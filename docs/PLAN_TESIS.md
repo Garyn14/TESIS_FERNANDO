@@ -84,13 +84,11 @@ Periodo de desarrollo del documento: del 5 de octubre al 29 de noviembre de 2026
 - Infraestructura: AWS (RNF06).
 - Privacidad: en la blockchain solo va el HMAC del DNI; la clave se guarda en un gestor de secretos (RNF03, Ley 29733).
 
-**Por decidir (no figura en el documento):**
-- Lenguaje y framework del backend.
-- Framework del frontend.
-- Base de datos off-chain (por ejemplo PostgreSQL).
-- Herramienta para el contrato (Hardhat o Foundry).
-
-Conviene decidirlos antes o durante el Sprint 0 y registrarlos en `docs/arquitectura/`.
+**Decidido en DRA-42** (detalle en [arquitectura/ADR-001-stack-tecnico.md](arquitectura/ADR-001-stack-tecnico.md)):
+- Frontend: React + TypeScript + Vite + Tailwind (como el prototipo), con ethers.js para MetaMask.
+- Backend: Java 21 + Spring Boot (Maven), con web3j para Besu.
+- Base de datos: PostgreSQL, con Spring Data JPA + Flyway (pendiente de confirmar: se eligió Prisma, que no funciona con Java).
+- Smart contract: Hardhat.
 
 ---
 
