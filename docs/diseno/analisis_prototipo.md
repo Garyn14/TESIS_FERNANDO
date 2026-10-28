@@ -42,17 +42,42 @@ Representa con fidelidad el proceso propuesto de la tesis (sección 3.1.1) y cub
 4. **"Procesando firma" no existe como estado.** La documentación lo lista entre los 6 estados y HU23 habla de "seis estados posibles", pero en el código solo hay 5 (`Pendiente`, `Observado`, `Rechazado`, `Firmado`, `Anulado`). "Procesando firma" solo aparece en la ventana de progreso. En el sistema real sí debe ser un estado persistente, porque HU18 corrige los documentos "detenidos en proceso de firma".
 5. **Dominio de verificación.** El certificado impreso dice `verifica.agrojunin.gob.pe`. Hay que confirmar si ese dominio existe o si es un ejemplo, porque irá en cada documento impreso y en el código QR.
 
-### 4.2 Detalles visuales menores
+### 4.2 Problemas funcionales del prototipo (corregir antes de la reunión de validación)
+
+1. **Mesa de Partes no encuentra documentos que no estén firmados.** Si se entra como Luis al empezar, al buscar "Teodoro", "004817", "Kevin" o "Ccori" sale "No se encontraron documentos", aunque esos trámites existen como Pendientes u Observados. Esto contradice HU23 ("ver el estado… para informar al ciudadano sobre su trámite", con seis estados posibles) y el rol de Mesa de Partes, que es quien recibe el expediente y atiende al ciudadano. El flujo F10 solo funciona si antes se hicieron F2 y F6.
+2. **Las tablas se desbordan a 1440 px.** En "Documentos firmados" (Director), la columna Acciones queda cortada y el botón "Anular" se ve como "Anu". En "Buscar documentos" (Mesa de Partes), al desplazarse se pierde la columna Código.
+
+### 4.3 Detalles visuales menores
 
 - En el documento final, la franja verde del pie sobresale del marco dorado (captura 28).
 - Los campos de fecha muestran el formato del navegador (`09/16/2026` en un navegador en inglés). En el sistema real conviene forzar `dd/mm/aaaa`.
 
-### 4.3 Calidad del código
+### 4.4 Calidad del código
 
 - `npm run build` funciona, pero el chequeo de tipos (`tsc --noEmit`) da **6 errores**. Por ejemplo, `RegistryDocument` no declara `annulmentRecord` ni `originalCode` aunque el código los usa. No rompen el prototipo, porque Vite no revisa tipos al compilar.
 - Tener todo en un solo archivo, sin rutas ni capa de datos, está bien para un prototipo. Para el sistema real hace falta separar componentes, usar rutas con URL propia (por ejemplo, para abrir un documento desde una notificación o un enlace) y conectar una API.
 
-## 5. Qué aprovechar para el desarrollo real
+## 5. Prueba de los flujos
+
+Se automatizaron los flujos de la documentación con [`capturas/probar_flujos.cjs`](capturas/probar_flujos.cjs). Cada flujo parte de un estado limpio.
+
+| Flujo | Resultado |
+|---|---|
+| F1 Emisión por lista | OK |
+| F2 Firmar lote (y cancelar firma) | OK |
+| F3 Consulta e impresión, duplicado | OK |
+| F4 Observar un beneficiario y corregir | OK |
+| F5 Observar o rechazar un lote | OK |
+| F6 Rechazo individual con aviso a Mesa de Partes | OK |
+| F7 Firma múltiple con falla y reintento | OK |
+| F8 Reemisión | OK |
+| F9 Anulación | OK |
+| F10 Búsquedas | Solo funciona si antes se firmó o rechazó el documento (ver §4.2) |
+| Login incorrecto | OK |
+
+No hubo errores en la consola del navegador en ningún flujo.
+
+## 6. Qué aprovechar para el desarrollo real
 
 1. **Stack del frontend.** La tesis no lo definía. Usar **React + TypeScript + Vite + Tailwind**, igual que el prototipo, permite reutilizar los estilos y componentes visuales.
 2. **Guía visual.** Los colores, tipografía y componentes ya están definidos como tokens en `prototipo/src/index.css` (`@theme`). Se pueden copiar tal cual.
@@ -61,7 +86,7 @@ Representa con fidelidad el proceso propuesto de la tesis (sección 3.1.1) y cub
 5. **Criterios de aceptación visuales.** Los flujos F1 a F10 sirven como guiones de prueba de aceptación con el Product Owner.
 6. **Evidencia para la tesis.** Las capturas sirven para el Cap. III (prototipado y validación con el negocio).
 
-## 6. Capturas
+## 7. Capturas
 
 Generadas con [`capturas/generar_capturas.cjs`](capturas/generar_capturas.cjs), a 1440 px de ancho, siguiendo F1, F2 y F3.
 
