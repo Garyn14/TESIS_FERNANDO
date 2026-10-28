@@ -1,6 +1,6 @@
 # ADR-001: Stack técnico de la plataforma
 
-- **Estado:** Propuesto, pendiente de confirmar el punto 3.
+- **Estado:** Aceptado (28/10/2026)
 - **Fecha:** 28/10/2026
 - **Tarea Jira:** DRA-42
 - **Decisores:** Garyn Fernando Huarhuachi Ramos, Jefferson Jesús Ventura Ruiz
@@ -43,7 +43,7 @@ La tesis fija parte de la tecnología en los requerimientos no funcionales: Besu
 
 1. **Frontend en React + TypeScript.** El prototipo validado ya usa este stack. Rehacerlo en otro framework no aporta nada y se perdería la guía visual.
 2. **Backend en Java + Spring Boot.** Es robusto, está muy difundido en el sector público peruano y tiene un ecosistema maduro para seguridad (Spring Security). Con web3j se integra con redes EVM como Besu. A cambio, el proyecto usa dos lenguajes: Java en el backend y TypeScript en el frontend y en las pruebas del contrato.
-3. **Spring Data JPA + Flyway en lugar de Prisma.** El equipo eligió "PostgreSQL + Prisma", pero **Prisma es un ORM exclusivo de Node.js/TypeScript y no se puede usar desde Java**. El equivalente en Spring Boot es Spring Data JPA (Hibernate) como ORM y Flyway para las migraciones versionadas, que es lo que aportaba Prisma. La base de datos sigue siendo PostgreSQL. *Pendiente de confirmación del equipo.*
+3. **Spring Data JPA + Flyway en lugar de Prisma.** El equipo eligió "PostgreSQL + Prisma", pero **Prisma es un ORM exclusivo de Node.js/TypeScript y no se puede usar desde Java**. El equivalente en Spring Boot es Spring Data JPA (Hibernate) como ORM y Flyway para las migraciones versionadas, que es lo que aportaba Prisma. La base de datos sigue siendo PostgreSQL. Confirmado por el equipo.
 4. **Hardhat.** Las pruebas del contrato se escriben en TypeScript, igual que el frontend, y Hardhat se integra directamente con OpenZeppelin. Genera el ABI que web3j usa para crear los envoltorios Java.
 5. **La firma ocurre en el navegador.** Para cumplir RNF05, el backend nunca recibe claves privadas. Prepara el PDF y su hash (HU16) y los guarda en IPFS (HU17). El frontend llama al contrato desde MetaMask con ethers.js, y el backend confirma el resultado leyendo los eventos del contrato con web3j (HU18). La blockchain es la fuente de verdad (RNF10).
 
@@ -58,7 +58,7 @@ La tesis fija parte de la tecnología en los requerimientos no funcionales: Besu
 
 | Alternativa | Motivo |
 |---|---|
-| Node.js + NestJS | Era la opción recomendada por compartir lenguaje con el frontend; el equipo prefirió Java |
+| Node.js + NestJS | Compartía lenguaje con el frontend, pero el equipo tiene amplia experiencia en Java y prefirió Spring Boot |
 | Python + FastAPI | Agrega otro lenguaje sin ventajas para el caso |
 | Foundry | Pruebas en Solidity; agrega curva de aprendizaje |
 | MySQL | Sin ventajas frente a PostgreSQL para este caso |
