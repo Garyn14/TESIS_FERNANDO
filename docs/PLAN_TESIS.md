@@ -87,7 +87,7 @@ Periodo de desarrollo del documento: del 5 de octubre al 29 de noviembre de 2026
 **Decidido en DRA-42** (detalle en [arquitectura/ADR-001-stack-tecnico.md](arquitectura/ADR-001-stack-tecnico.md)):
 - Frontend: React + TypeScript + Vite + Tailwind (como el prototipo), con ethers.js para MetaMask.
 - Backend: Java 21 + Spring Boot (Maven), con web3j para Besu.
-- Base de datos: PostgreSQL, con Spring Data JPA + Flyway (pendiente de confirmar: se eligió Prisma, que no funciona con Java).
+- Base de datos: PostgreSQL, con Spring Data JPA + Flyway.
 - Smart contract: Hardhat.
 
 ---
