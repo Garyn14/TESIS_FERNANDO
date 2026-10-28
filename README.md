@@ -31,6 +31,8 @@ docs/                  Puente entre la tesis y el desarrollo
   PLAN_TESIS.md        Plan de desarrollo: capítulos, sprints y pendientes
   requerimientos/      Épicas, historias de usuario, backlog
   arquitectura/        Diagramas y decisiones técnicas
+  diseno/              Documentación, análisis y capturas del prototipo
+prototipo/             Prototipo navegable (Figma Make, React), solo referencia
 plataforma/            Componente técnico (código)
   contracts/           Smart contract (Solidity) y sus pruebas
   backend/             API, base de datos off-chain, integración Besu/IPFS

@@ -1,6 +1,9 @@
 # Diseño de la interfaz
 
 - [prototipo_plataforma_interna.md](prototipo_plataforma_interna.md): descripción completa del prototipo navegable de la plataforma interna, hecho en Figma Make (versión del 27/10/2026). Incluye la guía visual, los roles, las pantallas, los flujos F1 a F10 y los mensajes del sistema.
+- [analisis_prototipo.md](analisis_prototipo.md): análisis técnico del prototipo, diferencias con la tesis y qué aprovechar para el desarrollo.
+- [capturas/](capturas/): 28 capturas de las pantallas principales.
+- Código del prototipo: [`prototipo/`](../../prototipo/).
 
 ## Cobertura del prototipo frente a las historias de usuario
 

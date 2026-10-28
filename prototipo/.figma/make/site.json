@@ -1,0 +1,11 @@
+{
+  "title": "Plataforma de Certificados – Agencia Agraria Satipo",
+  "description": "Designed for the Agencia Agraria Satipo, this platform streamlines certificate management, allowing users to log in, track documents, and manage notifications efficiently.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
