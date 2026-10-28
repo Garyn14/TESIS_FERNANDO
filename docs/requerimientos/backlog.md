@@ -2,6 +2,8 @@
 
 Fuente: Tabla 25 de la tesis. En total son 30 historias de usuario y 156 puntos.
 
+El detalle de cada historia, con sus criterios de aceptación, está en [historias/](historias/README.md).
+
 | Épica | Nombre | RF |
 |---|---|---|
 | E1 | Gestión de usuarios, roles y áreas | RF01–RF09 |
