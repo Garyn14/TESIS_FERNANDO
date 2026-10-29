@@ -7,7 +7,7 @@ Stack definido en [ADR-001](../docs/arquitectura/ADR-001-stack-tecnico.md).
 | `backend/` | API, base de datos off-chain, integración con Besu e IPFS | Java 21, Spring Boot 4.1, Spring Data JPA, Flyway, web3j |
 | `frontend/` | Plataforma interna y portal público de verificación | React 19, TypeScript, Vite 8, Tailwind CSS 4, ethers.js |
 | `contracts/` | Smart contract de registro de documentos | Solidity 0.8.30, OpenZeppelin 5, Hardhat 3 |
-| `infra/` | Servicios para desarrollo local | Docker Compose (PostgreSQL 17; Besu e IPFS en DRA-45 y DRA-46) |
+| `infra/` | Servicios para desarrollo local | Docker Compose: PostgreSQL 17 y red Besu QBFT de 4 validadores ([infra/besu](infra/besu/README.md)); IPFS en DRA-46 |
 
 ## Requisitos
 
@@ -18,10 +18,11 @@ Stack definido en [ADR-001](../docs/arquitectura/ADR-001-stack-tecnico.md).
 ## Levantar en local
 
 ```bash
-# 1. Base de datos
+# 1. Base de datos y red Besu
 cd plataforma/infra
 cp .env.example .env
-docker compose up -d
+./besu/generar-red.sh            # solo la primera vez
+docker compose --profile besu up -d   # sin --profile besu levanta solo PostgreSQL
 
 # 2. Backend (http://localhost:8080)
 cd ../backend

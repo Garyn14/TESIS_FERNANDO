@@ -15,7 +15,7 @@ La integración continua (CI) comprueba de forma automática que cada cambio sub
 | `push` | `main` y cualquier rama que empiece con `DRA-` (por ejemplo `DRA-14-login-por-rol`) |
 | `pull_request` | Cualquier pull request hacia el repositorio |
 
-Una ejecución completa tarda entre 1 y 2 minutos. El job más lento es el del backend, porque levanta un PostgreSQL real para las pruebas.
+Una ejecución completa tarda unos 2 minutos. Los jobs más lentos son el de la red Besu, que levanta 4 nodos, y el del backend, que levanta un PostgreSQL real para las pruebas.
 
 ## 3. Flujo
 
@@ -25,15 +25,17 @@ flowchart LR
     W --> B[Job Backend]
     W --> F[Job Frontend]
     W --> C[Job Contratos]
+    W --> RB[Job Red Besu]
     B --> B1[Spotless: formato Java] --> B2[Compilación] --> B3[Pruebas con PostgreSQL 17 en Testcontainers] --> B4[Empaquetado JAR]
     F --> F1[npm ci] --> F2[oxlint] --> F3[Prettier] --> F4[Vitest] --> F5[Build de Vite]
     C --> C1[npm ci] --> C2[Prettier + plugin Solidity] --> C3[Compilación Hardhat] --> C4[Pruebas Hardhat]
-    B4 & F5 & C4 --> R{¿Los tres en verde?}
+    RB --> RB1[Generar claves y génesis] --> RB2[Levantar 4 validadores] --> RB3[Esperar bloques] --> RB4[Desplegar PruebaRed y leer evento]
+    B4 & F5 & C4 & RB4 --> R{¿Los cuatro en verde?}
     R -- Sí --> OK[Cambio integrable a main]
     R -- No --> KO[Se corrige en la misma rama]
 ```
 
-Los tres jobs corren **en paralelo** y son independientes: si falla uno, los otros terminan igual y se ve qué parte del proyecto tiene el problema.
+Los cuatro jobs corren **en paralelo** y son independientes: si falla uno, los otros terminan igual y se ve qué parte del proyecto tiene el problema.
 
 ## 4. Qué valida cada job
 
@@ -63,10 +65,22 @@ Los tres jobs corren **en paralelo** y son independientes: si falla uno, los otr
 | Compilación | `npm run compile` | El contrato compila con Solidity 0.8.30 |
 | Pruebas | `npm test` | Pruebas del contrato en la red simulada de Hardhat |
 
+### Red Besu (QBFT, 4 validadores)
+
+Agregado en DRA-45.
+
+| Paso | Comando | Qué asegura |
+|---|---|---|
+| Generar la red | `plataforma/infra/besu/generar-red.sh` | Claves de 4 validadores, génesis QBFT y lista de nodos permitidos, nuevas en cada ejecución |
+| Levantar nodos | `docker compose --profile besu up -d besu-nodo1 … besu-nodo4` | La configuración de `docker-compose.yml` arranca |
+| Esperar bloques | Consulta `eth_blockNumber` hasta el bloque 3 (máximo 2 minutos) | El consenso QBFT funciona entre los 4 nodos |
+| Prueba de humo | `npm run probar:besu` (`scripts/probar-red-besu.ts`) | `chainId` 20260; 4 validadores; una cuenta nueva **sin saldo** despliega `PruebaRed.sol` y envía una transacción con `gasPrice` 0; el evento se lee y el saldo sigue en 0 (RNF11) |
+| Si falla | `docker compose logs` | Deja en el registro los últimos mensajes de los nodos |
+
 ## 5. Cómo leer un resultado
 
 1. En GitHub, abre la pestaña **Actions** o el ícono ✓/✗ que aparece junto a cada commit.
-2. Cada ejecución muestra los tres jobs. Uno en rojo indica qué parte falló.
+2. Cada ejecución muestra los cuatro jobs. Uno en rojo indica qué parte falló.
 3. Al entrar al job se ve el paso exacto que falló y su registro.
 4. Con **GitHub for Jira** instalado, el estado del build también aparece dentro de cada historia en Jira.
 
@@ -81,6 +95,7 @@ Se reproduce en local con el mismo comando del paso que falló y se corrige en l
 | Linter o formato del frontend | `npm run lint` / `npm run format:check` | `npm run format` |
 | Pruebas del frontend | `npm test` | — |
 | Contratos | `npm run compile` / `npm test` | `npm run format` para el formato |
+| Red Besu | `./besu/generar-red.sh` + `docker compose --profile besu up -d` + `npm run probar:besu` | Revisar `docker compose --profile besu logs` |
 
 Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 
@@ -101,9 +116,10 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 |---|---|---|---|
 | 29/10/2026 | [40792393119](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40792393119) | `DRA-43-estructura-ci` | ✓ Los tres jobs en verde (con avisos de actions obsoletas) |
 | 29/10/2026 | [40792574492](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40792574492) | `DRA-43-estructura-ci` | ✓ Los tres jobs en verde, sin avisos, tras actualizar a `@v5` |
+| 29/10/2026 | [40797880888](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40797880888) | `DRA-45-red-besu` | ✓ Cuatro jobs en verde, incluido el nuevo job Red Besu |
 
 ## 9. Pendientes
 
 - ~~Instalar **GitHub for Jira**~~: instalado el 29/10/2026 (DRA-43).
-- Cuando existan los servicios de Besu (DRA-45) e IPFS (DRA-46), agregar pruebas de integración que los levanten.
+- Cuando exista el servicio IPFS (DRA-46), agregarlo a las pruebas de integración.
 - Agregar análisis de dependencias vulnerables (Dependabot) en un sprint posterior.
