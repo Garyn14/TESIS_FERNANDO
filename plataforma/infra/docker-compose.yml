@@ -1,5 +1,19 @@
-# Servicios para desarrollo local. Besu e IPFS se agregan en DRA-45 y DRA-46.
+# Servicios para desarrollo local.
+#   docker compose up -d                  -> solo PostgreSQL
+#   docker compose --profile besu up -d   -> PostgreSQL + red Besu QBFT de 4 validadores
+# Antes de usar el perfil besu, generar la red una sola vez: ./besu/generar-red.sh
+# IPFS se agrega en DRA-46.
 name: plataforma
+
+x-besu: &besu
+  image: hyperledger/besu:${BESU_VERSION:-26.10.2}
+  profiles: [besu]
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8545'"]
+    interval: 5s
+    timeout: 3s
+    retries: 30
 
 services:
   postgres:
@@ -12,11 +26,67 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    networks: [plataforma]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 10
 
+  # Nodo 1: validador y nodo de arranque. Es el único que expone RPC fuera de Docker
+  # (backend, Hardhat y MetaMask se conectan a http://localhost:8545).
+  besu-nodo1:
+    <<: *besu
+    command: --config-file=/red/nodo1/config.toml
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+    volumes:
+      - ./besu/red:/red:ro
+      - besu-nodo1:/opt/besu/data
+    networks:
+      plataforma:
+        ipv4_address: 172.30.0.11
+
+  besu-nodo2:
+    <<: *besu
+    command: --config-file=/red/nodo2/config.toml
+    volumes:
+      - ./besu/red:/red:ro
+      - besu-nodo2:/opt/besu/data
+    networks:
+      plataforma:
+        ipv4_address: 172.30.0.12
+
+  besu-nodo3:
+    <<: *besu
+    command: --config-file=/red/nodo3/config.toml
+    volumes:
+      - ./besu/red:/red:ro
+      - besu-nodo3:/opt/besu/data
+    networks:
+      plataforma:
+        ipv4_address: 172.30.0.13
+
+  besu-nodo4:
+    <<: *besu
+    command: --config-file=/red/nodo4/config.toml
+    volumes:
+      - ./besu/red:/red:ro
+      - besu-nodo4:/opt/besu/data
+    networks:
+      plataforma:
+        ipv4_address: 172.30.0.14
+
 volumes:
   postgres-data:
+  besu-nodo1:
+  besu-nodo2:
+  besu-nodo3:
+  besu-nodo4:
+
+networks:
+  plataforma:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

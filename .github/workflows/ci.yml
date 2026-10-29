@@ -58,3 +58,40 @@ jobs:
       - run: npm run format:check
       - run: npm run compile
       - run: npm test
+
+  red-besu:
+    name: Red Besu (QBFT, 4 validadores)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: plataforma/contracts/package-lock.json
+      - name: Generar claves y génesis
+        run: plataforma/infra/besu/generar-red.sh
+      - name: Levantar los 4 nodos
+        working-directory: plataforma/infra
+        run: docker compose --profile besu up -d besu-nodo1 besu-nodo2 besu-nodo3 besu-nodo4
+      - name: Esperar bloques
+        run: |
+          for i in $(seq 1 60); do
+            n=$(curl -s -X POST -H 'Content-Type: application/json' \
+              --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' \
+              http://localhost:8545 | jq -r '.result // "0x0"')
+            [ $((n)) -ge 3 ] && echo "Bloque $((n))" && exit 0
+            sleep 2
+          done
+          echo "La red no produjo bloques" && exit 1
+      - run: npm ci
+        working-directory: plataforma/contracts
+      - name: Desplegar contrato de prueba y leer el evento
+        working-directory: plataforma/contracts
+        env:
+          BESU_RPC_URL: http://localhost:8545
+        run: npm run probar:besu
+      - name: Registros de los nodos si falla
+        if: failure()
+        working-directory: plataforma/infra
+        run: docker compose --profile besu logs --tail 100
