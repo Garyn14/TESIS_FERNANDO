@@ -17,7 +17,6 @@ export const MENU: OpcionMenu[] = [
     ruta: 'billetera',
     titulo: 'Billetera del director',
     permiso: 'BILLETERA_GESTIONAR',
-    pendiente: 'Se habilita en el Sprint 1 (HU06).',
   },
   {
     ruta: 'mis-documentos',

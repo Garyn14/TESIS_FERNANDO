@@ -8,7 +8,9 @@
     "test": "hardhat test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "probar:besu": "hardhat run scripts/probar-red-besu.ts --network besuLocal"
+    "probar:besu": "hardhat run scripts/probar-red-besu.ts --network besuLocal",
+    "desplegar:besu": "hardhat run scripts/desplegar.ts --network besuLocal",
+    "probar:registro": "hardhat run scripts/probar-registro-besu.ts --network besuLocal"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^4.0.0",

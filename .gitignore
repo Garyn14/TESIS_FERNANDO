@@ -19,3 +19,4 @@ plataforma/contracts/types/
 .vscode/
 *.iml
 .DS_Store
+despliegues/

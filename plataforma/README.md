@@ -48,4 +48,6 @@ Comprobación rápida: `curl http://localhost:8080/api/salud` responde `{"estado
 | `PLATAFORMA_ADMIN_USUARIO` / `PLATAFORMA_ADMIN_NOMBRE` / `PLATAFORMA_ADMIN_CONTRASENA` | Primera cuenta de Administrador (RF09). Ver [backend/README.md](backend/README.md#inicialización-del-sistema-rf09) |
 | `SESION_INACTIVIDAD` | `30m`. Tiempo de inactividad de la sesión (RNF02). Solo se cambia para pruebas |
 | `SESION_COOKIE_SEGURA` | `false`. Poner `true` en producción (HTTPS) |
+| `PLATAFORMA_CONTRATO_DIRECCION` | *(vacía)*. Dirección del contrato `RegistroDocumentos` desplegado (HU06). Ver [contracts/README.md](contracts/README.md#despliegue) |
+| `BESU_RPC_PUBLICA` | `http://localhost:8545`. Nodo que usa la billetera del navegador |
 | API de IPFS (se configura en HU17) | `http://localhost:5001` |

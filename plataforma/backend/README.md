@@ -15,6 +15,8 @@ API de la plataforma: Java 21 + Spring Boot 4.1, PostgreSQL con Spring Data JPA 
 | `config` | Seguridad (Spring Security, permisos por método, codificador de contraseñas) y cliente de Besu |
 | `sesion` | Inicio y cierre de sesión, bloqueo por intentos, validación de la cuenta en cada solicitud y CSRF (HU03) |
 | `areas` | Áreas y tipos de documento; regla de control interno de RF05 (`AlcanceDeArea`) (HU05) |
+| `billeteras` | Billetera del director (RF07) y verificación de los cambios del rol de firmante (RF08) (HU06) |
+| `blockchain` | Lectura del contrato RegistroDocumentos con web3j: estado de los roles y recibos de transacción. Nunca envía transacciones (RNF05) |
 | `comun` | Formato único de errores de la API y validador de solicitudes |
 | `salud` | `/api/salud` |
 | `usuarios` | Roles y cuentas: creación y listado (HU01); edición, desactivación, reactivación e historial (HU02); se completa en HU03–HU06 |
@@ -49,6 +51,7 @@ El esquema de PostgreSQL **solo cambia mediante migraciones de Flyway**. Hiberna
 | V5 | `V5__historial_de_cuentas.sql` | Tabla `usuario_historial`, cargada con el evento de creación de las cuentas existentes | DRA-13 (HU02) |
 | V6 | `V6__bloqueo_por_intentos_fallidos.sql` | Columnas `usuario.intentos_fallidos` y `usuario.bloqueada_hasta`; evento `BLOQUEADA` en el historial | DRA-14 (HU03) |
 | V7 | `V7__cambio_y_restablecimiento_de_contrasena.sql` | Columna `usuario.contrasena_cambiada_en`; eventos `CONTRASENA_CAMBIADA` y `CONTRASENA_RESTABLECIDA`; `evento` pasa a 30 caracteres | DRA-15 (HU04) |
+| V8 | `V8__billetera_del_director.sql` | Columna `usuario.billetera` (única sin distinguir mayúsculas) y eventos `BILLETERA_REGISTRADA`, `FIRMANTE_OTORGADO` y `FIRMANTE_REVOCADO` | DRA-17 (HU06) |
 
 ## API
 
@@ -84,6 +87,10 @@ Cada servicio exige un permiso con `@PreAuthorize` (RF04). Sin sesión responde 
 | `POST /api/usuarios/{id}/restablecer-contrasena` | `USUARIOS_GESTIONAR` | Asigna una contraseña temporal; desbloquea la cuenta y cierra sus sesiones | HU04 |
 | `GET /api/areas` | `USUARIOS_GESTIONAR` | Áreas activas con los tipos de documento que emite cada una | HU05 |
 | `GET /api/tipos-documento` | `DOCUMENTO_REGISTRAR` | Tipos que la sesión puede registrar: para el Área encargada, solo los de su área (RF05) | HU05 |
+| `GET /api/billeteras` | `BILLETERA_GESTIONAR` | Directores (y cuentas con billetera) con el estado de firmante leído de la blockchain | HU06 |
+| `PUT /api/billeteras/{idCuenta}` | `BILLETERA_GESTIONAR` | Registra la billetera del director: formato, suma de verificación EIP-55, unicidad, solo Director, no administradora del contrato y sin cambiarla mientras sea firmante | HU06 |
+| `POST /api/billeteras/{idCuenta}/firmante` | `BILLETERA_GESTIONAR` | Recibe el identificador de una transacción firmada en el navegador, la verifica en la blockchain y la registra en el historial (sin duplicar) | HU06 |
+| `GET /api/blockchain/red` | `CUENTA_PROPIA` | chainId, nombre y URL de la red, y dirección del contrato, para la billetera del navegador | HU06 |
 
 No hay ninguna ruta para eliminar cuentas (RF01): `DELETE` responde 405.
 
@@ -110,6 +117,25 @@ Reglas de edición y desactivación (HU02):
 - Cada creación, edición, desactivación y reactivación se guarda en `usuario_historial` con quién la hizo, cuándo y qué cambió.
 
 > Las pruebas de HU01 y HU02 simulan la sesión con `@WithMockUser`. Las de HU03 (`sesion/`) usan sesiones reales, y la prueba de punta a punta (`plataforma/e2e`) recorre todo desde el navegador.
+
+## Blockchain (HU06)
+
+El backend **lee** el contrato `RegistroDocumentos` con web3j (`eth_call` y recibos de transacción) y **nunca envía transacciones** ni guarda claves (RNF05). Las transacciones las firma la billetera del Administrador en el navegador. El backend recibe solo su identificador y comprueba en la blockchain que:
+
+- se haya confirmado;
+- sea del contrato de la plataforma;
+- contenga el evento `RoleGranted` o `RoleRevoked` del rol de firmante para esa billetera.
+
+El estado "firmante" se lee siempre del contrato (RNF10). Si la blockchain no responde, `GET /api/billeteras` devuelve `blockchainDisponible: false` y ningún estado, y los cambios que necesitan comprobar el contrato responden 503.
+
+| Variable | Por defecto | Uso |
+|---|---|---|
+| `BESU_RPC_URL` | `http://localhost:8545` | Nodo que consulta el backend |
+| `PLATAFORMA_CONTRATO_DIRECCION` | *(vacía)* | Dirección de `RegistroDocumentos` (ver `plataforma/contracts/README.md`). Sin ella, la pantalla avisa que el contrato no está configurado |
+| `BESU_RPC_PUBLICA` | `http://localhost:8545` | URL del nodo que se propone a la billetera del navegador |
+| `BESU_CHAIN_ID` / `BESU_NOMBRE_RED` | `20260` / `Plataforma DRA Satipo` | Red que se propone a la billetera |
+
+Las llamadas al contrato se arman con `FunctionEncoder` de web3j, sin envoltorios generados, porque por ahora el backend usa dos funciones de lectura. Si con el registro de documentos (HU18) crecen, se generarán los envoltorios desde el ABI de Hardhat, como prevé el ADR-001.
 
 ## Inicialización del sistema (RF09)
 

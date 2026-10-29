@@ -91,6 +91,11 @@ jobs:
         env:
           BESU_RPC_URL: http://localhost:8545
         run: npm run probar:besu
+      - name: Contrato RegistroDocumentos en Besu (HU06)
+        working-directory: plataforma/contracts
+        env:
+          BESU_RPC_URL: http://localhost:8545
+        run: npm run probar:registro
       - name: Registros de los nodos si falla
         if: failure()
         working-directory: plataforma/infra

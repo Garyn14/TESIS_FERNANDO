@@ -77,6 +77,7 @@ Agregado en DRA-45.
 | Levantar nodos | `docker compose --profile besu up -d besu-nodo1 … besu-nodo4` | La configuración de `docker-compose.yml` arranca |
 | Esperar bloques | Consulta `eth_blockNumber` hasta el bloque 3 (máximo 2 minutos) | El consenso QBFT funciona entre los 4 nodos |
 | Prueba de humo | `npm run probar:besu` (`scripts/probar-red-besu.ts`) | `chainId` 20260; 4 validadores; una cuenta nueva **sin saldo** despliega `PruebaRed.sol` y envía una transacción con `gasPrice` 0; el evento se lee y el saldo sigue en 0 (RNF11) |
+| Contrato de la plataforma | `npm run probar:registro` (`scripts/probar-registro-besu.ts`) | Agregado en DRA-17: `RegistroDocumentos` se despliega con dos administradores; el Administrador otorga el rol de firmante y el respaldo lo revoca, en la red real y sin saldo |
 | Si falla | `docker compose logs` | Deja en el registro los últimos mensajes de los nodos |
 
 ### IPFS privado

@@ -1,8 +1,21 @@
-// Prueba de punta a punta real de HU01 a HU05: navegador + frontend + backend + PostgreSQL, sin
+// Prueba de punta a punta real de HU01 a HU06: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía y el backend con SESION_INACTIVIDAD=1m (ver
 // levantar.sh), para probar la expiración en un minuto.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
+const { readFileSync } = require('node:fs')
+const { Contract, JsonRpcProvider, getAddress } = require('ethers')
+const { instalarBilletera } = require('./billetera-de-prueba.cjs')
+
+// HU06: billeteras de prueba y contrato desplegado por levantar.sh.
+const BESU = process.env.BESU_RPC_URL ?? 'http://localhost:8545'
+const DESPLIEGUE = JSON.parse(readFileSync(process.env.E2E_DESPLIEGUE ?? `${__dirname}/.despliegue.json`, 'utf8'))
+const B = DESPLIEGUE.billeteras
+const contratoEnCadena = new Contract(
+  DESPLIEGUE.contrato,
+  ['function esFirmante(address) view returns (bool)'],
+  new JsonRpcProvider(BESU),
+)
 
 const [out, URL = 'http://localhost:5173/', ADMIN_TEMPORAL = 'Admin2026!'] = process.argv.slice(2)
 const ADMIN_CLAVE = 'AdminPropia26'
@@ -17,9 +30,11 @@ const paso = async (nombre, fn) => {
 
 ;(async () => {
   const b = await chromium.launch()
+  const billeteras = new Map()
   const nueva = async () => {
     const c = await b.newContext({ viewport: { width: 1280, height: 800 } })
     const p = await c.newPage()
+    billeteras.set(p, await instalarBilletera(c, BESU))
     await p.goto(URL)
     return p
   }
@@ -159,6 +174,99 @@ const paso = async (nombre, fn) => {
     assert.equal(await rosa.getByText('Certificado de Capacitación').count(), 0)
     await foto(rosa, 'hu05_05_area_cambiada_en_sesion')
     await rosa.context().close()
+  })
+
+  // ---------------------------------------------- HU06: billetera del director y rol de firmante
+  const fila = (p, texto) => p.locator('tr', { hasText: texto })
+  await paso('HU06 · La pantalla lista al director sin billetera', async () => {
+    await admin.getByRole('link', { name: 'Billetera del director' }).click()
+    await fila(admin, 'cmendoza').getByText('Sin billetera').waitFor()
+    await admin.getByText(DESPLIEGUE.contrato).waitFor()
+    await foto(admin, 'hu06_01_sin_billetera')
+  })
+  await paso('HU06 · Valida el formato, la suma de verificación y que no sea administradora', async () => {
+    await admin.getByRole('button', { name: 'Registrar la billetera de cmendoza' }).click()
+    const ventana = admin.getByRole('dialog', { name: 'Billetera del director' })
+    const direccion = campo(ventana, 'Dirección de la billetera')
+    await direccion.fill('0x12345')
+    await ventana.getByRole('button', { name: 'Guardar billetera' }).click()
+    await ventana.getByText('40 caracteres hexadecimales').waitFor()
+    // Un error de tipeo en una letra: la suma de verificación EIP-55 lo detecta.
+    const conError = B.director.direccion.replace(/[a-f]/, (l) => l.toUpperCase())
+    await direccion.fill(conError)
+    await ventana.getByRole('button', { name: 'Guardar billetera' }).click()
+    await ventana.getByText('EIP-55', { exact: false }).waitFor()
+    await foto(admin, 'hu06_02_error_de_tipeo')
+    await direccion.fill(B.administrador.direccion)
+    await ventana.getByRole('button', { name: 'Guardar billetera' }).click()
+    await ventana.getByText('administradora del contrato', { exact: false }).waitFor()
+    await direccion.fill(B.director.direccion.toLowerCase())
+    await ventana.getByRole('button', { name: 'Guardar billetera' }).click()
+    await fila(admin, 'cmendoza').getByText(getAddress(B.director.direccion)).waitFor()
+    await fila(admin, 'cmendoza').getByText('Sin rol de firmante').waitFor()
+    await foto(admin, 'hu06_03_billetera_registrada')
+  })
+  await paso('HU06 · Una billetera que no administra el contrato no puede otorgar', async () => {
+    billeteras.get(admin).usar(B.otra.clave)
+    await admin.getByRole('button', { name: 'Otorgar el rol de firmante a cmendoza' }).click()
+    const ventana = admin.getByRole('dialog', { name: 'Otorgar rol de firmante' })
+    await ventana.getByRole('button', { name: 'Conectar billetera y continuar' }).click()
+    await ventana.getByRole('alert').getByText('no es administradora del contrato', { exact: false }).waitFor()
+    assert.equal(billeteras.get(admin).estado.transacciones.length, 0)
+    await foto(admin, 'hu06_04_billetera_no_administradora')
+    await ventana.getByRole('button', { name: 'Cancelar' }).click()
+  })
+  await paso('HU06 · El Administrador otorga el rol con su billetera, en la blockchain real', async () => {
+    billeteras.get(admin).usar(B.administrador.clave)
+    await admin.getByRole('button', { name: 'Otorgar el rol de firmante a cmendoza' }).click()
+    const ventana = admin.getByRole('dialog', { name: 'Otorgar rol de firmante' })
+    await ventana.getByRole('button', { name: 'Conectar billetera y continuar' }).click()
+    await ventana.getByText(getAddress(B.administrador.direccion)).waitFor()
+    await ventana.getByText('Sin costo').waitFor()
+    // La red de la plataforma se agregó a la billetera porque no la conocía.
+    assert.deepEqual(billeteras.get(admin).estado.redesAgregadas, ['Plataforma DRA Satipo'])
+    await foto(admin, 'hu06_05_confirmar_otorgamiento')
+    await ventana.getByRole('button', { name: 'Confirmar en la billetera' }).click()
+    await ventana.getByText('Rol de firmante otorgado', { exact: false }).waitFor({ timeout: 60_000 })
+    await foto(admin, 'hu06_06_rol_otorgado')
+    await ventana.getByRole('button', { name: 'Listo' }).click()
+    await fila(admin, 'cmendoza').getByText('✓ Firmante activo').waitFor()
+    assert.equal(billeteras.get(admin).estado.transacciones.length, 1)
+    // Comprobación independiente, directo en la blockchain.
+    assert.equal(await contratoEnCadena.esFirmante(B.director.direccion), true)
+  })
+  await paso('HU06 · No se puede cambiar la billetera mientras tenga el rol de firmante', async () => {
+    await admin.getByRole('button', { name: 'Cambiar la billetera de cmendoza' }).click()
+    const ventana = admin.getByRole('dialog', { name: 'Billetera del director' })
+    await campo(ventana, 'Dirección de la billetera').fill(B.otra.direccion)
+    await ventana.getByRole('button', { name: 'Guardar billetera' }).click()
+    await ventana.getByText('Revóquelo antes de cambiar la billetera', { exact: false }).waitFor()
+    await ventana.getByRole('button', { name: 'Cancelar' }).click()
+  })
+  await paso('HU06 · El Administrador revoca el rol; el estado se lee de la blockchain', async () => {
+    await admin.getByRole('button', { name: 'Revocar el rol de firmante de cmendoza' }).click()
+    const ventana = admin.getByRole('dialog', { name: '¿Revocar el rol de firmante?' })
+    await ventana.getByText('Los documentos firmados antes siguen siendo válidos', { exact: false }).waitFor()
+    await ventana.getByRole('button', { name: 'Conectar billetera y continuar' }).click()
+    await ventana.getByRole('button', { name: 'Confirmar en la billetera' }).click()
+    await ventana.getByText('Rol de firmante revocado', { exact: false }).waitFor({ timeout: 60_000 })
+    await foto(admin, 'hu06_07_rol_revocado')
+    await ventana.getByRole('button', { name: 'Listo' }).click()
+    await fila(admin, 'cmendoza').getByText('Sin rol de firmante').waitFor()
+    assert.equal(await contratoEnCadena.esFirmante(B.director.direccion), false)
+    // Se recarga la pantalla: el estado viene de la blockchain, no de lo que recuerda el navegador.
+    await admin.getByRole('link', { name: 'Usuarios' }).click()
+    await admin.getByRole('link', { name: 'Billetera del director' }).click()
+    await fila(admin, 'cmendoza').getByText('Sin rol de firmante').waitFor()
+    await admin.getByRole('link', { name: 'Usuarios' }).click()
+  })
+  await paso('HU06 · Solo el Administrador ve la pantalla de billeteras', async () => {
+    const p = await nueva()
+    await ingresar(p, 'cmendoza', PROPIA)
+    await p.getByRole('navigation', { name: 'Menú principal' }).waitFor()
+    assert.equal(await p.getByRole('link', { name: 'Billetera del director' }).count(), 0)
+    assert.equal(await api(p, '/api/billeteras'), 403)
+    await p.context().close()
   })
 
   await paso('HU03 · Una dirección sin permiso no muestra la pantalla ni sus datos', async () => {

@@ -1,0 +1,8 @@
+{
+  "name": "plataforma-e2e",
+  "private": true,
+  "description": "Pruebas de punta a punta en navegador real (Playwright se usa instalado globalmente)",
+  "dependencies": {
+    "ethers": "^6.17.0"
+  }
+}
