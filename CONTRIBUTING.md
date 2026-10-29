@@ -25,7 +25,7 @@ Con la app **GitHub for Jira** instalada, las ramas y commits aparecen dentro de
 | Frontend | `cd plataforma/frontend && npm run lint && npm run format:check && npm test && npm run build` |
 | Contratos | `cd plataforma/contracts && npm run format:check && npm run compile && npm test` |
 
-La integración continua (`.github/workflows/ci.yml`) ejecuta lo mismo en cada push a `main` o a ramas `DRA-*`.
+La integración continua (`.github/workflows/ci.yml`) ejecuta lo mismo en cada push a `main` o a ramas `DRA-*`. Cómo funciona, cómo leer sus resultados y qué hacer si falla: [docs/arquitectura/integracion-continua.md](docs/arquitectura/integracion-continua.md).
 
 ## Definición de terminado
 
