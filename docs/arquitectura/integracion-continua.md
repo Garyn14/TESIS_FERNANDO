@@ -26,16 +26,18 @@ flowchart LR
     W --> F[Job Frontend]
     W --> C[Job Contratos]
     W --> RB[Job Red Besu]
+    W --> IP[Job IPFS privado]
     B --> B1[Spotless: formato Java] --> B2[Compilación] --> B3[Pruebas con PostgreSQL 17 en Testcontainers] --> B4[Empaquetado JAR]
     F --> F1[npm ci] --> F2[oxlint] --> F3[Prettier] --> F4[Vitest] --> F5[Build de Vite]
     C --> C1[npm ci] --> C2[Prettier + plugin Solidity] --> C3[Compilación Hardhat] --> C4[Pruebas Hardhat]
     RB --> RB1[Generar claves y génesis] --> RB2[Levantar 4 validadores] --> RB3[Esperar bloques] --> RB4[Desplegar PruebaRed y leer evento]
-    B4 & F5 & C4 & RB4 --> R{¿Los cuatro en verde?}
+    IP --> IP1[Generar clave de enjambre] --> IP2[Levantar nodo] --> IP3[Subir y recuperar por CID] --> IP4[Prueba de aislamiento]
+    B4 & F5 & C4 & RB4 & IP4 --> R{¿Los cinco en verde?}
     R -- Sí --> OK[Cambio integrable a main]
     R -- No --> KO[Se corrige en la misma rama]
 ```
 
-Los cuatro jobs corren **en paralelo** y son independientes: si falla uno, los otros terminan igual y se ve qué parte del proyecto tiene el problema.
+Los cinco jobs corren **en paralelo** y son independientes: si falla uno, los otros terminan igual y se ve qué parte del proyecto tiene el problema.
 
 ## 4. Qué valida cada job
 
@@ -77,10 +79,22 @@ Agregado en DRA-45.
 | Prueba de humo | `npm run probar:besu` (`scripts/probar-red-besu.ts`) | `chainId` 20260; 4 validadores; una cuenta nueva **sin saldo** despliega `PruebaRed.sol` y envía una transacción con `gasPrice` 0; el evento se lee y el saldo sigue en 0 (RNF11) |
 | Si falla | `docker compose logs` | Deja en el registro los últimos mensajes de los nodos |
 
+### IPFS privado
+
+Agregado en DRA-46.
+
+| Paso | Comando | Qué asegura |
+|---|---|---|
+| Generar la clave | `plataforma/infra/ipfs/generar-clave.sh` | Clave de enjambre nueva en cada ejecución |
+| Levantar el nodo | `docker compose --profile ipfs up -d --wait ipfs` | El nodo arranca en modo privado (`LIBP2P_FORCE_PNET=1`) |
+| Prueba de humo | `./ipfs/probar-ipfs.sh` | 0 nodos de arranque y 0 pares; un archivo subido con CIDv1 se recupera idéntico y queda fijado |
+| Aislamiento | `./ipfs/probar-aislamiento.sh` | Un nodo sin la clave es rechazado y uno con la misma clave se conecta (RNF03) |
+| Si falla | `docker compose logs` | Deja en el registro los últimos mensajes del nodo |
+
 ## 5. Cómo leer un resultado
 
 1. En GitHub, abre la pestaña **Actions** o el ícono ✓/✗ que aparece junto a cada commit.
-2. Cada ejecución muestra los cuatro jobs. Uno en rojo indica qué parte falló.
+2. Cada ejecución muestra los cinco jobs. Uno en rojo indica qué parte falló.
 3. Al entrar al job se ve el paso exacto que falló y su registro.
 4. Con **GitHub for Jira** instalado, el estado del build también aparece dentro de cada historia en Jira.
 
@@ -96,6 +110,7 @@ Se reproduce en local con el mismo comando del paso que falló y se corrige en l
 | Pruebas del frontend | `npm test` | — |
 | Contratos | `npm run compile` / `npm test` | `npm run format` para el formato |
 | Red Besu | `./besu/generar-red.sh` + `docker compose --profile besu up -d` + `npm run probar:besu` | Revisar `docker compose --profile besu logs` |
+| IPFS privado | `./ipfs/generar-clave.sh` + `docker compose --profile ipfs up -d` + `./ipfs/probar-ipfs.sh` | Revisar `docker compose --profile ipfs logs` |
 
 Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 
@@ -117,9 +132,10 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 29/10/2026 | [40792393119](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40792393119) | `DRA-43-estructura-ci` | ✓ Los tres jobs en verde (con avisos de actions obsoletas) |
 | 29/10/2026 | [40792574492](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40792574492) | `DRA-43-estructura-ci` | ✓ Los tres jobs en verde, sin avisos, tras actualizar a `@v5` |
 | 29/10/2026 | [40797880888](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40797880888) | `DRA-45-red-besu` | ✓ Cuatro jobs en verde, incluido el nuevo job Red Besu |
+| 29/10/2026 | [40814310340](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40814310340) | `DRA-46-ipfs-privado` | ✓ Cinco jobs en verde, incluido el nuevo job IPFS privado |
 
 ## 9. Pendientes
 
 - ~~Instalar **GitHub for Jira**~~: instalado el 29/10/2026 (DRA-43).
-- Cuando exista el servicio IPFS (DRA-46), agregarlo a las pruebas de integración.
+- Cuando el backend integre Besu e IPFS (Sprint 3), agregar pruebas de integración del backend contra esos servicios.
 - Agregar análisis de dependencias vulnerables (Dependabot) en un sprint posterior.
