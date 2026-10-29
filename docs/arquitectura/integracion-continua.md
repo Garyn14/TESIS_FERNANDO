@@ -104,6 +104,6 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 
 ## 9. Pendientes
 
-- Instalar **GitHub for Jira** para ver ramas, commits y builds en cada historia (DRA-43).
+- ~~Instalar **GitHub for Jira**~~: instalado el 29/10/2026 (DRA-43).
 - Cuando existan los servicios de Besu (DRA-45) e IPFS (DRA-46), agregar pruebas de integración que los levanten.
 - Agregar análisis de dependencias vulnerables (Dependabot) en un sprint posterior.
