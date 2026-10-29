@@ -10,8 +10,8 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 
 | Sprint | Fechas | Objetivo | Historias | Puntos |
 |---|---|---|---|---|
-| 0 | 28/10 – 11/11 | Infraestructura en AWS, red Besu, IPFS privado y entorno de desarrollo | Tareas DRA-42 a DRA-47 | — |
-| 1 | 11/11 – 18/11 | Usuarios, roles, áreas y billetera del director | HU01–HU06 | 24 |
+| 0 | 28/10 – 29/10 (**cerrado**) | Infraestructura en AWS, red Besu, IPFS privado y entorno de desarrollo | Tareas DRA-42, DRA-43, DRA-45, DRA-46, DRA-47 | — |
+| 1 | 11/11 – 18/11 | Usuarios, roles, áreas y billetera del director | HU01–HU06 + tarea DRA-44 (AWS, diferida) | 24 |
 | 2 | 18/11 – 25/11 | Solicitudes individuales y por lista; smart contract | HU07–HU09 | 23 |
 | 3 | 25/11 – 09/12 | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 | 47 |
 | 4 | 09/12 – 16/12 | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
@@ -20,6 +20,11 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 | | | | **Total** | **156** |
 
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
+
+### Cierre del Sprint 0 (29/10/2026)
+
+- **Finalizadas:** DRA-42 (stack técnico), DRA-43 (repositorio y CI), DRA-45 (red Besu), DRA-46 (IPFS privado) y DRA-47 (inicialización, RF09).
+- **Diferida:** DRA-44 (infraestructura en AWS). Se movió al Sprint 1 por decisión: durante la construcción todo corre en local y sin costo, y AWS se usa recién cuando se necesite. Estimación de costos en [docs/arquitectura/estimacion-costos-aws.md](../arquitectura/estimacion-costos-aws.md).
 
 ## Épicas
 
@@ -54,7 +59,7 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 |---|---|
 | DRA-42 | Definir el stack técnico |
 | DRA-43 | Configurar el repositorio, la estructura del proyecto y la integración continua |
-| DRA-44 | Provisionar la infraestructura en AWS |
+| DRA-44 | Provisionar la infraestructura en AWS (diferida: movida al Sprint 1; se crea cuando se necesite para la demo, la aceptación y la posprueba) |
 | DRA-45 | Desplegar la red Hyperledger Besu (QBFT, 4 validadores) |
 | DRA-46 | Desplegar el nodo IPFS privado |
 | DRA-47 | Procedimiento de inicialización del sistema (RF09) |
