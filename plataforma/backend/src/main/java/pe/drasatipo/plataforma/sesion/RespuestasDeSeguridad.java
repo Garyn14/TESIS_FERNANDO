@@ -23,6 +23,11 @@ final class RespuestasDeSeguridad {
   static final String CUENTA_DESACTIVADA =
       "Su cuenta fue desactivada. Comuníquese con el Administrador.";
   static final String SIN_PERMISO = "No tiene permiso para realizar esta acción.";
+  static final String CONTRASENA_RESTABLECIDA =
+      "El Administrador restableció su contraseña. Inicie sesión con la contraseña temporal.";
+  static final String CONTRASENA_CAMBIADA =
+      "Su contraseña se cambió en otra sesión. Inicie sesión con la contraseña nueva.";
+  static final String DEBE_CAMBIAR = "Debe cambiar su contraseña temporal antes de continuar.";
 
   private RespuestasDeSeguridad() {}
 
@@ -46,7 +51,7 @@ final class RespuestasDeSeguridad {
     return SIN_SESION;
   }
 
-  private static void escribir(HttpServletResponse respuesta, HttpStatus estado, String mensaje)
+  static void escribir(HttpServletResponse respuesta, HttpStatus estado, String mensaje)
       throws IOException {
     respuesta.setStatus(estado.value());
     respuesta.setContentType(MediaType.APPLICATION_JSON_VALUE);

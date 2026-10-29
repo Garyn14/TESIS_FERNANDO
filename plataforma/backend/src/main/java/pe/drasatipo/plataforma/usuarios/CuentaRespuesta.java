@@ -11,6 +11,8 @@ public record CuentaRespuesta(
     String rolNombre,
     boolean activo,
     boolean debeCambiarContrasena,
+    /** Hasta cuándo está bloqueada por intentos fallidos (HU03), o null. */
+    OffsetDateTime bloqueadaHasta,
     OffsetDateTime creadoEn) {
 
   static CuentaRespuesta de(Usuario usuario) {
@@ -22,6 +24,7 @@ public record CuentaRespuesta(
         usuario.getRol().getNombre(),
         usuario.isActivo(),
         usuario.isDebeCambiarContrasena(),
+        usuario.estaBloqueada(OffsetDateTime.now()) ? usuario.getBloqueadaHasta() : null,
         usuario.getCreadoEn());
   }
 }

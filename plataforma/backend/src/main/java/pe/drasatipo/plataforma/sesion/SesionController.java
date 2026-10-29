@@ -4,7 +4,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -17,14 +19,17 @@ import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import pe.drasatipo.plataforma.usuarios.CambioContrasenaSolicitud;
+import pe.drasatipo.plataforma.usuarios.GestionContrasenas;
 import pe.drasatipo.plataforma.usuarios.RolRepository;
 import pe.drasatipo.plataforma.usuarios.Usuario;
 import pe.drasatipo.plataforma.usuarios.UsuarioRepository;
 
-/** Inicio y cierre de sesión (HU03, RF02). */
+/** Inicio y cierre de sesión (HU03, RF02) y cambio de la contraseña propia (HU04, RF03). */
 @RestController
 @RequestMapping("/api/sesion")
 public class SesionController {
@@ -34,18 +39,21 @@ public class SesionController {
   private final RolRepository roles;
   private final SecurityContextRepository contextos;
   private final CsrfAuthenticationStrategy renovarCsrf;
+  private final GestionContrasenas contrasenas;
 
   public SesionController(
       AutenticacionUsuarios autenticacion,
       UsuarioRepository usuarios,
       RolRepository roles,
       SecurityContextRepository contextos,
-      CsrfTokenRepository tokensCsrf) {
+      CsrfTokenRepository tokensCsrf,
+      GestionContrasenas contrasenas) {
     this.autenticacion = autenticacion;
     this.usuarios = usuarios;
     this.roles = roles;
     this.contextos = contextos;
     this.renovarCsrf = new CsrfAuthenticationStrategy(tokensCsrf);
+    this.contrasenas = contrasenas;
   }
 
   @PostMapping
@@ -83,6 +91,31 @@ public class SesionController {
     UsuarioEnSesion enSesion = (UsuarioEnSesion) sesion.getPrincipal();
     Usuario cuenta = usuarios.findConRolById(enSesion.id()).orElseThrow();
     return SesionRespuesta.de(cuenta, roles.codigosDePermisos(cuenta.getRol().getId()));
+  }
+
+  /**
+   * HU04: cambia la contraseña propia. La sesión actual sigue activa con la marca nueva; las demás
+   * sesiones de la cuenta se cierran en su siguiente solicitud.
+   */
+  @PutMapping("/contrasena")
+  @PreAuthorize("hasAuthority('CUENTA_PROPIA')")
+  public SesionRespuesta cambiarContrasena(
+      @RequestBody CambioContrasenaSolicitud datos,
+      Authentication sesion,
+      HttpServletRequest solicitud,
+      HttpServletResponse respuesta) {
+    UsuarioEnSesion enSesion = (UsuarioEnSesion) sesion.getPrincipal();
+    Instant cambiadaEn = contrasenas.cambiarPropia(enSesion.id(), datos);
+
+    SecurityContext contexto = SecurityContextHolder.createEmptyContext();
+    contexto.setAuthentication(
+        UsernamePasswordAuthenticationToken.authenticated(
+            new UsuarioEnSesion(enSesion.id(), enSesion.nombreUsuario(), cambiadaEn),
+            null,
+            sesion.getAuthorities()));
+    SecurityContextHolder.setContext(contexto);
+    contextos.saveContext(contexto, solicitud, respuesta);
+    return actual(contexto.getAuthentication());
   }
 
   @DeleteMapping

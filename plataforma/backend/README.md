@@ -47,6 +47,7 @@ El esquema de PostgreSQL **solo cambia mediante migraciones de Flyway**. Hiberna
 | V4 | `V4__usuario_creado_por_y_unicidad.sql` | Columna `usuario.creado_por` e índice único de `lower(nombre_usuario)` | DRA-12 (HU01) |
 | V5 | `V5__historial_de_cuentas.sql` | Tabla `usuario_historial`, cargada con el evento de creación de las cuentas existentes | DRA-13 (HU02) |
 | V6 | `V6__bloqueo_por_intentos_fallidos.sql` | Columnas `usuario.intentos_fallidos` y `usuario.bloqueada_hasta`; evento `BLOQUEADA` en el historial | DRA-14 (HU03) |
+| V7 | `V7__cambio_y_restablecimiento_de_contrasena.sql` | Columna `usuario.contrasena_cambiada_en`; eventos `CONTRASENA_CAMBIADA` y `CONTRASENA_RESTABLECIDA`; `evento` pasa a 30 caracteres | DRA-15 (HU04) |
 
 ## API
 
@@ -62,7 +63,9 @@ Cada servicio exige un permiso con `@PreAuthorize` (RF04). Sin sesión responde 
 | Permisos | Se vuelven a leer de la base de datos **en cada solicitud**. Si la cuenta se desactiva, la sesión se cierra; si cambia de rol, rigen los permisos nuevos |
 | Intentos fallidos | Tres seguidos bloquean la cuenta una hora (evento `BLOQUEADA`). Un ingreso correcto reinicia el contador. Durante el bloqueo no se evalúa la contraseña |
 | Mensajes | Usuario inexistente y contraseña incorrecta dan el mismo mensaje (401), y en ambos casos se calcula un hash para que tarden lo mismo. Cuenta bloqueada: 423, con la hora de fin. Cuenta desactivada: 403, solo si la contraseña es correcta |
-| 401 sin sesión | "Inicie sesión para continuar.", "Su sesión expiró por inactividad..." si la cookie ya no es válida, o "Su cuenta fue desactivada..." |
+| Contraseña temporal | Con `debe_cambiar_contrasena`, el servidor responde 403 "Debe cambiar su contraseña temporal antes de continuar" a todo salvo `GET` y `DELETE /api/sesion` y `PUT /api/sesion/contrasena` (HU04) |
+| Cambio de contraseña | Cada sesión guarda el momento del último cambio que conoce. Si `contrasena_cambiada_en` es posterior (cambio desde otra sesión o restablecimiento), la sesión se cierra en su siguiente solicitud. La sesión que hizo el cambio se actualiza y sigue activa (HU04) |
+| 401 sin sesión | "Inicie sesión para continuar.", "Su sesión expiró por inactividad..." si la cookie ya no es válida, "Su cuenta fue desactivada...", "El Administrador restableció su contraseña..." o "Su contraseña se cambió en otra sesión..." |
 
 | Método y ruta | Permiso | Descripción | Historia |
 |---|---|---|---|
@@ -70,12 +73,14 @@ Cada servicio exige un permiso con `@PreAuthorize` (RF04). Sin sesión responde 
 | `POST /api/sesion` | Público | Inicia sesión con usuario y contraseña. Devuelve el rol y los permisos | HU03 |
 | `GET /api/sesion` | Con sesión | Sesión actual. Sin sesión responde 401 con el motivo | HU03 |
 | `DELETE /api/sesion` | Con sesión | Cierra la sesión en el servidor | HU03 |
+| `PUT /api/sesion/contrasena` | `CUENTA_PROPIA` | Cambia la contraseña propia; exige la actual | HU04 |
 | `GET /api/usuarios` | `USUARIOS_GESTIONAR` | Lista las cuentas, la más reciente primero. Nunca incluye la contraseña | HU01 |
 | `POST /api/usuarios` | `USUARIOS_GESTIONAR` | Crea una cuenta activa con contraseña temporal. Responde 201 | HU01 |
 | `GET /api/roles` | `USUARIOS_GESTIONAR` | Roles para el formulario de la cuenta | HU01 |
 | `PUT /api/usuarios/{id}` | `USUARIOS_GESTIONAR` | Edita el nombre completo y el rol | HU02 |
 | `POST /api/usuarios/{id}/desactivar` | `USUARIOS_GESTIONAR` | Quita el acceso sin borrar la cuenta | HU02 |
 | `POST /api/usuarios/{id}/reactivar` | `USUARIOS_GESTIONAR` | Devuelve el acceso con el mismo rol | HU02 |
+| `POST /api/usuarios/{id}/restablecer-contrasena` | `USUARIOS_GESTIONAR` | Asigna una contraseña temporal; desbloquea la cuenta y cierra sus sesiones | HU04 |
 
 No hay ninguna ruta para eliminar cuentas (RF01): `DELETE` responde 405.
 

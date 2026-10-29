@@ -21,3 +21,10 @@ export const iniciarSesion = (nombreUsuario: string, contrasena: string) =>
 
 export const cerrarSesion = () =>
   solicitar<void>('/api/sesion', { method: 'DELETE', sinAvisoDeSesion: true })
+
+/** HU04: cambia la contraseña propia. Devuelve la sesión actualizada. */
+export const cambiarContrasena = (contrasenaActual: string, contrasenaNueva: string) =>
+  solicitar<Sesion>('/api/sesion/contrasena', {
+    method: 'PUT',
+    body: JSON.stringify({ contrasenaActual, contrasenaNueva }),
+  })

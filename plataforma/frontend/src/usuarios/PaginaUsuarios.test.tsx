@@ -17,6 +17,7 @@ const lrojas: Cuenta = {
   rolNombre: 'Director',
   activo: true,
   debeCambiarContrasena: false,
+  bloqueadaHasta: null,
   creadoEn: '2026-10-29T15:00:00Z',
 }
 
@@ -127,5 +128,51 @@ describe('PaginaUsuarios (HU02)', () => {
     render(<PaginaUsuarios />)
     await screen.findByText('lrojas')
     expect(screen.queryByRole('button', { name: /eliminar|borrar/i })).not.toBeInTheDocument()
+  })
+  it('restablece la contraseña y la muestra una sola vez para entregarla', async () => {
+    const fetch = backend({
+      'POST /api/usuarios/7/restablecer-contrasena': () =>
+        respuesta(200, { ...lrojas, debeCambiarContrasena: true }),
+    })
+    render(<PaginaUsuarios />)
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Restablecer la contraseña de lrojas' }),
+    )
+    const ventana = screen.getByRole('dialog', { name: 'Restablecer contraseña' })
+    fireEvent.click(within(ventana).getByRole('button', { name: 'Generar' }))
+    const temporal = (within(ventana).getByLabelText('Contraseña temporal') as HTMLInputElement)
+      .value
+    expect(temporal).toHaveLength(12)
+
+    fireEvent.click(within(ventana).getByRole('button', { name: 'Restablecer contraseña' }))
+
+    expect(await within(ventana).findByText(temporal)).toBeInTheDocument()
+    expect(within(ventana).getByText(/no se volverá a mostrar/)).toBeInTheDocument()
+    const envio = fetch.mock.calls.find(([r]) => String(r).endsWith('/restablecer-contrasena'))
+    expect(JSON.parse(envio?.[1]?.body as string)).toEqual({ contrasenaTemporal: temporal })
+  })
+
+  it('valida la longitud de la contraseña temporal', async () => {
+    const fetch = backend({})
+    render(<PaginaUsuarios />)
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Restablecer la contraseña de lrojas' }),
+    )
+    fireEvent.change(screen.getByLabelText('Contraseña temporal'), { target: { value: 'corta' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Restablecer contraseña' }))
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'La contraseña debe tener de 8 a 20 caracteres.',
+    )
+    expect(fetch.mock.calls.some(([r]) => String(r).includes('restablecer'))).toBe(false)
+  })
+
+  it('muestra hasta qué hora está bloqueada una cuenta', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((ruta) =>
+      ruta === '/api/usuarios'
+        ? respuesta(200, [{ ...lrojas, bloqueadaHasta: '2026-10-29T17:34:00Z' }])
+        : respuesta(200, roles),
+    )
+    render(<PaginaUsuarios />)
+    expect(await screen.findByText(/Bloqueada hasta 12:34/)).toBeInTheDocument()
   })
 })

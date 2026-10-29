@@ -1,6 +1,8 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import logo from '../assets/logo-dra.png'
+import Modal from '../comun/Modal'
 import type { Sesion } from '../sesion/api'
+import FormularioCambioContrasena from '../sesion/FormularioCambioContrasena'
 import { opcionesPermitidas } from './menu'
 
 interface Props {
@@ -9,6 +11,7 @@ interface Props {
   ruta: string
   onNavegar: (ruta: string) => void
   onCerrarSesion: () => void
+  onSesionActualizada: (sesion: Sesion) => void
   children: ReactNode
 }
 
@@ -27,8 +30,11 @@ export default function Estructura({
   ruta,
   onNavegar,
   onCerrarSesion,
+  onSesionActualizada,
   children,
 }: Props) {
+  // HU04: cambio voluntario de la contraseña (null: ventana cerrada).
+  const [cambio, setCambio] = useState<null | 'formulario' | 'hecho'>(null)
   return (
     <div className="min-h-screen md:flex">
       <aside className="bg-institutional text-white md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0">
@@ -80,6 +86,13 @@ export default function Estructura({
             </div>
             <button
               type="button"
+              onClick={() => setCambio('formulario')}
+              className="ml-2 rounded-lg px-3 py-2 font-medium text-institutional-soft hover:underline"
+            >
+              Cambiar contraseña
+            </button>
+            <button
+              type="button"
               onClick={onCerrarSesion}
               className="ml-2 rounded-lg border border-line px-3 py-2 font-medium text-ink hover:bg-neutral-pale"
             >
@@ -89,6 +102,35 @@ export default function Estructura({
         </header>
         <main className="flex-1">{children}</main>
       </div>
+
+      {cambio && (
+        <Modal titulo="Cambiar contraseña" onCerrar={() => setCambio(null)}>
+          {cambio === 'formulario' ? (
+            <FormularioCambioContrasena
+              onCambiada={(s) => {
+                onSesionActualizada(s)
+                setCambio('hecho')
+              }}
+              onCancelar={() => setCambio(null)}
+            />
+          ) : (
+            <div className="space-y-4">
+              <p role="status" className="rounded-lg bg-green-pale px-4 py-3 text-institutional">
+                ✓ Su contraseña se cambió. Si tenía la sesión abierta en otro equipo, allí se cerró.
+              </p>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setCambio(null)}
+                  className="rounded-lg bg-institutional px-4 py-2 font-medium text-white"
+                >
+                  Listo
+                </button>
+              </div>
+            </div>
+          )}
+        </Modal>
+      )}
     </div>
   )
 }

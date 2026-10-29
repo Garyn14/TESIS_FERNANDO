@@ -93,7 +93,8 @@ public class AutenticacionUsuarios {
     }
     cuenta.registrarIngresoCorrecto();
     return new CuentaAutenticada(
-        new UsuarioEnSesion(cuenta.getId(), cuenta.getNombreUsuario()),
+        new UsuarioEnSesion(
+            cuenta.getId(), cuenta.getNombreUsuario(), cuenta.getContrasenaCambiadaEn()),
         SesionRespuesta.de(cuenta, roles.codigosDePermisos(cuenta.getRol().getId())));
   }
 
