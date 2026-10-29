@@ -5,5 +5,7 @@ public enum EventoCuenta {
   CREADA,
   EDITADA,
   DESACTIVADA,
-  REACTIVADA
+  REACTIVADA,
+  /** Tres intentos fallidos seguidos de inicio de sesión (HU03). */
+  BLOQUEADA
 }

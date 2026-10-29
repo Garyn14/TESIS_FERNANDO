@@ -42,6 +42,12 @@ public class Usuario {
   @Column(name = "debe_cambiar_contrasena", nullable = false)
   private boolean debeCambiarContrasena;
 
+  @Column(name = "intentos_fallidos", nullable = false)
+  private short intentosFallidos;
+
+  @Column(name = "bloqueada_hasta")
+  private OffsetDateTime bloqueadaHasta;
+
   @Column(name = "creado_en", nullable = false, updatable = false)
   private OffsetDateTime creadoEn = OffsetDateTime.now();
 
@@ -114,5 +120,36 @@ public class Usuario {
 
   void reactivar() {
     this.activo = true;
+  }
+
+  public boolean estaBloqueada(OffsetDateTime ahora) {
+    return bloqueadaHasta != null && bloqueadaHasta.isAfter(ahora);
+  }
+
+  public OffsetDateTime getBloqueadaHasta() {
+    return bloqueadaHasta;
+  }
+
+  public int getIntentosFallidos() {
+    return intentosFallidos;
+  }
+
+  /**
+   * HU03: suma un intento fallido. Al llegar al máximo bloquea la cuenta hasta {@code hasta} y
+   * vuelve el contador a cero. Devuelve true si la cuenta quedó bloqueada.
+   */
+  public boolean registrarIntentoFallido(int maximo, OffsetDateTime hasta) {
+    intentosFallidos++;
+    if (intentosFallidos < maximo) {
+      return false;
+    }
+    intentosFallidos = 0;
+    bloqueadaHasta = hasta;
+    return true;
+  }
+
+  public void registrarIngresoCorrecto() {
+    intentosFallidos = 0;
+    bloqueadaHasta = null;
   }
 }

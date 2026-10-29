@@ -120,10 +120,60 @@ Los dos primeros son los de la Tabla 17 de la tesis. Los demás detallan cómo s
 
 **Como** usuario del sistema, **quiero** iniciar sesión con mi usuario y contraseña, **para** acceder solo a las funciones de mi rol.
 
+**Contexto**
+
+Es la puerta de entrada a la plataforma. Hay un único formulario de inicio de sesión para todos los roles (RF02). El rol y los permisos salen de la cuenta autenticada, y con ellos el menú muestra solo lo que cada persona puede usar (RF04). Las reglas de seguridad de la contraseña y de la sesión vienen de RNF02.
+
+Con esta historia, HU01 y HU02 se pueden usar y probar de punta a punta desde el login, y una cuenta desactivada (HU02) deja de poder entrar.
+
+**Menú según el permiso**
+
+Cada opción exige un permiso. Los permisos de cada rol se configuran en la base de datos (DRA-47). Las opciones cuyas pantallas todavía no existen se muestran con el aviso "Se habilita en el Sprint N", para que el menú de cada rol ya quede completo y se pueda validar.
+
+| Opción | Permiso | Rol con el permiso hoy | Pantalla |
+|---|---|---|---|
+| Inicio | CUENTA_PROPIA | Todos | Bienvenida con el nombre y el rol |
+| Usuarios | USUARIOS_GESTIONAR | Administrador | HU01, HU02 |
+| Billetera del director | BILLETERA_GESTIONAR | Administrador | HU06 (Sprint 1) |
+| Mis documentos | DOCUMENTO_VER_AREA | Área encargada | Sprint 2 |
+| Nuevo documento | DOCUMENTO_REGISTRAR | Área encargada | HU07–HU09 (Sprint 2) |
+| Por revisar | DOCUMENTO_REVISAR | Director | HU10 (Sprint 3) |
+| Documentos firmados | DOCUMENTO_VER_FIRMADOS | Director | Sprint 3 |
+| Buscar documentos | DOCUMENTO_BUSCAR | Consulta interna | HU22 (Sprint 6) |
+
 **Criterios de aceptación**
+
+Los tres primeros son los de la Tabla 17 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] El menú muestra solo las vistas permitidas.
 - [ ] Tres intentos fallidos bloquean la cuenta durante una hora.
 - [ ] La sesión expira tras 30 minutos de inactividad.
+- [ ] El inicio de sesión es único para todos los roles, con usuario y contraseña. El usuario no distingue mayúsculas (JPerez entra como jperez).
+- [ ] Si el usuario no existe o la contraseña es incorrecta, se muestra el mismo mensaje, "Usuario o contraseña incorrectos", sin revelar cuál de los dos falló, y el usuario escrito se conserva.
+- [ ] Los intentos fallidos se cuentan seguidos: un ingreso correcto vuelve el contador a cero. Al tercer intento fallido, la cuenta se bloquea por una hora y se muestra hasta qué hora. Mientras está bloqueada no se acepta ni la contraseña correcta.
+- [ ] Una cuenta desactivada no puede iniciar sesión. Si la contraseña es correcta, se indica que la cuenta está desactivada y que debe comunicarse con el Administrador.
+- [ ] El servidor valida el permiso en cada solicitud con los datos actuales de la cuenta. Si el Administrador desactiva una cuenta o le cambia el rol, el cambio rige desde la siguiente solicitud, aunque la persona tenga la sesión abierta (RF04).
+- [ ] Al expirar la sesión, la siguiente acción lleva al inicio de sesión con el aviso "Su sesión expiró por inactividad".
+- [ ] El encabezado muestra el nombre y el rol de la persona, y el botón "Cerrar sesión" termina la sesión en el servidor.
+- [ ] Escribir directamente la dirección de una pantalla sin el permiso no la muestra: se indica "No tiene permiso para ver esta sección".
+- [ ] La sesión usa una cookie HttpOnly con protección CSRF, y el identificador de sesión cambia al iniciar sesión.
+- [ ] El bloqueo de una cuenta queda en su historial (evento Bloqueada).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Obligar a cambiar la contraseña temporal en el primer ingreso | HU04. Esta historia ya informa al frontend que la contraseña es temporal |
+| Desbloquear una cuenta antes de la hora: el Administrador restablece la contraseña | HU04 |
+| Reglas de control interno de RF05 (el Área encargada solo ve su área; quien registra no firma) | HU05 y HU11. Se aplican en el código de cada servicio, no en el login |
+| Auditoría de todos los inicios de sesión | Sprint 6 (E5) |
+
+**Notas técnicas**
+
+- API: POST /api/sesion (iniciar), GET /api/sesion (sesión actual) y DELETE /api/sesion (cerrar).
+- Sesión del servidor (Spring Security) con tiempo de inactividad de 30 minutos. Cookie de sesión HttpOnly y SameSite=Lax; token CSRF en la cookie XSRF-TOKEN.
+- Migración V6: intentos_fallidos y bloqueada_hasta en la tabla usuario, y el evento BLOQUEADA en el historial.
+- Para no revelar qué usuarios existen, cuando el usuario no existe igual se calcula un hash, así la respuesta tarda lo mismo.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|

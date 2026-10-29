@@ -1,0 +1,16 @@
+✓ HU03 · Muestra el inicio de sesión sin sesión
+✓ HU03 · Usuario o contraseña incorrectos, conserva el usuario
+✓ HU03 · El Administrador entra y ve solo su menú
+✓ HU01 · Crea tres cuentas reales, una por rol
+✓ HU01 · No permite repetir un usuario con otras mayúsculas
+✓ HU03 · Menú de rquispe con solo sus vistas
+✓ HU03 · Menú de cmendoza con solo sus vistas
+✓ HU03 · Menú de ltorres con solo sus vistas
+✓ HU03 · Una dirección sin permiso no muestra la pantalla ni sus datos
+✓ HU03 · Tres intentos fallidos bloquean la cuenta una hora
+✓ HU02+HU03 · Desactivar cierra la sesión abierta de la persona
+✓ HU02 · Una cuenta desactivada no puede iniciar sesión
+✓ HU02+HU03 · Cambiar el rol cambia el menú abierto en la siguiente pantalla
+✓ HU02 · El Administrador no puede desactivar su propia cuenta
+✓ HU03 · Cerrar sesión la termina en el servidor
+✓ HU03 · La sesión expira por inactividad (1 minuto en esta prueba; 30 en producción)
