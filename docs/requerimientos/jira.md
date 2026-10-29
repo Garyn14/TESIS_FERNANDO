@@ -6,18 +6,18 @@ Cargado el 28/10/2026 a partir de [historias_de_usuario.md](historias_de_usuario
 
 ## Calendario de sprints (reprogramado)
 
-Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario se reprogramó desde el Sprint 0 activo en Jira, conservando la duración relativa: semanas de 1 sprint y el Sprint 3 de dos semanas.
+Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario se reprogramó conservando la duración relativa: sprints de 1 semana y el Sprint 3 de dos semanas. El 29/10/2026, al cerrar el Sprint 0 antes de lo previsto, se **adelantó todo el calendario** y el Sprint 1 se inició ese mismo día.
 
-| Sprint | Fechas | Objetivo | Historias | Puntos |
-|---|---|---|---|---|
-| 0 | 28/10 – 29/10 (**cerrado**) | Infraestructura en AWS, red Besu, IPFS privado y entorno de desarrollo | Tareas DRA-42, DRA-43, DRA-45, DRA-46, DRA-47 | — |
-| 1 | 11/11 – 18/11 | Usuarios, roles, áreas y billetera del director | HU01–HU06 + tarea DRA-44 (AWS, diferida) | 24 |
-| 2 | 18/11 – 25/11 | Solicitudes individuales y por lista; smart contract | HU07–HU09 | 23 |
-| 3 | 25/11 – 09/12 | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 | 47 |
-| 4 | 09/12 – 16/12 | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
-| 5 | 16/12 – 23/12 | Verificación pública de autenticidad | HU19–HU21 | 16 |
-| 6 | 23/12 – 30/12 | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
-| | | | **Total** | **156** |
+| Sprint | Fechas | Estado | Objetivo | Historias | Puntos |
+|---|---|---|---|---|---|
+| 0 | 28/10 – 29/10 | Cerrado | Infraestructura: red Besu, IPFS privado y entorno de desarrollo | Tareas DRA-42, DRA-43, DRA-45, DRA-46, DRA-47 | — |
+| 1 | 29/10 – 04/11 | **Activo** | Usuarios, roles, áreas y billetera del director | HU01–HU06 + tarea DRA-44 (AWS, diferida) | 24 |
+| 2 | 05/11 – 11/11 | Futuro | Solicitudes individuales y por lista; smart contract | HU07–HU09 | 23 |
+| 3 | 12/11 – 25/11 | Futuro | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 | 47 |
+| 4 | 26/11 – 02/12 | Futuro | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
+| 5 | 03/12 – 09/12 | Futuro | Verificación pública de autenticidad | HU19–HU21 | 16 |
+| 6 | 10/12 – 16/12 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
+| | | | | **Total** | **156** |
 
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
 
