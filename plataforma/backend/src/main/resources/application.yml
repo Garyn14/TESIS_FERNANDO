@@ -22,3 +22,8 @@ plataforma:
   version: '@project.version@'
   besu:
     rpc-url: ${BESU_RPC_URL:http://localhost:8545}
+  # Primera cuenta de Administrador (RF09). Sin contraseña no se crea la cuenta.
+  inicializacion:
+    admin-usuario: ${PLATAFORMA_ADMIN_USUARIO:admin}
+    admin-nombre: ${PLATAFORMA_ADMIN_NOMBRE:Administrador de la plataforma}
+    admin-contrasena: ${PLATAFORMA_ADMIN_CONTRASENA:}

@@ -17,6 +17,10 @@ DRA-14 Bloquea la cuenta tras 3 intentos fallidos
 
 Con la app **GitHub for Jira** instalada, las ramas y commits aparecen dentro de cada historia en Jira.
 
+## Base de datos
+
+El esquema solo cambia con migraciones de Flyway. Las reglas (nombres, no modificar migraciones ya integradas, estructura y datos por separado, sin secretos) están en [plataforma/backend/README.md](plataforma/backend/README.md#base-de-datos-y-migraciones-flyway).
+
 ## Antes de subir cambios
 
 | Proyecto | Comando |
