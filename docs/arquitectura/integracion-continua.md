@@ -136,6 +136,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 29/10/2026 | [40898899824](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40898899824) | `DRA-12-crear-cuentas` | ✓ Cinco jobs en verde con la primera historia (HU01) |
 | 29/10/2026 | [40903595082](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40903595082) | `DRA-13-editar-desactivar-cuentas` | ✓ Cinco jobs en verde con HU02 |
 | 29/10/2026 | [40913715547](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40913715547) | `DRA-14-inicio-de-sesion` | ✓ Cinco jobs en verde con HU03 (53 pruebas de backend, 31 de frontend) |
+| 29/10/2026 | [40928314920](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40928314920) | `DRA-15-cambiar-restablecer-contrasena` | ✓ Cinco jobs en verde con HU04 (63 pruebas de backend, 44 de frontend) |
 
 ## 9. Pendientes
 
