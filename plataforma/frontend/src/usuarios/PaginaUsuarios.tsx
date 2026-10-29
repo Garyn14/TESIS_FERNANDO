@@ -56,10 +56,7 @@ export default function PaginaUsuarios() {
   return (
     <section className="mx-auto w-full max-w-6xl p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-institutional">Usuarios</h2>
-          <p className="text-muted">Cuentas del personal autorizado a usar la plataforma.</p>
-        </div>
+        <p className="text-muted">Cuentas del personal autorizado a usar la plataforma.</p>
         <button
           type="button"
           onClick={() => abrir({ tipo: 'nueva' })}

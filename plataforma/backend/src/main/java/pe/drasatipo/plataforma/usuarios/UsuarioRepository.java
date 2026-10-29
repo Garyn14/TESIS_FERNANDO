@@ -18,6 +18,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
   @EntityGraph(attributePaths = "rol")
   List<Usuario> findAllByOrderByCreadoEnDesc();
 
+  /** Cuenta con su rol ya cargado, para usarla fuera de una transacción (filtro de sesión). */
+  @EntityGraph(attributePaths = "rol")
+  Optional<Usuario> findConRolById(Long id);
+
   /**
    * Cuentas activas de un rol, bloqueadas hasta el fin de la transacción. Evita que dos solicitudes
    * simultáneas dejen el sistema sin Administradores activos (HU02).

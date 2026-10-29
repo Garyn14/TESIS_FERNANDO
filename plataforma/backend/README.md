@@ -13,6 +13,7 @@ API de la plataforma: Java 21 + Spring Boot 4.1, PostgreSQL con Spring Data JPA 
 | Paquete | Contenido |
 |---|---|
 | `config` | Seguridad (Spring Security, permisos por método, codificador de contraseñas) y cliente de Besu |
+| `sesion` | Inicio y cierre de sesión, bloqueo por intentos, validación de la cuenta en cada solicitud y CSRF (HU03) |
 | `comun` | Formato único de errores de la API |
 | `salud` | `/api/salud` |
 | `usuarios` | Roles y cuentas: creación y listado (HU01); edición, desactivación, reactivación e historial (HU02); se completa en HU03–HU06 |
@@ -45,14 +46,30 @@ El esquema de PostgreSQL **solo cambia mediante migraciones de Flyway**. Hiberna
 | V3 | `V3__datos_iniciales_catalogos.sql` | 4 roles, 17 permisos con su asignación inicial (22), 5 tipos de documento, 3 áreas y los tipos que emite cada una | DRA-47 (RF09) |
 | V4 | `V4__usuario_creado_por_y_unicidad.sql` | Columna `usuario.creado_por` e índice único de `lower(nombre_usuario)` | DRA-12 (HU01) |
 | V5 | `V5__historial_de_cuentas.sql` | Tabla `usuario_historial`, cargada con el evento de creación de las cuentas existentes | DRA-13 (HU02) |
+| V6 | `V6__bloqueo_por_intentos_fallidos.sql` | Columnas `usuario.intentos_fallidos` y `usuario.bloqueada_hasta`; evento `BLOQUEADA` en el historial | DRA-14 (HU03) |
 
 ## API
 
 Cada servicio exige un permiso con `@PreAuthorize` (RF04). Sin sesión responde **401**; con sesión pero sin el permiso, **403**.
 
+### Sesión (HU03)
+
+| Aspecto | Cómo funciona |
+|---|---|
+| Sesión | Del servidor (cookie `JSESSIONID`, HttpOnly, SameSite=Lax). El identificador cambia al iniciar sesión |
+| Inactividad | 30 minutos (`SESION_INACTIVIDAD`, solo se cambia para pruebas) |
+| CSRF | Cookie `XSRF-TOKEN`, que el frontend devuelve en la cabecera `X-XSRF-TOKEN` en cada POST, PUT o DELETE. Se renueva al iniciar sesión |
+| Permisos | Se vuelven a leer de la base de datos **en cada solicitud**. Si la cuenta se desactiva, la sesión se cierra; si cambia de rol, rigen los permisos nuevos |
+| Intentos fallidos | Tres seguidos bloquean la cuenta una hora (evento `BLOQUEADA`). Un ingreso correcto reinicia el contador. Durante el bloqueo no se evalúa la contraseña |
+| Mensajes | Usuario inexistente y contraseña incorrecta dan el mismo mensaje (401), y en ambos casos se calcula un hash para que tarden lo mismo. Cuenta bloqueada: 423, con la hora de fin. Cuenta desactivada: 403, solo si la contraseña es correcta |
+| 401 sin sesión | "Inicie sesión para continuar.", "Su sesión expiró por inactividad..." si la cookie ya no es válida, o "Su cuenta fue desactivada..." |
+
 | Método y ruta | Permiso | Descripción | Historia |
 |---|---|---|---|
 | `GET /api/salud` | Público | Estado del backend | DRA-43 |
+| `POST /api/sesion` | Público | Inicia sesión con usuario y contraseña. Devuelve el rol y los permisos | HU03 |
+| `GET /api/sesion` | Con sesión | Sesión actual. Sin sesión responde 401 con el motivo | HU03 |
+| `DELETE /api/sesion` | Con sesión | Cierra la sesión en el servidor | HU03 |
 | `GET /api/usuarios` | `USUARIOS_GESTIONAR` | Lista las cuentas, la más reciente primero. Nunca incluye la contraseña | HU01 |
 | `POST /api/usuarios` | `USUARIOS_GESTIONAR` | Crea una cuenta activa con contraseña temporal. Responde 201 | HU01 |
 | `GET /api/roles` | `USUARIOS_GESTIONAR` | Roles para el formulario de la cuenta | HU01 |
@@ -84,7 +101,7 @@ Reglas de edición y desactivación (HU02):
 - Siempre debe quedar al menos un Administrador activo. Las cuentas de Administrador activas se bloquean durante la verificación para que dos solicitudes simultáneas no dejen el sistema sin ninguno.
 - Cada creación, edición, desactivación y reactivación se guarda en `usuario_historial` con quién la hizo, cuándo y qué cambió.
 
-> Hasta HU03 no hay inicio de sesión: las pruebas simulan la sesión con `@WithMockUser`.
+> Las pruebas de HU01 y HU02 simulan la sesión con `@WithMockUser`. Las de HU03 (`sesion/`) usan sesiones reales, y la prueba de punta a punta (`plataforma/e2e`) recorre todo desde el navegador.
 
 ## Inicialización del sistema (RF09)
 

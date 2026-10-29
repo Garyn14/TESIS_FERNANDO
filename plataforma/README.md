@@ -7,6 +7,7 @@ Stack definido en [ADR-001](../docs/arquitectura/ADR-001-stack-tecnico.md).
 | `backend/` | API, base de datos off-chain, integración con Besu e IPFS | Java 21, Spring Boot 4.1, Spring Data JPA, Flyway, web3j |
 | `frontend/` | Plataforma interna y portal público de verificación | React 19, TypeScript, Vite 8, Tailwind CSS 4, ethers.js |
 | `contracts/` | Smart contract de registro de documentos | Solidity 0.8.30, OpenZeppelin 5, Hardhat 3 |
+| `e2e/` | Pruebas de punta a punta en navegador real ([e2e](e2e/README.md)) |
 | `infra/` | Servicios para desarrollo local | Docker Compose: PostgreSQL 17, red Besu QBFT de 4 validadores ([infra/besu](infra/besu/README.md)) y nodo IPFS privado ([infra/ipfs](infra/ipfs/README.md)) |
 
 ## Requisitos
@@ -45,4 +46,6 @@ Comprobación rápida: `curl http://localhost:8080/api/salud` responde `{"estado
 | `DB_USER` / `DB_PASSWORD` | `plataforma` / `plataforma` |
 | `BESU_RPC_URL` | `http://localhost:8545` |
 | `PLATAFORMA_ADMIN_USUARIO` / `PLATAFORMA_ADMIN_NOMBRE` / `PLATAFORMA_ADMIN_CONTRASENA` | Primera cuenta de Administrador (RF09). Ver [backend/README.md](backend/README.md#inicialización-del-sistema-rf09) |
+| `SESION_INACTIVIDAD` | `30m`. Tiempo de inactividad de la sesión (RNF02). Solo se cambia para pruebas |
+| `SESION_COOKIE_SEGURA` | `false`. Poner `true` en producción (HTTPS) |
 | API de IPFS (se configura en HU17) | `http://localhost:5001` |

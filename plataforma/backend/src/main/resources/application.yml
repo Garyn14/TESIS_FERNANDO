@@ -12,6 +12,17 @@ spring:
   flyway:
     locations: classpath:db/migration
 
+# Sesión del servidor (HU03, RNF02): expira tras 30 minutos de inactividad.
+server:
+  servlet:
+    session:
+      timeout: ${SESION_INACTIVIDAD:30m}
+      cookie:
+        http-only: true
+        same-site: lax
+        # true en producción (HTTPS); en desarrollo local se usa HTTP.
+        secure: ${SESION_COOKIE_SEGURA:false}
+
 management:
   endpoints:
     web:
