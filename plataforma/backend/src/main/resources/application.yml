@@ -33,6 +33,13 @@ plataforma:
   version: '@project.version@'
   besu:
     rpc-url: ${BESU_RPC_URL:http://localhost:8545}
+  # Red y contrato para la billetera del navegador (HU06). Sin contrato, la pantalla de billeteras
+  # avisa que la blockchain no está configurada.
+  blockchain:
+    chain-id: ${BESU_CHAIN_ID:20260}
+    nombre: ${BESU_NOMBRE_RED:Plataforma DRA Satipo}
+    rpc-publica: ${BESU_RPC_PUBLICA:http://localhost:8545}
+    contrato: ${PLATAFORMA_CONTRATO_DIRECCION:}
   # Primera cuenta de Administrador (RF09). Sin contraseña no se crea la cuenta.
   inicializacion:
     admin-usuario: ${PLATAFORMA_ADMIN_USUARIO:admin}

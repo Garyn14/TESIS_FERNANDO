@@ -11,6 +11,7 @@ public class Rol {
 
   public static final String ADMINISTRADOR = "ADMINISTRADOR";
   public static final String AREA_ENCARGADA = "AREA_ENCARGADA";
+  public static final String DIRECTOR = "DIRECTOR";
 
   @Id private Short id;
   private String codigo;

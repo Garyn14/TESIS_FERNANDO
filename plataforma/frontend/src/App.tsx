@@ -7,6 +7,7 @@ import { useRuta } from './estructura/useRuta'
 import { cerrarSesion, obtenerSesion, type Sesion } from './sesion/api'
 import PaginaCambioObligatorio from './sesion/PaginaCambioObligatorio'
 import PaginaLogin from './sesion/PaginaLogin'
+import PaginaBilletera from './billeteras/PaginaBilletera'
 import PaginaUsuarios from './usuarios/PaginaUsuarios'
 
 const SIN_SESION = 'Inicie sesión para continuar.'
@@ -97,6 +98,7 @@ export default function App() {
   if (!permitida) contenido = <PaginaSinPermiso />
   else if (opcion.pendiente) contenido = <PaginaPendiente mensaje={opcion.pendiente} />
   else if (opcion.ruta === 'usuarios') contenido = <PaginaUsuarios />
+  else if (opcion.ruta === 'billetera') contenido = <PaginaBilletera />
   // La clave recarga los tipos de documento si cambia el área de la persona.
   else contenido = <PaginaInicio key={sesion.areaNombre ?? ''} sesion={sesion} />
 

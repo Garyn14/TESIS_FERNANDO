@@ -41,6 +41,10 @@ public class Usuario {
   @JoinColumn(name = "area_id")
   private Area area;
 
+  /** Billetera del director (HU06, RF07), con suma de verificación EIP-55. Nunca una clave. */
+  @Column(length = 42)
+  private String billetera;
+
   @Column(nullable = false)
   private boolean activo = true;
 
@@ -194,5 +198,14 @@ public class Usuario {
     this.debeCambiarContrasena = true;
     this.contrasenaCambiadaEn = Instant.now().truncatedTo(ChronoUnit.MICROS);
     registrarIngresoCorrecto();
+  }
+
+  public String getBilletera() {
+    return billetera;
+  }
+
+  /** HU06: la validación (formato, unicidad, rol) la hace GestionBilleteras. */
+  public void asignarBilletera(String billetera) {
+    this.billetera = billetera;
   }
 }

@@ -292,10 +292,57 @@ Los dos primeros son los de la Tabla 17 de la tesis. Los demás detallan cómo s
 
 **Como** Administrador, **quiero** registrar la billetera del director y otorgarle el rol de firmante, **para** habilitar su firma en la plataforma.
 
+**Contexto**
+
+El director firma los documentos desde su propia billetera digital (MetaMask), sin que el servidor guarde ninguna clave privada (RNF05). Para que su firma valga, el smart contract tiene que reconocer esa billetera como **firmante**. Esta historia cubre los dos pasos previos a la primera firma:
+
+1. **RF07:** el Administrador registra en la plataforma la dirección de la billetera del director.
+2. **RF08:** el Administrador otorga (o revoca) el rol de firmante a esa billetera en el smart contract, confirmándolo con su propia billetera de administrador del contrato.
+
+Es la primera historia que usa la blockchain. Por eso incluye el primer smart contract del proyecto, **RegistroDocumentos**, con el control de acceso por roles. Las funciones para registrar y anular documentos se agregan a ese mismo contrato en las historias de firma (HU16–HU18).
+
+**Quién puede hacer qué en el contrato:**
+
+| Rol en el contrato | Billeteras | Qué puede hacer |
+|---|---|---|
+| Administrador del contrato | La del Administrador de la plataforma **y** una de respaldo guardada fuera de línea (RNF05) | Otorgar y revocar el rol de firmante |
+| Firmante | La del director | Registrar documentos firmados (desde HU17) |
+
 **Criterios de aceptación**
+
+Los tres primeros son los de la Tabla 17 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] Se valida el formato y la unicidad de la billetera.
 - [ ] El otorgamiento se confirma con la billetera de administrador del contrato.
 - [ ] La revocación no invalida los documentos firmados antes.
+- [ ] La pantalla "Billetera del director" lista las cuentas con rol Director, su billetera y si tiene el rol de firmante. Solo la ve quien tiene el permiso BILLETERA_GESTIONAR (Administrador).
+- [ ] La dirección debe tener el formato de Ethereum (0x seguido de 40 caracteres hexadecimales). Si trae mayúsculas y minúsculas, se comprueba su suma de verificación (EIP-55) para detectar errores de tipeo. No puede estar asignada a otra cuenta, sin distinguir mayúsculas.
+- [ ] Solo una cuenta con rol Director puede tener billetera registrada.
+- [ ] No se puede cambiar la billetera mientras tenga el rol de firmante: primero hay que revocarlo, para que no quede una billetera antigua con permiso de firmar.
+- [ ] Para otorgar o revocar, el Administrador conecta su billetera. La plataforma comprueba que esté en la red de la plataforma (y ofrece cambiarla) y que sea administradora del contrato; si no lo es, lo indica sin enviar nada.
+- [ ] La operación se firma en el navegador con la billetera del Administrador. El servidor nunca recibe claves privadas (RNF05).
+- [ ] Al terminar, el servidor verifica la transacción en la blockchain (que se haya confirmado, que sea del contrato y que corresponda a esa billetera) antes de registrarla en el historial de la cuenta con su identificador de transacción.
+- [ ] El estado "Firmante activo" se lee siempre de la blockchain, que es la fuente de verdad (RNF10). Si la blockchain no responde, la pantalla lo indica en lugar de mostrar un estado que podría no ser cierto.
+- [ ] Revocar pide confirmación. La revocación solo quita el permiso de firmar de ahí en adelante: el contrato no borra ni modifica nada de lo ya registrado.
+- [ ] El contrato no permite que una billetera administradora del contrato sea también firmante (control interno: quien administra los permisos no firma).
+- [ ] Al desplegar el contrato, el rol de administrador queda en la billetera del Administrador y en la de respaldo; la cuenta que despliega no queda con ningún rol (RNF05).
+- [ ] El contrato está documentado con NatSpec y usa el control de acceso de OpenZeppelin (RNF08), y se prueba en la red simulada de Hardhat y en la red Besu local.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Registrar y anular documentos en el contrato | HU16–HU18 y HU29. Ahí se prueba con documentos reales que una firma anterior sigue siendo válida después de revocar el rol |
+| Verificar antes de firmar que la billetera conectada sea la del director (RF29) | HU11 |
+| Desplegar el contrato en AWS | DRA-44, para la demo |
+| Custodia física de la billetera de respaldo | Procedimiento documentado en plataforma/contracts/README.md; la guarda la institución |
+
+**Notas técnicas**
+
+- Contrato: plataforma/contracts/contracts/RegistroDocumentos.sol (Solidity 0.8.30, OpenZeppelin AccessControl 5.6). Script de despliegue con las direcciones del Administrador y del respaldo.
+- API: GET /api/billeteras, PUT /api/billeteras/{idCuenta} (registrar la dirección) y POST /api/billeteras/{idCuenta}/firmante (verificar y registrar una transacción de otorgamiento o revocación). GET /api/blockchain/red da la red y la dirección del contrato al frontend.
+- El backend lee el contrato con web3j (eth_call) y nunca envía transacciones.
+- Migración V8: columna usuario.billetera (única sin distinguir mayúsculas) y eventos BILLETERA_REGISTRADA, FIRMANTE_OTORGADO y FIRMANTE_REVOCADO.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|

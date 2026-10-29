@@ -11,5 +11,11 @@ public enum EventoCuenta {
   /** La persona cambió su propia contraseña (HU04). */
   CONTRASENA_CAMBIADA,
   /** El Administrador asignó una contraseña temporal (HU04). */
-  CONTRASENA_RESTABLECIDA
+  CONTRASENA_RESTABLECIDA,
+  /** Billetera del director registrada o cambiada (HU06). */
+  BILLETERA_REGISTRADA,
+  /** Rol de firmante otorgado en el contrato (HU06). */
+  FIRMANTE_OTORGADO,
+  /** Rol de firmante revocado en el contrato (HU06). */
+  FIRMANTE_REVOCADO
 }
