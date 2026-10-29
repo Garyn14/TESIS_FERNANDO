@@ -82,7 +82,10 @@ export default function Estructura({
             </span>
             <div className="leading-tight">
               <p className="font-medium">{sesion.nombreCompleto}</p>
-              <p className="text-muted">{sesion.rolNombre}</p>
+              <p className="text-muted">
+                {sesion.rolNombre}
+                {sesion.areaNombre && ` – ${sesion.areaNombre}`}
+              </p>
             </div>
             <button
               type="button"

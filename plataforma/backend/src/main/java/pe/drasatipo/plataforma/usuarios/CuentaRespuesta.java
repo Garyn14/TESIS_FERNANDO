@@ -9,6 +9,9 @@ public record CuentaRespuesta(
     String nombreCompleto,
     String rol,
     String rolNombre,
+    /** Código y nombre del área (HU05), o null. */
+    String area,
+    String areaNombre,
     boolean activo,
     boolean debeCambiarContrasena,
     /** Hasta cuándo está bloqueada por intentos fallidos (HU03), o null. */
@@ -22,6 +25,8 @@ public record CuentaRespuesta(
         usuario.getNombreCompleto(),
         usuario.getRol().getCodigo(),
         usuario.getRol().getNombre(),
+        usuario.getArea() == null ? null : usuario.getArea().getCodigo(),
+        usuario.getArea() == null ? null : usuario.getArea().getNombre(),
         usuario.isActivo(),
         usuario.isDebeCambiarContrasena(),
         usuario.estaBloqueada(OffsetDateTime.now()) ? usuario.getBloqueadaHasta() : null,

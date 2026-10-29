@@ -14,7 +14,8 @@ API de la plataforma: Java 21 + Spring Boot 4.1, PostgreSQL con Spring Data JPA 
 |---|---|
 | `config` | Seguridad (Spring Security, permisos por método, codificador de contraseñas) y cliente de Besu |
 | `sesion` | Inicio y cierre de sesión, bloqueo por intentos, validación de la cuenta en cada solicitud y CSRF (HU03) |
-| `comun` | Formato único de errores de la API |
+| `areas` | Áreas y tipos de documento; regla de control interno de RF05 (`AlcanceDeArea`) (HU05) |
+| `comun` | Formato único de errores de la API y validador de solicitudes |
 | `salud` | `/api/salud` |
 | `usuarios` | Roles y cuentas: creación y listado (HU01); edición, desactivación, reactivación e historial (HU02); se completa en HU03–HU06 |
 | `inicializacion` | Procedimiento de inicialización (RF09) |
@@ -81,6 +82,8 @@ Cada servicio exige un permiso con `@PreAuthorize` (RF04). Sin sesión responde 
 | `POST /api/usuarios/{id}/desactivar` | `USUARIOS_GESTIONAR` | Quita el acceso sin borrar la cuenta | HU02 |
 | `POST /api/usuarios/{id}/reactivar` | `USUARIOS_GESTIONAR` | Devuelve el acceso con el mismo rol | HU02 |
 | `POST /api/usuarios/{id}/restablecer-contrasena` | `USUARIOS_GESTIONAR` | Asigna una contraseña temporal; desbloquea la cuenta y cierra sus sesiones | HU04 |
+| `GET /api/areas` | `USUARIOS_GESTIONAR` | Áreas activas con los tipos de documento que emite cada una | HU05 |
+| `GET /api/tipos-documento` | `DOCUMENTO_REGISTRAR` | Tipos que la sesión puede registrar: para el Área encargada, solo los de su área (RF05) | HU05 |
 
 No hay ninguna ruta para eliminar cuentas (RF01): `DELETE` responde 405.
 
@@ -155,6 +158,8 @@ Se basa en los roles del prototipo validado (`docs/diseno/prototipo_plataforma_i
 | Consulta interna | `DOCUMENTO_BUSCAR`, `AUDITORIA_VER`, `DOCUMENTO_IMPRIMIR`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
 
 Las dos reglas de control interno de RF05 (el Área encargada solo ve su área, y quien registra no firma) **no son permisos**: se aplican en el código, sin importar lo que diga la configuración (HU05, HU11).
+
+La primera está en un solo componente, `areas/AlcanceDeArea` (HU05). Hoy limita los tipos de documento; las historias de documentos del Sprint 2 deben usarlo también para filtrar los documentos. El rol Área encargada exige un área activa al crear o editar la cuenta. Para los demás roles el área queda vacía.
 
 ### Áreas iniciales (pendiente de validar)
 

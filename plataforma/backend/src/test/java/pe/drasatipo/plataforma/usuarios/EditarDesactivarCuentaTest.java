@@ -54,10 +54,15 @@ class EditarDesactivarCuentaTest {
   private long crear(String usuario, String nombre, String rol) throws Exception {
     String cuerpo =
         """
-        {"nombreUsuario": "%s", "nombreCompleto": "%s", "rol": "%s",
+        {"nombreUsuario": "%s", "nombreCompleto": "%s", "rol": "%s", "area": %s,
          "contrasenaTemporal": "Clave2026!"}
         """
-            .formatted(usuario, nombre, rol);
+            .formatted(
+                usuario,
+                nombre,
+                rol,
+                // HU05: el Área encargada exige área; aquí se usa una cualquiera.
+                "AREA_ENCARGADA".equals(rol) ? "\"CAPACITACION\"" : "null");
     String respuesta =
         mvc.perform(
                 post("/api/usuarios")

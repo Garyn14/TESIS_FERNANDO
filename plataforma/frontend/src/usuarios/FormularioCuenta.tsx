@@ -1,21 +1,31 @@
 import { useId, useState, type FormEvent } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { BOTON_PRIMARIO, BOTON_SECUNDARIO, CAMPO } from '../comun/estilos'
-import { crearCuenta, type Cuenta, type NuevaCuenta, type Rol } from './api'
+import {
+  crearCuenta,
+  AREA_ENCARGADA,
+  type Area,
+  type Cuenta,
+  type NuevaCuenta,
+  type Rol,
+} from './api'
+import CampoArea from './CampoArea'
 import { validarCuenta, type Errores } from './validacion'
 
 interface Props {
   roles: Rol[]
+  areas: Area[]
   onCreada: (cuenta: Cuenta) => void
   onCancelar: () => void
 }
 
-export default function FormularioCuenta({ roles, onCreada, onCancelar }: Props) {
+export default function FormularioCuenta({ roles, areas, onCreada, onCancelar }: Props) {
   const id = useId()
   const [datos, setDatos] = useState<NuevaCuenta>({
     nombreUsuario: '',
     nombreCompleto: '',
     rol: '',
+    area: '',
     contrasenaTemporal: '',
   })
   const [errores, setErrores] = useState<Errores>({})
@@ -125,6 +135,16 @@ export default function FormularioCuenta({ roles, onCreada, onCancelar }: Props)
             </p>
           ))}
       </div>
+
+      {datos.rol === AREA_ENCARGADA && (
+        <CampoArea
+          id={`${id}-area`}
+          valor={datos.area}
+          areas={areas}
+          error={errores.area}
+          onCambiar={(a) => cambiar('area', a)}
+        />
+      )}
 
       <div>
         <label htmlFor={`${id}-contrasenaTemporal`} className="font-medium">

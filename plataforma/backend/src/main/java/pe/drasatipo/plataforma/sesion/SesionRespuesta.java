@@ -9,6 +9,8 @@ public record SesionRespuesta(
     String nombreCompleto,
     String rol,
     String rolNombre,
+    /** Nombre del área (HU05), o null. Se muestra junto al rol en el encabezado. */
+    String areaNombre,
     List<String> permisos,
     boolean debeCambiarContrasena) {
 
@@ -18,6 +20,7 @@ public record SesionRespuesta(
         usuario.getNombreCompleto(),
         usuario.getRol().getCodigo(),
         usuario.getRol().getNombre(),
+        usuario.getArea() == null ? null : usuario.getArea().getNombre(),
         permisos,
         usuario.isDebeCambiarContrasena());
   }

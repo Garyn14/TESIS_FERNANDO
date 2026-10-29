@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pe.drasatipo.plataforma.areas.Area;
+import pe.drasatipo.plataforma.areas.AreaRepository;
 import pe.drasatipo.plataforma.comun.ReglaDeNegocioException;
 import pe.drasatipo.plataforma.comun.ValidadorDeSolicitudes;
 
@@ -21,11 +23,14 @@ public class GestionUsuarios {
   static final String ROL_PROPIO = "No puede cambiar su propio rol.";
   static final String DESACTIVACION_PROPIA = "No puede desactivar su propia cuenta.";
   static final String ULTIMO_ADMINISTRADOR = "Debe quedar al menos un Administrador activo.";
+  static final String AREA_OBLIGATORIA = "Seleccione el área de la persona.";
+  static final String AREA_INVALIDA = "Seleccione un área válida.";
 
   private static final Logger log = LoggerFactory.getLogger(GestionUsuarios.class);
 
   private final UsuarioRepository usuarios;
   private final RolRepository roles;
+  private final AreaRepository areas;
   private final HistorialRepository historial;
   private final PasswordEncoder codificador;
   private final ValidadorDeSolicitudes validador;
@@ -33,11 +38,13 @@ public class GestionUsuarios {
   public GestionUsuarios(
       UsuarioRepository usuarios,
       RolRepository roles,
+      AreaRepository areas,
       HistorialRepository historial,
       PasswordEncoder codificador,
       ValidadorDeSolicitudes validador) {
     this.usuarios = usuarios;
     this.roles = roles;
+    this.areas = areas;
     this.historial = historial;
     this.codificador = codificador;
     this.validador = validador;
@@ -63,6 +70,7 @@ public class GestionUsuarios {
     validador.validar(datos);
 
     Rol rol = rolValido(datos.rol());
+    Area area = areaPara(rol, datos.area());
     if (usuarios.existsByNombreUsuarioIgnoreCase(datos.nombreUsuario())) {
       throw duplicado();
     }
@@ -76,23 +84,32 @@ public class GestionUsuarios {
             rol,
             true,
             actor.getId());
+    cuenta.asignarArea(area);
     try {
       usuarios.saveAndFlush(cuenta);
     } catch (DataIntegrityViolationException e) {
       // Otra solicitud creó el mismo nombre de usuario entre la verificación y el guardado.
       throw duplicado();
     }
-    registrar(cuenta, EventoCuenta.CREADA, "Rol: " + rol.getNombre(), actor);
+    registrar(
+        cuenta,
+        EventoCuenta.CREADA,
+        "Rol: " + rol.getNombre() + (area == null ? "" : "; Área: " + area.getNombre()),
+        actor);
     return CuentaRespuesta.de(cuenta);
   }
 
-  /** HU02: cambia el nombre completo y el rol. Si no cambia nada, no se registra ningún evento. */
+  /**
+   * HU02 y HU05: cambia el nombre completo, el rol y el área. Si no cambia nada, no se registra
+   * ningún evento.
+   */
   @Transactional
   public CuentaRespuesta editar(
       Long id, EdicionCuentaSolicitud solicitud, String nombreUsuarioActor) {
     EdicionCuentaSolicitud datos = solicitud.normalizada();
     validador.validar(datos);
     Rol rol = rolValido(datos.rol());
+    Area area = areaPara(rol, datos.area());
     Usuario cuenta = cuenta(id);
     Usuario actor = actor(nombreUsuarioActor);
 
@@ -109,11 +126,14 @@ public class GestionUsuarios {
       exigirOtroAdministradorActivo(cuenta, "rol");
       cambios.add("Rol: %s → %s".formatted(cuenta.getRol().getNombre(), rol.getNombre()));
     }
+    if (!nombreDe(cuenta.getArea()).equals(nombreDe(area))) {
+      cambios.add("Área: %s → %s".formatted(nombreDe(cuenta.getArea()), nombreDe(area)));
+    }
     if (cambios.isEmpty()) {
       return CuentaRespuesta.de(cuenta);
     }
 
-    cuenta.actualizar(datos.nombreCompleto(), rol);
+    cuenta.actualizar(datos.nombreCompleto(), rol, area);
     registrar(cuenta, EventoCuenta.EDITADA, String.join("; ", cambios), actor);
     return CuentaRespuesta.de(cuenta);
   }
@@ -150,6 +170,27 @@ public class GestionUsuarios {
     cuenta.reactivar();
     registrar(cuenta, EventoCuenta.REACTIVADA, null, actor);
     return CuentaRespuesta.de(cuenta);
+  }
+
+  /**
+   * HU05 (RF05, RF06): el rol Área encargada exige un área activa; los demás roles no tienen área,
+   * aunque la solicitud traiga una.
+   */
+  private Area areaPara(Rol rol, String codigoArea) {
+    if (!Rol.AREA_ENCARGADA.equals(rol.getCodigo())) {
+      return null;
+    }
+    if (codigoArea == null || codigoArea.isBlank()) {
+      throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "area", AREA_OBLIGATORIA);
+    }
+    return areas
+        .findByCodigoAndActivaTrue(codigoArea)
+        .orElseThrow(
+            () -> new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "area", AREA_INVALIDA));
+  }
+
+  private static String nombreDe(Area area) {
+    return area == null ? "sin área" : area.getNombre();
   }
 
   /** Si la cuenta es un Administrador activo, debe existir otro para poder quitarle ese rol. */

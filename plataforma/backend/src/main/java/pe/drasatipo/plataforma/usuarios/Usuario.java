@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import pe.drasatipo.plataforma.areas.Area;
 
 /** Cuenta de usuario (RF01–RF03). */
 @Entity
@@ -35,8 +36,10 @@ public class Usuario {
   @JoinColumn(name = "rol_id")
   private Rol rol;
 
-  @Column(name = "area_id")
-  private Short areaId;
+  /** Obligatoria solo para el rol Área encargada (HU05); nula para los demás. */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "area_id")
+  private Area area;
 
   @Column(nullable = false)
   private boolean activo = true;
@@ -118,9 +121,18 @@ public class Usuario {
   }
 
   /** HU02: el nombre de usuario no cambia porque identifica a la persona en el historial. */
-  void actualizar(String nombreCompleto, Rol rol) {
+  void actualizar(String nombreCompleto, Rol rol, Area area) {
     this.nombreCompleto = nombreCompleto;
     this.rol = rol;
+    this.area = area;
+  }
+
+  void asignarArea(Area area) {
+    this.area = area;
+  }
+
+  public Area getArea() {
+    return area;
   }
 
   void desactivar() {

@@ -1,0 +1,25 @@
+✓ HU03 · Muestra el inicio de sesión sin sesión
+✓ HU03 · Usuario o contraseña incorrectos, conserva el usuario
+✓ HU04 · Con contraseña temporal solo puede cambiarla, también en la API
+✓ HU04 · El cambio exige la contraseña actual
+✓ HU04+HU03 · Tras cambiarla, entra con el menú del Administrador
+✓ HU01+HU05 · Crea tres cuentas reales, una por rol; el Área encargada exige área
+✓ HU01 · No permite repetir un usuario con otras mayúsculas
+✓ HU04+HU03 · rquispe: cambia la temporal y ve solo su menú
+✓ HU04+HU03 · cmendoza: cambia la temporal y ve solo su menú
+✓ HU04+HU03 · ltorres: cambia la temporal y ve solo su menú
+✓ HU05 · El Área encargada ve su área y solo los tipos de documento de su área
+✓ HU03 · Una dirección sin permiso no muestra la pantalla ni sus datos
+✓ HU03 · Tres intentos fallidos bloquean la cuenta una hora
+✓ HU04 · La lista de Usuarios muestra hasta cuándo está bloqueada y cabe a 1280 px
+✓ HU04 · El Administrador restablece: genera la temporal y la muestra
+✓ HU04 · Restablecer desbloquea y obliga a cambiar la contraseña
+✓ HU04 · Restablecer cierra la sesión abierta de la persona
+✓ HU04 · El Administrador no restablece su propia contraseña
+✓ HU04 · Cambiar la contraseña desde el encabezado cierra las otras sesiones
+✓ HU02+HU03 · Desactivar cierra la sesión abierta de la persona
+✓ HU02 · Una cuenta desactivada no puede iniciar sesión
+✓ HU02+HU03 · Cambiar el rol cambia el menú abierto en la siguiente pantalla
+✓ HU02 · El Administrador no puede desactivar su propia cuenta
+✓ HU03 · Cerrar sesión la termina en el servidor
+✓ HU03 · La sesión expira por inactividad (1 minuto en esta prueba; 30 en producción)

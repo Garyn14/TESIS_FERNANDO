@@ -1,4 +1,4 @@
-import type { EdicionCuenta, NuevaCuenta } from './api'
+import { AREA_ENCARGADA, type EdicionCuenta, type NuevaCuenta } from './api'
 
 const PATRON_USUARIO = /^[a-z][a-z0-9._]{3,29}$/
 
@@ -17,12 +17,14 @@ export function validarCuenta(datos: NuevaCuenta): Errores {
   return errores
 }
 
-/** Datos editables (HU02): nombre completo y rol. */
+/** Datos editables (HU02, HU05): nombre completo, rol y, para el Área encargada, el área. */
 export function validarEdicion(datos: EdicionCuenta): Errores {
   const errores: Errores = {}
   if (!datos.nombreCompleto) errores.nombreCompleto = 'Ingrese el nombre completo.'
   else if (datos.nombreCompleto.length < 3 || datos.nombreCompleto.length > 150)
     errores.nombreCompleto = 'El nombre completo debe tener de 3 a 150 caracteres.'
   if (!datos.rol) errores.rol = 'Seleccione un rol.'
+  else if (datos.rol === AREA_ENCARGADA && !datos.area)
+    errores.area = 'Seleccione el área de la persona.'
   return errores
 }
