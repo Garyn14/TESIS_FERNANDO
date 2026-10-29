@@ -186,4 +186,44 @@ describe('App (HU03)', () => {
     fireEvent.click(inicio)
     expect(await screen.findByRole('link', { name: 'Buscar documentos' })).toBeInTheDocument()
   })
+  it('con contraseña temporal solo muestra el cambio obligatorio', async () => {
+    const temporal = { ...ADMIN, debeCambiarContrasena: true }
+    backend(temporal, {
+      'PUT /api/sesion/contrasena': () => respuesta(200, ADMIN),
+    })
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: 'Cambie su contraseña' })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Contraseña temporal'), {
+      target: { value: 'Temporal99' },
+    })
+    fireEvent.change(screen.getByLabelText('Contraseña nueva'), {
+      target: { value: 'Propia2026' },
+    })
+    fireEvent.change(screen.getByLabelText('Repita la contraseña nueva'), {
+      target: { value: 'Propia2026' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Cambiar contraseña' }))
+
+    expect(await opcionesDelMenu()).toEqual(['Inicio', 'Usuarios', 'Billetera del director'])
+  })
+
+  it('cualquier usuario puede cambiar su contraseña desde el encabezado', async () => {
+    backend(CONSULTA, { 'PUT /api/sesion/contrasena': () => respuesta(200, CONSULTA) })
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Cambiar contraseña' }))
+    const ventana = screen.getByRole('dialog', { name: 'Cambiar contraseña' })
+    fireEvent.change(within(ventana).getByLabelText('Contraseña actual'), {
+      target: { value: 'Actual2026' },
+    })
+    fireEvent.change(within(ventana).getByLabelText('Contraseña nueva'), {
+      target: { value: 'Nueva20266' },
+    })
+    fireEvent.change(within(ventana).getByLabelText('Repita la contraseña nueva'), {
+      target: { value: 'Nueva20266' },
+    })
+    fireEvent.click(within(ventana).getByRole('button', { name: 'Cambiar contraseña' }))
+    expect(await within(ventana).findByRole('status')).toHaveTextContent('Su contraseña se cambió.')
+  })
 })

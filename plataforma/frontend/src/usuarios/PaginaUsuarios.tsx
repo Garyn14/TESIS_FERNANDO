@@ -5,6 +5,7 @@ import { listarCuentas, listarRoles, type Cuenta, type Rol } from './api'
 import ConfirmarEstado from './ConfirmarEstado'
 import FormularioCuenta from './FormularioCuenta'
 import FormularioEdicion from './FormularioEdicion'
+import RestablecerContrasena from './RestablecerContrasena'
 
 const formatoFecha = new Intl.DateTimeFormat('es-PE', {
   dateStyle: 'short',
@@ -12,10 +13,22 @@ const formatoFecha = new Intl.DateTimeFormat('es-PE', {
   timeZone: 'America/Lima',
 })
 
-type Ventana =
-  { tipo: 'nueva' } | { tipo: 'editar'; cuenta: Cuenta } | { tipo: 'estado'; cuenta: Cuenta } | null
+const formatoHora = new Intl.DateTimeFormat('es-PE', {
+  timeStyle: 'short',
+  timeZone: 'America/Lima',
+})
 
-/** Pantalla Usuarios del Administrador: crear (HU01), editar, desactivar y reactivar (HU02). */
+type Ventana =
+  | { tipo: 'nueva' }
+  | { tipo: 'editar'; cuenta: Cuenta }
+  | { tipo: 'estado'; cuenta: Cuenta }
+  | { tipo: 'contrasena'; cuenta: Cuenta }
+  | null
+
+/**
+ * Pantalla Usuarios del Administrador: crear (HU01), editar, desactivar y reactivar (HU02), y
+ * restablecer la contraseña (HU04).
+ */
 export default function PaginaUsuarios() {
   const [cuentas, setCuentas] = useState<Cuenta[]>([])
   const [roles, setRoles] = useState<Rol[]>([])
@@ -84,12 +97,12 @@ export default function PaginaUsuarios() {
           <table className="w-full text-left">
             <thead className="border-b border-line bg-cream text-muted">
               <tr>
-                <th className="px-4 py-3 font-medium">Usuario</th>
-                <th className="px-4 py-3 font-medium">Nombre completo</th>
-                <th className="px-4 py-3 font-medium">Rol</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium">Creada</th>
-                <th className="px-4 py-3 font-medium">
+                <th className="px-3 py-3 font-medium">Usuario</th>
+                <th className="px-3 py-3 font-medium">Nombre completo</th>
+                <th className="px-3 py-3 font-medium">Rol</th>
+                <th className="px-3 py-3 font-medium">Estado</th>
+                <th className="px-3 py-3 font-medium">Creada</th>
+                <th className="px-3 py-3 font-medium">
                   <span className="sr-only">Acciones</span>
                 </th>
               </tr>
@@ -100,11 +113,15 @@ export default function PaginaUsuarios() {
                   key={c.id}
                   className={`border-b border-line last:border-0 ${c.activo ? '' : 'text-muted'}`}
                 >
-                  <td className="px-4 py-3 font-medium">{c.nombreUsuario}</td>
-                  <td className="px-4 py-3">{c.nombreCompleto}</td>
-                  <td className="px-4 py-3">{c.rolNombre}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    {c.activo ? (
+                  <td className="px-3 py-3 font-medium">{c.nombreUsuario}</td>
+                  <td className="px-3 py-3">{c.nombreCompleto}</td>
+                  <td className="px-3 py-3">{c.rolNombre}</td>
+                  <td className="px-3 py-3">
+                    {c.activo && c.bloqueadaHasta ? (
+                      <span className="inline-block rounded-2xl bg-orange-pale px-3 py-1 text-orange">
+                        🔒 Bloqueada hasta {formatoHora.format(new Date(c.bloqueadaHasta))}
+                      </span>
+                    ) : c.activo ? (
                       <span className="rounded-full bg-green-pale px-3 py-1 text-institutional">
                         ✓ Activa
                       </span>
@@ -114,28 +131,37 @@ export default function PaginaUsuarios() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    {formatoFecha.format(new Date(c.creadoEn))}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <button
-                      type="button"
-                      onClick={() => abrir({ tipo: 'editar', cuenta: c })}
-                      aria-label={`Editar ${c.nombreUsuario}`}
-                      className="rounded px-2 py-1 font-medium text-institutional-soft hover:underline"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => abrir({ tipo: 'estado', cuenta: c })}
-                      aria-label={`${c.activo ? 'Desactivar' : 'Reactivar'} ${c.nombreUsuario}`}
-                      className={`ml-2 rounded px-2 py-1 font-medium hover:underline ${
-                        c.activo ? 'text-red-700' : 'text-institutional-soft'
-                      }`}
-                    >
-                      {c.activo ? 'Desactivar' : 'Reactivar'}
-                    </button>
+                  <td className="px-3 py-3">{formatoFecha.format(new Date(c.creadoEn))}</td>
+                  <td className="px-3 py-2">
+                    {/* Acciones apiladas: la tabla cabe sin desplazarse en pantallas de 1280 px. */}
+                    <div className="flex flex-col items-end">
+                      <button
+                        type="button"
+                        onClick={() => abrir({ tipo: 'editar', cuenta: c })}
+                        aria-label={`Editar ${c.nombreUsuario}`}
+                        className="rounded px-2 py-0.5 font-medium whitespace-nowrap text-institutional-soft hover:underline"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => abrir({ tipo: 'contrasena', cuenta: c })}
+                        aria-label={`Restablecer la contraseña de ${c.nombreUsuario}`}
+                        className="rounded px-2 py-0.5 font-medium whitespace-nowrap text-institutional-soft hover:underline"
+                      >
+                        Restablecer contraseña
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => abrir({ tipo: 'estado', cuenta: c })}
+                        aria-label={`${c.activo ? 'Desactivar' : 'Reactivar'} ${c.nombreUsuario}`}
+                        className={`rounded px-2 py-0.5 font-medium whitespace-nowrap hover:underline ${
+                          c.activo ? 'text-red-700' : 'text-institutional-soft'
+                        }`}
+                      >
+                        {c.activo ? 'Desactivar' : 'Reactivar'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -175,6 +201,15 @@ export default function PaginaUsuarios() {
               )
             }
             onCancelar={cerrar}
+          />
+        </Modal>
+      )}
+      {ventana?.tipo === 'contrasena' && (
+        <Modal titulo="Restablecer contraseña" onCerrar={cerrar}>
+          <RestablecerContrasena
+            cuenta={ventana.cuenta}
+            onRestablecida={(c) => setCuentas((lista) => lista.map((x) => (x.id === c.id ? c : x)))}
+            onCerrar={cerrar}
           />
         </Modal>
       )}

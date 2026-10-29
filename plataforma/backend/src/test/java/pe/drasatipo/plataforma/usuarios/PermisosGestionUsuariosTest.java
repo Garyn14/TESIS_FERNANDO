@@ -19,7 +19,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 import pe.drasatipo.plataforma.ContenedoresDePrueba;
 
-/** HU01 y HU02 (DRA-12, DRA-13), RF04: solo quien tiene USUARIOS_GESTIONAR gestiona cuentas. */
+/**
+ * HU01, HU02 y HU04 (DRA-12, DRA-13, DRA-15), RF04: solo quien tiene USUARIOS_GESTIONAR gestiona
+ * cuentas.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(ContenedoresDePrueba.class)
@@ -47,7 +50,11 @@ class PermisosGestionUsuariosTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(EDICION),
         post("/api/usuarios/1/desactivar").with(csrf()),
-        post("/api/usuarios/1/reactivar").with(csrf()));
+        post("/api/usuarios/1/reactivar").with(csrf()),
+        post("/api/usuarios/1/restablecer-contrasena")
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"contrasenaTemporal\": \"Temporal99\"}"));
   }
 
   @Test

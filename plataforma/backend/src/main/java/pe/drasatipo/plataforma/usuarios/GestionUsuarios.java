@@ -1,13 +1,7 @@
 package pe.drasatipo.plataforma.usuarios;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
-import jakarta.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,8 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pe.drasatipo.plataforma.comun.DatosInvalidosException;
 import pe.drasatipo.plataforma.comun.ReglaDeNegocioException;
+import pe.drasatipo.plataforma.comun.ValidadorDeSolicitudes;
 
 /** Gestión de cuentas por el Administrador (RF01): HU01 y HU02. */
 @Service
@@ -34,14 +28,14 @@ public class GestionUsuarios {
   private final RolRepository roles;
   private final HistorialRepository historial;
   private final PasswordEncoder codificador;
-  private final Validator validador;
+  private final ValidadorDeSolicitudes validador;
 
   public GestionUsuarios(
       UsuarioRepository usuarios,
       RolRepository roles,
       HistorialRepository historial,
       PasswordEncoder codificador,
-      Validator validador) {
+      ValidadorDeSolicitudes validador) {
     this.usuarios = usuarios;
     this.roles = roles;
     this.historial = historial;
@@ -66,7 +60,7 @@ public class GestionUsuarios {
   @Transactional
   public CuentaRespuesta crear(NuevaCuentaSolicitud solicitud, String nombreUsuarioActor) {
     NuevaCuentaSolicitud datos = solicitud.normalizada();
-    validar(datos);
+    validador.validar(datos);
 
     Rol rol = rolValido(datos.rol());
     if (usuarios.existsByNombreUsuarioIgnoreCase(datos.nombreUsuario())) {
@@ -97,7 +91,7 @@ public class GestionUsuarios {
   public CuentaRespuesta editar(
       Long id, EdicionCuentaSolicitud solicitud, String nombreUsuarioActor) {
     EdicionCuentaSolicitud datos = solicitud.normalizada();
-    validar(datos);
+    validador.validar(datos);
     Rol rol = rolValido(datos.rol());
     Usuario cuenta = cuenta(id);
     Usuario actor = actor(nombreUsuarioActor);
@@ -198,24 +192,6 @@ public class GestionUsuarios {
     return usuarios
         .findByNombreUsuarioIgnoreCase(nombreUsuario)
         .orElseThrow(() -> new IllegalStateException("La cuenta en sesión no existe."));
-  }
-
-  /** Se valida después de normalizar, por eso no se usa @Valid en el controlador. */
-  private <T> void validar(T datos) {
-    Set<ConstraintViolation<T>> errores = validador.validate(datos);
-    if (errores.isEmpty()) {
-      return;
-    }
-    // Un campo vacío incumple varias reglas a la vez: se muestra primero "Ingrese...".
-    Map<String, String> campos = new TreeMap<>();
-    for (ConstraintViolation<T> error : errores) {
-      String campo = error.getPropertyPath().toString();
-      boolean vacio = error.getConstraintDescriptor().getAnnotation() instanceof NotBlank;
-      if (vacio || !campos.containsKey(campo)) {
-        campos.put(campo, error.getMessage());
-      }
-    }
-    throw new DatosInvalidosException(campos);
   }
 
   private static ReglaDeNegocioException conflicto(String campo, String mensaje) {

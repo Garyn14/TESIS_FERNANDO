@@ -23,9 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class UsuariosController {
 
   private final GestionUsuarios gestion;
+  private final GestionContrasenas contrasenas;
 
-  public UsuariosController(GestionUsuarios gestion) {
+  public UsuariosController(GestionUsuarios gestion, GestionContrasenas contrasenas) {
     this.gestion = gestion;
+    this.contrasenas = contrasenas;
   }
 
   @GetMapping("/usuarios")
@@ -56,6 +58,15 @@ public class UsuariosController {
   @PostMapping("/usuarios/{id}/reactivar")
   public CuentaRespuesta reactivar(@PathVariable Long id, Authentication autenticacion) {
     return gestion.reactivar(id, autenticacion.getName());
+  }
+
+  /** HU04: asigna una contraseña temporal. La respuesta nunca la incluye. */
+  @PostMapping("/usuarios/{id}/restablecer-contrasena")
+  public CuentaRespuesta restablecerContrasena(
+      @PathVariable Long id,
+      @RequestBody RestablecimientoSolicitud solicitud,
+      Authentication autenticacion) {
+    return contrasenas.restablecer(id, solicitud, autenticacion.getName());
   }
 
   /** Roles que se pueden asignar en el formulario de la cuenta. */

@@ -5,6 +5,7 @@ import { MENU } from './estructura/menu'
 import { PaginaInicio, PaginaPendiente, PaginaSinPermiso } from './estructura/Paginas'
 import { useRuta } from './estructura/useRuta'
 import { cerrarSesion, obtenerSesion, type Sesion } from './sesion/api'
+import PaginaCambioObligatorio from './sesion/PaginaCambioObligatorio'
 import PaginaLogin from './sesion/PaginaLogin'
 import PaginaUsuarios from './usuarios/PaginaUsuarios'
 
@@ -76,6 +77,19 @@ export default function App() {
     setSesion(null)
   }
 
+  // HU04 (RF03): con contraseña temporal, solo se puede cambiarla.
+  if (sesion.debeCambiarContrasena)
+    return (
+      <PaginaCambioObligatorio
+        sesion={sesion}
+        onCambiada={(s) => {
+          setSesion(s)
+          navegar('inicio')
+        }}
+        onCerrarSesion={salir}
+      />
+    )
+
   const opcion = MENU.find((o) => o.ruta === ruta) ?? MENU[0]
   const permitida = sesion.permisos.includes(opcion.permiso)
 
@@ -92,6 +106,7 @@ export default function App() {
       ruta={opcion.ruta}
       onNavegar={navegar}
       onCerrarSesion={salir}
+      onSesionActualizada={setSesion}
     >
       {contenido}
     </Estructura>

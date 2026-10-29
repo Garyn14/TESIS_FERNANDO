@@ -9,7 +9,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 
 /** Cuenta de usuario (RF01–RF03). */
 @Entity
@@ -50,6 +52,13 @@ public class Usuario {
 
   @Column(name = "creado_en", nullable = false, updatable = false)
   private OffsetDateTime creadoEn = OffsetDateTime.now();
+
+  /**
+   * Último cambio o restablecimiento de la contraseña (HU04). En microsegundos, la precisión de
+   * PostgreSQL, para que el valor en memoria sea igual al guardado.
+   */
+  @Column(name = "contrasena_cambiada_en", nullable = false)
+  private Instant contrasenaCambiadaEn = Instant.now().truncatedTo(ChronoUnit.MICROS);
 
   /** Cuenta que creó esta cuenta. Nulo solo para la primera cuenta de Administrador (RF09). */
   @Column(name = "creado_por", updatable = false)
@@ -151,5 +160,27 @@ public class Usuario {
   public void registrarIngresoCorrecto() {
     intentosFallidos = 0;
     bloqueadaHasta = null;
+  }
+
+  public Instant getContrasenaCambiadaEn() {
+    return contrasenaCambiadaEn;
+  }
+
+  /** HU04: la persona cambia su propia contraseña; deja de ser temporal. */
+  public void cambiarContrasena(String hash) {
+    this.contrasenaHash = hash;
+    this.debeCambiarContrasena = false;
+    this.contrasenaCambiadaEn = Instant.now().truncatedTo(ChronoUnit.MICROS);
+  }
+
+  /**
+   * HU04: el Administrador asigna una contraseña temporal. Desbloquea la cuenta y obliga a
+   * cambiarla en el siguiente ingreso.
+   */
+  void restablecerContrasena(String hashTemporal) {
+    this.contrasenaHash = hashTemporal;
+    this.debeCambiarContrasena = true;
+    this.contrasenaCambiadaEn = Instant.now().truncatedTo(ChronoUnit.MICROS);
+    registrarIngresoCorrecto();
   }
 }

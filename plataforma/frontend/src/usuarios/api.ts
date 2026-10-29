@@ -8,6 +8,8 @@ export interface Cuenta {
   rolNombre: string
   activo: boolean
   debeCambiarContrasena: boolean
+  /** Hasta cuándo está bloqueada por intentos fallidos (HU03), o null. */
+  bloqueadaHasta: string | null
   creadoEn: string
 }
 
@@ -41,3 +43,9 @@ export const desactivarCuenta = (id: number) =>
 
 export const reactivarCuenta = (id: number) =>
   solicitar<Cuenta>(`/api/usuarios/${id}/reactivar`, { method: 'POST' })
+
+export const restablecerContrasena = (id: number, contrasenaTemporal: string) =>
+  solicitar<Cuenta>(`/api/usuarios/${id}/restablecer-contrasena`, {
+    method: 'POST',
+    body: JSON.stringify({ contrasenaTemporal }),
+  })
