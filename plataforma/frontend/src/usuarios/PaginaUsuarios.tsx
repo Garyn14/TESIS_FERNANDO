@@ -1,6 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { BOTON_PRIMARIO } from '../comun/estilos'
+import Modal from '../comun/Modal'
 import { listarCuentas, listarRoles, type Cuenta, type Rol } from './api'
+import ConfirmarEstado from './ConfirmarEstado'
 import FormularioCuenta from './FormularioCuenta'
+import FormularioEdicion from './FormularioEdicion'
 
 const formatoFecha = new Intl.DateTimeFormat('es-PE', {
   dateStyle: 'short',
@@ -8,15 +12,17 @@ const formatoFecha = new Intl.DateTimeFormat('es-PE', {
   timeZone: 'America/Lima',
 })
 
-/** Pantalla Usuarios del Administrador (HU01). Editar y desactivar se agregan en HU02. */
+type Ventana =
+  { tipo: 'nueva' } | { tipo: 'editar'; cuenta: Cuenta } | { tipo: 'estado'; cuenta: Cuenta } | null
+
+/** Pantalla Usuarios del Administrador: crear (HU01), editar, desactivar y reactivar (HU02). */
 export default function PaginaUsuarios() {
   const [cuentas, setCuentas] = useState<Cuenta[]>([])
   const [roles, setRoles] = useState<Rol[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
-  const dialogo = useRef<HTMLDialogElement>(null)
-  const [formularioAbierto, setFormularioAbierto] = useState(false)
+  const [ventana, setVentana] = useState<Ventana>(null)
 
   useEffect(() => {
     Promise.all([listarCuentas(), listarRoles()])
@@ -28,15 +34,17 @@ export default function PaginaUsuarios() {
       .finally(() => setCargando(false))
   }, [])
 
-  const abrir = () => {
+  const abrir = (v: Ventana) => {
     setAviso('')
-    setFormularioAbierto(true)
-    dialogo.current?.showModal?.()
+    setVentana(v)
   }
 
-  const cerrar = () => {
-    dialogo.current?.close?.()
-    setFormularioAbierto(false)
+  const cerrar = () => setVentana(null)
+
+  const reemplazar = (cuenta: Cuenta, mensaje: string) => {
+    setCuentas((lista) => lista.map((c) => (c.id === cuenta.id ? cuenta : c)))
+    setAviso(mensaje)
+    cerrar()
   }
 
   const alCrear = (cuenta: Cuenta) => {
@@ -54,9 +62,9 @@ export default function PaginaUsuarios() {
         </div>
         <button
           type="button"
-          onClick={abrir}
+          onClick={() => abrir({ tipo: 'nueva' })}
           disabled={cargando || !!error}
-          className="rounded-lg bg-institutional px-4 py-2 font-medium text-white hover:bg-institutional-soft disabled:opacity-60"
+          className={BOTON_PRIMARIO}
         >
           Nueva cuenta
         </button>
@@ -84,27 +92,53 @@ export default function PaginaUsuarios() {
                 <th className="px-4 py-3 font-medium">Rol</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
                 <th className="px-4 py-3 font-medium">Creada</th>
+                <th className="px-4 py-3 font-medium">
+                  <span className="sr-only">Acciones</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {cuentas.map((c) => (
-                <tr key={c.id} className="border-b border-line last:border-0">
+                <tr
+                  key={c.id}
+                  className={`border-b border-line last:border-0 ${c.activo ? '' : 'text-muted'}`}
+                >
                   <td className="px-4 py-3 font-medium">{c.nombreUsuario}</td>
                   <td className="px-4 py-3">{c.nombreCompleto}</td>
                   <td className="px-4 py-3">{c.rolNombre}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     {c.activo ? (
                       <span className="rounded-full bg-green-pale px-3 py-1 text-institutional">
                         ✓ Activa
                       </span>
                     ) : (
                       <span className="rounded-full bg-neutral-pale px-3 py-1 text-muted">
-                        Inactiva
+                        ⊘ Inactiva
                       </span>
                     )}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     {formatoFecha.format(new Date(c.creadoEn))}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-right">
+                    <button
+                      type="button"
+                      onClick={() => abrir({ tipo: 'editar', cuenta: c })}
+                      aria-label={`Editar ${c.nombreUsuario}`}
+                      className="rounded px-2 py-1 font-medium text-institutional-soft hover:underline"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => abrir({ tipo: 'estado', cuenta: c })}
+                      aria-label={`${c.activo ? 'Desactivar' : 'Reactivar'} ${c.nombreUsuario}`}
+                      className={`ml-2 rounded px-2 py-1 font-medium hover:underline ${
+                        c.activo ? 'text-red-700' : 'text-institutional-soft'
+                      }`}
+                    >
+                      {c.activo ? 'Desactivar' : 'Reactivar'}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -113,19 +147,40 @@ export default function PaginaUsuarios() {
         )}
       </div>
 
-      <dialog
-        ref={dialogo}
-        aria-labelledby="titulo-nueva-cuenta"
-        onClose={() => setFormularioAbierto(false)}
-        className="m-auto w-full max-w-lg rounded-xl border border-line bg-card p-6 text-ink shadow-lg backdrop:bg-black/40"
-      >
-        <h3 id="titulo-nueva-cuenta" className="mb-4 text-xl font-semibold text-institutional">
-          Nueva cuenta
-        </h3>
-        {formularioAbierto && (
+      {ventana?.tipo === 'nueva' && (
+        <Modal titulo="Nueva cuenta" onCerrar={cerrar}>
           <FormularioCuenta roles={roles} onCreada={alCrear} onCancelar={cerrar} />
-        )}
-      </dialog>
+        </Modal>
+      )}
+      {ventana?.tipo === 'editar' && (
+        <Modal titulo="Editar cuenta" onCerrar={cerrar}>
+          <FormularioEdicion
+            cuenta={ventana.cuenta}
+            roles={roles}
+            onGuardada={(c) => reemplazar(c, `Se guardaron los cambios de "${c.nombreUsuario}".`)}
+            onCancelar={cerrar}
+          />
+        </Modal>
+      )}
+      {ventana?.tipo === 'estado' && (
+        <Modal
+          titulo={ventana.cuenta.activo ? '¿Desactivar la cuenta?' : '¿Reactivar la cuenta?'}
+          onCerrar={cerrar}
+        >
+          <ConfirmarEstado
+            cuenta={ventana.cuenta}
+            onConfirmada={(c) =>
+              reemplazar(
+                c,
+                c.activo
+                  ? `Se reactivó la cuenta "${c.nombreUsuario}".`
+                  : `Se desactivó la cuenta "${c.nombreUsuario}". Sus datos e historial se conservan.`,
+              )
+            }
+            onCancelar={cerrar}
+          />
+        </Modal>
+      )}
     </section>
   )
 }

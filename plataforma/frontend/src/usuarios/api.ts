@@ -24,9 +24,20 @@ export interface NuevaCuenta {
   contrasenaTemporal: string
 }
 
+export type EdicionCuenta = Pick<NuevaCuenta, 'nombreCompleto' | 'rol'>
+
 export const listarCuentas = () => solicitar<Cuenta[]>('/api/usuarios')
 
 export const listarRoles = () => solicitar<Rol[]>('/api/roles')
 
 export const crearCuenta = (datos: NuevaCuenta) =>
   solicitar<Cuenta>('/api/usuarios', { method: 'POST', body: JSON.stringify(datos) })
+
+export const editarCuenta = (id: number, datos: EdicionCuenta) =>
+  solicitar<Cuenta>(`/api/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(datos) })
+
+export const desactivarCuenta = (id: number) =>
+  solicitar<Cuenta>(`/api/usuarios/${id}/desactivar`, { method: 'POST' })
+
+export const reactivarCuenta = (id: number) =>
+  solicitar<Cuenta>(`/api/usuarios/${id}/reactivar`, { method: 'POST' })

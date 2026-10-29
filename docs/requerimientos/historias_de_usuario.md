@@ -83,9 +83,51 @@ Los tres primeros son los de la Tabla 17 de la tesis. Los demás detallan cómo 
 
 **Como** Administrador, **quiero** editar o desactivar cuentas, **para** mantener actualizado el personal autorizado.
 
+**Contexto**
+
+El personal de la agencia cambia: hay traslados, cambios de función, fin de contrato o vacaciones largas. El Administrador tiene que poder corregir los datos de una cuenta, cambiarle el rol y quitarle el acceso sin borrarla. RF01 exige que la desactivación no elimine la cuenta ni sus acciones del historial de auditoría, porque los documentos que esa persona registró o firmó tienen que seguir mostrando quién lo hizo.
+
+Esta historia continúa HU01 (DRA-12) y usa la misma pantalla Usuarios.
+
+**Qué se puede cambiar**
+
+| Dato | ¿Se edita? | Motivo |
+|---|---|---|
+| Nombre completo | Sí, de 3 a 150 caracteres | Corrección de datos |
+| Rol | Sí, uno solo de los cuatro | Cambio de función |
+| Nombre de usuario | No | Identifica a la persona en el historial (regla de HU01) |
+| Contraseña | No, aquí no | El restablecimiento es de HU04 |
+
 **Criterios de aceptación**
+
+Los dos primeros son los de la Tabla 17 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] La desactivación no elimina la cuenta ni su historial.
 - [ ] Un usuario desactivado no puede iniciar sesión.
+- [ ] El Administrador puede editar el nombre completo y el rol de una cuenta. El nombre de usuario se muestra pero no se puede cambiar.
+- [ ] Desactivar pide confirmación. La cuenta queda como Inactiva en la lista y conserva todos sus datos.
+- [ ] Una cuenta inactiva se puede reactivar, también con confirmación, y vuelve a tener acceso con su mismo rol.
+- [ ] No existe ninguna opción para eliminar cuentas, ni en la pantalla ni en la API.
+- [ ] El Administrador no puede desactivar su propia cuenta ni cambiarse el rol, para no quedarse sin acceso.
+- [ ] Siempre debe quedar al menos un Administrador activo: no se puede desactivar ni cambiar de rol al último.
+- [ ] Cada creación, edición, desactivación y reactivación queda registrada en el historial de la cuenta, con quién la hizo, cuándo y qué cambió (por ejemplo, "Rol: Director → Consulta interna").
+- [ ] Solo un usuario con el permiso USUARIOS_GESTIONAR puede editar, desactivar o reactivar. Sin sesión se responde 401 y con otro rol, 403 (RF04).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Rechazar el inicio de sesión de una cuenta inactiva y cerrar su sesión abierta | HU03. Esta historia deja la cuenta marcada como inactiva; HU03 aplica la regla en el login y la prueba de punta a punta del segundo criterio se hace allí |
+| Restablecer la contraseña | HU04 |
+| Cambiar el área de un usuario del Área encargada | HU05 |
+| Revocar el rol de firmante si se desactiva al Director | HU06 |
+| Pantalla para consultar el historial de una cuenta | Sprint 6, junto con la auditoría interna (E5) |
+
+**Notas técnicas**
+
+- API: PUT /api/usuarios/{id} (editar), POST /api/usuarios/{id}/desactivar y POST /api/usuarios/{id}/reactivar.
+- Migración V5: tabla usuario_historial, cargada con el evento de creación de las cuentas que ya existen.
+- Los dos bloqueos de seguridad (la propia cuenta y el último Administrador) se validan en el servidor, no solo en la pantalla.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|

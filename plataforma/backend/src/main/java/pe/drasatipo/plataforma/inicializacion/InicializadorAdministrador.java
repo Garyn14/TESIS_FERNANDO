@@ -9,6 +9,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import pe.drasatipo.plataforma.usuarios.Contrasenas;
+import pe.drasatipo.plataforma.usuarios.EventoCuenta;
+import pe.drasatipo.plataforma.usuarios.HistorialRepository;
+import pe.drasatipo.plataforma.usuarios.RegistroHistorial;
 import pe.drasatipo.plataforma.usuarios.Rol;
 import pe.drasatipo.plataforma.usuarios.RolRepository;
 import pe.drasatipo.plataforma.usuarios.Usuario;
@@ -31,16 +34,19 @@ public class InicializadorAdministrador implements ApplicationRunner {
   private final RolRepository roles;
   private final UsuarioRepository usuarios;
   private final PasswordEncoder codificador;
+  private final HistorialRepository historial;
 
   public InicializadorAdministrador(
       InicializacionProperties propiedades,
       RolRepository roles,
       UsuarioRepository usuarios,
-      PasswordEncoder codificador) {
+      PasswordEncoder codificador,
+      HistorialRepository historial) {
     this.propiedades = propiedades;
     this.roles = roles;
     this.usuarios = usuarios;
     this.codificador = codificador;
+    this.historial = historial;
   }
 
   @Override
@@ -77,6 +83,9 @@ public class InicializadorAdministrador implements ApplicationRunner {
             true,
             null);
     usuarios.save(cuenta);
+    historial.save(
+        new RegistroHistorial(
+            cuenta.getId(), EventoCuenta.CREADA, "Rol: " + administrador.getNombre(), null));
     log.info(
         "Inicialización: se creó la cuenta de Administrador '{}'. Debe cambiar la contraseña en"
             + " su primer inicio de sesión.",

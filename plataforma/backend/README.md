@@ -15,7 +15,7 @@ API de la plataforma: Java 21 + Spring Boot 4.1, PostgreSQL con Spring Data JPA 
 | `config` | Seguridad (Spring Security, permisos por método, codificador de contraseñas) y cliente de Besu |
 | `comun` | Formato único de errores de la API |
 | `salud` | `/api/salud` |
-| `usuarios` | Roles y cuentas: creación y listado (HU01); se completa en HU02–HU06 |
+| `usuarios` | Roles y cuentas: creación y listado (HU01); edición, desactivación, reactivación e historial (HU02); se completa en HU03–HU06 |
 | `inicializacion` | Procedimiento de inicialización (RF09) |
 
 ## Base de datos y migraciones (Flyway)
@@ -44,6 +44,7 @@ El esquema de PostgreSQL **solo cambia mediante migraciones de Flyway**. Hiberna
 | V2 | `V2__esquema_roles_permisos_catalogos.sql` | Tablas `rol`, `permiso`, `rol_permiso`, `area`, `tipo_documento`, `area_tipo_documento`, `usuario` | DRA-47 (RF09) |
 | V3 | `V3__datos_iniciales_catalogos.sql` | 4 roles, 17 permisos con su asignación inicial (22), 5 tipos de documento, 3 áreas y los tipos que emite cada una | DRA-47 (RF09) |
 | V4 | `V4__usuario_creado_por_y_unicidad.sql` | Columna `usuario.creado_por` e índice único de `lower(nombre_usuario)` | DRA-12 (HU01) |
+| V5 | `V5__historial_de_cuentas.sql` | Tabla `usuario_historial`, cargada con el evento de creación de las cuentas existentes | DRA-13 (HU02) |
 
 ## API
 
@@ -55,6 +56,11 @@ Cada servicio exige un permiso con `@PreAuthorize` (RF04). Sin sesión responde 
 | `GET /api/usuarios` | `USUARIOS_GESTIONAR` | Lista las cuentas, la más reciente primero. Nunca incluye la contraseña | HU01 |
 | `POST /api/usuarios` | `USUARIOS_GESTIONAR` | Crea una cuenta activa con contraseña temporal. Responde 201 | HU01 |
 | `GET /api/roles` | `USUARIOS_GESTIONAR` | Roles para el formulario de la cuenta | HU01 |
+| `PUT /api/usuarios/{id}` | `USUARIOS_GESTIONAR` | Edita el nombre completo y el rol | HU02 |
+| `POST /api/usuarios/{id}/desactivar` | `USUARIOS_GESTIONAR` | Quita el acceso sin borrar la cuenta | HU02 |
+| `POST /api/usuarios/{id}/reactivar` | `USUARIOS_GESTIONAR` | Devuelve el acceso con el mismo rol | HU02 |
+
+No hay ninguna ruta para eliminar cuentas (RF01): `DELETE` responde 405.
 
 Los errores siempre tienen la misma forma:
 
@@ -66,9 +72,17 @@ Los errores siempre tienen la misma forma:
 | Código | Cuándo |
 |---|---|
 | 400 | Algún campo no cumple sus reglas o el rol no existe |
-| 409 | El nombre de usuario ya existe (sin distinguir mayúsculas) |
+| 404 | La cuenta no existe |
+| 409 | El nombre de usuario ya existe (sin distinguir mayúsculas), el Administrador intenta desactivarse o cambiarse el rol, o se dejaría el sistema sin Administradores activos |
 
 Reglas de la cuenta (HU01): el nombre de usuario se pasa a minúsculas y debe tener de 4 a 30 caracteres (letras sin tildes, números, punto o guion bajo, empezando con una letra). El nombre completo debe tener de 3 a 150 caracteres. La contraseña temporal, de 8 a 20 (RNF02); se guarda con BCrypt y la cuenta queda marcada para cambiarla en el primer inicio de sesión (RF03). Se guarda quién creó la cuenta (`creado_por`).
+
+Reglas de edición y desactivación (HU02):
+- El nombre de usuario no se edita.
+- Desactivar o reactivar una cuenta que ya está en ese estado no hace nada, y editar sin cambios tampoco registra eventos.
+- Quien gestiona no puede desactivar su propia cuenta ni cambiarse el rol.
+- Siempre debe quedar al menos un Administrador activo. Las cuentas de Administrador activas se bloquean durante la verificación para que dos solicitudes simultáneas no dejen el sistema sin ninguno.
+- Cada creación, edición, desactivación y reactivación se guarda en `usuario_historial` con quién la hizo, cuándo y qué cambió.
 
 > Hasta HU03 no hay inicio de sesión: las pruebas simulan la sesión con `@WithMockUser`.
 
