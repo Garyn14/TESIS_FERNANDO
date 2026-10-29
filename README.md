@@ -1,5 +1,7 @@
 # Tesis: Plataforma con Blockchain para la emisión y verificación de certificados y constancias
 
+[![CI](https://github.com/Garyn14/TESIS_FERNANDO/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Garyn14/TESIS_FERNANDO/actions/workflows/ci.yml)
+
 **Título:** Plataforma con Blockchain usando la metodología Scrum para la emisión y verificación de certificados y constancias en la Dirección Regional de Agricultura Satipo, Junín.
 
 **Institución:** Universidad Nacional Mayor de San Marcos, FISI, Escuela Profesional de Ingeniería de Software.
@@ -30,7 +32,7 @@ tesis/                 Componente teórico (documento de tesis)
 docs/                  Puente entre la tesis y el desarrollo
   PLAN_TESIS.md        Plan de desarrollo: capítulos, sprints y pendientes
   requerimientos/      Épicas, historias de usuario, backlog
-  arquitectura/        Diagramas y decisiones técnicas
+  arquitectura/        Decisiones técnicas (ADR) e integración continua
   diseno/              Documentación, análisis y capturas del prototipo
 prototipo/             Prototipo navegable (Figma Make, React), solo referencia
 plataforma/            Componente técnico (código)
