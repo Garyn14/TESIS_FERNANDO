@@ -51,8 +51,8 @@ La tesis fija parte de la tecnología en los requerimientos no funcionales: Besu
 
 - La estructura del repositorio queda así: `plataforma/contracts` (Hardhat, TypeScript), `plataforma/backend` (Spring Boot, Maven), `plataforma/frontend` (React + Vite) y `plataforma/infra` (Docker Compose, configuración de Besu e IPFS).
 - La integración continua (DRA-43) tiene que compilar y probar tanto Java como TypeScript.
-- Versiones fijadas en DRA-43 (última estable al 29/10/2026): Spring Boot 4.1.2, Maven 3.9.16 (wrapper), web3j 6.1.0, Flyway (gestionado por Spring Boot), PostgreSQL 17, Testcontainers 2; React 19.3, Vite 8.3, TypeScript 7.0 (frontend) y 6.0 (contratos), Tailwind CSS 4.3, ethers 6.17; Hardhat 3.21, Solidity 0.8.30, OpenZeppelin Contracts 5.6. Las versiones de Besu y Kubo se fijan en DRA-45 y DRA-46.
-- Al compilar el contrato hay que usar una versión de la EVM compatible con el *milestone* configurado en el génesis de Besu. Se define en DRA-45.
+- Versiones fijadas en DRA-43 (última estable al 29/10/2026): Spring Boot 4.1.2, Maven 3.9.16 (wrapper), web3j 6.1.0, Flyway (gestionado por Spring Boot), PostgreSQL 17, Testcontainers 2; React 19.3, Vite 8.3, TypeScript 7.0 (frontend) y 6.0 (contratos), Tailwind CSS 4.3, ethers 6.17; Hardhat 3.21, Solidity 0.8.30, OpenZeppelin Contracts 5.6. Besu 26.10.2 (DRA-45); la versión de Kubo se fija en DRA-46.
+- Al compilar el contrato hay que usar una versión de la EVM compatible con el hito configurado en el génesis de Besu. En DRA-45 se fijó Cancun (`cancunTime: 0` en el génesis y `evmVersion: cancun` en Hardhat), con `chainId` 20260. Detalle en `plataforma/infra/besu/README.md`.
 
 ## Alternativas descartadas
 
