@@ -7,6 +7,23 @@ const roles = [
   { codigo: 'ADMINISTRADOR', nombre: 'Administrador', descripcion: 'Gestiona cuentas' },
   { codigo: 'DIRECTOR', nombre: 'Director', descripcion: 'Firma documentos' },
   { codigo: 'CONSULTA_INTERNA', nombre: 'Consulta interna', descripcion: 'Mesa de Partes' },
+  { codigo: 'AREA_ENCARGADA', nombre: 'Área encargada', descripcion: 'Registra documentos' },
+]
+
+const areas = [
+  {
+    codigo: 'CAPACITACION',
+    nombre: 'Área de Capacitación',
+    tipos: [
+      { codigo: 'CERTIFICADO_CAPACITACION', nombre: 'Certificado de Capacitación' },
+      { codigo: 'CERTIFICADO_RECONOCIMIENTO', nombre: 'Certificado de Reconocimiento' },
+    ],
+  },
+  {
+    codigo: 'ADMINISTRACION',
+    nombre: 'Área de Administración',
+    tipos: [{ codigo: 'CERTIFICADO_TRABAJO', nombre: 'Certificado de Trabajo' }],
+  },
 ]
 
 const lrojas: Cuenta = {
@@ -15,6 +32,8 @@ const lrojas: Cuenta = {
   nombreCompleto: 'Luis Rojas',
   rol: 'DIRECTOR',
   rolNombre: 'Director',
+  area: null,
+  areaNombre: null,
   activo: true,
   debeCambiarContrasena: false,
   bloqueadaHasta: null,
@@ -31,6 +50,7 @@ function backend(acciones: Record<string, () => Promise<Response>>) {
     const clave = `${opciones?.method ?? 'GET'} ${ruta}`
     if (clave === 'GET /api/usuarios') return respuesta(200, [lrojas])
     if (clave === 'GET /api/roles') return respuesta(200, roles)
+    if (clave === 'GET /api/areas') return respuesta(200, areas)
     return acciones[clave]?.() ?? respuesta(500, null)
   })
 }
@@ -74,6 +94,7 @@ describe('PaginaUsuarios (HU02)', () => {
     expect(JSON.parse(put?.[1]?.body as string)).toEqual({
       nombreCompleto: 'Luis Rojas Paredes',
       rol: 'CONSULTA_INTERNA',
+      area: null,
     })
   })
 
@@ -102,7 +123,8 @@ describe('PaginaUsuarios (HU02)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(fetch).toHaveBeenCalledTimes(2)
+    // Solo las tres consultas iniciales: cuentas, roles y áreas.
+    expect(fetch).toHaveBeenCalledTimes(3)
   })
 
   it('muestra el motivo cuando el servidor no permite desactivar', async () => {
@@ -170,9 +192,63 @@ describe('PaginaUsuarios (HU02)', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation((ruta) =>
       ruta === '/api/usuarios'
         ? respuesta(200, [{ ...lrojas, bloqueadaHasta: '2026-10-29T17:34:00Z' }])
-        : respuesta(200, roles),
+        : respuesta(200, ruta === '/api/areas' ? areas : roles),
     )
     render(<PaginaUsuarios />)
     expect(await screen.findByText(/Bloqueada hasta 12:34/)).toBeInTheDocument()
+  })
+  it('el Área encargada exige elegir un área y muestra lo que emite', async () => {
+    const fetch = backend({
+      'POST /api/usuarios': () =>
+        respuesta(201, {
+          ...lrojas,
+          id: 9,
+          nombreUsuario: 'rquispe',
+          rol: 'AREA_ENCARGADA',
+          rolNombre: 'Área encargada',
+          area: 'CAPACITACION',
+          areaNombre: 'Área de Capacitación',
+        }),
+    })
+    render(<PaginaUsuarios />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Nueva cuenta' }))
+    const ventana = screen.getByRole('dialog', { name: 'Nueva cuenta' })
+    expect(within(ventana).queryByLabelText('Área')).not.toBeInTheDocument()
+
+    fireEvent.change(within(ventana).getByLabelText('Nombre de usuario'), {
+      target: { value: 'rquispe' },
+    })
+    fireEvent.change(within(ventana).getByLabelText('Nombre completo'), {
+      target: { value: 'Rosa Quispe' },
+    })
+    fireEvent.change(within(ventana).getByLabelText('Rol'), { target: { value: 'AREA_ENCARGADA' } })
+    fireEvent.change(within(ventana).getByLabelText('Contraseña temporal'), {
+      target: { value: 'Temporal99' },
+    })
+    fireEvent.click(within(ventana).getByRole('button', { name: 'Crear cuenta' }))
+    expect(within(ventana).getByText('Seleccione el área de la persona.')).toBeInTheDocument()
+
+    fireEvent.change(within(ventana).getByLabelText('Área'), { target: { value: 'CAPACITACION' } })
+    expect(
+      within(ventana).getByText(
+        'Emite: Certificado de Capacitación, Certificado de Reconocimiento.',
+      ),
+    ).toBeInTheDocument()
+    fireEvent.click(within(ventana).getByRole('button', { name: 'Crear cuenta' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Se creó la cuenta "rquispe"')
+    expect(within(await fila('rquispe')).getByText('Área de Capacitación')).toBeInTheDocument()
+    const envio = fetch.mock.calls.find(([, o]) => o?.method === 'POST')
+    expect(JSON.parse(envio?.[1]?.body as string).area).toBe('CAPACITACION')
+  })
+
+  it('marca las cuentas del Área encargada que no tienen área', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((ruta) =>
+      ruta === '/api/usuarios'
+        ? respuesta(200, [{ ...lrojas, rol: 'AREA_ENCARGADA', rolNombre: 'Área encargada' }])
+        : respuesta(200, ruta === '/api/areas' ? areas : roles),
+    )
+    render(<PaginaUsuarios />)
+    expect(await screen.findByText('⚠ Sin área asignada')).toBeInTheDocument()
   })
 })

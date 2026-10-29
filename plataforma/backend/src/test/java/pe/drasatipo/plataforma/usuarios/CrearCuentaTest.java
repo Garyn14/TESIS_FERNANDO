@@ -51,9 +51,16 @@ class CrearCuentaTest {
       throws Exception {
     String cuerpo =
         """
-        {"nombreUsuario": %s, "nombreCompleto": %s, "rol": %s, "contrasenaTemporal": %s}
+        {"nombreUsuario": %s, "nombreCompleto": %s, "rol": %s, "area": %s,
+         "contrasenaTemporal": %s}
         """
-            .formatted(json(usuario), json(nombre), json(rol), json(contrasena));
+            .formatted(
+                json(usuario),
+                json(nombre),
+                json(rol),
+                // HU05: el Área encargada exige área; aquí se usa una cualquiera.
+                json("AREA_ENCARGADA".equals(rol) ? "CAPACITACION" : null),
+                json(contrasena));
     return mvc.perform(
         post("/api/usuarios").with(csrf()).contentType(MediaType.APPLICATION_JSON).content(cuerpo));
   }

@@ -20,6 +20,8 @@ public record NuevaCuentaSolicitud(
         @Size(min = 3, max = 150, message = "El nombre completo debe tener de 3 a 150 caracteres.")
         String nombreCompleto,
     @NotBlank(message = "Seleccione un rol.") String rol,
+    /** Código del área. Obligatoria solo para el rol Área encargada (HU05). */
+    String area,
     @NotBlank(message = "Ingrese la contraseña temporal.")
         @Size(
             min = Contrasenas.LONGITUD_MINIMA,
@@ -33,13 +35,14 @@ public record NuevaCuentaSolicitud(
         nombreUsuario == null ? null : nombreUsuario.strip().toLowerCase(java.util.Locale.ROOT),
         nombreCompleto == null ? null : nombreCompleto.strip(),
         rol,
+        area,
         contrasenaTemporal);
   }
 
   /** La contraseña nunca se muestra, ni siquiera en los registros. */
   @Override
   public String toString() {
-    return "NuevaCuentaSolicitud[nombreUsuario=%s, nombreCompleto=%s, rol=%s]"
-        .formatted(nombreUsuario, nombreCompleto, rol);
+    return "NuevaCuentaSolicitud[nombreUsuario=%s, nombreCompleto=%s, rol=%s, area=%s]"
+        .formatted(nombreUsuario, nombreCompleto, rol, area);
   }
 }

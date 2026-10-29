@@ -1,22 +1,32 @@
 import { useId, useState, type FormEvent } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { BOTON_PRIMARIO, BOTON_SECUNDARIO, CAMPO } from '../comun/estilos'
-import { editarCuenta, type Cuenta, type EdicionCuenta, type Rol } from './api'
+import {
+  editarCuenta,
+  AREA_ENCARGADA,
+  type Area,
+  type Cuenta,
+  type EdicionCuenta,
+  type Rol,
+} from './api'
+import CampoArea from './CampoArea'
 import { validarEdicion, type Errores } from './validacion'
 
 interface Props {
   cuenta: Cuenta
   roles: Rol[]
+  areas: Area[]
   onGuardada: (cuenta: Cuenta) => void
   onCancelar: () => void
 }
 
 /** HU02: edita el nombre completo y el rol. El nombre de usuario se muestra pero no se edita. */
-export default function FormularioEdicion({ cuenta, roles, onGuardada, onCancelar }: Props) {
+export default function FormularioEdicion({ cuenta, roles, areas, onGuardada, onCancelar }: Props) {
   const id = useId()
   const [datos, setDatos] = useState<EdicionCuenta>({
     nombreCompleto: cuenta.nombreCompleto,
     rol: cuenta.rol,
+    area: cuenta.area ?? '',
   })
   const [errores, setErrores] = useState<Errores>({})
   const [errorGeneral, setErrorGeneral] = useState('')
@@ -103,6 +113,16 @@ export default function FormularioEdicion({ cuenta, roles, onGuardada, onCancela
           </p>
         )}
       </div>
+
+      {datos.rol === AREA_ENCARGADA && (
+        <CampoArea
+          id={`${id}-area`}
+          valor={datos.area}
+          areas={areas}
+          error={errores.area}
+          onCambiar={(a) => cambiar('area', a)}
+        />
+      )}
 
       {errorGeneral && (
         <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-red-800">

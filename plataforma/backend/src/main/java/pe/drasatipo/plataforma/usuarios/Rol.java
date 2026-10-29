@@ -10,6 +10,7 @@ import jakarta.persistence.Table;
 public class Rol {
 
   public static final String ADMINISTRADOR = "ADMINISTRADOR";
+  public static final String AREA_ENCARGADA = "AREA_ENCARGADA";
 
   @Id private Short id;
   private String codigo;

@@ -97,7 +97,8 @@ export default function App() {
   if (!permitida) contenido = <PaginaSinPermiso />
   else if (opcion.pendiente) contenido = <PaginaPendiente mensaje={opcion.pendiente} />
   else if (opcion.ruta === 'usuarios') contenido = <PaginaUsuarios />
-  else contenido = <PaginaInicio sesion={sesion} />
+  // La clave recarga los tipos de documento si cambia el área de la persona.
+  else contenido = <PaginaInicio key={sesion.areaNombre ?? ''} sesion={sesion} />
 
   return (
     <Estructura

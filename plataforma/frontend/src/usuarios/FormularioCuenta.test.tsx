@@ -2,6 +2,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import FormularioCuenta from './FormularioCuenta'
 
+const areas = [
+  {
+    codigo: 'CAPACITACION',
+    nombre: 'Área de Capacitación',
+    tipos: [{ codigo: 'CERTIFICADO_CAPACITACION', nombre: 'Certificado de Capacitación' }],
+  },
+]
+
 const roles = [
   { codigo: 'DIRECTOR', nombre: 'Director', descripcion: 'Revisa y firma documentos' },
   { codigo: 'AREA_ENCARGADA', nombre: 'Área encargada', descripcion: 'Registra documentos' },
@@ -24,7 +32,7 @@ afterEach(() => vi.restoreAllMocks())
 describe('FormularioCuenta (HU01)', () => {
   it('indica cada campo que hay que corregir sin llamar al servidor', () => {
     const fetch = vi.spyOn(globalThis, 'fetch')
-    render(<FormularioCuenta roles={roles} onCreada={vi.fn()} onCancelar={vi.fn()} />)
+    render(<FormularioCuenta roles={roles} areas={areas} onCreada={vi.fn()} onCancelar={vi.fn()} />)
 
     llenar('1ab', '', '', 'corta')
 
@@ -40,7 +48,9 @@ describe('FormularioCuenta (HU01)', () => {
     const cuenta = { id: 5, nombreUsuario: 'jperez', rolNombre: 'Director' }
     const fetch = vi.spyOn(globalThis, 'fetch').mockReturnValue(respuesta(201, cuenta))
     const onCreada = vi.fn()
-    render(<FormularioCuenta roles={roles} onCreada={onCreada} onCancelar={vi.fn()} />)
+    render(
+      <FormularioCuenta roles={roles} areas={areas} onCreada={onCreada} onCancelar={vi.fn()} />,
+    )
 
     llenar(' JPerez ', 'Juan Pérez', 'DIRECTOR', 'Clave2026!')
 
@@ -52,6 +62,7 @@ describe('FormularioCuenta (HU01)', () => {
       nombreUsuario: 'jperez',
       nombreCompleto: 'Juan Pérez',
       rol: 'DIRECTOR',
+      area: null,
       contrasenaTemporal: 'Clave2026!',
     })
   })
@@ -64,7 +75,9 @@ describe('FormularioCuenta (HU01)', () => {
       }),
     )
     const onCreada = vi.fn()
-    render(<FormularioCuenta roles={roles} onCreada={onCreada} onCancelar={vi.fn()} />)
+    render(
+      <FormularioCuenta roles={roles} areas={areas} onCreada={onCreada} onCancelar={vi.fn()} />,
+    )
 
     llenar('jperez', 'Juan Pérez', 'DIRECTOR', 'Clave2026!')
 
@@ -73,13 +86,13 @@ describe('FormularioCuenta (HU01)', () => {
   })
 
   it('muestra la descripción del rol elegido', () => {
-    render(<FormularioCuenta roles={roles} onCreada={vi.fn()} onCancelar={vi.fn()} />)
+    render(<FormularioCuenta roles={roles} areas={areas} onCreada={vi.fn()} onCancelar={vi.fn()} />)
     fireEvent.change(screen.getByLabelText('Rol'), { target: { value: 'DIRECTOR' } })
     expect(screen.getByText('Revisa y firma documentos')).toBeInTheDocument()
   })
 
   it('oculta la contraseña hasta que se pide mostrarla', () => {
-    render(<FormularioCuenta roles={roles} onCreada={vi.fn()} onCancelar={vi.fn()} />)
+    render(<FormularioCuenta roles={roles} areas={areas} onCreada={vi.fn()} onCancelar={vi.fn()} />)
     const contrasena = screen.getByLabelText('Contraseña temporal')
     expect(contrasena).toHaveAttribute('type', 'password')
     fireEvent.click(screen.getByRole('button', { name: 'Mostrar' }))

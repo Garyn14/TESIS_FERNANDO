@@ -12,6 +12,7 @@ const sesionDe = (rol: string, rolNombre: string, permisos: string[]): Sesion =>
   nombreCompleto: 'Rosa Quispe Huamán',
   rol,
   rolNombre,
+  areaNombre: null,
   permisos: ['CUENTA_PROPIA', ...permisos],
   debeCambiarContrasena: false,
 })
@@ -37,7 +38,9 @@ function backend(sesion: Sesion | null, extra: Record<string, () => Promise<Resp
         ? respuesta(200, sesion)
         : respuesta(401, { mensaje: 'Inicie sesión para continuar.', campos: {} })
     if (clave === 'DELETE /api/sesion') return Promise.resolve(new Response(null, { status: 204 }))
-    if (clave === 'GET /api/usuarios' || clave === 'GET /api/roles') return respuesta(200, [])
+    if (['GET /api/usuarios', 'GET /api/roles', 'GET /api/areas'].includes(clave))
+      return respuesta(200, [])
+    if (clave === 'GET /api/tipos-documento') return respuesta(200, [])
     return respuesta(500, null)
   })
 }
@@ -225,5 +228,39 @@ describe('App (HU03)', () => {
     })
     fireEvent.click(within(ventana).getByRole('button', { name: 'Cambiar contraseña' }))
     expect(await within(ventana).findByRole('status')).toHaveTextContent('Su contraseña se cambió.')
+  })
+  it('el Área encargada ve su área en el encabezado y lo que emite en Inicio', async () => {
+    backend(
+      { ...AREA, areaNombre: 'Área de Capacitación' },
+      {
+        'GET /api/tipos-documento': () =>
+          respuesta(200, [
+            { codigo: 'CERTIFICADO_CAPACITACION', nombre: 'Certificado de Capacitación' },
+            { codigo: 'CERTIFICADO_RECONOCIMIENTO', nombre: 'Certificado de Reconocimiento' },
+          ]),
+      },
+    )
+    render(<App />)
+    const encabezado = await screen.findByRole('banner')
+    expect(
+      within(encabezado).getByText('Área encargada – Área de Capacitación'),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'Documentos que emite Área de Capacitación' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Certificado de Reconocimiento')).toBeInTheDocument()
+  })
+
+  it('sin área asignada avisa que debe comunicarse con el Administrador', async () => {
+    backend(AREA)
+    render(<App />)
+    expect(await screen.findByRole('alert')).toHaveTextContent('no tiene un área asignada')
+  })
+
+  it('los roles sin registro de documentos no consultan tipos', async () => {
+    const fetch = backend(DIRECTOR)
+    render(<App />)
+    await screen.findByRole('navigation')
+    expect(fetch.mock.calls.some(([r]) => r === '/api/tipos-documento')).toBe(false)
   })
 })

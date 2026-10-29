@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react'
 import { BOTON_PRIMARIO } from '../comun/estilos'
 import Modal from '../comun/Modal'
-import { listarCuentas, listarRoles, type Cuenta, type Rol } from './api'
+import {
+  AREA_ENCARGADA,
+  listarAreas,
+  listarCuentas,
+  listarRoles,
+  type Area,
+  type Cuenta,
+  type Rol,
+} from './api'
 import ConfirmarEstado from './ConfirmarEstado'
 import FormularioCuenta from './FormularioCuenta'
 import FormularioEdicion from './FormularioEdicion'
@@ -32,16 +40,18 @@ type Ventana =
 export default function PaginaUsuarios() {
   const [cuentas, setCuentas] = useState<Cuenta[]>([])
   const [roles, setRoles] = useState<Rol[]>([])
+  const [areas, setAreas] = useState<Area[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
   const [ventana, setVentana] = useState<Ventana>(null)
 
   useEffect(() => {
-    Promise.all([listarCuentas(), listarRoles()])
-      .then(([c, r]) => {
+    Promise.all([listarCuentas(), listarRoles(), listarAreas()])
+      .then(([c, r, a]) => {
         setCuentas(c)
         setRoles(r)
+        setAreas(a)
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setCargando(false))
@@ -115,18 +125,24 @@ export default function PaginaUsuarios() {
                 >
                   <td className="px-3 py-3 font-medium">{c.nombreUsuario}</td>
                   <td className="px-3 py-3">{c.nombreCompleto}</td>
-                  <td className="px-3 py-3">{c.rolNombre}</td>
+                  <td className="px-3 py-3">
+                    {c.rolNombre}
+                    {c.areaNombre && <span className="block text-muted">{c.areaNombre}</span>}
+                    {c.rol === AREA_ENCARGADA && !c.area && (
+                      <span className="block text-orange">⚠ Sin área asignada</span>
+                    )}
+                  </td>
                   <td className="px-3 py-3">
                     {c.activo && c.bloqueadaHasta ? (
                       <span className="inline-block rounded-2xl bg-orange-pale px-3 py-1 text-orange">
                         🔒 Bloqueada hasta {formatoHora.format(new Date(c.bloqueadaHasta))}
                       </span>
                     ) : c.activo ? (
-                      <span className="rounded-full bg-green-pale px-3 py-1 text-institutional">
+                      <span className="inline-block rounded-full bg-green-pale px-3 py-1 whitespace-nowrap text-institutional">
                         ✓ Activa
                       </span>
                     ) : (
-                      <span className="rounded-full bg-neutral-pale px-3 py-1 text-muted">
+                      <span className="inline-block rounded-full bg-neutral-pale px-3 py-1 whitespace-nowrap text-muted">
                         ⊘ Inactiva
                       </span>
                     )}
@@ -172,7 +188,7 @@ export default function PaginaUsuarios() {
 
       {ventana?.tipo === 'nueva' && (
         <Modal titulo="Nueva cuenta" onCerrar={cerrar}>
-          <FormularioCuenta roles={roles} onCreada={alCrear} onCancelar={cerrar} />
+          <FormularioCuenta roles={roles} areas={areas} onCreada={alCrear} onCancelar={cerrar} />
         </Modal>
       )}
       {ventana?.tipo === 'editar' && (
@@ -180,6 +196,7 @@ export default function PaginaUsuarios() {
           <FormularioEdicion
             cuenta={ventana.cuenta}
             roles={roles}
+            areas={areas}
             onGuardada={(c) => reemplazar(c, `Se guardaron los cambios de "${c.nombreUsuario}".`)}
             onCancelar={cerrar}
           />

@@ -1,4 +1,4 @@
-// Prueba de punta a punta real de HU01 a HU04: navegador + frontend + backend + PostgreSQL, sin
+// Prueba de punta a punta real de HU01 a HU05: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía y el backend con SESION_INACTIVIDAD=1m (ver
 // levantar.sh), para probar la expiración en un minuto.
 const { chromium } = require('playwright')
@@ -81,7 +81,7 @@ const paso = async (nombre, fn) => {
   })
 
   // ------------------------------------------------------------------ HU01: crear cuentas
-  await paso('HU01 · Crea tres cuentas reales, una por rol', async () => {
+  await paso('HU01+HU05 · Crea tres cuentas reales, una por rol; el Área encargada exige área', async () => {
     await admin.getByRole('link', { name: 'Usuarios' }).click()
     for (const [u, n, rol] of [
       ['rquispe', 'Rosa Quispe Huamán', 'AREA_ENCARGADA'],
@@ -93,6 +93,14 @@ const paso = async (nombre, fn) => {
       await campo(admin, 'Nombre completo').fill(n)
       await campo(admin, 'Rol').selectOption(rol)
       await campo(admin, 'Contraseña temporal').fill(TEMPORAL)
+      if (rol === 'AREA_ENCARGADA') {
+        // HU05: sin área no se guarda.
+        await admin.getByRole('button', { name: 'Crear cuenta' }).click()
+        await admin.getByText('Seleccione el área de la persona.').waitFor()
+        await campo(admin, 'Área').selectOption('CAPACITACION')
+        await admin.getByText('Emite: Certificado de Capacitación, Certificado de Reconocimiento.').waitFor()
+        await foto(admin, 'hu05_01_area_obligatoria')
+      }
       await admin.getByRole('button', { name: 'Crear cuenta' }).click()
       await admin.getByRole('status').getByText(`Se creó la cuenta "${u}"`).waitFor()
     }
@@ -123,6 +131,35 @@ const paso = async (nombre, fn) => {
       await p.context().close()
     })
   }
+
+  // ---------------------------------------------------------------- HU05: área del usuario
+  await paso('HU05 · El Área encargada ve su área y solo los tipos de documento de su área', async () => {
+    const rosa = await nueva()
+    await ingresar(rosa, 'rquispe', PROPIA)
+    await rosa.getByRole('banner').getByText('Área encargada – Área de Capacitación').waitFor()
+    await rosa.getByRole('heading', { name: 'Documentos que emite Área de Capacitación' }).waitFor()
+    const tipos = await rosa.evaluate(() =>
+      fetch('/api/tipos-documento').then((r) => r.json()).then((t) => t.map((x) => x.codigo).sort()),
+    )
+    assert.deepEqual(tipos, ['CERTIFICADO_CAPACITACION', 'CERTIFICADO_RECONOCIMIENTO'])
+    await foto(rosa, 'hu05_02_inicio_con_area')
+
+    // HU05: el Administrador le cambia el área con la sesión abierta.
+    await admin.getByRole('button', { name: 'Editar rquispe' }).click()
+    await campo(admin, 'Área').selectOption('DESARROLLO_AGRARIO')
+    await foto(admin, 'hu05_03_editar_area')
+    await admin.getByRole('button', { name: 'Guardar cambios' }).click()
+    await admin.getByRole('status').getByText('Se guardaron los cambios').waitFor()
+    await admin.getByText('Área de Desarrollo Agrario').waitFor()
+    await foto(admin, 'hu05_04_lista_con_area')
+
+    await rosa.getByRole('link', { name: 'Inicio' }).click()
+    await rosa.getByRole('heading', { name: 'Documentos que emite Área de Desarrollo Agrario' }).waitFor()
+    await rosa.getByText('Constancia de Productor Activo').waitFor()
+    assert.equal(await rosa.getByText('Certificado de Capacitación').count(), 0)
+    await foto(rosa, 'hu05_05_area_cambiada_en_sesion')
+    await rosa.context().close()
+  })
 
   await paso('HU03 · Una dirección sin permiso no muestra la pantalla ni sus datos', async () => {
     const p = await nueva()

@@ -5,6 +5,8 @@ export interface Sesion {
   nombreCompleto: string
   rol: string
   rolNombre: string
+  /** Área de la persona (HU05), o null. */
+  areaNombre: string | null
   permisos: string[]
   debeCambiarContrasena: boolean
 }

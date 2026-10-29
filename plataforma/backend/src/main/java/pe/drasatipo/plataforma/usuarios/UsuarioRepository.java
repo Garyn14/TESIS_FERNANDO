@@ -15,11 +15,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
   Optional<Usuario> findByNombreUsuarioIgnoreCase(String nombreUsuario);
 
-  @EntityGraph(attributePaths = "rol")
+  @EntityGraph(attributePaths = {"rol", "area"})
   List<Usuario> findAllByOrderByCreadoEnDesc();
 
   /** Cuenta con su rol ya cargado, para usarla fuera de una transacción (filtro de sesión). */
-  @EntityGraph(attributePaths = "rol")
+  @EntityGraph(attributePaths = {"rol", "area"})
   Optional<Usuario> findConRolById(Long id);
 
   /**
