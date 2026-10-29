@@ -7,7 +7,8 @@
     "compile": "hardhat build",
     "test": "hardhat test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "probar:besu": "hardhat run scripts/probar-red-besu.ts --network besuLocal"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^4.0.0",
