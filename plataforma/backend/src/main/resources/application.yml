@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: plataforma-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/plataforma}
+    username: ${DB_USER:plataforma}
+    password: ${DB_PASSWORD:plataforma}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+plataforma:
+  version: '@project.version@'
+  besu:
+    rpc-url: ${BESU_RPC_URL:http://localhost:8545}
