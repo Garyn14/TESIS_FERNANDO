@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import pe.drasatipo.plataforma.usuarios.Contrasenas;
 import pe.drasatipo.plataforma.usuarios.Rol;
 import pe.drasatipo.plataforma.usuarios.RolRepository;
 import pe.drasatipo.plataforma.usuarios.Usuario;
@@ -23,9 +24,6 @@ import pe.drasatipo.plataforma.usuarios.UsuarioRepository;
  */
 @Component
 public class InicializadorAdministrador implements ApplicationRunner {
-
-  static final int LONGITUD_MINIMA = 8;
-  static final int LONGITUD_MAXIMA = 20;
 
   private static final Logger log = LoggerFactory.getLogger(InicializadorAdministrador.class);
 
@@ -59,10 +57,11 @@ public class InicializadorAdministrador implements ApplicationRunner {
               + " PLATAFORMA_ADMIN_CONTRASENA y reinicia el backend para crearla.");
       return;
     }
-    if (contrasena.length() < LONGITUD_MINIMA || contrasena.length() > LONGITUD_MAXIMA) {
+    if (contrasena.length() < Contrasenas.LONGITUD_MINIMA
+        || contrasena.length() > Contrasenas.LONGITUD_MAXIMA) {
       throw new IllegalStateException(
           "PLATAFORMA_ADMIN_CONTRASENA debe tener entre %d y %d caracteres (RNF02)."
-              .formatted(LONGITUD_MINIMA, LONGITUD_MAXIMA));
+              .formatted(Contrasenas.LONGITUD_MINIMA, Contrasenas.LONGITUD_MAXIMA));
     }
 
     Rol administrador =
@@ -75,7 +74,8 @@ public class InicializadorAdministrador implements ApplicationRunner {
             propiedades.adminNombre(),
             codificador.encode(contrasena),
             administrador,
-            true);
+            true,
+            null);
     usuarios.save(cuenta);
     log.info(
         "Inicialización: se creó la cuenta de Administrador '{}'. Debe cambiar la contraseña en"

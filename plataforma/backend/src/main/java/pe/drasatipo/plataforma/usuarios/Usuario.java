@@ -11,7 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 
-/** Cuenta de usuario (RF01–RF03). La gestión completa se implementa en HU01–HU05. */
+/** Cuenta de usuario (RF01–RF03). */
 @Entity
 @Table(name = "usuario")
 public class Usuario {
@@ -42,8 +42,12 @@ public class Usuario {
   @Column(name = "debe_cambiar_contrasena", nullable = false)
   private boolean debeCambiarContrasena;
 
-  @Column(name = "creado_en", nullable = false, insertable = false, updatable = false)
-  private OffsetDateTime creadoEn;
+  @Column(name = "creado_en", nullable = false, updatable = false)
+  private OffsetDateTime creadoEn = OffsetDateTime.now();
+
+  /** Cuenta que creó esta cuenta. Nulo solo para la primera cuenta de Administrador (RF09). */
+  @Column(name = "creado_por", updatable = false)
+  private Long creadoPor;
 
   protected Usuario() {}
 
@@ -52,12 +56,14 @@ public class Usuario {
       String nombreCompleto,
       String contrasenaHash,
       Rol rol,
-      boolean debeCambiarContrasena) {
+      boolean debeCambiarContrasena,
+      Long creadoPor) {
     this.nombreUsuario = nombreUsuario;
     this.nombreCompleto = nombreCompleto;
     this.contrasenaHash = contrasenaHash;
     this.rol = rol;
     this.debeCambiarContrasena = debeCambiarContrasena;
+    this.creadoPor = creadoPor;
   }
 
   public Long getId() {
@@ -86,5 +92,13 @@ public class Usuario {
 
   public boolean isDebeCambiarContrasena() {
     return debeCambiarContrasena;
+  }
+
+  public OffsetDateTime getCreadoEn() {
+    return creadoEn;
+  }
+
+  public Long getCreadoPor() {
+    return creadoPor;
   }
 }
