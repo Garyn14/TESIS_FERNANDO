@@ -133,6 +133,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 29/10/2026 | [40792574492](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40792574492) | `DRA-43-estructura-ci` | ✓ Los tres jobs en verde, sin avisos, tras actualizar a `@v5` |
 | 29/10/2026 | [40797880888](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40797880888) | `DRA-45-red-besu` | ✓ Cuatro jobs en verde, incluido el nuevo job Red Besu |
 | 29/10/2026 | [40814310340](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40814310340) | `DRA-46-ipfs-privado` | ✓ Cinco jobs en verde, incluido el nuevo job IPFS privado |
+| 29/10/2026 | [40898899824](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40898899824) | `DRA-12-crear-cuentas` | ✓ Cinco jobs en verde con la primera historia (HU01) |
 
 ## 9. Pendientes
 
