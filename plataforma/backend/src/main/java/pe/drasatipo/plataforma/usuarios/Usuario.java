@@ -101,4 +101,18 @@ public class Usuario {
   public Long getCreadoPor() {
     return creadoPor;
   }
+
+  /** HU02: el nombre de usuario no cambia porque identifica a la persona en el historial. */
+  void actualizar(String nombreCompleto, Rol rol) {
+    this.nombreCompleto = nombreCompleto;
+    this.rol = rol;
+  }
+
+  void desactivar() {
+    this.activo = false;
+  }
+
+  void reactivar() {
+    this.activo = true;
+  }
 }

@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import pe.drasatipo.plataforma.usuarios.HistorialRepository;
 import pe.drasatipo.plataforma.usuarios.RolRepository;
 import pe.drasatipo.plataforma.usuarios.UsuarioRepository;
 
@@ -24,7 +25,8 @@ class ValidacionContrasenaInicialTest {
             new InicializacionProperties("admin", "Administrador", contrasena),
             mock(RolRepository.class),
             usuarios,
-            mock(PasswordEncoder.class));
+            mock(PasswordEncoder.class),
+            mock(HistorialRepository.class));
 
     assertThatThrownBy(() -> inicializador.run(new DefaultApplicationArguments()))
         .isInstanceOf(IllegalStateException.class)

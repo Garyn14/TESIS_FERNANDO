@@ -1,5 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { ErrorApi } from '../api/cliente'
+import { BOTON_PRIMARIO, BOTON_SECUNDARIO, CAMPO } from '../comun/estilos'
 import { crearCuenta, type Cuenta, type NuevaCuenta, type Rol } from './api'
 import { validarCuenta, type Errores } from './validacion'
 
@@ -58,9 +59,7 @@ export default function FormularioCuenta({ roles, onCreada, onCancelar }: Props)
     id: `${id}-${nombre}`,
     'aria-invalid': errores[nombre] ? true : undefined,
     'aria-describedby': errores[nombre] ? `${id}-${nombre}-error` : undefined,
-    className: `mt-1 w-full rounded-lg border bg-card px-3 py-2 text-ink outline-none focus:ring-2 focus:ring-institutional-soft ${
-      errores[nombre] ? 'border-red-600' : 'border-line'
-    }`,
+    className: `${CAMPO} ${errores[nombre] ? 'border-red-600' : 'border-line'}`,
   })
 
   const error = (nombre: keyof NuevaCuenta) =>
@@ -162,18 +161,10 @@ export default function FormularioCuenta({ roles, onCreada, onCancelar }: Props)
       )}
 
       <div className="flex justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancelar}
-          className="rounded-lg border border-institutional bg-card px-4 py-2 font-medium text-institutional hover:bg-green-pale"
-        >
+        <button type="button" onClick={onCancelar} className={BOTON_SECUNDARIO}>
           Cancelar
         </button>
-        <button
-          type="submit"
-          disabled={guardando}
-          className="rounded-lg bg-institutional px-4 py-2 font-medium text-white hover:bg-institutional-soft disabled:opacity-60"
-        >
+        <button type="submit" disabled={guardando} className={BOTON_PRIMARIO}>
           {guardando ? 'Guardando…' : 'Crear cuenta'}
         </button>
       </div>

@@ -1,9 +1,11 @@
 package pe.drasatipo.plataforma.usuarios;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
@@ -15,4 +17,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
   @EntityGraph(attributePaths = "rol")
   List<Usuario> findAllByOrderByCreadoEnDesc();
+
+  /**
+   * Cuentas activas de un rol, bloqueadas hasta el fin de la transacción. Evita que dos solicitudes
+   * simultáneas dejen el sistema sin Administradores activos (HU02).
+   */
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  List<Usuario> findByRolCodigoAndActivoTrue(String codigoRol);
 }
