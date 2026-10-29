@@ -25,9 +25,9 @@ cp .env.example .env     # activa los perfiles besu e ipfs (COMPOSE_PROFILES)
 ./ipfs/generar-clave.sh  # solo la primera vez
 docker compose up -d
 
-# 2. Backend (http://localhost:8080)
+# 2. Backend (http://localhost:8080). La primera vez, con la contraseña temporal del Administrador:
 cd ../backend
-./mvnw spring-boot:run
+PLATAFORMA_ADMIN_CONTRASENA='<8 a 20 caracteres>' ./mvnw spring-boot:run
 
 # 3. Frontend (http://localhost:5173, redirige /api al backend)
 cd ../frontend
@@ -44,4 +44,5 @@ Comprobación rápida: `curl http://localhost:8080/api/salud` responde `{"estado
 | `DB_URL` | `jdbc:postgresql://localhost:5432/plataforma` |
 | `DB_USER` / `DB_PASSWORD` | `plataforma` / `plataforma` |
 | `BESU_RPC_URL` | `http://localhost:8545` |
+| `PLATAFORMA_ADMIN_USUARIO` / `PLATAFORMA_ADMIN_NOMBRE` / `PLATAFORMA_ADMIN_CONTRASENA` | Primera cuenta de Administrador (RF09). Ver [backend/README.md](backend/README.md#inicialización-del-sistema-rf09) |
 | API de IPFS (se configura en HU17) | `http://localhost:5001` |
