@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'DRA-*']
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (Java + Spring Boot)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plataforma/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Formato, compilación y pruebas
+        run: ./mvnw -B verify
+
+  frontend:
+    name: Frontend (React + Vite)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plataforma/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: plataforma/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build
+
+  contracts:
+    name: Contratos (Hardhat)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plataforma/contracts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: plataforma/contracts/package-lock.json
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run compile
+      - run: npm test
