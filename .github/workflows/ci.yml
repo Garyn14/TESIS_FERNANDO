@@ -95,3 +95,23 @@ jobs:
         if: failure()
         working-directory: plataforma/infra
         run: docker compose --profile besu logs --tail 100
+
+  ipfs:
+    name: IPFS privado
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plataforma/infra
+    steps:
+      - uses: actions/checkout@v5
+      - name: Generar la clave de enjambre
+        run: ./ipfs/generar-clave.sh
+      - name: Levantar el nodo IPFS
+        run: docker compose --profile ipfs up -d --wait ipfs
+      - name: Red privada y subida/recuperación por CID
+        run: ./ipfs/probar-ipfs.sh
+      - name: Aislamiento (nodo sin clave rechazado, con clave conectado)
+        run: ./ipfs/probar-aislamiento.sh
+      - name: Registros del nodo si falla
+        if: failure()
+        run: docker compose --profile ipfs logs --tail 100

@@ -1,8 +1,9 @@
 # Servicios para desarrollo local.
-#   docker compose up -d                  -> solo PostgreSQL
-#   docker compose --profile besu up -d   -> PostgreSQL + red Besu QBFT de 4 validadores
-# Antes de usar el perfil besu, generar la red una sola vez: ./besu/generar-red.sh
-# IPFS se agrega en DRA-46.
+#   docker compose up -d                                 -> solo PostgreSQL
+#   docker compose --profile besu up -d                  -> + red Besu QBFT de 4 validadores
+#   docker compose --profile ipfs up -d                  -> + nodo IPFS privado
+#   docker compose --profile besu --profile ipfs up -d   -> todo
+# Una sola vez antes de usar los perfiles: ./besu/generar-red.sh y ./ipfs/generar-clave.sh
 name: plataforma
 
 x-besu: &besu
@@ -78,8 +79,35 @@ services:
       plataforma:
         ipv4_address: 172.30.0.14
 
+  # Nodo IPFS privado (Kubo) donde se guardan los PDF firmados (RNF03, HU17).
+  # La API y el gateway solo se publican en 127.0.0.1: no quedan expuestos a la red local.
+  ipfs:
+    image: ipfs/kubo:${KUBO_VERSION:-v0.43.1}
+    profiles: [ipfs]
+    restart: unless-stopped
+    environment:
+      # Kubo se niega a arrancar si no encuentra la clave de enjambre
+      LIBP2P_FORCE_PNET: "1"
+      IPFS_SWARM_KEY_FILE: /red/swarm.key
+    ports:
+      - "127.0.0.1:5001:5001"
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - ./ipfs/red:/red:ro
+      - ./ipfs/init:/container-init.d:ro
+      - ipfs-data:/data/ipfs
+    networks:
+      plataforma:
+        ipv4_address: 172.30.0.20
+    healthcheck:
+      test: ["CMD", "ipfs", "id"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
 volumes:
   postgres-data:
+  ipfs-data:
   besu-nodo1:
   besu-nodo2:
   besu-nodo3:
