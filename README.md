@@ -32,7 +32,7 @@ tesis/                 Componente teórico (documento de tesis)
 docs/                  Puente entre la tesis y el desarrollo
   PLAN_TESIS.md        Plan de desarrollo: capítulos, sprints y pendientes
   requerimientos/      Épicas, historias de usuario, backlog
-  arquitectura/        Decisiones técnicas (ADR) e integración continua
+  arquitectura/        Decisiones técnicas (ADR), integración continua y costos de AWS
   diseno/              Documentación, análisis y capturas del prototipo
 prototipo/             Prototipo navegable (Figma Make, React), solo referencia
 plataforma/            Componente técnico (código)
