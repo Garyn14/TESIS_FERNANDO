@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 # Levanta un entorno limpio y real para la prueba de punta a punta: PostgreSQL vacío en el puerto
 # 5433, la red Besu local (si no está levantada) con un RegistroDocumentos recién desplegado, el
-# backend en el 8080 (con la sesión de 1 minuto para probar la expiración) y el frontend en el 5173.
-# Detener con Ctrl+C.
+# backend en el 8080 y el frontend en el 5173. Detener con Ctrl+C.
+#
+#   ./e2e/levantar.sh          -> para la prueba automática: la sesión expira en 1 minuto
+#   ./e2e/levantar.sh demo     -> para la demostración (revisión del sprint): sesión de 30 minutos
+#                                 y datos para importar las billeteras de prueba en MetaMask
 set -euo pipefail
 cd "$(dirname "$0")/.."
+MODO=${1:-prueba}
+INACTIVIDAD=$([ "$MODO" = demo ] && echo 30m || echo 1m)
 
 # Red Besu (HU06): se levanta si no responde.
 if ! curl -s -X POST -H 'content-type: application/json' \
@@ -23,7 +28,7 @@ until docker exec e2e-pg pg_isready -U plataforma >/dev/null 2>&1; do sleep 1; d
 
 (cd backend && ./mvnw -q package -DskipTests)
 DB_URL=jdbc:postgresql://localhost:5433/plataforma PLATAFORMA_ADMIN_CONTRASENA='Admin2026!' \
-  PLATAFORMA_ADMIN_NOMBRE='Garyn Huarhuachi Ramos' SESION_INACTIVIDAD=1m \
+  PLATAFORMA_ADMIN_NOMBRE='Garyn Huarhuachi Ramos' SESION_INACTIVIDAD=$INACTIVIDAD \
   PLATAFORMA_CONTRATO_DIRECCION="$CONTRATO" \
   java -jar backend/target/plataforma-backend-*.jar &
 BACKEND=$!
@@ -32,5 +37,21 @@ FRONTEND=$!
 trap 'kill $BACKEND $FRONTEND; docker rm -f e2e-pg >/dev/null' EXIT
 
 until curl -s localhost:8080/api/salud >/dev/null; do sleep 1; done
-echo "Entorno listo. En otra terminal: node e2e/sprint1.cjs <carpeta de capturas>"
+if [ "$MODO" = demo ]; then
+  node -e '
+    const d = require("./e2e/.despliegue.json")
+    console.log(`
+Demostración lista en http://localhost:5173  (Administrador: admin / Admin2026!)
+
+En MetaMask (billeteras SOLO de prueba, sin valor):
+  1. Agregue la red manualmente o deje que la plataforma la proponga:
+     Plataforma DRA Satipo · RPC http://localhost:8545 · chainId 20260 · moneda DRA
+  2. Importe la cuenta del Administrador del contrato con esta clave privada:
+     ${d.billeteras.administrador.clave}
+  3. Dirección para registrar como billetera del director:
+     ${d.billeteras.director.direccion}
+Contrato RegistroDocumentos: ${d.contrato}`)'
+else
+  echo "Entorno listo. En otra terminal: node e2e/sprint1.cjs <carpeta de capturas>"
+fi
 wait
