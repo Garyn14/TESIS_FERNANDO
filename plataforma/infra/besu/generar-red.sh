@@ -17,15 +17,30 @@ if [[ "${1:-}" == "--forzar" ]]; then
 fi
 rm -rf red tmp
 
+# Git Bash (Windows) reescribe las rutas que parecen de Unix (-w /trabajo pasaría a ser
+# C:/Program Files/Git/trabajo) y Docker Desktop necesita la carpeta en formato de Windows.
+if [[ "${OSTYPE:-}" == msys* || "${OSTYPE:-}" == cygwin* ]]; then
+  export MSYS_NO_PATHCONV=1
+  CARPETA="$(pwd -W)"
+  USUARIO=()
+else
+  CARPETA="$(pwd)"
+  USUARIO=(-u "$(id -u):$(id -g)")
+fi
+
 # Besu 26.10 genera los archivos pero termina con "Output directory already exists";
 # por eso se valida la salida en lugar del código de retorno.
-docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/trabajo" -w /trabajo "$BESU_IMAGE" \
+REGISTRO="$(mktemp)"
+docker run --rm "${USUARIO[@]}" -v "$CARPETA:/trabajo" -w /trabajo "$BESU_IMAGE" \
   operator generate-blockchain-config --config-file=qbftConfigFile.json --to=tmp \
-  --private-key-file-name=key >/dev/null 2>&1 || true
+  --private-key-file-name=key >"$REGISTRO" 2>&1 || true
 if [[ ! -f tmp/genesis.json || $(find tmp/keys -name key | wc -l) -ne 4 ]]; then
-  echo "No se pudo generar la configuración de la red." >&2
+  echo "No se pudo generar la configuración de la red. Salida de Docker:" >&2
+  tail -n 20 "$REGISTRO" >&2
+  rm -f "$REGISTRO"
   exit 1
 fi
+rm -f "$REGISTRO"
 
 mkdir -p red
 cp tmp/genesis.json red/genesis.json

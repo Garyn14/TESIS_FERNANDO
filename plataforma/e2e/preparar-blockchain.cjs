@@ -16,6 +16,8 @@ const billeteras = { administrador: nueva(), respaldo: nueva(), director: nueva(
 
 execFileSync('npx', ['hardhat', 'run', 'scripts/desplegar.ts', '--network', 'besuLocal'], {
   cwd: contratos,
+  // En Windows npx es npx.cmd y solo se encuentra a través del intérprete de comandos.
+  shell: process.platform === 'win32',
   stdio: ['ignore', 'ignore', 'inherit'],
   env: {
     ...process.env,
