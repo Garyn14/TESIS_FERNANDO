@@ -9,6 +9,17 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 MODO=${1:-prueba}
+
+# Requisitos: se comprueban antes de empezar, para fallar con un motivo claro.
+falta() { echo "Falta un requisito: $1" >&2; exit 1; }
+# Maven usa el Java de JAVA_HOME si está definido; si no, el java del PATH.
+JAVA_BIN="${JAVA_HOME:+$JAVA_HOME/bin/}java"
+version_java=$("$JAVA_BIN" -XshowSettings:properties -version 2>&1 | sed -n 's/.*java.specification.version = //p')
+[ "${version_java%%.*}" -ge 21 ] 2>/dev/null ||
+  falta "Java 21 o superior (Maven usaría $JAVA_BIN, versión ${version_java:-desconocida}). En Ubuntu/WSL: sudo apt install openjdk-21-jdk y, si JAVA_HOME está definido, apúntalo a /usr/lib/jvm/java-21-openjdk-amd64"
+version_node=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
+[ "$version_node" -ge 22 ] || falta "Node.js 22 o superior (versión actual: ${version_node})"
+docker info >/dev/null 2>&1 || falta "Docker en ejecución (enciende Docker Desktop y activa la integración con WSL)"
 INACTIVIDAD=$([ "$MODO" = demo ] && echo 30m || echo 1m)
 
 # Red Besu (HU06): se levanta si no responde.
