@@ -20,6 +20,8 @@ El documento de la revisión, para compartir con el PO, está en <https://claude
 - la calidad del incremento;
 - lo que se necesita para el Sprint 2.
 
+Guion para que el PO pruebe cada historia y deje su ok en Jira: [guion-de-pruebas.md](guion-de-pruebas.md).
+
 Evidencia por historia: [docs/evidencias/sprint-1](../../evidencias/sprint-1/).
 
 ## Cómo levantar la demostración
