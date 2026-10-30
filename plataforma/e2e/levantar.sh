@@ -17,6 +17,10 @@ if ! curl -s -X POST -H 'content-type: application/json' \
   [ -d infra/besu/red ] || infra/besu/generar-red.sh
   (cd infra && docker compose --profile besu up -d --wait)
 fi
+# Dependencias de un clon nuevo: se instalan solo si faltan.
+for proyecto in contracts frontend; do
+  [ -d "$proyecto/node_modules" ] || (echo "Instalando dependencias de $proyecto…" && cd "$proyecto" && npm ci --silent)
+done
 (cd e2e && npm install --silent)
 CONTRATO=$(cd e2e && node preparar-blockchain.cjs)
 echo "Contrato RegistroDocumentos: $CONTRATO"
