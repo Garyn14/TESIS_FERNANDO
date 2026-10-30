@@ -1,0 +1,6 @@
+# Finales de línea fijos para lo que se ejecuta en bash o dentro de contenedores Linux: en Windows,
+# Git podría convertirlos a CRLF y romperlos ("$'\r': command not found").
+*.sh text eol=lf
+mvnw text eol=lf
+plataforma/infra/ipfs/init/* text eol=lf
+*.toml text eol=lf
