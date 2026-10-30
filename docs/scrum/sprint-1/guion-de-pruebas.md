@@ -169,7 +169,7 @@ Si alguno no es correcto, indíquelo en el ticket.
 | 6.12 | Vaya a Usuarios y vuelva a Billetera del director. | El estado sigue siendo "Sin rol de firmante": se lee de la blockchain, no de lo que recuerda el navegador. |
 | 6.13 | En la ventana de incógnito, ingrese con `cmendoza` / `OtraPropia26`. | Su menú no incluye "Billetera del director": solo el Administrador la ve. |
 
-Que los documentos firmados antes de la revocación sigan siendo válidos se comprueba con documentos reales en el Sprint 4 (HU16–HU18), cuando existan las firmas. Aquí se valida el aviso y que el contrato solo quita el permiso de ahí en adelante.
+Que los documentos firmados antes de la revocación sigan siendo válidos se comprueba con documentos reales en el Sprint 3 (HU16–HU18), cuando existan las firmas. Aquí se valida el aviso y que el contrato solo quita el permiso de ahí en adelante.
 
 ---
 
