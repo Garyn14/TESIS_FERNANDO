@@ -17,7 +17,7 @@ El detalle de cada historia, con sus criterios de aceptación, está en [histori
 | Sprint | HU | Puntos | Estado |
 |---|---|---|---|
 | 0 | Infraestructura (AWS, Besu, IPFS, entorno) | — | ☐ |
-| 1 | HU01 Crear cuentas (3) · HU02 Editar/desactivar (2) · HU03 Login por rol (5) · HU04 Contraseña (3) · HU05 Asignar área (3) · HU06 Billetera del director (8) | 24 | ☐ |
+| 1 | HU01 Crear cuentas (3) · HU02 Editar/desactivar (2) · HU03 Login por rol (5) · HU04 Contraseña (3) · HU05 Asignar área (3) · HU06 Billetera del director (8) | 24 | ☑ Cerrado el 31/10/2026, 24 de 24 puntos ([acta](../scrum/sprint-1/revision.md#acta)) |
 | 2 | HU07 Tipo de documento (2) · HU08 Registro a solicitud de parte (8) · HU09 Emisión por lista (13) · **smart contract** | 23 | ☐ |
 | 3 | HU10 Pendientes (3) · HU11 Firmar uno o varios (13) · HU12 Firmar lote (8) · HU16 PDF + hash (5) · HU17 IPFS (5) · HU18 Sincronizar con la blockchain (13) | 47 | ☐ |
 | 4 | HU13 Observar (3) · HU14 Rechazar (3) · HU15 Corregir y reenviar (5) · HU29 Anular (8) · HU30 Reemitir (8) | 27 | ☐ |
