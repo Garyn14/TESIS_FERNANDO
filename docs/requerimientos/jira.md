@@ -6,20 +6,28 @@ Cargado el 28/10/2026 a partir de [historias_de_usuario.md](historias_de_usuario
 
 ## Calendario de sprints (reprogramado)
 
-Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario se reprogramó conservando la duración relativa: sprints de 1 semana y el Sprint 3 de dos semanas. El 29/10/2026, al cerrar el Sprint 0 antes de lo previsto, se **adelantó todo el calendario** y el Sprint 1 se inició ese mismo día.
+Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario se reprogramó conservando la duración relativa: sprints de 1 semana y el Sprint 3 de dos semanas. El 29/10/2026, al cerrar el Sprint 0 antes de lo previsto, se **adelantó todo el calendario** y el Sprint 1 se inició ese mismo día. El 01/11/2026, tras cerrar el Sprint 1 el 31/10 (4 días antes de lo previsto), se **volvió a adelantar el calendario**: el Sprint 2 empieza el 01/11 y los siguientes se corren 4 días, con la misma duración.
 
 | Sprint | Fechas | Estado | Objetivo | Historias | Puntos |
 |---|---|---|---|---|---|
 | 0 | 28/10 – 29/10 | Cerrado | Infraestructura: red Besu, IPFS privado y entorno de desarrollo | Tareas DRA-42, DRA-43, DRA-45, DRA-46, DRA-47 | — |
-| 1 | 29/10 – 04/11 | **Activo** | Usuarios, roles, áreas y billetera del director | HU01–HU06 + tarea DRA-44 (AWS, diferida) | 24 |
-| 2 | 05/11 – 11/11 | Futuro | Solicitudes individuales y por lista; smart contract | HU07–HU09 | 23 |
-| 3 | 12/11 – 25/11 | Futuro | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 | 47 |
-| 4 | 26/11 – 02/12 | Futuro | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
-| 5 | 03/12 – 09/12 | Futuro | Verificación pública de autenticidad | HU19–HU21 | 16 |
-| 6 | 10/12 – 16/12 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
+| 1 | 29/10 – 31/10 | Cerrado (24 de 24 puntos) | Usuarios, roles, áreas y billetera del director | HU01–HU06 | 24 |
+| 2 | 01/11 – 07/11 | Siguiente | Solicitudes individuales y por lista; smart contract | HU07–HU09 + tarea DRA-44 (AWS, diferida) | 23 |
+| 3 | 08/11 – 21/11 | Futuro | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 | 47 |
+| 4 | 22/11 – 28/11 | Futuro | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
+| 5 | 29/11 – 05/12 | Futuro | Verificación pública de autenticidad | HU19–HU21 | 16 |
+| 6 | 06/12 – 12/12 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
 | | | | | **Total** | **156** |
 
+**Avance:** 24 de 156 puntos (15 %). Velocidad del Sprint 1: 24 puntos.
+
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
+
+### Cierre del Sprint 1 (31/10/2026)
+
+- **Finalizadas:** las 6 historias, de HU01 a HU06 (DRA-12 a DRA-17). Son 24 de 24 puntos, aprobadas con el [guion de pruebas](../scrum/sprint-1/guion-de-pruebas.md). Acta en [revision.md](../scrum/sprint-1/revision.md#acta).
+- **Movida al Sprint 2:** DRA-44 (infraestructura en AWS), que sigue diferida hasta que se necesite para la demostración.
+- **Pendientes para el Sprint 2:** las 3 preguntas abiertas al PO (áreas, nombre oficial y custodia del respaldo) y los insumos para las plantillas.
 
 ### Cierre del Sprint 0 (29/10/2026)
 
@@ -59,7 +67,7 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 |---|---|
 | DRA-42 | Definir el stack técnico |
 | DRA-43 | Configurar el repositorio, la estructura del proyecto y la integración continua |
-| DRA-44 | Provisionar la infraestructura en AWS (diferida: movida al Sprint 1; se crea cuando se necesite para la demo, la aceptación y la posprueba) |
+| DRA-44 | Provisionar la infraestructura en AWS (diferida: movida al Sprint 1 y luego al Sprint 2; se crea cuando se necesite para la demo, la aceptación y la posprueba) |
 | DRA-45 | Desplegar la red Hyperledger Besu (QBFT, 4 validadores) |
 | DRA-46 | Desplegar el nodo IPFS privado |
 | DRA-47 | Procedimiento de inicialización del sistema (RF09) |
