@@ -12,7 +12,7 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 |---|---|---|---|---|---|
 | 0 | 28/10 – 29/10 | Cerrado | Infraestructura: red Besu, IPFS privado y entorno de desarrollo | Tareas DRA-42, DRA-43, DRA-45, DRA-46, DRA-47 | — |
 | 1 | 29/10 – 31/10 | Cerrado (24 de 24 puntos) | Usuarios, roles, áreas y billetera del director | HU01–HU06 | 24 |
-| 2 | 01/11 – 07/11 | Siguiente | Solicitudes individuales y por lista; smart contract | HU07–HU09 + tarea DRA-44 (AWS, diferida) | 23 |
+| 2 | 01/11 – 07/11 | **Activo** | Solicitudes individuales y por lista; smart contract | HU07–HU09 + tarea DRA-44 (AWS, diferida) | 23 |
 | 3 | 08/11 – 21/11 | Futuro | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 | 47 |
 | 4 | 22/11 – 28/11 | Futuro | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
 | 5 | 29/11 – 05/12 | Futuro | Verificación pública de autenticidad | HU19–HU21 | 16 |
