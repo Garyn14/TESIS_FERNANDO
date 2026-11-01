@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { documento as consultar, fechaCorta, type Documento } from './api'
 import Certificado from './Certificado'
@@ -17,13 +17,25 @@ export default function PaginaDetalleDocumento({ codigo }: { codigo: string }) {
       .catch((e) => setError(e instanceof ErrorApi ? e.message : 'No se pudo abrir el documento.'))
   }, [codigo])
 
-  const datos: [string, string][] = doc
+  const datos: [string, ReactNode][] = doc
     ? [
         ['Tipo', doc.tipoNombre],
         ['Beneficiario', `${doc.nombres} ${doc.apellidos}`],
         ['Código', doc.codigo],
         ['DNI', doc.dni],
-        ['N.° de expediente', doc.numeroExpediente],
+        // HU09: los de una emisión por lista no tienen expediente, sino lote.
+        doc.lote
+          ? [
+              'Lote',
+              <a
+                key="lote"
+                href={`#/mis-documentos/lote/${doc.lote}`}
+                className="text-institutional hover:underline"
+              >
+                Lote {doc.lote}
+              </a>,
+            ]
+          : ['N.° de expediente', doc.numeroExpediente],
         ['Área', doc.areaNombre],
         ['Enviado por', doc.registradoPor],
         ['Fecha de envío', fechaCorta(doc.registradoEn)],

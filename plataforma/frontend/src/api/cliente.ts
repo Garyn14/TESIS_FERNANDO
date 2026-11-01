@@ -44,7 +44,8 @@ export async function solicitar<T>(ruta: string, opciones: Opciones = {}): Promi
   const { sinAvisoDeSesion, ...init } = opciones
   const cabeceras = new Headers(init.headers)
   cabeceras.set('Accept', 'application/json')
-  if (init.body) cabeceras.set('Content-Type', 'application/json')
+  // Un FormData (archivo) lleva su propio tipo, con el separador de partes.
+  if (typeof init.body === 'string') cabeceras.set('Content-Type', 'application/json')
   const csrf = tokenCsrf()
   if (csrf) cabeceras.set('X-XSRF-TOKEN', decodeURIComponent(csrf))
 

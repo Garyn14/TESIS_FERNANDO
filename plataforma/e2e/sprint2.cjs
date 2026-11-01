@@ -1,6 +1,6 @@
 // Prueba de punta a punta real del Sprint 2: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). Crea sus propias cuentas desde la
-// pantalla Usuarios y recorre HU07 y HU08.
+// pantalla Usuarios y recorre HU07, HU08 y HU09.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
@@ -56,6 +56,7 @@ const paso = async (nombre, fn) => {
       ['rquispe', 'Rosa Quispe Huamán', 'AREA_ENCARGADA', 'CAPACITACION'],
       ['pmorales', 'Pedro Morales Ccanto', 'AREA_ENCARGADA', 'ADMINISTRACION'],
       ['cmendoza', 'Ing. Carlos Mendoza Rivera', 'DIRECTOR', null],
+      ['lhuaman', 'Luz Huamán Ccori', 'AREA_ENCARGADA', 'CAPACITACION'],
     ]) {
       await admin.getByRole('button', { name: 'Nueva cuenta' }).click()
       await campo(admin, 'Nombre de usuario').fill(u)
@@ -274,6 +275,133 @@ const paso = async (nombre, fn) => {
     assert.equal(await api(rosa2, '/api/documentos/' + codigo), 403)
     await foto(rosa2, 'hu08_08_documento_de_otra_area')
     await rosa2.context().close()
+  })
+
+  // ------------------------------------------------------------- HU09: emisión por lista
+  const luz = await nueva()
+  const psql = (sql) =>
+    execFileSync('docker', ['exec', 'e2e-pg', 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c', sql])
+      .toString()
+      .trim()
+  const celda = (p, columna, fila) => p.getByLabel(`${columna} de la fila ${fila}`, { exact: true })
+  let lote
+  await paso('HU09 · Los datos del evento se validan y el área organizadora viene completa', async () => {
+    await primerIngreso(luz, 'lhuaman', TEMPORAL, PROPIA)
+    await luz.getByRole('link', { name: 'Nuevo documento' }).click()
+    await luz.getByRole('link', { name: /Certificado de Capacitación/ }).click()
+    await luz.getByRole('heading', { name: 'Emisión por lista: Certificado de Capacitación' }).waitFor()
+    assert.equal(await luz.getByLabel(/^Área organizadora/).inputValue(), 'Área de Capacitación')
+    await luz.getByRole('button', { name: 'Continuar' }).click()
+    assert.equal(await luz.getByText('Complete este campo.').count(), 3)
+    await luz.getByLabel(/^Nombre del taller/).fill('Manejo integrado de plagas en café')
+    await campo(luz, 'Fecha de inicio').fill('2026-09-14')
+    await campo(luz, 'Fecha de fin').fill('2026-09-16')
+    await luz.getByLabel(/^Duración \(horas\)/).fill('24')
+    await luz.getByLabel(/^Lugar/).fill('Local comunal de Río Negro, Satipo')
+    await foto(luz, 'hu09_01_datos_del_evento')
+    await luz.getByRole('button', { name: 'Continuar' }).click()
+    await luz.getByText('Aún no hay beneficiarios. Importe la lista desde Excel o agréguelos uno por uno.').waitFor()
+  })
+  await paso('HU09 · La plantilla Excel se descarga con sus columnas', async () => {
+    const [descarga] = await Promise.all([
+      luz.waitForEvent('download'),
+      luz.getByRole('button', { name: 'Descargar plantilla Excel' }).click(),
+    ])
+    assert.equal(descarga.suggestedFilename(), 'plantilla-beneficiarios.xlsx')
+    const ruta = await descarga.path()
+    // Un .xlsx es un ZIP: empieza con "PK".
+    assert.equal(require('node:fs').readFileSync(ruta).subarray(0, 2).toString(), 'PK')
+    await luz.getByText('Plantilla descargada.').waitFor()
+  })
+  await paso('HU09 · Importa la lista desde Excel y señala la fila con error', async () => {
+    await luz.getByLabel('Archivo Excel de beneficiarios').setInputFiles(`${__dirname}/datos/beneficiarios-prototipo.xlsx`)
+    await luz.getByText('Se importaron 8 beneficiarios desde Excel.').waitFor()
+    assert.equal(await celda(luz, 'Nombres', 8).inputValue(), 'Gladys')
+    await luz.getByText('El DNI debe tener 8 dígitos.').waitFor()
+    await luz.getByText('Hay 1 error en la lista. Corríjalo para continuar.').waitFor()
+    assert.ok(await luz.getByRole('button', { name: 'Continuar a vista previa' }).isDisabled())
+    await foto(luz, 'hu09_02_importado_con_error')
+    await celda(luz, 'DNI', 5).fill('44198236')
+    await luz.getByText('✓ 8 beneficiarios listos').waitFor()
+    await foto(luz, 'hu09_03_lista_corregida')
+  })
+  await paso('HU09 · Un DNI repetido se señala en las dos filas', async () => {
+    await luz.getByRole('button', { name: 'Agregar beneficiario' }).click()
+    await celda(luz, 'Nombres', 9).fill('Juan Carlos')
+    await celda(luz, 'Apellidos', 9).fill('Ccori Mamani')
+    await celda(luz, 'DNI', 9).fill('45218736')
+    await luz.getByText('El DNI se repite en la fila 9.').waitFor()
+    await luz.getByText('El DNI se repite en la fila 1.').waitFor()
+    await foto(luz, 'hu09_04_dni_repetido')
+    await luz.getByRole('button', { name: 'Eliminar la fila 9' }).click()
+    await luz.getByText('✓ 8 beneficiarios listos').waitFor()
+  })
+  await paso('HU09 · La vista previa muestra un certificado de ejemplo y la relación completa', async () => {
+    await luz.getByRole('button', { name: 'Continuar a vista previa' }).click()
+    const resumen = luz.getByRole('complementary', { name: 'Resumen del lote' })
+    await resumen.getByText('8 certificados').waitFor()
+    await resumen.getByText('del 14 al 16 de setiembre de 2026').waitFor()
+    assert.equal(await resumen.getByRole('listitem').count(), 8)
+    const certificado = luz.getByRole('figure')
+    await certificado.getByText('VISTA PREVIA').waitFor()
+    await certificado.getByText('Juan Ccori Pari', { exact: false }).waitFor()
+    await certificado
+      .getByText("'Manejo integrado de plagas en café', realizado del 14 al 16 de setiembre de 2026", { exact: false })
+      .waitFor()
+    await foto(luz, 'hu09_05_vista_previa')
+    await luz.getByRole('button', { name: 'Volver' }).click()
+    assert.equal(await celda(luz, 'DNI', 5).inputValue(), '44198236')
+    await luz.getByRole('button', { name: 'Continuar a vista previa' }).click()
+    await resumen.waitFor()
+  })
+  await paso('HU09 · Al enviar se crea el lote con un documento Pendiente por beneficiario', async () => {
+    await luz.getByRole('button', { name: 'Enviar a revisión' }).click()
+    const ventana = luz.getByRole('dialog', { name: '¿Enviar a revisión?' })
+    await ventana.getByText('¿Enviar 8 certificados a revisión del Director?', { exact: false }).waitFor()
+    await foto(luz, 'hu09_06_confirmar_envio')
+    await ventana.getByRole('button', { name: 'Enviar' }).click()
+    const aviso = luz.getByRole('status')
+    await aviso.getByText(/Se enviaron 8 certificados a revisión \(Lote \d{4}-\d{3}\)/).waitFor()
+    lote = (await aviso.textContent()).match(/Lote (\d{4}-\d{3})/)[1]
+    assert.equal(lote, `${new Date().getFullYear()}-001`)
+    await foto(luz, 'hu09_07_enviado')
+  })
+  await paso('HU09 · En la base hay 8 documentos del lote, cada uno con su código, token y HMAC', async () => {
+    const fila = psql(
+      `SELECT count(*), count(DISTINCT d.codigo), count(DISTINCT d.token_qr), count(DISTINCT d.dni_hmac),
+              bool_and(d.estado = 'PENDIENTE' AND d.origen = 'OFICIO' AND d.numero_expediente IS NULL),
+              (SELECT count(*) FROM documento_historial h WHERE h.documento_id IN (SELECT id FROM documento WHERE lote_id = l.id))
+       FROM documento d JOIN lote l ON l.id = d.lote_id WHERE l.numero = '${lote}' GROUP BY l.id`,
+    ).split('|')
+    assert.deepEqual(fila, ['8', '8', '8', '8', 't', '8'])
+  })
+  await paso('HU09 · Mis documentos muestra el lote en una fila y su detalle lista los 8 certificados', async () => {
+    await luz.getByRole('link', { name: 'Mis documentos' }).click()
+    const fila = luz.locator('tr', { hasText: `Lote ${lote}` })
+    await fila.getByText('8 beneficiarios').waitFor()
+    await fila.getByText('Pendiente').waitFor()
+    await foto(luz, 'hu09_08_mis_documentos')
+    await fila.getByRole('link').click()
+    await luz.getByRole('heading', { name: `Lote ${lote}` }).waitFor()
+    const tabla = luz.getByRole('table', { name: 'Certificados del lote' })
+    assert.equal(await tabla.locator('tbody tr').count(), 8)
+    assert.equal(await luz.locator('main').getByRole('button').count(), 0)
+    await foto(luz, 'hu09_09_detalle_del_lote')
+    await tabla.locator('tbody tr').first().getByRole('link').click()
+    await luz.getByRole('link', { name: `Lote ${lote}` }).waitFor()
+    await luz.getByRole('figure').getByText('Juan Ccori Pari', { exact: false }).waitFor()
+    await foto(luz, 'hu09_10_certificado_del_lote')
+  })
+  await paso('HU09 · Un lote de otra área no se muestra', async () => {
+    const pedro2 = await nueva()
+    await ingresar(pedro2, 'pmorales', PROPIA)
+    await pedro2.getByRole('navigation', { name: 'Menú principal' }).waitFor()
+    await pedro2.goto(URL + '#/mis-documentos/lote/' + lote)
+    await pedro2.getByRole('alert').getByText('Este lote no pertenece a su área.').waitFor()
+    assert.equal(await api(pedro2, '/api/lotes/' + lote), 403)
+    await foto(pedro2, 'hu09_11_lote_de_otra_area')
+    await pedro2.context().close()
+    await luz.context().close()
   })
 
   await b.close()

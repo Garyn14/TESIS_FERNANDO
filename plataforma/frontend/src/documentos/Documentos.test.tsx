@@ -16,15 +16,23 @@ const TRABAJO: TipoDocumento = {
   titulo: 'CERTIFICADO',
   origen: 'SOLICITUD_PARTE',
   campos: [
-    { nombre: 'cargo', etiqueta: 'Cargo', tipo: 'TEXTO', ayuda: null, opciones: [] },
+    { nombre: 'cargo', etiqueta: 'Cargo', tipo: 'TEXTO', ayuda: null, opciones: [], maximo: 100 },
     {
       nombre: 'fechaInicio',
       etiqueta: 'Fecha de inicio',
       tipo: 'FECHA',
       ayuda: null,
       opciones: [],
+      maximo: 0,
     },
-    { nombre: 'fechaFin', etiqueta: 'Fecha de fin', tipo: 'FECHA', ayuda: null, opciones: [] },
+    {
+      nombre: 'fechaFin',
+      etiqueta: 'Fecha de fin',
+      tipo: 'FECHA',
+      ayuda: null,
+      opciones: [],
+      maximo: 100,
+    },
   ],
 }
 
