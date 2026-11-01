@@ -1,7 +1,17 @@
 package pe.drasatipo.plataforma.areas;
 
+import java.util.List;
+import pe.drasatipo.plataforma.documentos.CampoPlantilla;
+import pe.drasatipo.plataforma.documentos.PlantillasDeDocumento;
+
+/** Tipo de documento con los campos de su formulario (HU08); sin campos para los de oficio. */
 public record TipoDocumentoRespuesta(
-    String codigo, String nombre, String descripcion, String titulo, String origen) {
+    String codigo,
+    String nombre,
+    String descripcion,
+    String titulo,
+    String origen,
+    List<CampoPlantilla> campos) {
 
   static TipoDocumentoRespuesta de(TipoDocumento tipo) {
     return new TipoDocumentoRespuesta(
@@ -9,6 +19,7 @@ public record TipoDocumentoRespuesta(
         tipo.getNombre(),
         tipo.getDescripcion(),
         tipo.getTitulo(),
-        tipo.getOrigen());
+        tipo.getOrigen(),
+        PlantillasDeDocumento.campos(tipo.getCodigo()));
   }
 }
