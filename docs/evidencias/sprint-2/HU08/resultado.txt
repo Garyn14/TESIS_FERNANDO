@@ -1,0 +1,14 @@
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ HU07 · Nuevo documento lista solo los tipos del área, con su origen
+✓ HU07 · Un tipo de oficio abre el registro por lista
+✓ HU07 · Un tipo de otra área no se abre por su dirección ni por la API
+✓ HU07 · Un tipo a solicitud de parte abre el registro individual
+✓ HU07 · Si cambia el área con la sesión abierta, al volver ve los tipos nuevos
+✓ HU07 · Otro rol no ve la opción ni abre el formulario
+✓ HU08 · Exige el expediente y valida cada campo antes de la vista previa
+✓ HU08 · La vista previa usa la plantilla del tipo y se puede volver sin perder datos
+✓ HU08 · Al enviar, con confirmación, queda Pendiente con su código de verificación
+✓ HU08 · En la base quedan el token del QR y el HMAC del DNI, nunca el DNI en su lugar
+✓ HU08 · Mis documentos lo muestra Pendiente y su detalle no se puede editar
+✓ HU08 · El mismo expediente no se registra dos veces
+✓ HU08 · Un documento de otra área no se lista ni se abre por su dirección
