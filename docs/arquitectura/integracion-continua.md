@@ -142,6 +142,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 29/10/2026 | [40944693594](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/40944693594) | `DRA-17-billetera-y-firmante` | ✓ Cinco jobs en verde con HU06: contrato compilado con el compilador oficial, 15 pruebas de Hardhat y RegistroDocumentos probado en la red Besu real (92 pruebas de backend, 59 de frontend) |
 | 01/11/2026 | [41333365036](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41333365036) | `DRA-18-tipo-de-documento` | ✓ Cinco jobs en verde con HU07, la primera del Sprint 2 (99 pruebas de backend, 66 de frontend) |
 | 01/11/2026 | [41335816519](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41335816519) | `DRA-19-solicitud-de-parte` | ✓ Cinco jobs en verde con HU08: migración V10 de documentos validada contra PostgreSQL 17 real (111 pruebas de backend, 76 de frontend) |
+| 01/11/2026 | [41347416010](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41347416010) | `DRA-20-emision-por-lista` | ✓ Cinco jobs en verde con HU09: migración V11 de lotes y lectura de Excel con Apache POI (123 pruebas de backend, 85 de frontend) |
 
 ## 9. Pendientes
 
