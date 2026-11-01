@@ -1,0 +1,23 @@
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ HU07 · Nuevo documento lista solo los tipos del área, con su origen
+✓ HU07 · Un tipo de oficio abre el registro por lista
+✓ HU07 · Un tipo de otra área no se abre por su dirección ni por la API
+✓ HU07 · Un tipo a solicitud de parte abre el registro individual
+✓ HU07 · Si cambia el área con la sesión abierta, al volver ve los tipos nuevos
+✓ HU07 · Otro rol no ve la opción ni abre el formulario
+✓ HU08 · Exige el expediente y valida cada campo antes de la vista previa
+✓ HU08 · La vista previa usa la plantilla del tipo y se puede volver sin perder datos
+✓ HU08 · Al enviar, con confirmación, queda Pendiente con su código de verificación
+✓ HU08 · En la base quedan el token del QR y el HMAC del DNI, nunca el DNI en su lugar
+✓ HU08 · Mis documentos lo muestra Pendiente y su detalle no se puede editar
+✓ HU08 · El mismo expediente no se registra dos veces
+✓ HU08 · Un documento de otra área no se lista ni se abre por su dirección
+✓ HU09 · Los datos del evento se validan y el área organizadora viene completa
+✓ HU09 · La plantilla Excel se descarga con sus columnas
+✓ HU09 · Importa la lista desde Excel y señala la fila con error
+✓ HU09 · Un DNI repetido se señala en las dos filas
+✓ HU09 · La vista previa muestra un certificado de ejemplo y la relación completa
+✓ HU09 · Al enviar se crea el lote con un documento Pendiente por beneficiario
+✓ HU09 · En la base hay 8 documentos del lote, cada uno con su código, token y HMAC
+✓ HU09 · Mis documentos muestra el lote en una fila y su detalle lista los 8 certificados
+✓ HU09 · Un lote de otra área no se muestra

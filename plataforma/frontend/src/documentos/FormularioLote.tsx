@@ -296,7 +296,7 @@ export default function FormularioLote({
                 <table className="w-full text-left">
                   <thead className="border-b border-line text-sm text-muted">
                     <tr>
-                      <th className="px-3 py-2 font-medium">N.°</th>
+                      <th className="px-3 py-2 font-medium whitespace-nowrap">N.°</th>
                       {COLUMNAS.map(([, titulo]) => (
                         <th key={titulo} className="px-3 py-2 font-medium">
                           {titulo}

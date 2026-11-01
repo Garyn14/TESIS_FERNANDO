@@ -386,7 +386,7 @@ const paso = async (nombre, fn) => {
     const tabla = luz.getByRole('table', { name: 'Certificados del lote' })
     assert.equal(await tabla.locator('tbody tr').count(), 8)
     assert.equal(await luz.locator('main').getByRole('button').count(), 0)
-    await foto(luz, 'hu09_09_detalle_del_lote')
+    await luz.screenshot({ path: `${out}/hu09_09_detalle_del_lote.png`, fullPage: true })
     await tabla.locator('tbody tr').first().getByRole('link').click()
     await luz.getByRole('link', { name: `Lote ${lote}` }).waitFor()
     await luz.getByRole('figure').getByText('Juan Ccori Pari', { exact: false }).waitFor()
