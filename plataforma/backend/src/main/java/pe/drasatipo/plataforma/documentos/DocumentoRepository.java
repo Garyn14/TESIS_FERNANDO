@@ -11,10 +11,13 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
 
   boolean existsByNumeroExpediente(String numeroExpediente);
 
-  @EntityGraph(attributePaths = {"tipo", "area", "registradoPor"})
+  @EntityGraph(attributePaths = {"tipo", "area", "registradoPor", "lote"})
   Optional<Documento> findByCodigo(String codigo);
 
   /** Mis documentos: los de un área, del más reciente al más antiguo (RF05). */
-  @EntityGraph(attributePaths = {"tipo"})
-  List<Documento> findByAreaIdOrderByRegistradoEnDesc(Short areaId);
+  @EntityGraph(attributePaths = {"tipo", "lote"})
+  List<Documento> findByAreaIdOrderByRegistradoEnDescIdAsc(Short areaId);
+
+  /** Documentos de un lote, en el orden de la relación de beneficiarios (HU09). */
+  List<Documento> findByLoteIdOrderById(Long loteId);
 }

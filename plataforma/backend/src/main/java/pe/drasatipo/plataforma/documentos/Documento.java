@@ -55,6 +55,11 @@ public class Documento {
   @Column(name = "numero_expediente", updatable = false)
   private String numeroExpediente;
 
+  /** Lote de la emisión por lista (HU09); nulo para los de solicitud de parte. */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "lote_id", updatable = false)
+  private Lote lote;
+
   @Column(nullable = false, updatable = false)
   private String nombres;
 
@@ -83,6 +88,7 @@ public class Documento {
 
   protected Documento() {}
 
+  /** Documento a solicitud de parte (HU08). */
   Documento(
       String codigo,
       String tokenQr,
@@ -90,18 +96,61 @@ public class Documento {
       Area area,
       String dniHmac,
       Usuario registradoPor) {
+    this(
+        codigo,
+        tokenQr,
+        solicitud.tipo(),
+        area,
+        null,
+        solicitud.numeroExpediente(),
+        new Beneficiario(solicitud.nombres(), solicitud.apellidos(), solicitud.dni()),
+        dniHmac,
+        solicitud.datos(),
+        solicitud.texto(),
+        registradoPor);
+  }
+
+  /** Documento de un beneficiario de una emisión por lista (HU09). */
+  Documento(String codigo, String tokenQr, Lote lote, Beneficiario beneficiario, String dniHmac) {
+    this(
+        codigo,
+        tokenQr,
+        lote.getTipo(),
+        lote.getArea(),
+        lote,
+        null,
+        beneficiario,
+        dniHmac,
+        lote.getDatos(),
+        lote.getTexto(),
+        lote.getRegistradoPor());
+  }
+
+  private Documento(
+      String codigo,
+      String tokenQr,
+      TipoDocumento tipo,
+      Area area,
+      Lote lote,
+      String numeroExpediente,
+      Beneficiario beneficiario,
+      String dniHmac,
+      Map<String, String> datos,
+      String texto,
+      Usuario registradoPor) {
     this.codigo = codigo;
     this.tokenQr = tokenQr;
-    this.tipo = solicitud.tipo();
+    this.tipo = tipo;
     this.area = area;
-    this.origen = solicitud.tipo().getOrigen();
-    this.numeroExpediente = solicitud.numeroExpediente();
-    this.nombres = solicitud.nombres();
-    this.apellidos = solicitud.apellidos();
-    this.dni = solicitud.dni();
+    this.origen = tipo.getOrigen();
+    this.lote = lote;
+    this.numeroExpediente = numeroExpediente;
+    this.nombres = beneficiario.nombres();
+    this.apellidos = beneficiario.apellidos();
+    this.dni = beneficiario.dni();
     this.dniHmac = dniHmac;
-    this.datos = Map.copyOf(solicitud.datos());
-    this.texto = solicitud.texto();
+    this.datos = Map.copyOf(datos);
+    this.texto = texto;
     this.registradoPor = registradoPor;
   }
 
@@ -135,6 +184,10 @@ public class Documento {
 
   public String getNumeroExpediente() {
     return numeroExpediente;
+  }
+
+  public Lote getLote() {
+    return lote;
   }
 
   public String getNombres() {

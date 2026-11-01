@@ -12,7 +12,8 @@ import pe.drasatipo.plataforma.comun.DatosInvalidosException;
 
 /**
  * Normaliza y valida una solicitud a solicitud de parte (HU08, RF11, RF12). Los errores se
- * devuelven por campo; los de la plantilla, como {@code datos.cargo}.
+ * devuelven por campo; los de la plantilla, como {@code datos.cargo}. Las reglas de los datos del
+ * beneficiario y de la plantilla se comparten con la emisión por lista (HU09).
  */
 final class ValidacionDeSolicitud {
 
@@ -21,6 +22,7 @@ final class ValidacionDeSolicitud {
 
   private static final Pattern NOMBRE = Pattern.compile("[\\p{L}][\\p{L} '\\-]{1,99}");
   private static final Pattern DNI = Pattern.compile("\\d{8}");
+  private static final Pattern ENTERO = Pattern.compile("\\d{1,9}");
   private static final ZoneId ZONA = ZoneId.of("America/Lima");
 
   private ValidacionDeSolicitud() {}
@@ -38,24 +40,43 @@ final class ValidacionDeSolicitud {
     String nombres = nombre(solicitud.nombres(), "nombres", "Ingrese los nombres.", errores);
     String apellidos =
         nombre(solicitud.apellidos(), "apellidos", "Ingrese los apellidos.", errores);
-    String dni = limpiar(solicitud.dni());
-    if (dni.isEmpty()) {
-      errores.put("dni", "Ingrese el DNI.");
-    } else if (!DNI.matcher(dni).matches()) {
-      errores.put("dni", "El DNI debe tener 8 dígitos.");
-    }
+    String dni = dni(solicitud.dni(), "dni", errores);
+    Map<String, String> datos = datos(plantilla, solicitud.datos(), errores);
 
-    Map<String, String> recibidos = solicitud.datos() == null ? Map.of() : solicitud.datos();
+    if (!errores.isEmpty()) {
+      throw new DatosInvalidosException(errores);
+    }
+    return new SolicitudValidada(
+        tipo, expediente, nombres, apellidos, dni, datos, plantilla.texto().apply(datos));
+  }
+
+  /** Valida los campos de la plantilla; los errores se guardan como {@code datos.<campo>}. */
+  static Map<String, String> datos(
+      PlantillasDeDocumento.Plantilla plantilla,
+      Map<String, String> recibidos,
+      Map<String, String> errores) {
+    Map<String, String> valores = recibidos == null ? Map.of() : recibidos;
     Map<String, String> datos = new LinkedHashMap<>();
     for (CampoPlantilla campo : plantilla.campos()) {
-      String valor = limpiar(recibidos.get(campo.nombre()));
+      String valor = limpiar(valores.get(campo.nombre()));
       String clave = "datos." + campo.nombre();
       switch (campo.tipo()) {
         case TEXTO -> {
           if (valor.isEmpty()) {
             errores.put(clave, "Complete este campo.");
-          } else if (valor.length() < 2 || valor.length() > 100) {
-            errores.put(clave, "Use de 2 a 100 caracteres.");
+          } else if (valor.length() < 2 || valor.length() > campo.maximo()) {
+            errores.put(clave, "Use de 2 a %d caracteres.".formatted(campo.maximo()));
+          }
+        }
+        case NUMERO -> {
+          if (valor.isEmpty()) {
+            errores.put(clave, "Complete este campo.");
+          } else if (!ENTERO.matcher(valor).matches()
+              || Integer.parseInt(valor) < 1
+              || Integer.parseInt(valor) > campo.maximo()) {
+            errores.put(clave, "Ingrese un número entero de 1 a %d.".formatted(campo.maximo()));
+          } else {
+            valor = String.valueOf(Integer.parseInt(valor));
           }
         }
         case OPCION -> {
@@ -75,21 +96,25 @@ final class ValidacionDeSolicitud {
             .isBefore(LocalDate.parse(datos.get("fechaInicio")))) {
       errores.put("datos.fechaFin", "La fecha de fin no puede ser anterior a la de inicio.");
     }
-
-    if (!errores.isEmpty()) {
-      throw new DatosInvalidosException(errores);
-    }
-    return new SolicitudValidada(
-        tipo, expediente, nombres, apellidos, dni, datos, plantilla.texto().apply(datos));
+    return datos;
   }
 
-  private static String nombre(
-      String valor, String campo, String vacio, Map<String, String> errores) {
+  static String nombre(String valor, String campo, String vacio, Map<String, String> errores) {
     String limpio = limpiar(valor);
     if (limpio.isEmpty()) {
       errores.put(campo, vacio);
     } else if (!NOMBRE.matcher(limpio).matches()) {
       errores.put(campo, "Use solo letras, espacios, apóstrofo o guion (de 2 a 100 caracteres).");
+    }
+    return limpio;
+  }
+
+  static String dni(String valor, String campo, Map<String, String> errores) {
+    String limpio = limpiar(valor);
+    if (limpio.isEmpty()) {
+      errores.put(campo, "Ingrese el DNI.");
+    } else if (!DNI.matcher(limpio).matches()) {
+      errores.put(campo, "El DNI debe tener 8 dígitos.");
     }
     return limpio;
   }
@@ -109,7 +134,7 @@ final class ValidacionDeSolicitud {
   }
 
   /** Quita los espacios de los extremos y deja uno solo entre palabras. */
-  private static String limpiar(String valor) {
+  static String limpiar(String valor) {
     return valor == null ? "" : valor.strip().replaceAll("\\s+", " ");
   }
 }
