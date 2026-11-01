@@ -40,6 +40,10 @@ plataforma:
     nombre: ${BESU_NOMBRE_RED:Plataforma DRA Satipo}
     rpc-publica: ${BESU_RPC_PUBLICA:http://localhost:8545}
     contrato: ${PLATAFORMA_CONTRATO_DIRECCION:}
+  # Clave del HMAC-SHA256 del DNI (HU08, RF17), de al menos 32 caracteres. En AWS va en el gestor
+  # de secretos (RNF03). Sin clave no se registran documentos.
+  dni:
+    clave-hmac: ${PLATAFORMA_CLAVE_HMAC_DNI:}
   # Primera cuenta de Administrador (RF09). Sin contraseña no se crea la cuenta.
   inicializacion:
     admin-usuario: ${PLATAFORMA_ADMIN_USUARIO:admin}

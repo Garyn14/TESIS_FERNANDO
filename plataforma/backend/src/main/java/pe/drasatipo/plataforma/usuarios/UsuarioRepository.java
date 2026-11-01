@@ -32,6 +32,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
   Optional<Usuario> findByBilleteraIgnoreCase(String billetera);
 
+  /** HU08: el Director cuyo nombre va en la firma de la vista previa. */
+  Optional<Usuario> findFirstByRolCodigoAndActivoTrueOrderByCreadoEn(String codigoRol);
+
   /** HU06: cuentas con rol Director o con billetera registrada (aunque ya no sean Director). */
   @EntityGraph(attributePaths = {"rol", "area"})
   @Query(

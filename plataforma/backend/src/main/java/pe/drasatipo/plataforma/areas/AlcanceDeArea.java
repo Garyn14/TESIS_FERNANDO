@@ -44,4 +44,14 @@ public class AlcanceDeArea {
   public Optional<TipoDocumento> tipoPermitido(Usuario cuenta, String codigo) {
     return tiposPermitidos(cuenta).stream().filter(t -> t.getCodigo().equals(codigo)).findFirst();
   }
+
+  /**
+   * True si la cuenta puede ver lo registrado por un área: la suya, o todas si no está limitada.
+   */
+  public boolean puedeVerArea(Usuario cuenta, Area area) {
+    if (!estaLimitada(cuenta)) {
+      return true;
+    }
+    return cuenta.getArea() != null && cuenta.getArea().getId().equals(area.getId());
+  }
 }
