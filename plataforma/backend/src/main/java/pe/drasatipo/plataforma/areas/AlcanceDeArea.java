@@ -1,6 +1,7 @@
 package pe.drasatipo.plataforma.areas;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 import pe.drasatipo.plataforma.usuarios.Rol;
 import pe.drasatipo.plataforma.usuarios.Usuario;
@@ -37,5 +38,10 @@ public class AlcanceDeArea {
       return List.of();
     }
     return area.getTiposDocumento().stream().filter(TipoDocumento::isActivo).toList();
+  }
+
+  /** Un tipo de documento por su código, solo si la cuenta puede registrarlo (HU07). */
+  public Optional<TipoDocumento> tipoPermitido(Usuario cuenta, String codigo) {
+    return tiposPermitidos(cuenta).stream().filter(t -> t.getCodigo().equals(codigo)).findFirst();
   }
 }

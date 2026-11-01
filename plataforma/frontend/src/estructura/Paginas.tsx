@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { tiposPermitidos, type TipoDocumento } from '../usuarios/api'
+import { tiposPermitidos, type TipoDocumento } from '../documentos/api'
 import type { Sesion } from '../sesion/api'
 
 const saludo = (hora: number) =>
