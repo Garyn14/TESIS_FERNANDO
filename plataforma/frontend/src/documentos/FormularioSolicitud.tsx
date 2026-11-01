@@ -1,6 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { ErrorApi } from '../api/cliente'
-import { BOTON_PRIMARIO, BOTON_SECUNDARIO, CAMPO } from '../comun/estilos'
+import { BOTON_PRIMARIO, BOTON_SECUNDARIO } from '../comun/estilos'
 import Modal from '../comun/Modal'
 import {
   registrar,
@@ -10,6 +10,7 @@ import {
   type TipoDocumento,
   type VistaPrevia,
 } from './api'
+import CampoFormulario, { CampoDePlantilla } from './CampoFormulario'
 import Certificado from './Certificado'
 import { limpiar, validarSolicitud, type Errores } from './validacion'
 
@@ -50,6 +51,12 @@ export default function FormularioSolicitud({ tipo }: { tipo: TipoDocumento }) {
     setDatos((d) => ({ ...d, [campo]: valor }))
     setErrores((e) => ({ ...e, [campo]: '' }))
   }
+  const campo = (nombre: string) => ({
+    id: `${id}-${nombre}`,
+    valor: datos[nombre],
+    error: errores[nombre],
+    onCambiar: (valor: string) => cambiar(nombre, valor),
+  })
 
   /** Muestra los errores del servidor junto a su campo, o el mensaje general. */
   const fallo = (e: unknown) => {
@@ -110,27 +117,6 @@ export default function FormularioSolicitud({ tipo }: { tipo: TipoDocumento }) {
       </div>
     )
 
-  const propiedades = (nombre: string) => ({
-    id: `${id}-${nombre}`,
-    value: datos[nombre],
-    onChange: (e: { target: { value: string } }) => cambiar(nombre, e.target.value),
-    'aria-invalid': errores[nombre] ? true : undefined,
-    'aria-describedby': errores[nombre] ? `${id}-${nombre}-error` : undefined,
-    className: `${CAMPO} ${errores[nombre] ? 'border-red-600' : 'border-line'}`,
-  })
-  const etiqueta = (nombre: string, texto: string, ayuda?: string | null) => (
-    <label htmlFor={`${id}-${nombre}`} className="font-medium">
-      {texto}
-      {ayuda && <span className="ml-2 font-normal text-muted">{ayuda}</span>}
-    </label>
-  )
-  const error = (nombre: string) =>
-    errores[nombre] && (
-      <p id={`${id}-${nombre}-error`} className="mt-1 text-red-700">
-        {errores[nombre]}
-      </p>
-    )
-
   return (
     <>
       <ol aria-label="Pasos" className="mt-4 flex flex-wrap gap-4 text-sm text-muted">
@@ -187,47 +173,17 @@ export default function FormularioSolicitud({ tipo }: { tipo: TipoDocumento }) {
         </div>
       ) : (
         <form noValidate onSubmit={continuar} className="mt-6 grid gap-4 md:grid-cols-2">
-          <div>
-            {etiqueta('numeroExpediente', 'N.° de expediente', 'Ej.: EXP-2026-004817')}
-            <input {...propiedades('numeroExpediente')} autoComplete="off" />
-            {error('numeroExpediente')}
-          </div>
-          <div>
-            {etiqueta('dni', 'DNI')}
-            <input {...propiedades('dni')} inputMode="numeric" maxLength={8} autoComplete="off" />
-            {error('dni')}
-          </div>
-          <div>
-            {etiqueta('nombres', 'Nombres')}
-            <input {...propiedades('nombres')} />
-            {error('nombres')}
-          </div>
-          <div>
-            {etiqueta('apellidos', 'Apellidos')}
-            <input {...propiedades('apellidos')} />
-            {error('apellidos')}
-          </div>
-          {tipo.campos.map((c) => {
-            const nombre = `datos.${c.nombre}`
-            return (
-              <div key={c.nombre}>
-                {etiqueta(nombre, c.etiqueta, c.ayuda)}
-                {c.tipo === 'OPCION' ? (
-                  <select {...propiedades(nombre)}>
-                    <option value="">Seleccione</option>
-                    {c.opciones.map((o) => (
-                      <option key={o} value={o}>
-                        {o.charAt(0).toUpperCase() + o.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input {...propiedades(nombre)} type={c.tipo === 'FECHA' ? 'date' : 'text'} />
-                )}
-                {error(nombre)}
-              </div>
-            )
-          })}
+          <CampoFormulario
+            {...campo('numeroExpediente')}
+            etiqueta="N.° de expediente"
+            ayuda="Ej.: EXP-2026-004817"
+          />
+          <CampoFormulario {...campo('dni')} etiqueta="DNI" tipo="numero" maxLength={8} />
+          <CampoFormulario {...campo('nombres')} etiqueta="Nombres" />
+          <CampoFormulario {...campo('apellidos')} etiqueta="Apellidos" />
+          {tipo.campos.map((c) => (
+            <CampoDePlantilla key={c.nombre} campo={c} {...campo(`datos.${c.nombre}`)} />
+          ))}
           <div className="flex justify-end md:col-span-2">
             <button type="submit" className={BOTON_PRIMARIO} disabled={ocupado}>
               {ocupado ? 'Validando…' : 'Continuar a vista previa'}

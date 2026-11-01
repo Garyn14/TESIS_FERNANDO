@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { tipoPermitido, type TipoDocumento } from './api'
+import FormularioLote from './FormularioLote'
 import FormularioSolicitud from './FormularioSolicitud'
-
-const PASOS_POR_LISTA = ['Datos del evento', 'Beneficiarios', 'Vista previa']
 
 /**
  * HU07: formulario del tipo elegido. Los de oficio abren el registro por lista (HU09) y los de
  * solicitud de parte, el registro individual (HU08). El servidor confirma que el tipo sea del área.
  */
-export default function PaginaFormularioDocumento({ codigo }: { codigo: string }) {
+export default function PaginaFormularioDocumento({
+  codigo,
+  areaNombre,
+}: {
+  codigo: string
+  areaNombre: string | null
+}) {
   const [tipo, setTipo] = useState<TipoDocumento | null>(null)
   const [error, setError] = useState('')
   useEffect(() => {
@@ -42,22 +47,8 @@ export default function PaginaFormularioDocumento({ codigo }: { codigo: string }
               Origen: {porLista ? 'De oficio' : 'A solicitud de parte'}
             </span>
           </div>
-          {porLista && (
-            <ol aria-label="Pasos" className="mt-4 flex flex-wrap gap-4 text-sm text-muted">
-              {PASOS_POR_LISTA.map((paso, i) => (
-                <li key={paso} className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full border border-line font-medium">
-                    {i + 1}
-                  </span>
-                  {paso}
-                </li>
-              ))}
-            </ol>
-          )}
           {porLista ? (
-            <p className="mt-6 text-muted">
-              El formulario de emisión por lista se habilita con la HU09, en este mismo sprint.
-            </p>
+            <FormularioLote tipo={tipo} areaNombre={areaNombre} />
           ) : (
             <FormularioSolicitud tipo={tipo} />
           )}

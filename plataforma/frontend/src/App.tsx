@@ -9,6 +9,7 @@ import PaginaCambioObligatorio from './sesion/PaginaCambioObligatorio'
 import PaginaLogin from './sesion/PaginaLogin'
 import PaginaBilletera from './billeteras/PaginaBilletera'
 import PaginaDetalleDocumento from './documentos/PaginaDetalleDocumento'
+import PaginaDetalleLote from './documentos/PaginaDetalleLote'
 import PaginaFormularioDocumento from './documentos/PaginaFormularioDocumento'
 import PaginaMisDocumentos from './documentos/PaginaMisDocumentos'
 import PaginaNuevoDocumento from './documentos/PaginaNuevoDocumento'
@@ -103,7 +104,7 @@ export default function App() {
     )
 
   // Las rutas con detalle (#/nuevo-documento/CODIGO) pertenecen a la opción de su primer tramo.
-  const [base, detalle] = ruta.split('/')
+  const [base, detalle, numero] = ruta.split('/')
   const opcion = MENU.find((o) => o.ruta === base) ?? MENU[0]
   const permitida = sesion.permisos.includes(opcion.permiso)
 
@@ -114,15 +115,22 @@ export default function App() {
   else if (opcion.ruta === 'billetera') contenido = <PaginaBilletera />
   // HU08: la clave vuelve a consultar en cada visita, por si cambió el área (HU05).
   else if (opcion.ruta === 'mis-documentos')
-    contenido = detalle ? (
-      <PaginaDetalleDocumento key={`${detalle}-${visita}`} codigo={detalle} />
-    ) : (
-      <PaginaMisDocumentos key={visita} areaNombre={sesion.areaNombre} />
-    )
+    contenido =
+      detalle === 'lote' && numero ? (
+        <PaginaDetalleLote key={`${numero}-${visita}`} numero={numero} />
+      ) : detalle ? (
+        <PaginaDetalleDocumento key={`${detalle}-${visita}`} codigo={detalle} />
+      ) : (
+        <PaginaMisDocumentos key={visita} areaNombre={sesion.areaNombre} />
+      )
   // HU07: la clave vuelve a cargar los tipos en cada visita, por si cambió el área (HU05).
   else if (opcion.ruta === 'nuevo-documento')
     contenido = detalle ? (
-      <PaginaFormularioDocumento key={`${detalle}-${visita}`} codigo={detalle} />
+      <PaginaFormularioDocumento
+        key={`${detalle}-${visita}`}
+        codigo={detalle}
+        areaNombre={sesion.areaNombre}
+      />
     ) : (
       <PaginaNuevoDocumento key={visita} />
     )

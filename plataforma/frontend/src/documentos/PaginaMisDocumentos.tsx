@@ -43,9 +43,9 @@ export default function PaginaMisDocumentos({ areaNombre }: { areaNombre: string
           <table className="w-full text-left">
             <thead className="border-b border-line text-sm text-muted">
               <tr>
-                <th className="px-4 py-3 font-medium">Código</th>
+                <th className="px-4 py-3 font-medium">Código o lote</th>
                 <th className="px-4 py-3 font-medium">Tipo</th>
-                <th className="px-4 py-3 font-medium">Beneficiario</th>
+                <th className="px-4 py-3 font-medium">Beneficiario(s)</th>
                 <th className="px-4 py-3 font-medium">N.° de expediente</th>
                 <th className="px-4 py-3 font-medium">Fecha de envío</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
@@ -53,13 +53,19 @@ export default function PaginaMisDocumentos({ areaNombre }: { areaNombre: string
             </thead>
             <tbody>
               {lista.map((d) => (
-                <tr key={d.codigo} className="border-b border-line last:border-0">
+                <tr
+                  key={d.codigo ?? `lote-${d.lote}`}
+                  className="border-b border-line last:border-0"
+                >
                   <td className="px-4 py-3 font-mono whitespace-nowrap">
+                    {/* HU09: un lote ocupa una sola fila y abre su propio detalle. */}
                     <a
-                      href={`#/mis-documentos/${d.codigo}`}
+                      href={
+                        d.lote ? `#/mis-documentos/lote/${d.lote}` : `#/mis-documentos/${d.codigo}`
+                      }
                       className="text-institutional hover:underline"
                     >
-                      {d.codigo}
+                      {d.lote ? `▤ Lote ${d.lote}` : d.codigo}
                     </a>
                   </td>
                   <td className="px-4 py-3">{d.tipoNombre}</td>
