@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { tipoPermitido, type TipoDocumento } from './api'
+import FormularioSolicitud from './FormularioSolicitud'
 
 const PASOS_POR_LISTA = ['Datos del evento', 'Beneficiarios', 'Vista previa']
 
@@ -53,11 +54,13 @@ export default function PaginaFormularioDocumento({ codigo }: { codigo: string }
               ))}
             </ol>
           )}
-          <p className="mt-6 text-muted">
-            {porLista
-              ? 'El formulario de emisión por lista se habilita con la HU09, en este mismo sprint.'
-              : 'El formulario a solicitud de parte, con el número de expediente, se habilita con la HU08, en este mismo sprint.'}
-          </p>
+          {porLista ? (
+            <p className="mt-6 text-muted">
+              El formulario de emisión por lista se habilita con la HU09, en este mismo sprint.
+            </p>
+          ) : (
+            <FormularioSolicitud tipo={tipo} />
+          )}
         </div>
       )}
     </section>

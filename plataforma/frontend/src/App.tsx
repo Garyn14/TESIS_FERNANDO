@@ -8,7 +8,9 @@ import { cerrarSesion, obtenerSesion, type Sesion } from './sesion/api'
 import PaginaCambioObligatorio from './sesion/PaginaCambioObligatorio'
 import PaginaLogin from './sesion/PaginaLogin'
 import PaginaBilletera from './billeteras/PaginaBilletera'
+import PaginaDetalleDocumento from './documentos/PaginaDetalleDocumento'
 import PaginaFormularioDocumento from './documentos/PaginaFormularioDocumento'
+import PaginaMisDocumentos from './documentos/PaginaMisDocumentos'
 import PaginaNuevoDocumento from './documentos/PaginaNuevoDocumento'
 import PaginaUsuarios from './usuarios/PaginaUsuarios'
 
@@ -103,6 +105,13 @@ export default function App() {
   else if (opcion.pendiente) contenido = <PaginaPendiente mensaje={opcion.pendiente} />
   else if (opcion.ruta === 'usuarios') contenido = <PaginaUsuarios />
   else if (opcion.ruta === 'billetera') contenido = <PaginaBilletera />
+  // HU08: la clave vuelve a consultar en cada visita, por si cambió el área (HU05).
+  else if (opcion.ruta === 'mis-documentos')
+    contenido = detalle ? (
+      <PaginaDetalleDocumento key={`${detalle}-${visita}`} codigo={detalle} />
+    ) : (
+      <PaginaMisDocumentos key={visita} areaNombre={sesion.areaNombre} />
+    )
   // HU07: la clave vuelve a cargar los tipos en cada visita, por si cambió el área (HU05).
   else if (opcion.ruta === 'nuevo-documento')
     contenido = detalle ? (

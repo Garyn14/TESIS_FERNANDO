@@ -272,6 +272,7 @@ describe('App (HU07)', () => {
     descripcion: 'Para participantes de talleres y capacitaciones.',
     titulo: 'CERTIFICADO',
     origen: 'OFICIO',
+    campos: [],
   }
   const TRABAJO = {
     codigo: 'CERTIFICADO_TRABAJO',
@@ -279,6 +280,17 @@ describe('App (HU07)', () => {
     descripcion: 'Para personas que trabajaron en la agencia.',
     titulo: 'CERTIFICADO',
     origen: 'SOLICITUD_PARTE',
+    campos: [
+      { nombre: 'cargo', etiqueta: 'Cargo', tipo: 'TEXTO', ayuda: null, opciones: [] },
+      {
+        nombre: 'fechaInicio',
+        etiqueta: 'Fecha de inicio',
+        tipo: 'FECHA',
+        ayuda: null,
+        opciones: [],
+      },
+      { nombre: 'fechaFin', etiqueta: 'Fecha de fin', tipo: 'FECHA', ayuda: null, opciones: [] },
+    ],
   }
 
   it('Nuevo documento lista los tipos del área con su origen', async () => {
@@ -340,7 +352,11 @@ describe('App (HU07)', () => {
       await screen.findByRole('heading', { name: 'Certificado de Trabajo' }),
     ).toBeInTheDocument()
     expect(screen.getByText('Origen: A solicitud de parte')).toBeInTheDocument()
-    expect(screen.queryByRole('list', { name: 'Pasos' })).not.toBeInTheDocument()
+    expect(
+      within(screen.getByRole('list', { name: 'Pasos' }))
+        .getAllByRole('listitem')
+        .map((p) => p.textContent),
+    ).toEqual(['1Datos de la solicitud', '2Vista previa'])
   })
 
   it('un tipo que no es del área no muestra el formulario', async () => {
