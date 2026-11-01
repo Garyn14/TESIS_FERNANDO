@@ -22,7 +22,6 @@ export const MENU: OpcionMenu[] = [
     ruta: 'mis-documentos',
     titulo: 'Mis documentos',
     permiso: 'DOCUMENTO_VER_AREA',
-    pendiente: 'Se habilita en el Sprint 2.',
   },
   {
     ruta: 'nuevo-documento',

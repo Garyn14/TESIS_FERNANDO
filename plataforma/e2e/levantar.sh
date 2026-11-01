@@ -42,9 +42,12 @@ docker run -d --name e2e-pg -e POSTGRES_DB=plataforma -e POSTGRES_USER=plataform
 until docker exec e2e-pg pg_isready -U plataforma >/dev/null 2>&1; do sleep 1; done
 
 (cd backend && ./mvnw -q package -DskipTests)
+# Clave del HMAC del DNI (HU08, RF17): una nueva en cada arranque, porque la base también es nueva.
+# En AWS se guarda en el gestor de secretos (RNF03).
+CLAVE_HMAC=$(node -p 'require("crypto").randomBytes(32).toString("hex")')
 DB_URL=jdbc:postgresql://localhost:5433/plataforma PLATAFORMA_ADMIN_CONTRASENA='Admin2026!' \
   PLATAFORMA_ADMIN_NOMBRE='Garyn Huarhuachi Ramos' SESION_INACTIVIDAD=$INACTIVIDAD \
-  PLATAFORMA_CONTRATO_DIRECCION="$CONTRATO" \
+  PLATAFORMA_CONTRATO_DIRECCION="$CONTRATO" PLATAFORMA_CLAVE_HMAC_DNI="$CLAVE_HMAC" \
   java -jar backend/target/plataforma-backend-*.jar &
 BACKEND=$!
 (cd frontend && npx vite --port 5173 --strictPort) &

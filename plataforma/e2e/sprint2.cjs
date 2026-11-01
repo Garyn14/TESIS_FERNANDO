@@ -1,8 +1,9 @@
 // Prueba de punta a punta real del Sprint 2: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). Crea sus propias cuentas desde la
-// pantalla Usuarios y recorre HU07.
+// pantalla Usuarios y recorre HU07 y HU08.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
+const { execFileSync } = require('node:child_process')
 
 const [out, URL = 'http://localhost:5173/', ADMIN_TEMPORAL = 'Admin2026!'] = process.argv.slice(2)
 const ADMIN_CLAVE = 'AdminPropia26'
@@ -140,6 +141,138 @@ const paso = async (nombre, fn) => {
     assert.equal(await api(carlos, '/api/tipos-documento'), 403)
     assert.equal(await api(carlos, '/api/tipos-documento/CERTIFICADO_CAPACITACION'), 403)
     await carlos.context().close()
+  })
+
+  // ------------------------------------------------- HU08: registro a solicitud de parte
+  const EXPEDIENTE = 'EXP-2026-005391'
+  const pedro = await nueva()
+  const formulario = (p) => ({
+    expediente: p.getByLabel(/^N\.° de expediente/),
+    dni: campo(p, 'DNI'),
+    nombres: campo(p, 'Nombres'),
+    apellidos: campo(p, 'Apellidos'),
+    cargo: p.getByLabel(/^Cargo/),
+    inicio: campo(p, 'Fecha de inicio'),
+    fin: campo(p, 'Fecha de fin'),
+  })
+  const continuar = (p) => p.getByRole('button', { name: 'Continuar a vista previa' }).click()
+  let codigo
+  await paso('HU08 · Exige el expediente y valida cada campo antes de la vista previa', async () => {
+    await ingresar(pedro, 'pmorales', PROPIA)
+    await pedro.getByRole('link', { name: 'Nuevo documento' }).click()
+    await pedro.getByRole('link', { name: /Certificado de Trabajo/ }).click()
+    await pedro.getByRole('heading', { name: 'Certificado de Trabajo' }).waitFor()
+    const f = formulario(pedro)
+    await f.dni.fill('4582936')
+    await f.inicio.fill('2026-05-02')
+    await f.fin.fill('2026-05-01')
+    await continuar(pedro)
+    await pedro.getByText('Ingrese el número de expediente.').waitFor()
+    await pedro.getByText('El DNI debe tener 8 dígitos.').waitFor()
+    await pedro.getByText('Ingrese los nombres.').waitFor()
+    await pedro.getByText('La fecha de fin no puede ser anterior a la de inicio.').waitFor()
+    await f.expediente.fill('2026-5391')
+    await continuar(pedro)
+    await pedro.getByText('Use el formato EXP-AAAA-NNNNNN, por ejemplo EXP-2026-004817.').waitFor()
+    await foto(pedro, 'hu08_01_validaciones')
+  })
+  await paso('HU08 · La vista previa usa la plantilla del tipo y se puede volver sin perder datos', async () => {
+    const f = formulario(pedro)
+    await f.expediente.fill(EXPEDIENTE.toLowerCase())
+    await f.dni.fill('45829364')
+    await f.nombres.fill('Lucía')
+    await f.apellidos.fill('Paredes Quinto')
+    await f.cargo.fill('asistente administrativa')
+    await f.inicio.fill('2025-01-02')
+    await f.fin.fill('2026-09-30')
+    await continuar(pedro)
+    const certificado = pedro.getByRole('figure', { name: 'Vista previa: Certificado de Trabajo' })
+    await certificado.waitFor()
+    for (const texto of [
+      'VISTA PREVIA',
+      'CERTIFICADO',
+      'Lucía Paredes Quinto',
+      'como asistente administrativa, del 02/01/2025 al 30/09/2026',
+      'Fecha de emisión: se asignará al firmar',
+      'Ing. Carlos Mendoza Rivera',
+    ])
+      await certificado.getByText(texto, { exact: false }).first().waitFor()
+    await pedro.getByText(EXPEDIENTE).waitFor()
+    await foto(pedro, 'hu08_02_vista_previa')
+    await pedro.getByRole('button', { name: 'Volver' }).click()
+    assert.equal(await formulario(pedro).cargo.inputValue(), 'asistente administrativa')
+    await continuar(pedro)
+    await certificado.waitFor()
+  })
+  await paso('HU08 · Al enviar, con confirmación, queda Pendiente con su código de verificación', async () => {
+    await pedro.getByRole('button', { name: 'Enviar a revisión' }).click()
+    const ventana = pedro.getByRole('dialog', { name: '¿Enviar a revisión?' })
+    await ventana.getByText('no se puede modificar mientras esté en revisión', { exact: false }).waitFor()
+    await foto(pedro, 'hu08_03_confirmar_envio')
+    await ventana.getByRole('button', { name: 'Enviar' }).click()
+    const aviso = pedro.getByRole('status')
+    await aviso.getByText('Documento enviado a revisión').waitFor()
+    codigo = await aviso.locator('strong').textContent()
+    assert.match(codigo, new RegExp(`^DRA-${new Date().getFullYear()}-[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$`))
+    await foto(pedro, 'hu08_04_enviado')
+  })
+  await paso('HU08 · En la base quedan el token del QR y el HMAC del DNI, nunca el DNI en su lugar', async () => {
+    const fila = execFileSync('docker', [
+      'exec', 'e2e-pg', 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c',
+      `SELECT estado, numero_expediente, length(token_qr), dni_hmac, (SELECT evento FROM documento_historial h WHERE h.documento_id = d.id) FROM documento d WHERE codigo = '${codigo}'`,
+    ]).toString().trim().split('|')
+    assert.equal(fila[0], 'PENDIENTE')
+    assert.equal(fila[1], EXPEDIENTE)
+    assert.equal(fila[2], '43')
+    assert.match(fila[3], /^[0-9a-f]{64}$/)
+    assert.equal(fila[4], 'REGISTRADO')
+    // La API nunca devuelve el HMAC ni el token.
+    const json = await pedro.evaluate((c) => fetch('/api/documentos/' + c).then((r) => r.text()), codigo)
+    assert.ok(!json.includes(fila[3]) && !json.includes('tokenQr'))
+  })
+  await paso('HU08 · Mis documentos lo muestra Pendiente y su detalle no se puede editar', async () => {
+    await pedro.getByRole('link', { name: 'Mis documentos' }).click()
+    const fila = pedro.locator('tr', { hasText: codigo })
+    await fila.getByText('Pendiente').waitFor()
+    await fila.getByText('Lucía Paredes Quinto').waitFor()
+    await fila.getByText(EXPEDIENTE).waitFor()
+    assert.equal(await pedro.getByText(/Se habilita en el Sprint 2/).count(), 0)
+    await foto(pedro, 'hu08_05_mis_documentos')
+    await fila.getByRole('link', { name: codigo }).click()
+    await pedro.getByText('no se puede modificar mientras esté Pendiente', { exact: false }).waitFor()
+    await pedro.getByRole('figure').getByText('VISTA PREVIA').waitFor()
+    assert.equal(await pedro.locator('main').getByRole('button').count(), 0)
+    await foto(pedro, 'hu08_06_detalle_pendiente')
+  })
+  await paso('HU08 · El mismo expediente no se registra dos veces', async () => {
+    await pedro.goto(URL + '#/nuevo-documento/CERTIFICADO_PRACTICAS')
+    await pedro.getByRole('heading', { name: 'Certificado de Prácticas' }).waitFor()
+    await pedro.getByLabel(/^N\.° de expediente/).fill(EXPEDIENTE)
+    await campo(pedro, 'DNI').fill('46385127')
+    await campo(pedro, 'Nombres').fill('Kevin')
+    await campo(pedro, 'Apellidos').fill('Ramos Ccanto')
+    await campo(pedro, 'Modalidad').selectOption('preprofesionales')
+    await pedro.getByLabel(/^Área donde realizó las prácticas/).fill('Área de Administración')
+    await campo(pedro, 'Fecha de inicio').fill('2026-06-01')
+    await campo(pedro, 'Fecha de fin').fill('2026-08-31')
+    await continuar(pedro)
+    await pedro.getByRole('figure').getByText('prácticas preprofesionales en el Área de Administración', { exact: false }).waitFor()
+    await pedro.getByRole('button', { name: 'Enviar a revisión' }).click()
+    await pedro.getByRole('dialog').getByRole('button', { name: 'Enviar' }).click()
+    await pedro.getByText('El número de expediente ya está registrado en otro documento.').waitFor()
+    await foto(pedro, 'hu08_07_expediente_repetido')
+    await pedro.context().close()
+  })
+  await paso('HU08 · Un documento de otra área no se lista ni se abre por su dirección', async () => {
+    const rosa2 = await nueva()
+    await ingresar(rosa2, 'rquispe', PROPIA)
+    await rosa2.getByRole('link', { name: 'Mis documentos' }).click()
+    await rosa2.getByText('Aún no hay documentos registrados en su área.').waitFor()
+    await rosa2.goto(URL + '#/mis-documentos/' + codigo)
+    await rosa2.getByRole('alert').getByText('Este documento no pertenece a su área.').waitFor()
+    assert.equal(await api(rosa2, '/api/documentos/' + codigo), 403)
+    await foto(rosa2, 'hu08_08_documento_de_otra_area')
+    await rosa2.context().close()
   })
 
   await b.close()
