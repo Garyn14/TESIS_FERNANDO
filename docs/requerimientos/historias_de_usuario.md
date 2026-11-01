@@ -476,15 +476,60 @@ Los cuatro primeros son los de la Tabla 18 de la tesis. Los demás detallan cóm
 
 **Como** Área encargada, **quiero** registrar una emisión por lista con los datos del evento y la relación de beneficiarios, **para** generar todos los certificados de oficio de una sola vez.
 
+**Contexto**
+
+Los certificados de oficio los emite la agencia por iniciativa propia: por ejemplo, los de un taller de capacitación, para todos sus participantes. Hoy se hacen uno por uno. Con esta historia, el Área encargada ingresa una sola vez los datos del evento y la relación de beneficiarios (RF13), a mano o desde una plantilla Excel (RF14). La plataforma valida cada fila (RF15), muestra un certificado de ejemplo con la relación completa y, al enviar, crea un documento por beneficiario agrupados en un lote (RF19). Cada documento recibe su código, su token del QR y el HMAC del DNI, igual que en HU08 (RF16, RF17), y queda Pendiente.
+
+**Datos del evento, por tipo**
+
+| Tipo | Campos | Texto del certificado |
+|---|---|---|
+| Certificado de Capacitación | Nombre del taller, fecha de inicio, fecha de fin, duración en horas, lugar y área organizadora | "Por haber participado en el taller de capacitación '{taller}', realizado del {fechas} en {lugar}, con una duración de {horas} horas." (texto del prototipo) |
+| Certificado de Reconocimiento | Motivo, nombre del evento, fecha, lugar y área organizadora | "En reconocimiento a {motivo}, en el marco de '{evento}', realizado el {fecha} en {lugar}." |
+
+El área organizadora se completa con el área de la persona y se puede cambiar. Las fechas se escriben con el mes en letras, como en el prototipo (del 14 al 16 de setiembre de 2026). **Los campos y los textos están pendientes de validar con el PO.** El de Reconocimiento lo propuse yo, porque el prototipo solo tenía un ejemplo individual.
+
+**Relación de beneficiarios**
+
+Cada fila tiene Nombres, Apellidos y DNI, con las mismas reglas de HU08. Son las columnas del prototipo. **Siguen pendientes de validar con la lista real que se le pidió al PO.** Un lote tiene de 1 a 300 beneficiarios.
+
 **Criterios de aceptación**
+
+Los cuatro primeros son los de la Tabla 18 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] La relación se carga de forma manual o desde la plantilla Excel.
 - [ ] Cada fila se valida y sus errores se señalan.
 - [ ] La vista previa muestra un certificado de ejemplo y la relación completa.
 - [ ] Al enviar, se crea un documento por beneficiario, agrupados en un lote.
+- [ ] El registro por lista sigue los pasos "Datos del evento · Beneficiarios · Vista previa". No se pasa al paso siguiente mientras haya campos con error, y el servidor vuelve a validar todo en la vista previa y en el envío.
+- [ ] "Descargar plantilla Excel" baja un archivo .xlsx con las columnas Nombres, Apellidos y DNI, y la columna DNI en formato texto para no perder los ceros iniciales.
+- [ ] "Importar desde Excel" agrega a la tabla las filas del archivo. Si el archivo no es la plantilla (otro formato o sin esas columnas), o tiene más de 300 filas, no se importa nada y se indica el motivo.
+- [ ] "Agregar beneficiario" agrega una fila vacía. Cada fila se puede editar o eliminar. Sin filas, se muestra "Aún no hay beneficiarios. Importe la lista desde Excel o agréguelos uno por uno".
+- [ ] Cada fila con error se marca en rojo con su mensaje, y arriba se indica cuántos errores hay ("Hay 1 error en la lista. Corríjalo para continuar"). Un DNI repetido en la lista es un error en las dos filas (RF15). Sin errores se indica "N beneficiarios listos". Con errores o con la lista vacía no se puede continuar.
+- [ ] La vista previa muestra el certificado del primer beneficiario con la plantilla del tipo y la marca "VISTA PREVIA", y un resumen del lote: cantidad de certificados, evento, fechas y la lista de nombres (RF19). Desde ahí se puede volver sin perder los datos.
+- [ ] Enviar pide confirmación ("¿Enviar N certificados a revisión del Director?"). Al confirmar se crea el lote con su número, `Lote AAAA-NNN` (correlativo por año), y un documento Pendiente por beneficiario, cada uno con su propio código, token y HMAC del DNI. Todo se crea o no se crea nada.
+- [ ] Mis documentos muestra el lote en una sola fila, con su número, el tipo, la cantidad de beneficiarios, la fecha de envío y el estado. El detalle del lote muestra los datos del evento, el certificado de ejemplo y la lista de documentos con su código, que abre el detalle de cada uno. Nada se puede editar (RF20).
+- [ ] Solo se puede registrar un lote de un tipo de oficio del área de la persona, y un lote de otra área no se muestra ("Este lote no pertenece a su área") (RF05).
+- [ ] Registrar exige el permiso DOCUMENTO_REGISTRAR, y ver Mis documentos y el detalle, DOCUMENTO_VER_AREA. Sin sesión se responde 401 y con otro rol, 403 (RF04).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Revisar y firmar el lote completo | HU12 (Sprint 3) |
+| Observar un beneficiario y corregir el lote | HU13 y HU15 |
+| Reemitir un certificado de un lote | HU30 |
+
+**Notas técnicas**
+
+- API: GET /api/lotes/plantilla?tipo=… (descarga el .xlsx), POST /api/lotes/importar (lee el .xlsx y devuelve las filas), POST /api/lotes/vista-previa, POST /api/lotes (registra) y GET /api/lotes/{numero} (detalle). GET /api/documentos agrupa los documentos de un lote.
+- La plantilla y la lectura del Excel se hacen en el servidor con Apache POI. El archivo no se guarda.
+- Migración V11: tabla lote (número único por año, tipo, área, datos del evento, quién y cuándo) y la columna documento.lote_id.
+- El número del lote se asigna dentro de la transacción con un bloqueo, para que dos envíos simultáneos no reciban el mismo.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
-| Alta | 13 | 2 | RF13–RF19 |
+| Alta | 13 | 2 | RF13–RF19 (relacionados: RF05, RF20) |
 
 ---
 
