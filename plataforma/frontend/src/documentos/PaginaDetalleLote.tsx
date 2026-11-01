@@ -68,14 +68,14 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
               </div>
             ))}
           </dl>
-          <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_24rem]">
+          <div className="mt-6 grid gap-6">
             <Certificado documento={datos.ejemplo} />
             <div className="overflow-x-auto rounded-xl border border-line bg-card shadow-sm">
               <table className="w-full text-left text-sm">
                 <caption className="p-3 text-left font-semibold">Certificados del lote</caption>
                 <thead className="border-y border-line text-muted">
                   <tr>
-                    <th className="px-3 py-2 font-medium">N.°</th>
+                    <th className="px-3 py-2 font-medium whitespace-nowrap">N.°</th>
                     <th className="px-3 py-2 font-medium">Código</th>
                     <th className="px-3 py-2 font-medium">Beneficiario</th>
                     <th className="px-3 py-2 font-medium">DNI</th>
