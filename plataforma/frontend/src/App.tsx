@@ -24,6 +24,20 @@ export default function App() {
   const { ruta, visita, navegar } = useRuta()
   // Sube cada vez que termina la sesión: invalida las consultas de sesión que aún no respondieron.
   const generacion = useRef(0)
+  // Una sesión termina una sola vez. Si varias solicitudes reciben 401 a la vez, solo la primera
+  // trae el motivo (por ejemplo, "El Administrador restableció su contraseña"); las demás llegan
+  // cuando la sesión ya no existe y su aviso genérico no debe reemplazarlo.
+  const terminada = useRef(false)
+  const terminar = (mensaje: string) => {
+    if (terminada.current) return
+    terminada.current = true
+    generacion.current++
+    setAviso(mensaje)
+    setSesion(null)
+  }
+  useEffect(() => {
+    if (sesion) terminada.current = false
+  }, [sesion])
 
   useEffect(() => {
     obtenerSesion()
@@ -32,11 +46,8 @@ export default function App() {
         if (e instanceof ErrorApi && e.message !== SIN_SESION) setAviso(e.message)
         setSesion(null)
       })
-    return alTerminarSesion((mensaje) => {
-      generacion.current++
-      setAviso(mensaje)
-      setSesion(null)
-    })
+    return alTerminarSesion(terminar)
+    // terminar solo usa refs y setters estables: basta con suscribirse una vez.
   }, [])
 
   // Al cambiar de pantalla se vuelve a consultar la sesión: si la cuenta se desactivó o cambió de
@@ -51,11 +62,7 @@ export default function App() {
     obtenerSesion()
       .then((s) => vigente() && setSesion(s))
       .catch((e) => {
-        if (vigente() && e instanceof ErrorApi && e.estado === 401) {
-          generacion.current++
-          setAviso(e.message)
-          setSesion(null)
-        }
+        if (vigente() && e instanceof ErrorApi && e.estado === 401) terminar(e.message)
       })
     return () => {
       reemplazada = true

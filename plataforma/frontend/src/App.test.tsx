@@ -399,3 +399,32 @@ describe('App (HU07)', () => {
     )
   })
 })
+
+describe('App (HU08)', () => {
+  it('si varias solicitudes reciben 401 a la vez, el aviso conserva el primer motivo', async () => {
+    backend(AREA, {
+      // La sesión se cierra cuando la persona ya está en la plataforma y pasa a Mis documentos.
+      'GET /api/sesion': () =>
+        window.location.hash !== '#/mis-documentos'
+          ? respuesta(200, AREA)
+          : respuesta(401, {
+              mensaje: 'El Administrador restableció su contraseña. Inicie sesión nuevamente.',
+              campos: {},
+            }),
+      // Llega después, cuando la sesión ya no existe: su aviso es genérico.
+      'GET /api/documentos': () =>
+        new Promise((r) => setTimeout(r, 30)).then(() =>
+          respuesta(401, { mensaje: 'Inicie sesión para continuar.', campos: {} }),
+        ),
+    })
+    render(<App />)
+    fireEvent.click(await screen.findByRole('link', { name: 'Mis documentos' }))
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'El Administrador restableció su contraseña.',
+    )
+    await new Promise((r) => setTimeout(r, 60))
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'El Administrador restableció su contraseña.',
+    )
+  })
+})
