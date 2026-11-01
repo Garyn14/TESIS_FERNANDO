@@ -54,8 +54,6 @@ export const listarRoles = () => solicitar<Rol[]>('/api/roles')
 export const listarAreas = () => solicitar<Area[]>('/api/areas')
 
 /** Tipos de documento que la sesión puede registrar: los de su área si es Área encargada (RF05). */
-export const tiposPermitidos = () => solicitar<TipoDocumento[]>('/api/tipos-documento')
-
 /** Solo el Área encargada lleva área; para los demás roles se envía null. */
 const conArea = <T extends { rol: string; area: string }>(datos: T) => ({
   ...datos,

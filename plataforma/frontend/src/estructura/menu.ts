@@ -28,7 +28,6 @@ export const MENU: OpcionMenu[] = [
     ruta: 'nuevo-documento',
     titulo: 'Nuevo documento',
     permiso: 'DOCUMENTO_REGISTRAR',
-    pendiente: 'Se habilita en el Sprint 2 (HU07–HU09).',
   },
   {
     ruta: 'por-revisar',

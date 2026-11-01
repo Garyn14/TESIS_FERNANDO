@@ -8,6 +8,8 @@ import { cerrarSesion, obtenerSesion, type Sesion } from './sesion/api'
 import PaginaCambioObligatorio from './sesion/PaginaCambioObligatorio'
 import PaginaLogin from './sesion/PaginaLogin'
 import PaginaBilletera from './billeteras/PaginaBilletera'
+import PaginaFormularioDocumento from './documentos/PaginaFormularioDocumento'
+import PaginaNuevoDocumento from './documentos/PaginaNuevoDocumento'
 import PaginaUsuarios from './usuarios/PaginaUsuarios'
 
 const SIN_SESION = 'Inicie sesión para continuar.'
@@ -91,7 +93,9 @@ export default function App() {
       />
     )
 
-  const opcion = MENU.find((o) => o.ruta === ruta) ?? MENU[0]
+  // Las rutas con detalle (#/nuevo-documento/CODIGO) pertenecen a la opción de su primer tramo.
+  const [base, detalle] = ruta.split('/')
+  const opcion = MENU.find((o) => o.ruta === base) ?? MENU[0]
   const permitida = sesion.permisos.includes(opcion.permiso)
 
   let contenido
@@ -99,6 +103,13 @@ export default function App() {
   else if (opcion.pendiente) contenido = <PaginaPendiente mensaje={opcion.pendiente} />
   else if (opcion.ruta === 'usuarios') contenido = <PaginaUsuarios />
   else if (opcion.ruta === 'billetera') contenido = <PaginaBilletera />
+  // HU07: la clave vuelve a cargar los tipos en cada visita, por si cambió el área (HU05).
+  else if (opcion.ruta === 'nuevo-documento')
+    contenido = detalle ? (
+      <PaginaFormularioDocumento key={`${detalle}-${visita}`} codigo={detalle} />
+    ) : (
+      <PaginaNuevoDocumento key={visita} />
+    )
   // La clave recarga los tipos de documento si cambia el área de la persona.
   else contenido = <PaginaInicio key={sesion.areaNombre ?? ''} sesion={sesion} />
 

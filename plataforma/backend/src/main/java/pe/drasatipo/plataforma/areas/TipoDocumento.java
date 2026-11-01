@@ -12,6 +12,7 @@ public class TipoDocumento {
   @Id private Short id;
   private String codigo;
   private String nombre;
+  private String descripcion;
   private String titulo;
   private String origen;
   private boolean activo;
@@ -28,6 +29,11 @@ public class TipoDocumento {
 
   public String getNombre() {
     return nombre;
+  }
+
+  /** Texto breve para la pantalla "Nuevo documento" (HU07). */
+  public String getDescripcion() {
+    return descripcion;
   }
 
   /** CERTIFICADO o CONSTANCIA. */

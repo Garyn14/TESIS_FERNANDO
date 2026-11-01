@@ -264,3 +264,122 @@ describe('App (HU03)', () => {
     expect(fetch.mock.calls.some(([r]) => r === '/api/tipos-documento')).toBe(false)
   })
 })
+
+describe('App (HU07)', () => {
+  const CAPACITACION = {
+    codigo: 'CERTIFICADO_CAPACITACION',
+    nombre: 'Certificado de Capacitación',
+    descripcion: 'Para participantes de talleres y capacitaciones.',
+    titulo: 'CERTIFICADO',
+    origen: 'OFICIO',
+  }
+  const TRABAJO = {
+    codigo: 'CERTIFICADO_TRABAJO',
+    nombre: 'Certificado de Trabajo',
+    descripcion: 'Para personas que trabajaron en la agencia.',
+    titulo: 'CERTIFICADO',
+    origen: 'SOLICITUD_PARTE',
+  }
+
+  it('Nuevo documento lista los tipos del área con su origen', async () => {
+    backend(AREA, { 'GET /api/tipos-documento': () => respuesta(200, [CAPACITACION, TRABAJO]) })
+    render(<App />)
+    fireEvent.click(await screen.findByRole('link', { name: 'Nuevo documento' }))
+    const tarjeta = await screen.findByRole('link', { name: /Certificado de Capacitación/ })
+    expect(tarjeta).toHaveTextContent('Para participantes de talleres y capacitaciones.')
+    expect(tarjeta).toHaveTextContent('Emisión por lista')
+    expect(tarjeta).toHaveAttribute('href', '#/nuevo-documento/CERTIFICADO_CAPACITACION')
+    expect(screen.getByRole('link', { name: /Certificado de Trabajo/ })).toHaveTextContent(
+      'A solicitud de parte',
+    )
+    expect(
+      screen.getByText('Solo se muestran los tipos de documento asignados a su área.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Se habilita en el Sprint 2/)).not.toBeInTheDocument()
+  })
+
+  it('sin área asignada no muestra tipos y avisa', async () => {
+    window.location.hash = '#/nuevo-documento'
+    backend(AREA)
+    render(<App />)
+    expect(await screen.findByRole('alert')).toHaveTextContent('Comuníquese con el Administrador')
+  })
+
+  it('un tipo de oficio abre el registro por lista', async () => {
+    window.location.hash = '#/nuevo-documento/CERTIFICADO_CAPACITACION'
+    backend(AREA, {
+      'GET /api/tipos-documento/CERTIFICADO_CAPACITACION': () => respuesta(200, CAPACITACION),
+    })
+    render(<App />)
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Emisión por lista: Certificado de Capacitación',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Origen: De oficio')).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('list', { name: 'Pasos' }))
+        .getAllByRole('listitem')
+        .map((p) => p.textContent),
+    ).toEqual(['1Datos del evento', '2Beneficiarios', '3Vista previa'])
+    expect(screen.getByRole('link', { name: 'Nuevo documento' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(screen.getByRole('link', { name: '← Cambiar tipo de documento' })).toHaveAttribute(
+      'href',
+      '#/nuevo-documento',
+    )
+  })
+
+  it('un tipo a solicitud de parte abre el registro individual', async () => {
+    window.location.hash = '#/nuevo-documento/CERTIFICADO_TRABAJO'
+    backend(AREA, { 'GET /api/tipos-documento/CERTIFICADO_TRABAJO': () => respuesta(200, TRABAJO) })
+    render(<App />)
+    expect(
+      await screen.findByRole('heading', { name: 'Certificado de Trabajo' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Origen: A solicitud de parte')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Pasos' })).not.toBeInTheDocument()
+  })
+
+  it('un tipo que no es del área no muestra el formulario', async () => {
+    window.location.hash = '#/nuevo-documento/CONSTANCIA_PRODUCTOR_ACTIVO'
+    backend(AREA, {
+      'GET /api/tipos-documento/CONSTANCIA_PRODUCTOR_ACTIVO': () =>
+        respuesta(403, {
+          mensaje: 'Este tipo de documento no está asignado a su área.',
+          campos: {},
+        }),
+    })
+    render(<App />)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Este tipo de documento no está asignado a su área.',
+    )
+    expect(screen.queryByText(/Origen:/)).not.toBeInTheDocument()
+  })
+
+  it('otro rol no puede abrir el formulario por su dirección', async () => {
+    window.location.hash = '#/nuevo-documento/CERTIFICADO_CAPACITACION'
+    const fetch = backend(DIRECTOR)
+    render(<App />)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'No tiene permiso para ver esta sección.',
+    )
+    expect(fetch.mock.calls.some(([r]) => String(r).startsWith('/api/tipos-documento'))).toBe(false)
+  })
+
+  it('al volver a Nuevo documento consulta otra vez los tipos', async () => {
+    const fetch = backend(AREA, {
+      'GET /api/tipos-documento': () => respuesta(200, [CAPACITACION]),
+    })
+    render(<App />)
+    const opcion = await screen.findByRole('link', { name: 'Nuevo documento' })
+    fireEvent.click(opcion)
+    await screen.findByRole('link', { name: /Certificado de Capacitación/ })
+    fireEvent.click(opcion)
+    await vi.waitFor(() =>
+      expect(fetch.mock.calls.filter(([r]) => r === '/api/tipos-documento').length).toBe(3),
+    )
+  })
+})
