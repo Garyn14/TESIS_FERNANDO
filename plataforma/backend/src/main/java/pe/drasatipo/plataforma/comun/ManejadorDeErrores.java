@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class ManejadorDeErrores {
@@ -38,5 +39,14 @@ public class ManejadorDeErrores {
     Map<String, String> campos =
         e.getCampo() == null ? Map.of() : Map.of(e.getCampo(), e.getMessage());
     return ResponseEntity.status(e.getEstado()).body(new ErrorRespuesta(e.getMessage(), campos));
+  }
+
+  /** HU09: el Excel de beneficiarios supera el tamaño permitido. */
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  ResponseEntity<ErrorRespuesta> archivoGrande(MaxUploadSizeExceededException e) {
+    String mensaje =
+        "El archivo es demasiado grande. La plantilla con 300 beneficiarios pesa menos.";
+    return ResponseEntity.badRequest()
+        .body(new ErrorRespuesta(mensaje, Map.of("archivo", mensaje)));
   }
 }

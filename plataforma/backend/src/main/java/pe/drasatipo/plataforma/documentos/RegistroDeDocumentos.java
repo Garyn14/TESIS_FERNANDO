@@ -2,7 +2,12 @@ package pe.drasatipo.plataforma.documentos;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -110,9 +115,23 @@ public class RegistroDeDocumentos {
     if (cuenta.getArea() == null || !alcance.estaLimitada(cuenta)) {
       return List.of();
     }
-    return documentos.findByAreaIdOrderByRegistradoEnDesc(cuenta.getArea().getId()).stream()
-        .map(DocumentoResumen::de)
-        .toList();
+    List<Documento> delArea =
+        documentos.findByAreaIdOrderByRegistradoEnDescIdAsc(cuenta.getArea().getId());
+    // HU09: los documentos de un lote se muestran en una sola fila, donde aparece el primero.
+    Map<Long, Long> porLote =
+        delArea.stream()
+            .filter(d -> d.getLote() != null)
+            .collect(Collectors.groupingBy(d -> d.getLote().getId(), Collectors.counting()));
+    Set<Long> mostrados = new HashSet<>();
+    List<DocumentoResumen> filas = new ArrayList<>();
+    for (Documento documento : delArea) {
+      if (documento.getLote() == null) {
+        filas.add(DocumentoResumen.de(documento));
+      } else if (mostrados.add(documento.getLote().getId())) {
+        filas.add(DocumentoResumen.deLote(documento, porLote.get(documento.getLote().getId())));
+      }
+    }
+    return filas;
   }
 
   /** Detalle de un documento del área. Uno de otra área o inexistente da la misma respuesta. */
@@ -132,26 +151,24 @@ public class RegistroDeDocumentos {
             .tipoPermitido(cuenta, solicitud.tipo())
             .orElseThrow(
                 () -> new ReglaDeNegocioException(HttpStatus.FORBIDDEN, null, TIPO_NO_ASIGNADO));
+    if (!"SOLICITUD_PARTE".equals(tipo.getOrigen())) {
+      throw new ReglaDeNegocioException(
+          HttpStatus.BAD_REQUEST, "tipo", "Este tipo de documento se registra por lista.");
+    }
     PlantillasDeDocumento.Plantilla plantilla =
-        PlantillasDeDocumento.de(tipo.getCodigo())
-            .orElseThrow(
-                () ->
-                    new ReglaDeNegocioException(
-                        HttpStatus.BAD_REQUEST,
-                        "tipo",
-                        "Este tipo de documento se registra por lista."));
+        PlantillasDeDocumento.de(tipo.getCodigo()).orElseThrow();
     return ValidacionDeSolicitud.validar(solicitud, tipo, plantilla);
   }
 
   /** Nombre del Director que firma, para la plantilla; null si aún no hay ninguno. */
-  private String firmante() {
+  String firmante() {
     return usuarios
         .findFirstByRolCodigoAndActivoTrueOrderByCreadoEn(Rol.DIRECTOR)
         .map(Usuario::getNombreCompleto)
         .orElse(null);
   }
 
-  private Usuario cuenta(String nombreUsuario) {
+  Usuario cuenta(String nombreUsuario) {
     return usuarios.findByNombreUsuarioIgnoreCase(nombreUsuario).orElseThrow();
   }
 
