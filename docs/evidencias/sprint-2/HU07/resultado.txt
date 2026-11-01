@@ -1,0 +1,7 @@
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ HU07 · Nuevo documento lista solo los tipos del área, con su origen
+✓ HU07 · Un tipo de oficio abre el registro por lista
+✓ HU07 · Un tipo de otra área no se abre por su dirección ni por la API
+✓ HU07 · Un tipo a solicitud de parte abre el registro individual
+✓ HU07 · Si cambia el área con la sesión abierta, al volver ve los tipos nuevos
+✓ HU07 · Otro rol no ve la opción ni abre el formulario

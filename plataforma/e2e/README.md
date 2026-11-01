@@ -5,6 +5,7 @@ Recorren la plataforma en un navegador real (Playwright) contra el backend y Pos
 | Archivo | Qué prueba |
 |---|---|
 | `sprint1.cjs` | HU01 a HU06: 32 pasos (login, cambio obligatorio de la contraseña temporal, menú por rol, creación de cuentas con área obligatoria, tipos de documento por área y cambio de área con sesión abierta, billetera del director y rol de firmante otorgado y revocado en la red Besu real, bloqueo por intentos, restablecimiento, cambio de contraseña con cierre de otras sesiones, desactivación con sesión abierta, cambio de rol, cierre y expiración de la sesión) |
+| `sprint2.cjs` | HU07: el Administrador crea las cuentas desde la pantalla y se recorre la selección del tipo de documento por área (registro por lista y a solicitud de parte), el tipo de otra área por dirección y por API, el cambio de área con sesión abierta y el acceso de otro rol |
 | `levantar.sh` | Levanta un entorno limpio: PostgreSQL vacío (puerto 5433), la red Besu si no está levantada, un `RegistroDocumentos` recién desplegado, el backend (8080) y el frontend (5173) |
 | `preparar-blockchain.cjs` | Crea billeteras de prueba nuevas y despliega el contrato; escribe `.despliegue.json` (no se versiona) |
 | `billetera-de-prueba.cjs` | Reemplaza a MetaMask: un proveedor EIP-1193 inyectado que firma transacciones **reales** en Besu con claves de prueba |
@@ -18,6 +19,7 @@ Recorren la plataforma en un navegador real (Playwright) contra el backend y Pos
 
 # Terminal 2 (requiere Playwright: npm i -g playwright && npx playwright install chromium)
 node e2e/sprint1.cjs /tmp/capturas
+node e2e/sprint2.cjs /tmp/capturas-s2   # con otro levantar.sh: cada prueba necesita la base vacía
 ```
 
 El backend se levanta con `SESION_INACTIVIDAD=1m` para que la prueba de expiración tarde un minuto y no 30. La prueba crea sus propias cuentas, por eso necesita una base de datos vacía: vuelve a ejecutar `levantar.sh` antes de repetirla.
