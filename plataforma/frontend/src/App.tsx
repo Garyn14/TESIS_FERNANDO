@@ -12,6 +12,9 @@ import PaginaDetalleDocumento from './documentos/PaginaDetalleDocumento'
 import PaginaDetalleLote from './documentos/PaginaDetalleLote'
 import PaginaFormularioDocumento from './documentos/PaginaFormularioDocumento'
 import PaginaMisDocumentos from './documentos/PaginaMisDocumentos'
+import PaginaPorRevisar from './documentos/PaginaPorRevisar'
+import PaginaRevisionDocumento from './documentos/PaginaRevisionDocumento'
+import PaginaRevisionLote from './documentos/PaginaRevisionLote'
 import PaginaNuevoDocumento from './documentos/PaginaNuevoDocumento'
 import PaginaUsuarios from './usuarios/PaginaUsuarios'
 
@@ -113,6 +116,16 @@ export default function App() {
   else if (opcion.pendiente) contenido = <PaginaPendiente mensaje={opcion.pendiente} />
   else if (opcion.ruta === 'usuarios') contenido = <PaginaUsuarios />
   else if (opcion.ruta === 'billetera') contenido = <PaginaBilletera />
+  // HU10: abrir un elemento registra la revisión; la bandeja se vuelve a cargar en cada visita.
+  else if (opcion.ruta === 'por-revisar')
+    contenido =
+      detalle === 'lote' && numero ? (
+        <PaginaRevisionLote key={`${numero}-${visita}`} numero={numero} />
+      ) : detalle ? (
+        <PaginaRevisionDocumento key={`${detalle}-${visita}`} codigo={detalle} />
+      ) : (
+        <PaginaPorRevisar key={visita} />
+      )
   // HU08: la clave vuelve a consultar en cada visita, por si cambió el área (HU05).
   else if (opcion.ruta === 'mis-documentos')
     contenido =
