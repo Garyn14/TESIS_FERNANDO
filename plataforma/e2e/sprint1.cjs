@@ -367,7 +367,7 @@ const paso = async (nombre, fn) => {
     await foto(equipoB, 'hu04_07_otra_sesion_cerrada')
 
     // La sesión desde la que se cambió sigue activa.
-    await equipoA.getByRole('link', { name: 'Por revisar' }).click()
+    await equipoA.getByRole('link', { name: 'Documentos firmados' }).click()
     await equipoA.getByText('Se habilita en el Sprint 3', { exact: false }).waitFor()
     await equipoA.context().close()
     await equipoB.context().close()

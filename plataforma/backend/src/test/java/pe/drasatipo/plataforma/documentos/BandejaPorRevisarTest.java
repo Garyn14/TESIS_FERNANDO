@@ -163,6 +163,41 @@ class BandejaPorRevisarTest {
   }
 
   @Test
+  void dosAperturasSimultaneasRegistranUnaSolaRevision() throws Exception {
+    // En desarrollo, React abre la pantalla dos veces casi a la vez: solo una debe registrarla.
+    String codigo = documento();
+    MockHttpSession director = sesion("DIRECTOR", null);
+    java.util.concurrent.CountDownLatch salida = new java.util.concurrent.CountDownLatch(1);
+    java.util.concurrent.ExecutorService hilos =
+        java.util.concurrent.Executors.newFixedThreadPool(4);
+    List<java.util.concurrent.Future<Integer>> envios = new java.util.ArrayList<>();
+    for (int i = 0; i < 4; i++) {
+      envios.add(
+          hilos.submit(
+              () -> {
+                salida.await();
+                return mvc.perform(
+                        post("/api/revision/documentos/" + codigo).with(csrf()).session(director))
+                    .andReturn()
+                    .getResponse()
+                    .getStatus();
+              }));
+    }
+    salida.countDown();
+    for (java.util.concurrent.Future<Integer> envio : envios) {
+      assertThat(envio.get()).isEqualTo(200);
+    }
+    hilos.shutdown();
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM documento_historial h JOIN documento d ON d.id ="
+                    + " h.documento_id WHERE d.codigo = ? AND h.evento = 'REVISADO'",
+                Integer.class,
+                codigo))
+        .isEqualTo(1);
+  }
+
+  @Test
   void abrirUnLoteCuentaComoRevisionDeTodosSusDocumentos() throws Exception {
     String numero = lote(4);
     MockHttpSession director = sesion("DIRECTOR", null);

@@ -1,5 +1,6 @@
 package pe.drasatipo.plataforma.documentos;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -119,7 +120,7 @@ public class RevisionDelDirector {
   }
 
   private void registrarRevision(Documento documento, Usuario director, String detalle) {
-    if (documento.marcarRevisado(director)) {
+    if (documentos.marcarRevisado(documento.getId(), director, OffsetDateTime.now()) == 1) {
       historial.save(
           new HistorialDocumento(
               documento.getId(), EventoDocumento.REVISADO, detalle, director.getId()));

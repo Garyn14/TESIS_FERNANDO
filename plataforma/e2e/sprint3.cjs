@@ -137,6 +137,7 @@ const paso = async (nombre, fn) => {
     await primerIngreso(carlos, 'cmendoza', TEMPORAL, PROPIA)
     await carlos.getByRole('link', { name: 'Por revisar' }).click()
     await carlos.getByText('Documentos enviados por las áreas, del más antiguo al más reciente.').waitFor()
+    await filas().first().waitFor()
     assert.equal(await filas().count(), 3)
     await filas().nth(0).getByText('Lucía Paredes Quinto').waitFor()
     await filas().nth(0).getByText('EXP-2026-005391').waitFor()
