@@ -31,13 +31,13 @@ Recomendaciones:
 
 Contraseñas que se usan en el guion (puede usar otras, siempre que tengan de 8 a 20 caracteres):
 
-| Cuenta | Rol y área | Contraseña temporal | Contraseña propia |
-|---|---|---|---|
-| admin | Administrador | La que entrega el equipo | AdminPropia26 |
-| rquispe | Área encargada – Área de Capacitación | Demo2026 | Propia2026 |
-| pmorales | Área encargada – Área de Administración | Demo2026 | Propia2026 |
-| msalazar | Área encargada – Área de Desarrollo Agrario | Demo2026 | Propia2026 |
-| cmendoza | Director | Demo2026 | Propia2026 |
+| Cuenta | Nombre completo | Rol y área | Contraseña temporal | Contraseña propia |
+|---|---|---|---|---|
+| admin | (ya creada) | Administrador | La que entrega el equipo | AdminPropia26 |
+| rquispe | Rosa Quispe Huamán | Área encargada – Área de Capacitación | Demo2026 | Propia2026 |
+| pmorales | Pedro Morales Ccanto | Área encargada – Área de Administración | Demo2026 | Propia2026 |
+| msalazar | Marco Salazar Vela | Área encargada – Área de Desarrollo Agrario | Demo2026 | Propia2026 |
+| cmendoza | Ing. Carlos Mendoza Rivera | Director | Demo2026 | Propia2026 |
 
 ---
 
@@ -48,9 +48,9 @@ Contraseñas que se usan en el guion (puede usar otras, siempre que tengan de 8 
 | Paso | Qué hacer | Qué se espera |
 |---|---|---|
 | 0.1 | Ingrese con `admin` y la contraseña temporal. Cámbiela por `AdminPropia26`. | Entra con el menú del Administrador. |
-| 0.2 | En **Usuarios**, cree las cuatro cuentas de la tabla de arriba con "Nueva cuenta", cada una con su rol y área y la contraseña temporal `Demo2026`. | Las cuatro cuentas aparecen en la lista, activas. |
+| 0.2 | En **Usuarios**, cree las cuatro cuentas de la tabla de arriba con "Nueva cuenta". Cada una lleva su nombre completo, su rol, su área y la contraseña temporal `Demo2026`. | Las cuatro cuentas aparecen en la lista, activas. |
 
-El Director `cmendoza` no hace nada en este Sprint. Su nombre aparece en la firma de las vistas previas.
+El Director `cmendoza` no hace nada en este Sprint. Su nombre completo, "Ing. Carlos Mendoza Rivera", aparece bajo la línea de firma de las vistas previas. El espacio sobre la línea queda en blanco: la firma digital con la billetera llega en el Sprint 3.
 
 ---
 
@@ -94,7 +94,7 @@ El Director `cmendoza` no hace nada en este Sprint. Su nombre aparece en la firm
 |---|---|---|
 | 2.1 | Como `pmorales`, abra **Nuevo documento** → **Certificado de Trabajo**. Sin completar nada, pulse "Continuar a vista previa". | No avanza. Cada campo vacío se marca con su mensaje, por ejemplo "Ingrese el número de expediente" e "Ingrese los nombres". |
 | 2.2 | Escriba `4582936` en DNI (7 dígitos) y `2026-5391` en N.° de expediente. Ponga una fecha de fin anterior a la de inicio. Pulse "Continuar a vista previa". | "El DNI debe tener 8 dígitos". "Use el formato EXP-AAAA-NNNNNN, por ejemplo EXP-2026-004817". "La fecha de fin no puede ser anterior a la de inicio". |
-| 2.3 | Complete los datos correctos:<ul><li>expediente `EXP-2026-005391`;</li><li>DNI `45829364`;</li><li>nombres `Lucía`;</li><li>apellidos `Paredes Quinto`;</li><li>cargo `asistente administrativa`;</li><li>inicio 02/01/2025 y fin 30/09/2026.</li></ul>Pulse "Continuar a vista previa". | Aparece la vista previa del certificado:<ul><li>encabezado "AGENCIA AGRARIA SATIPO – DRA JUNÍN" y título CERTIFICADO;</li><li>"Otorgado a LUCÍA PAREDES QUINTO";</li><li>el texto "Por haber laborado en la Agencia Agraria Satipo como asistente administrativa, del 02/01/2025 al 30/09/2026…";</li><li>la firma del Ing. Carlos Mendoza Rivera;</li><li>la marca de agua "VISTA PREVIA" y el aviso de que la fecha de emisión y el QR se asignan al firmar.</li></ul>Al costado: expediente, DNI y tipo. |
+| 2.3 | Complete los datos correctos:<ul><li>expediente `EXP-2026-005391`;</li><li>DNI `45829364`;</li><li>nombres `Lucía`;</li><li>apellidos `Paredes Quinto`;</li><li>cargo `asistente administrativa`;</li><li>inicio 02/01/2025 y fin 30/09/2026.</li></ul>Pulse "Continuar a vista previa". Las fechas se escriben en día/mes/año. | Aparece la vista previa del certificado:<ul><li>encabezado "AGENCIA AGRARIA SATIPO – DRA JUNÍN" y título CERTIFICADO;</li><li>"Otorgado a LUCÍA PAREDES QUINTO";</li><li>el texto "Por haber laborado en la Agencia Agraria Satipo como asistente administrativa, del 02/01/2025 al 30/09/2026…";</li><li>la firma del Ing. Carlos Mendoza Rivera;</li><li>la marca de agua "VISTA PREVIA" y el aviso de que la fecha de emisión y el QR se asignan al firmar.</li></ul>Al costado: expediente, DNI y tipo. |
 | 2.4 | Pulse "Volver". | Regresa al formulario con todos los datos escritos. Vuelva a pulsar "Continuar a vista previa". |
 | 2.5 | Pulse "Enviar a revisión". | Se pide confirmación, con el aviso de que no se podrá modificar mientras esté en revisión. |
 | 2.6 | Pulse "Enviar". | "✓ Documento enviado a revisión", con el código de verificación (DRA-2026- y seis caracteres). Anótelo. |

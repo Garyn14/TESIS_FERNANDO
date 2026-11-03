@@ -2,7 +2,7 @@
 
 - **Sprint:** 2, del 01/11 al 07/11/2026. El trabajo terminó el 01/11, así que la revisión se puede adelantar.
 - **Objetivo (Jira):** registrar solicitudes individuales y por lista, y construir el smart contract.
-- **Resultado:** 3 de 3 historias, 23 de 23 puntos. Todas están construidas, probadas e integradas, y esperan la aprobación del PO.
+- **Resultado:** 3 de 3 historias aprobadas, 23 de 23 puntos. El Sprint se cerró el 03/11/2026 (ver [Acta](#acta)).
 - **Participantes (Tabla 24 de la tesis):**
   - Product Owner: Christhian Danny Escalante Rosas.
   - Scrum Master: Jefferson Ventura Ruiz.
@@ -74,8 +74,48 @@ Las tomé al refinar cada historia. El sistema ya funciona así; si el PO pide c
 
 ## Acta
 
-Se completa al terminar la revisión, con:
+- **Fecha de la validación:** 03/11/2026, en el entorno local levantado con `./e2e/levantar.sh demo`.
+- **Cómo se validó:** con el [guion de pruebas](guion-de-pruebas.md). La aprobación de cada historia quedó registrada en su ticket de Jira, que pasó a **Finalizada**.
+- **Cierre del Sprint 2:** 03/11/2026, antes de la fecha prevista (07/11).
 
-- la decisión del PO sobre cada historia;
-- las respuestas a las decisiones;
-- los cambios pedidos, que se cargan en Jira para el Sprint 3.
+### Decisión sobre cada historia
+
+| Historia | Ticket | Puntos | Decisión | Registro en Jira |
+|---|---|---|---|---|
+| HU07: Seleccionar el tipo de documento | DRA-18 | 2 | Aprobada | Comentario "Se da el OK al ticket", con captura |
+| HU08: Registrar un documento a solicitud de parte | DRA-19 | 8 | Aprobada con observaciones | Comentario "OK con las siguientes observaciones": 1) fechas en día/mes/año; 2) espacio en blanco en la firma de la vista previa. Con capturas |
+| HU09: Registrar una emisión por lista | DRA-20 | 13 | Aprobada con una observación | Comentario: OK, con la salvedad de que la fecha se registraba en mes/día/año |
+
+**Resultado:** 3 de 3 historias aprobadas, con 23 de 23 puntos. La velocidad del Sprint 2 es de 23 puntos; en los Sprints 1 y 2 se completaron 47 de 156 puntos (30 %).
+
+### Observaciones y cómo se resolvieron
+
+| Observación | Historia | Resolución |
+|---|---|---|
+| Las fechas se muestran en mes/día/año y deben ser día/mes/año | HU08, HU09 | **Corregida el 03/11/2026.** El selector del navegador tomaba el formato del idioma del sistema. Se reemplazó por un campo propio `dd/mm/aaaa`, que no depende del navegador y conserva el botón del calendario. Commit `aa6e3f2`, CI [41677224185](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41677224185). Evidencia en [observacion-fechas](../../evidencias/sprint-2/observacion-fechas/) |
+| En la vista previa, la firma del Director aparece en blanco | HU08 | **Explicada, sin cambio.** Eran dos cosas:<ul><li>Bajo la línea salía "cmendoza" porque la cuenta se creó con ese nombre completo. El guion no indicaba qué nombre poner; ya lo indica.</li><li>El espacio sobre la línea está en blanco a propósito: no va una firma manuscrita, sino la firma digital con la billetera, que llega en el Sprint 3 (HU11, HU17).</li></ul>El PO acordó dejarlo así |
+
+### Decisiones a validar
+
+Ninguna de las 15 decisiones de este documento recibió una respuesta explícita.
+
+- **Preguntas abiertas.** Necesitan un dato del PO y pasan al Sprint 3:
+  1. el formato del número de expediente;
+  2. los campos y textos de cada documento a solicitud de parte;
+  3. las columnas de la lista real de beneficiarios.
+
+  Mientras tanto, se mantienen los del prototipo. Conviene tenerlos antes de la HU16, que arma el PDF definitivo con esas plantillas.
+- **Decisiones de diseño (4 a 15).** Al aprobar no se pidió cambiarlas, así que se mantienen como están construidas.
+
+### Cambios pedidos
+
+Solo el formato de las fechas, que ya está corregido e integrado. No quedan cambios pendientes para el Sprint 3.
+
+### Pendientes que pasan al Sprint 3
+
+| Pendiente | Ticket o fuente |
+|---|---|
+| Infraestructura en AWS: sigue diferida, para no gastar crédito | DRA-44 |
+| Las 3 preguntas abiertas de este Sprint y las 3 del Sprint 1 (áreas, nombre oficial, custodia del respaldo) | Documentos de la revisión |
+| Insumos del PO: ejemplos reales de los documentos y la lista real de beneficiarios | Revisión del Sprint 1 |
+| Ajustar el objetivo del Sprint 2 en Jira: el smart contract ya se construyó en el Sprint 1 | Este documento, sección inicial |

@@ -12,16 +12,22 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 |---|---|---|---|---|---|
 | 0 | 28/10 – 29/10 | Cerrado | Infraestructura: red Besu, IPFS privado y entorno de desarrollo | Tareas DRA-42, DRA-43, DRA-45, DRA-46, DRA-47 | — |
 | 1 | 29/10 – 31/10 | Cerrado (24 de 24 puntos) | Usuarios, roles, áreas y billetera del director | HU01–HU06 | 24 |
-| 2 | 01/11 – 07/11 | **Activo** | Solicitudes individuales y por lista; smart contract | HU07–HU09 + tarea DRA-44 (AWS, diferida) | 23 |
-| 3 | 08/11 – 21/11 | Futuro | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 | 47 |
+| 2 | 01/11 – 03/11 | Cerrado (23 de 23 puntos) | Solicitudes individuales y por lista | HU07–HU09 | 23 |
+| 3 | 08/11 – 21/11 | Siguiente | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 + tarea DRA-44 (AWS, diferida) | 47 |
 | 4 | 22/11 – 28/11 | Futuro | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
 | 5 | 29/11 – 05/12 | Futuro | Verificación pública de autenticidad | HU19–HU21 | 16 |
 | 6 | 06/12 – 12/12 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
 | | | | | **Total** | **156** |
 
-**Avance:** 24 de 156 puntos (15 %). Velocidad del Sprint 1: 24 puntos.
+**Avance:** 47 de 156 puntos (30 %). Velocidad: 24 puntos en el Sprint 1 y 23 en el Sprint 2.
 
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
+
+### Cierre del Sprint 2 (03/11/2026)
+
+- **Finalizadas:** HU07, HU08 y HU09 (DRA-18 a DRA-20). Son 23 de 23 puntos, aprobadas con el [guion de pruebas](../scrum/sprint-2/guion-de-pruebas.md). Acta en [revision.md](../scrum/sprint-2/revision.md#acta).
+- **Observación atendida:** las fechas se muestran ahora en día/mes/año (DRA-19 y DRA-20).
+- **Movida al Sprint 3:** DRA-44 (infraestructura en AWS), que sigue diferida.
 
 ### Cierre del Sprint 1 (31/10/2026)
 
@@ -67,7 +73,7 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 |---|---|
 | DRA-42 | Definir el stack técnico |
 | DRA-43 | Configurar el repositorio, la estructura del proyecto y la integración continua |
-| DRA-44 | Provisionar la infraestructura en AWS (diferida: movida al Sprint 1 y luego al Sprint 2; se crea cuando se necesite para la demo, la aceptación y la posprueba) |
+| DRA-44 | Provisionar la infraestructura en AWS (diferida: movida a los Sprints 1, 2 y 3; se crea cuando se necesite para la demo, la aceptación y la posprueba) |
 | DRA-45 | Desplegar la red Hyperledger Besu (QBFT, 4 validadores) |
 | DRA-46 | Desplegar el nodo IPFS privado |
 | DRA-47 | Procedimiento de inicialización del sistema (RF09) |
