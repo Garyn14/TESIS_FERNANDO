@@ -6,17 +6,17 @@ Cargado el 28/10/2026 a partir de [historias_de_usuario.md](historias_de_usuario
 
 ## Calendario de sprints (reprogramado)
 
-Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario se reprogramó conservando la duración relativa: sprints de 1 semana y el Sprint 3 de dos semanas. El 29/10/2026, al cerrar el Sprint 0 antes de lo previsto, se **adelantó todo el calendario** y el Sprint 1 se inició ese mismo día. El 01/11/2026, tras cerrar el Sprint 1 el 31/10 (4 días antes de lo previsto), se **volvió a adelantar el calendario**: el Sprint 2 empieza el 01/11 y los siguientes se corren 4 días, con la misma duración.
+Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario se reprogramó conservando la duración relativa: sprints de 1 semana y el Sprint 3 de dos semanas. El 29/10/2026, al cerrar el Sprint 0 antes de lo previsto, se **adelantó todo el calendario** y el Sprint 1 se inició ese mismo día. El 01/11/2026, tras cerrar el Sprint 1 el 31/10 (4 días antes de lo previsto), se **volvió a adelantar el calendario**: el Sprint 2 empieza el 01/11 y los siguientes se corren 4 días, con la misma duración. El 03/11/2026, al cerrar el Sprint 2 cuatro días antes, se **adelantó una vez más**: el Sprint 3 empieza el 03/11 y el Sprint 6 termina el 07/12.
 
 | Sprint | Fechas | Estado | Objetivo | Historias | Puntos |
 |---|---|---|---|---|---|
 | 0 | 28/10 – 29/10 | Cerrado | Infraestructura: red Besu, IPFS privado y entorno de desarrollo | Tareas DRA-42, DRA-43, DRA-45, DRA-46, DRA-47 | — |
 | 1 | 29/10 – 31/10 | Cerrado (24 de 24 puntos) | Usuarios, roles, áreas y billetera del director | HU01–HU06 | 24 |
 | 2 | 01/11 – 03/11 | Cerrado (23 de 23 puntos) | Solicitudes individuales y por lista | HU07–HU09 | 23 |
-| 3 | 08/11 – 21/11 | Siguiente | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 + tarea DRA-44 (AWS, diferida) | 47 |
-| 4 | 22/11 – 28/11 | Futuro | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
-| 5 | 29/11 – 05/12 | Futuro | Verificación pública de autenticidad | HU19–HU21 | 16 |
-| 6 | 06/12 – 12/12 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
+| 3 | 03/11 – 16/11 | **Activo** | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 + tarea DRA-44 (AWS, diferida) | 47 |
+| 4 | 17/11 – 23/11 | Futuro | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
+| 5 | 24/11 – 30/11 | Futuro | Verificación pública de autenticidad | HU19–HU21 | 16 |
+| 6 | 01/12 – 07/12 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
 | | | | | **Total** | **156** |
 
 **Avance:** 47 de 156 puntos (30 %). Velocidad: 24 puntos en el Sprint 1 y 23 en el Sprint 2.
