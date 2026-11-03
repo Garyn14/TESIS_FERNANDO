@@ -67,8 +67,8 @@ function completar() {
   fireEvent.change(campo('Nombres'), { target: { value: '  Lucía ' } })
   fireEvent.change(campo('Apellidos'), { target: { value: 'Paredes   Quinto' } })
   fireEvent.change(campo('Cargo'), { target: { value: 'asistente administrativa' } })
-  fireEvent.change(campo('Fecha de inicio'), { target: { value: '2025-01-02' } })
-  fireEvent.change(campo('Fecha de fin'), { target: { value: '2026-09-30' } })
+  fireEvent.change(campo('Fecha de inicio'), { target: { value: '02/01/2025' } })
+  fireEvent.change(campo('Fecha de fin'), { target: { value: '30/09/2026' } })
 }
 
 beforeEach(() => vi.restoreAllMocks())
@@ -79,8 +79,8 @@ describe('Registro a solicitud de parte (HU08)', () => {
     const fetch = vi.spyOn(globalThis, 'fetch')
     render(<FormularioSolicitud tipo={TRABAJO} />)
     fireEvent.change(campo('DNI'), { target: { value: '4582936' } })
-    fireEvent.change(campo('Fecha de inicio'), { target: { value: '2026-05-02' } })
-    fireEvent.change(campo('Fecha de fin'), { target: { value: '2026-05-01' } })
+    fireEvent.change(campo('Fecha de inicio'), { target: { value: '02/05/2026' } })
+    fireEvent.change(campo('Fecha de fin'), { target: { value: '01/05/2026' } })
     fireEvent.click(screen.getByRole('button', { name: 'Continuar a vista previa' }))
 
     expect(await screen.findByText('Ingrese el número de expediente.')).toBeInTheDocument()
@@ -91,6 +91,16 @@ describe('Registro a solicitud de parte (HU08)', () => {
       screen.getByText('La fecha de fin no puede ser anterior a la de inicio.'),
     ).toBeInTheDocument()
     expect(campo('DNI')).toHaveAttribute('aria-invalid', 'true')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('una fecha que no existe se señala con el formato esperado', () => {
+    const fetch = vi.spyOn(globalThis, 'fetch')
+    render(<FormularioSolicitud tipo={TRABAJO} />)
+    completar()
+    fireEvent.change(campo('Fecha de inicio'), { target: { value: '31/02/2025' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar a vista previa' }))
+    expect(screen.getByText('Ingrese una fecha válida, en formato dd/mm/aaaa.')).toBeInTheDocument()
     expect(fetch).not.toHaveBeenCalled()
   })
 

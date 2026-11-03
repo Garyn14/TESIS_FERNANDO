@@ -94,8 +94,8 @@ function completarEvento() {
   fireEvent.change(campo('Nombre del taller'), {
     target: { value: 'Manejo integrado de plagas en café' },
   })
-  fireEvent.change(campo('Fecha de inicio'), { target: { value: '2026-09-14' } })
-  fireEvent.change(campo('Fecha de fin'), { target: { value: '2026-09-16' } })
+  fireEvent.change(campo('Fecha de inicio'), { target: { value: '14/09/2026' } })
+  fireEvent.change(campo('Fecha de fin'), { target: { value: '16/09/2026' } })
   fireEvent.change(campo('Duración (horas)'), { target: { value: '24' } })
   fireEvent.change(campo('Lugar'), { target: { value: 'Local comunal de Río Negro, Satipo' } })
   fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
@@ -118,8 +118,8 @@ describe('Emisión por lista (HU09)', () => {
   it('valida los datos del evento y completa el área organizadora', () => {
     render(<FormularioLote tipo={CAPACITACION} areaNombre="Área de Capacitación" />)
     expect(campo('Área organizadora')).toHaveValue('Área de Capacitación')
-    fireEvent.change(campo('Fecha de inicio'), { target: { value: '2026-09-16' } })
-    fireEvent.change(campo('Fecha de fin'), { target: { value: '2026-09-14' } })
+    fireEvent.change(campo('Fecha de inicio'), { target: { value: '16/09/2026' } })
+    fireEvent.change(campo('Fecha de fin'), { target: { value: '14/09/2026' } })
     fireEvent.change(campo('Duración (horas)'), { target: { value: '0' } })
     fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
     expect(screen.getAllByText('Complete este campo.')).toHaveLength(2)

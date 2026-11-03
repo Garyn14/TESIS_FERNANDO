@@ -1,4 +1,5 @@
 import type { Beneficiario, Campo, SolicitudDocumento } from './api'
+import { esIso } from './fecha'
 
 /**
  * Errores por campo, con las mismas claves que el servidor: los de la plantilla como
@@ -42,6 +43,7 @@ export function validarDatos(datos: Record<string, string>, campos: Campo[]): Er
     } else if (campo.tipo === 'OPCION') {
       if (!campo.opciones.includes(valor)) errores[clave] = 'Seleccione una opción.'
     } else if (!valor) errores[clave] = 'Ingrese la fecha.'
+    else if (!esIso(valor)) errores[clave] = 'Ingrese una fecha válida, en formato dd/mm/aaaa.'
     else if (valor > hoy) errores[clave] = 'La fecha no puede ser posterior a hoy.'
   }
   const { fechaInicio, fechaFin } = datos
