@@ -241,14 +241,4 @@ public class Documento {
   public OffsetDateTime getRevisadoEn() {
     return revisadoEn;
   }
-
-  /** Registra la revisión. Devuelve false si ya estaba revisado: solo cuenta la primera. */
-  boolean marcarRevisado(Usuario director) {
-    if (isRevisado()) {
-      return false;
-    }
-    this.revisadoPor = director;
-    this.revisadoEn = OffsetDateTime.now();
-    return true;
-  }
 }
