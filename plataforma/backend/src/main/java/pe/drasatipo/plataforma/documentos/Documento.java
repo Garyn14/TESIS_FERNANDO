@@ -20,8 +20,8 @@ import pe.drasatipo.plataforma.areas.TipoDocumento;
 import pe.drasatipo.plataforma.usuarios.Usuario;
 
 /**
- * Documento registrado por el Área encargada (HU08). Mientras está Pendiente no tiene ningún método
- * para modificarse (RF20): todos sus campos se fijan al registrarlo.
+ * Documento registrado por el Área encargada (HU08). Mientras está Pendiente su contenido no se
+ * puede modificar (RF20): todos sus datos se fijan al registrarlo. Solo se registra su revisión.
  */
 @Entity
 @Table(name = "documento")
@@ -85,6 +85,14 @@ public class Documento {
 
   @Column(name = "registrado_en", nullable = false, updatable = false)
   private OffsetDateTime registradoEn = OffsetDateTime.now();
+
+  /** Primera revisión del Director (HU10, RF22); nulos mientras no lo revise. */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "revisado_por")
+  private Usuario revisadoPor;
+
+  @Column(name = "revisado_en")
+  private OffsetDateTime revisadoEn;
 
   protected Documento() {}
 
@@ -224,5 +232,23 @@ public class Documento {
 
   public OffsetDateTime getRegistradoEn() {
     return registradoEn;
+  }
+
+  public boolean isRevisado() {
+    return revisadoEn != null;
+  }
+
+  public OffsetDateTime getRevisadoEn() {
+    return revisadoEn;
+  }
+
+  /** Registra la revisión. Devuelve false si ya estaba revisado: solo cuenta la primera. */
+  boolean marcarRevisado(Usuario director) {
+    if (isRevisado()) {
+      return false;
+    }
+    this.revisadoPor = director;
+    this.revisadoEn = OffsetDateTime.now();
+    return true;
   }
 }
