@@ -1,5 +1,7 @@
+import { useRef } from 'react'
 import { CAMPO } from '../comun/estilos'
 import type { Campo } from './api'
+import { leer, mostrar } from './fecha'
 
 interface Props {
   id: string
@@ -26,6 +28,7 @@ export default function CampoFormulario({
   opciones,
   maxLength,
 }: Props) {
+  const calendario = useRef<HTMLInputElement>(null)
   const propiedades = {
     id,
     value: valor,
@@ -49,10 +52,54 @@ export default function CampoFormulario({
             </option>
           ))}
         </select>
+      ) : tipo === 'fecha' ? (
+        // Campo propio en día/mes/año: el selector del navegador muestra el formato del idioma
+        // del sistema (mes/día/año en inglés). El botón abre ese calendario solo para elegir.
+        <div className="relative">
+          <input
+            {...propiedades}
+            value={mostrar(valor)}
+            onChange={(e) => onCambiar(leer(e.target.value))}
+            type="text"
+            placeholder="dd/mm/aaaa"
+            inputMode="numeric"
+            maxLength={10}
+            autoComplete="off"
+            className={`${propiedades.className} pr-12`}
+          />
+          <input
+            ref={calendario}
+            type="date"
+            tabIndex={-1}
+            aria-hidden="true"
+            value={/^\d{4}-\d{2}-\d{2}$/.test(valor) ? valor : ''}
+            onChange={(e) => e.target.value && onCambiar(e.target.value)}
+            className="pointer-events-none absolute right-2 bottom-0 h-0 w-0 opacity-0"
+          />
+          <button
+            type="button"
+            aria-label="Abrir calendario"
+            title="Abrir calendario"
+            onClick={() => calendario.current?.showPicker?.()}
+            className="absolute top-1/2 right-2 mt-0.5 -translate-y-1/2 rounded px-2 py-1 text-institutional hover:bg-green-pale"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              aria-hidden="true"
+            >
+              <rect x="3.5" y="5" width="17" height="15" rx="2" />
+              <path d="M3.5 10h17M8 3v4M16 3v4" />
+            </svg>
+          </button>
+        </div>
       ) : (
         <input
           {...propiedades}
-          type={tipo === 'fecha' ? 'date' : 'text'}
+          type="text"
           inputMode={tipo === 'numero' ? 'numeric' : undefined}
           maxLength={maxLength}
           autoComplete="off"
