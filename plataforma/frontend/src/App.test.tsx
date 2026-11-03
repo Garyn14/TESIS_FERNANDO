@@ -100,9 +100,9 @@ describe('App (HU03)', () => {
   it('las pantallas aún no construidas avisan en qué sprint se habilitan', async () => {
     backend(DIRECTOR)
     render(<App />)
-    fireEvent.click(await screen.findByRole('link', { name: 'Por revisar' }))
-    expect(await screen.findByText(/Se habilita en el Sprint 3 \(HU10\)/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Por revisar' })).toHaveAttribute(
+    fireEvent.click(await screen.findByRole('link', { name: 'Documentos firmados' }))
+    expect(await screen.findByText(/Se habilita en el Sprint 3/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Documentos firmados' })).toHaveAttribute(
       'aria-current',
       'page',
     )

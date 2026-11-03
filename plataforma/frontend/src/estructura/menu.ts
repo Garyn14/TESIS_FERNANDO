@@ -32,7 +32,6 @@ export const MENU: OpcionMenu[] = [
     ruta: 'por-revisar',
     titulo: 'Por revisar',
     permiso: 'DOCUMENTO_REVISAR',
-    pendiente: 'Se habilita en el Sprint 3 (HU10).',
   },
   {
     ruta: 'firmados',
