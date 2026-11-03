@@ -54,7 +54,7 @@ Cada sprint genera material para 3.4 y, al terminarlo, se deben guardar capturas
 
 ## 3. Calendario integrado
 
-> **Actualizado el 01/11/2026:** el calendario se reprogramó en Jira y se adelantó dos veces, al cerrar antes los Sprints 0 y 1. Hoy va del Sprint 2 (01/11–07/11) al Sprint 6 (06/12–12/12). Las fechas vigentes y la relación HU ↔ Jira están en [requerimientos/jira.md](requerimientos/jira.md). La tabla siguiente conserva el plan original de la tesis.
+> **Actualizado el 03/11/2026:** el calendario se reprogramó en Jira y se adelantó tres veces, al cerrar antes los Sprints 0, 1 y 2. Hoy va del Sprint 3 (03/11–16/11) al Sprint 6 (01/12–07/12). Las fechas vigentes y la relación HU ↔ Jira están en [requerimientos/jira.md](requerimientos/jira.md). La tabla siguiente conserva el plan original de la tesis.
 
 Periodo de desarrollo del documento: del 5 de octubre al 29 de noviembre de 2026.
 
