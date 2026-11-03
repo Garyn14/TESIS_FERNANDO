@@ -145,7 +145,7 @@ public class RegistroDeLotes {
         .orElseThrow(() -> new ReglaDeNegocioException(HttpStatus.FORBIDDEN, null, DE_OTRA_AREA));
   }
 
-  private LoteRespuesta respuesta(Lote lote) {
+  LoteRespuesta respuesta(Lote lote) {
     List<LoteRespuesta.DocumentoDelLote> delLote =
         documentos.findByLoteIdOrderById(lote.getId()).stream()
             .map(

@@ -544,14 +544,47 @@ Los cuatro primeros son los de la Tabla 18 de la tesis. Los demás detallan cóm
 
 **Como** director, **quiero** ver los documentos pendientes de revisión, **para** atenderlos en orden.
 
+**Contexto**
+
+Es la bandeja del Director. Hoy recibe los documentos impresos de varias áreas y no tiene una vista que le diga qué está pendiente ni en qué orden atenderlo. Con esta historia ve, en la opción "Por revisar", todo lo que las áreas enviaron (HU08 y HU09). Los muestra del más antiguo al más reciente, y cada lote aparece como un solo elemento (RF21). Al abrir un documento o un lote, la plataforma registra que lo revisó (RF22). Ese registro es lo que la HU11 exige para dejar seleccionarlo y firmarlo.
+
 **Criterios de aceptación**
+
+Los tres primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] Se ordenan del más antiguo al más reciente.
 - [ ] Los lotes aparecen como un solo elemento.
 - [ ] Se registra qué documentos fueron revisados.
+- [ ] La opción "Por revisar" deja de mostrar el aviso "Se habilita en el Sprint 3". Lista los documentos Pendientes de todas las áreas, con el subtítulo "Documentos enviados por las áreas, del más antiguo al más reciente". Cada fila muestra el tipo, el beneficiario, el área, quién lo envió, la fecha de envío y la revisión. En los de solicitud de parte se muestra también el número de expediente.
+- [ ] Un lote se muestra en una sola fila, con su número, el nombre del evento y la cantidad de certificados (por ejemplo, "Lote 2026-001 · Manejo integrado de plagas en café · 8 certificados").
+- [ ] La columna Revisión dice "Sin revisar" o "✓ Revisado".
+- [ ] Al abrir un documento se ven sus datos (con el expediente, si lo tiene) y su vista previa con la plantilla. Al abrirlo queda registrado como revisado, con quién y cuándo, y el evento queda en su historial.
+- [ ] Al abrir un lote se ven los datos del evento y quién lo envió. A la izquierda está el certificado del beneficiario elegido, y se puede pasar con "‹ Anterior" y "Siguiente ›" ("Certificado 3 de 8"). A la derecha está la relación de beneficiarios con su DNI: al pulsar un nombre se muestra su certificado. Abrir el lote cuenta como revisión de todos sus documentos (RF22).
+- [ ] Desde el detalle se vuelve a la bandeja con "← Volver a Por revisar", y el elemento aparece como Revisado.
+- [ ] Sin pendientes se muestra "¡Todo al día! No tiene documentos pendientes de revisión".
+- [ ] Solo un documento Pendiente se puede abrir para revisión. Uno inexistente o que ya no está Pendiente no se muestra.
+- [ ] Solo las cuentas con el permiso DOCUMENTO_REVISAR (rol Director) ven la opción y pueden consultar la bandeja. Sin sesión se responde 401 y con otro rol, 403 (RF04).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Seleccionar los revisados y firmarlos ("Firmar seleccionados") | HU11 |
+| Firmar el lote completo | HU12 |
+| Observar y rechazar (con su ventana de motivo) | HU13 y HU14 (Sprint 4) |
+| Contador de pendientes en el menú y avisos de documentos nuevos | HU26–HU28 (Sprint 6, notificaciones) |
+| Etiquetas "Corregido" y "Reemisión" | HU15 y HU30 (Sprint 4) |
+
+**Notas técnicas**
+
+- API: GET /api/revision (bandeja) y POST /api/revision/documentos/{codigo} y POST /api/revision/lotes/{numero} (abren para revisar y registran la revisión). Se usa POST porque registra un dato.
+- Migración V12: columnas revisado_por y revisado_en en documento, y el evento REVISADO en documento_historial.
+- El Director no está limitado por área (RF05 solo limita al Área encargada).
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
 | Alta | 3 | 3 | RF21, RF22 |
+
 
 ### HU11: Firmar uno o varios documentos
 

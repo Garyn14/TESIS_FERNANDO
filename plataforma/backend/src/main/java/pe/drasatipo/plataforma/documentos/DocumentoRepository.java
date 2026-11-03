@@ -18,6 +18,10 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
   @EntityGraph(attributePaths = {"tipo", "lote"})
   List<Documento> findByAreaIdOrderByRegistradoEnDescIdAsc(Short areaId);
 
+  /** Bandeja "Por revisar": los pendientes, del más antiguo al más reciente (HU10, RF21). */
+  @EntityGraph(attributePaths = {"tipo", "area", "registradoPor", "lote"})
+  List<Documento> findByEstadoOrderByRegistradoEnAscIdAsc(EstadoDocumento estado);
+
   /** Documentos de un lote, en el orden de la relación de beneficiarios (HU09). */
   List<Documento> findByLoteIdOrderById(Long loteId);
 }
