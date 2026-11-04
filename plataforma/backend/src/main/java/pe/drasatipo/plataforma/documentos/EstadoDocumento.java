@@ -10,5 +10,11 @@ public enum EstadoDocumento {
    */
   PROCESANDO_FIRMA,
   /** Registrado en la blockchain con la billetera del Director (HU11, RF31). */
-  FIRMADO
+  FIRMADO,
+  /**
+   * El Director lo observó con un motivo: vuelve al Área encargada para corregirlo (HU12, HU15).
+   */
+  OBSERVADO,
+  /** El Director lo rechazó con un motivo. Es definitivo (HU12, HU14). */
+  RECHAZADO
 }

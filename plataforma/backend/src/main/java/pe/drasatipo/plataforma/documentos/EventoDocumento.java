@@ -15,5 +15,9 @@ public enum EventoDocumento {
   /**
    * La firma no se completó (cancelada en la billetera o transacción fallida): volvió a Pendiente.
    */
-  FIRMA_CANCELADA
+  FIRMA_CANCELADA,
+  /** El Director lo observó; el detalle lleva el motivo (HU12). */
+  OBSERVADO,
+  /** El Director lo rechazó; el detalle lleva el motivo (HU12). */
+  RECHAZADO
 }

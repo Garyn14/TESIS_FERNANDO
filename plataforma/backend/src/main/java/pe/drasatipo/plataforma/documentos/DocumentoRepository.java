@@ -99,6 +99,20 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
       @Param("bloque") Long bloque,
       @Param("billetera") String billetera);
 
+  /**
+   * Observa o rechaza un documento Pendiente con su motivo (HU12), en una sola sentencia: si ya no
+   * está Pendiente (por ejemplo, se está firmando), no cambia. Devuelve 1 si cambió.
+   */
+  @Modifying
+  @Query(
+      "UPDATE Documento d SET d.estado = :estado, d.motivo = :motivo"
+          + " WHERE d.id = :id AND d.estado = "
+          + PENDIENTE)
+  int decidir(
+      @Param("id") Long id,
+      @Param("estado") EstadoDocumento estado,
+      @Param("motivo") String motivo);
+
   /** Devuelve a Pendiente un documento cuya preparación falló (HU17). */
   @Modifying
   @Query(

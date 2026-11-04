@@ -17,6 +17,12 @@ public record LoteRespuesta(
     VistaPreviaRespuesta ejemplo,
     List<DocumentoDelLote> documentos) {
 
+  /** Un certificado del lote, con su estado y el motivo si fue observado o rechazado (HU12). */
   public record DocumentoDelLote(
-      String codigo, String nombres, String apellidos, String dni, EstadoDocumento estado) {}
+      String codigo,
+      String nombres,
+      String apellidos,
+      String dni,
+      EstadoDocumento estado,
+      String motivo) {}
 }

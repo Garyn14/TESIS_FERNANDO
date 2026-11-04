@@ -19,7 +19,8 @@ public record DocumentoRespuesta(
     String areaNombre,
     String registradoPor,
     OffsetDateTime registradoEn,
-    String firmante) {
+    String firmante,
+    String motivo) {
 
   static DocumentoRespuesta de(Documento documento, String firmante) {
     return new DocumentoRespuesta(
@@ -38,6 +39,7 @@ public record DocumentoRespuesta(
         documento.getArea().getNombre(),
         documento.getRegistradoPor().getNombreCompleto(),
         documento.getRegistradoEn(),
-        firmante);
+        firmante,
+        documento.getMotivo());
   }
 }
