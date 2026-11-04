@@ -2,7 +2,8 @@
 // simulaciones. Requiere una base de datos vacía (levantar.sh). El Área encargada envía sus
 // documentos por la API desde el navegador (la pantalla ya la recorre sprint2.cjs) y el Director
 // trabaja desde la pantalla, con la billetera de prueba en la red Besu local. Recorre HU13, HU14,
-// HU15 y HU29 (anular un documento firmado, también desde la sincronización con la blockchain).
+// HU15, HU29 (anular un documento firmado, también desde la sincronización con la blockchain) y
+// HU30 (reemitir un documento firmado: al firmarse, el original se anula en la misma transacción).
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
@@ -43,6 +44,7 @@ const paso = async (nombre, fn) => {
     [
       'function consultar(string codigo) view returns (bool, (bytes32 hashPdf, bytes32 dniHmac, address firmante, uint64 registradoEn))',
       'function anulacion(string codigo) view returns (bool, uint64)',
+      'function reemplazadoPor(string codigo) view returns (string)',
     ],
     nodo,
   )
@@ -598,6 +600,184 @@ const paso = async (nombre, fn) => {
     assert.equal(await api(anonimo, '/api/firmados'), 401)
     assert.ok(!(await menu(pedro)).includes('Documentos firmados'))
     assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${nilo}'`), 'FIRMADO')
+  })
+
+  // ------------------------------------------------------- HU30: reemitir un documento firmado
+  const MOTIVO_REEMISION = 'El segundo apellido del beneficiario estaba mal escrito'
+  let nuevoNilo
+  await paso('HU30 · El área reemite un firmado: el formulario viene precargado, con el mismo expediente y el motivo obligatorio', async () => {
+    await pedro.goto(URL + '#/mis-documentos/' + nilo)
+    await pedro.reload()
+    await pedro.getByRole('link', { name: /Reemitir con corrección/ }).click()
+    await pedro.getByRole('heading', { name: 'Reemitir con corrección – Certificado de Trabajo' }).waitFor()
+    await pedro.getByText(`Reemisión de ${nilo}. Cuando el Director firme el nuevo documento, el original se anulará automáticamente.`).waitFor()
+    assert.equal(await pedro.getByLabel('Apellidos', { exact: false }).inputValue(), 'Huamán Soto')
+    assert.equal(await pedro.getByLabel('Cargo', { exact: false }).inputValue(), 'asistente administrativa')
+    assert.equal(await pedro.getByLabel('N.° de expediente', { exact: false }).count(), 0)
+    await pedro.getByText('EXP-2026-005402').waitFor()
+    const continuar = pedro.getByRole('button', { name: 'Continuar a vista previa' })
+    await continuar.click()
+    await pedro.getByText('Ingrese el motivo de la reemisión.').waitFor()
+    await pedro.getByLabel('Motivo de la reemisión').fill(MOTIVO_REEMISION)
+    await continuar.click()
+    await pedro.getByText('Corrija al menos un dato del documento.').waitFor()
+    await pedro.getByLabel('Apellidos', { exact: false }).fill('Huamán Sotomayor')
+    await foto(pedro, 'hu30_01_formulario_de_reemision')
+    await continuar.click()
+    await pedro.getByRole('figure').getByText('Huamán Sotomayor', { exact: false }).waitFor()
+    await pedro.getByRole('button', { name: 'Enviar a revisión' }).click()
+    const confirmar = pedro.getByRole('dialog', { name: '¿Enviar la reemisión a revisión?' })
+    await confirmar.getByText(`el original (${nilo}) se anulará automáticamente`, { exact: false }).waitFor()
+    await confirmar.getByRole('button', { name: 'Enviar' }).click()
+    const enviado = pedro.getByRole('status')
+    await enviado.getByText('✓ Reemisión enviada a revisión').waitFor()
+    nuevoNilo = await enviado.locator('strong.font-mono').textContent()
+    await foto(pedro, 'hu30_02_reemision_enviada')
+    assert.notEqual(nuevoNilo, nilo)
+    assert.equal(
+      psql(`SELECT d.estado, d.numero_expediente, o.codigo, d.motivo_reemision, d.apellidos FROM documento d JOIN documento o ON o.id = d.reemplaza_a WHERE d.codigo = '${nuevoNilo}'`),
+      `PENDIENTE|EXP-2026-005402|${nilo}|${MOTIVO_REEMISION}|Huamán Sotomayor`,
+    )
+    const [evento, detalle, quien] = ultimoEvento(nilo)
+    assert.equal(evento, 'REEMISION_SOLICITADA')
+    assert.equal(quien, 'pmorales')
+    assert.equal(detalle, `Reemisión solicitada por Pedro Morales Ccanto (Área de Administración): ${nuevoNilo}. Motivo: ${MOTIVO_REEMISION}`)
+    const [registro0, detalleNuevo] = ultimoEvento(nuevoNilo)
+    assert.equal(registro0, 'REGISTRADO')
+    assert.ok(detalleNuevo.startsWith(`Reemisión de ${nilo} registrada y enviada a revisión por Pedro Morales Ccanto`), detalleNuevo)
+    assert.ok(detalleNuevo.endsWith('Cambios: Apellidos: Huamán Soto → Huamán Sotomayor.'), detalleNuevo)
+  })
+  await paso('HU30 · El original sigue Firmado con "Reemisión en revisión"; no se reemite dos veces ni se anula por separado', async () => {
+    await pedro.goto(URL + '#/mis-documentos/' + nilo)
+    await pedro.reload()
+    await pedro.getByText('Reemisión en revisión:', { exact: false }).waitFor()
+    assert.equal(await pedro.getByRole('link', { name: /Reemitir con corrección/ }).count(), 0)
+    assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${nilo}'`), 'FIRMADO')
+    const otra = await enviar(pedro, `/api/documentos/${nilo}/reemision`, {
+      nombres: 'Nilo', apellidos: 'Huamán S.', dni: '44200002',
+      datos: { cargo: 'asistente administrativa', fechaInicio: '2025-01-02', fechaFin: '2026-09-30' },
+      motivo: 'Otra',
+    })
+    assert.equal(otra.estado, 409)
+    assert.equal(otra.cuerpo.mensaje, `Este documento ya tiene una reemisión en revisión: ${nuevoNilo}.`)
+    const anular = await enviar(carlos, `/api/anulacion/${nilo}/solicitud`, { motivo: 'Por separado' })
+    assert.equal(anular.estado, 409)
+    await carlos.goto(URL + '#/firmados')
+    await carlos.reload()
+    const fila = carlos.locator('main tbody tr', { hasText: nilo })
+    await fila.getByText('Reemisión en revisión:', { exact: false }).waitFor()
+    assert.equal(await fila.getByRole('button').count(), 0)
+  })
+  await paso('HU30 · El Director la ve como "Reemisión", con los cambios y el motivo, y al firmarla el original se anula en la misma transacción', async () => {
+    await carlos.goto(URL + '#/por-revisar')
+    await carlos.reload()
+    const fila = carlos.locator('main tbody tr', { hasText: 'Nilo Huamán Sotomayor' })
+    await fila.getByText('Reemisión', { exact: true }).waitFor()
+    await foto(carlos, 'hu30_03_bandeja_con_reemision')
+    await fila.getByRole('link').click()
+    const nota = carlos.getByRole('note')
+    await nota.getByText(`Este documento reemplaza a ${nilo}`, { exact: false }).waitFor()
+    await nota.getByText('Apellidos: Huamán Soto → Huamán Sotomayor').waitFor()
+    await nota.getByText(MOTIVO_REEMISION, { exact: false }).waitFor()
+    await foto(carlos, 'hu30_04_revision_con_cambios')
+    await carlos.getByRole('button', { name: 'Firmar' }).click()
+    const firma = carlos.getByRole('dialog', { name: 'Firmar con su billetera' })
+    await firma.getByText('Firmar 1 documento').waitFor()
+    const antes = billeteras.get(carlos).estado.transacciones.length
+    await firma.getByRole('button', { name: 'Confirmar' }).click()
+    await firma.getByText('Se firmó 1 documento.').waitFor({ timeout: 60_000 })
+    assert.equal(billeteras.get(carlos).estado.transacciones.length, antes + 1)
+    const tx = billeteras.get(carlos).estado.transacciones.at(-1)
+    await esperarHasta('el original Anulado', () => psql(`SELECT estado FROM documento WHERE codigo = '${nilo}'`) === 'ANULADO', 30_000)
+    assert.equal(psql(`SELECT estado, transaccion FROM documento WHERE codigo = '${nuevoNilo}'`), `FIRMADO|${tx}`)
+    assert.equal(
+      psql(`SELECT transaccion_anulacion, motivo_anulacion FROM documento WHERE codigo = '${nilo}'`),
+      `${tx}|Reemplazado por ${nuevoNilo}. Motivo de la reemisión: ${MOTIVO_REEMISION}`,
+    )
+    // En la blockchain, leído directo del nodo: una sola transacción registró el nuevo y anuló el original.
+    const recibo = await nodo.getTransactionReceipt(tx)
+    assert.equal(recibo.status, 1)
+    assert.equal(recibo.logs.length, 3)
+    assert.equal((await registro.consultar(nuevoNilo))[0], true)
+    assert.equal((await anulado(nilo)).si, true)
+    assert.equal(await registro.reemplazadoPor(nilo), nuevoNilo)
+    assert.equal((await registro.consultar(nilo))[0], true)
+    const [evento, detalle] = ultimoEvento(nilo)
+    assert.equal(evento, 'ANULADO')
+    assert.ok(/^(Anulado|Anulación confirmada por la sincronización: anulado) por reemisión \(reemplazado por /.test(detalle), detalle)
+    assert.ok(detalle.includes(nuevoNilo) && detalle.includes(`transacción ${tx}`), detalle)
+    await foto(carlos, 'hu30_05_reemision_firmada')
+    await firma.getByRole('button', { name: 'Volver a Por revisar' }).click()
+  })
+  await paso('HU30 · El área ve el original Anulado, "Reemplazado por" la reemisión, y la reemisión con su motivo', async () => {
+    await pedro.goto(URL + '#/mis-documentos/' + nilo)
+    await pedro.reload()
+    await pedro.getByText('Se anuló al firmarse su reemisión', { exact: false }).waitFor()
+    await pedro.getByRole('link', { name: nuevoNilo }).first().waitFor()
+    await foto(pedro, 'hu30_06_original_reemplazado')
+    await pedro.getByRole('link', { name: nuevoNilo }).first().click()
+    await pedro.getByText(`Reemisión de ${nilo}.`, { exact: false }).waitFor()
+    await pedro.getByText(MOTIVO_REEMISION).waitFor()
+    await pedro.getByText('Firmado', { exact: true }).first().waitFor()
+    await foto(pedro, 'hu30_07_detalle_de_la_reemision')
+  })
+  await paso('HU30 · Un certificado de un lote se reemite desde su fila, en el mismo lote y sin repetir un DNI vigente', async () => {
+    const numero = psql(`SELECT l.numero FROM lote l JOIN documento d ON d.lote_id = l.id WHERE d.codigo = '${gladys}'`)
+    // El Director firma el lote: revisarlo y "Firmar lote".
+    await carlos.goto(URL + '#/por-revisar/lote/' + numero)
+    await carlos.getByRole('button', { name: 'Firmar lote' }).click()
+    const firma = carlos.getByRole('dialog', { name: 'Firmar con su billetera' })
+    await firma.getByText('Firmar 3 certificados').waitFor()
+    await firma.getByRole('button', { name: 'Confirmar' }).click()
+    await firma.getByText('Se firmaron 3 certificados.').waitFor({ timeout: 60_000 })
+    await firma.getByRole('button', { name: 'Volver a Por revisar' }).click()
+    const juan = psql(`SELECT codigo FROM documento WHERE lote_id = (SELECT id FROM lote WHERE numero = '${numero}') AND nombres = 'Juan'`)
+
+    await rosa.goto(URL + '#/mis-documentos/lote/' + numero)
+    await rosa.reload()
+    await rosa.getByRole('button', { name: `Reemitir con corrección ${juan}` }).click()
+    const ventana = rosa.getByRole('dialog', { name: 'Reemitir certificado' })
+    await ventana.getByLabel('DNI', { exact: false }).fill('45903318')
+    await ventana.getByLabel('Apellidos', { exact: false }).fill('Ccori Párraga')
+    await ventana.getByLabel('Motivo de la reemisión').fill('El segundo apellido no coincide con el DNI')
+    await ventana.getByRole('button', { name: 'Enviar a revisión' }).click()
+    await ventana.getByText('El DNI ya está en otro certificado de este lote.').waitFor()
+    await ventana.getByLabel('DNI', { exact: false }).fill(juanDni)
+    await foto(rosa, 'hu30_08_reemitir_certificado_del_lote')
+    await ventana.getByRole('button', { name: 'Enviar a revisión' }).click()
+    await rosa.getByRole('status').getByText(`✓ La reemisión de ${juan} se envió a revisión`, { exact: false }).waitFor()
+    const nuevoJuan = psql(`SELECT d.codigo FROM documento d JOIN documento o ON o.id = d.reemplaza_a WHERE o.codigo = '${juan}'`)
+    assert.equal(psql(`SELECT l.numero, d.estado, d.apellidos FROM documento d JOIN lote l ON l.id = d.lote_id WHERE d.codigo = '${nuevoJuan}'`), `${numero}|PENDIENTE|Ccori Párraga`)
+    await rosa.locator('main tbody tr', { hasText: juan }).getByText('Reemisión en revisión:', { exact: false }).waitFor()
+
+    await carlos.goto(URL + '#/por-revisar')
+    await carlos.reload()
+    await carlos.locator('main tbody tr', { hasText: `Lote ${numero}` }).getByText('Reemisión', { exact: true }).waitFor()
+    await carlos.goto(URL + '#/por-revisar/lote/' + numero)
+    await carlos.getByText(`↻ Reemisión de ${juan}: Apellidos: Ccori Pari → Ccori Párraga`).waitFor()
+    await foto(carlos, 'hu30_09_lote_con_reemision')
+    await carlos.getByRole('button', { name: 'Firmar lote' }).click()
+    await firma.getByText('Firmar 1 certificado').waitFor()
+    await firma.getByRole('button', { name: 'Confirmar' }).click()
+    await firma.getByText('Se firmó 1 certificado.').waitFor({ timeout: 60_000 })
+    await esperarHasta('el certificado original Anulado', () => psql(`SELECT estado FROM documento WHERE codigo = '${juan}'`) === 'ANULADO', 30_000)
+    assert.equal(await registro.reemplazadoPor(juan), nuevoJuan)
+    assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${nuevoJuan}'`), 'FIRMADO')
+    await firma.getByRole('button', { name: 'Volver a Por revisar' }).click()
+    await rosa.reload()
+    // El motivo de la anulación dice qué certificado lo reemplazó.
+    await rosa.locator('main tbody tr', { hasText: juan }).getByText(`Motivo: Reemplazado por ${nuevoJuan}`, { exact: false }).waitFor()
+    await foto(rosa, 'hu30_10_lote_con_certificado_reemplazado')
+  })
+  await paso('HU30 · Solo el área del documento reemite, y solo un firmado', async () => {
+    const cuerpo = { nombres: 'Lucía', apellidos: 'Paredes', dni: '45829364', datos: {}, motivo: 'x' }
+    const pendiente = await enviar(pedro, `/api/documentos/${lucia}/reemision`, cuerpo)
+    assert.equal(pendiente.estado, 409)
+    assert.equal(pendiente.cuerpo.mensaje, 'Solo se reemite un documento firmado.')
+    assert.equal((await enviar(pedro, `/api/documentos/${nilo}/reemision`, cuerpo)).estado, 409)
+    assert.equal((await enviar(rosa, `/api/documentos/${nuevoNilo}/reemision`, cuerpo)).estado, 403)
+    assert.equal((await enviar(carlos, `/api/documentos/${nuevoNilo}/reemision`, cuerpo)).estado, 403)
+    assert.equal(psql(`SELECT count(*) FROM documento WHERE reemplaza_a = (SELECT id FROM documento WHERE codigo = '${nuevoNilo}')`), '0')
   })
 
   await b.close()
