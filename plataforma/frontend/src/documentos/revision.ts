@@ -17,6 +17,8 @@ export interface ElementoPorRevisar {
   enviadoPor: string
   registradoEn: string
   revisado: boolean
+  /** Reenviado por el área tras una observación (HU15). */
+  corregido?: boolean
 }
 
 /** Pendientes de todas las áreas, del más antiguo al más reciente. */

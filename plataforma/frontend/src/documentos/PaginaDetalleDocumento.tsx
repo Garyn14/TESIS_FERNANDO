@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { documento as consultar, fechaCorta, type Documento } from './api'
 import Certificado from './Certificado'
+import { BOTON_PRIMARIO } from '../comun/estilos'
 import Estado from './Estado'
 
 /** Qué significa cada estado para el área (HU08, HU11, HU17). */
@@ -74,6 +75,26 @@ export default function PaginaDetalleDocumento({ codigo }: { codigo: string }) {
               <strong>Motivo:</strong> {doc.motivo}
             </p>
           )}
+          {doc.estado === 'OBSERVADO' &&
+            (doc.lote ? (
+              <p className="mt-3 text-sm text-muted">
+                Corríjalo desde el{' '}
+                <a
+                  href={`#/mis-documentos/lote/${doc.lote}`}
+                  className="text-institutional hover:underline"
+                >
+                  detalle del Lote {doc.lote}
+                </a>
+                .
+              </p>
+            ) : (
+              <a
+                href={`#/mis-documentos/${doc.codigo}/corregir`}
+                className={`mt-3 inline-block ${BOTON_PRIMARIO}`}
+              >
+                Corregir y reenviar
+              </a>
+            ))}
           <dl className="mt-4 grid rounded-xl border border-line bg-card shadow-sm sm:grid-cols-2 lg:grid-cols-4">
             {datos.map(([etiqueta, valor]) => (
               <div key={etiqueta} className="border-b border-line p-4">

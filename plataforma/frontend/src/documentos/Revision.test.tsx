@@ -106,6 +106,7 @@ describe('Por revisar (HU10)', () => {
     })
     expect(lote).toHaveAttribute('href', '#/por-revisar/lote/2026-007')
     expect(filas[1]).toHaveTextContent('Sin revisar')
+    expect(within(filas[0]).queryByText('Corregido')).not.toBeInTheDocument()
     expect(within(filas[0]).getByRole('link')).toHaveAttribute(
       'href',
       '#/por-revisar/DRA-2026-T6N9QE',
@@ -141,6 +142,16 @@ describe('Por revisar (HU10)', () => {
 
     fireEvent.click(screen.getByRole('checkbox', { name: 'Seleccionar Teodoro Inga Mamani' }))
     expect(barra).toHaveTextContent('1 seleccionado (8 certificados)')
+  })
+
+  it('un documento reenviado tras una observación lleva la etiqueta Corregido (HU15)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+      respuesta(200, [{ ...BANDEJA[0], revisado: false, corregido: true }, BANDEJA[1]]),
+    )
+    render(<PaginaPorRevisar />)
+    const filas = (await screen.findAllByRole('row')).slice(1)
+    expect(within(filas[0]).getByText('Corregido')).toBeInTheDocument()
+    expect(within(filas[1]).queryByText('Corregido')).not.toBeInTheDocument()
   })
 
   it('sin pendientes avisa que todo está al día', async () => {

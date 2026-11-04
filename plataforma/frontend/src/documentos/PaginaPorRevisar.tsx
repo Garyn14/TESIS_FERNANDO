@@ -110,6 +110,11 @@ export default function PaginaPorRevisar({ director = '' }: { director?: string 
                       >
                         {e.lote ? `▤ ${nombre}` : nombre}
                       </a>
+                      {e.corregido && (
+                        <span className="ml-2 rounded-full bg-blue-pale px-2 py-0.5 text-xs font-medium text-blue">
+                          Corregido
+                        </span>
+                      )}
                       {e.numeroExpediente && (
                         <span className="block text-sm text-muted">{e.numeroExpediente}</span>
                       )}
