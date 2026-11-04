@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
-import { BOTON_PRIMARIO } from '../comun/estilos'
+import { BOTON_PRIMARIO, BOTON_SECUNDARIO } from '../comun/estilos'
 import VentanaDeFirma from '../firma/VentanaDeFirma'
 import { fechaCorta, type Documento } from './api'
 import Certificado from './Certificado'
 import MuestraDelPdf from './MuestraDelPdf'
-import { revisarDocumento } from './revision'
+import { observarDocumento, revisarDocumento } from './revision'
+import VentanaDeMotivo from './VentanaDeMotivo'
 
 /**
  * HU10: revisión de un documento. Abrirlo registra la revisión (RF22). HU11: se firma desde aquí.
- * Observar y rechazar llegan con HU13 y HU14.
+ * HU13: se observa con un motivo y vuelve al área. Rechazar llega con HU14.
  */
 export default function PaginaRevisionDocumento({
   codigo,
@@ -21,6 +22,7 @@ export default function PaginaRevisionDocumento({
   const [doc, setDoc] = useState<Documento | null>(null)
   const [error, setError] = useState('')
   const [firmando, setFirmando] = useState(false)
+  const [observando, setObservando] = useState(false)
   useEffect(() => {
     revisarDocumento(codigo)
       .then(setDoc)
@@ -67,15 +69,55 @@ export default function PaginaRevisionDocumento({
           <div className="mt-6">
             <Certificado documento={doc} />
           </div>
-          <MuestraDelPdf codigo={doc.codigo} />
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm text-muted">
-              ✓ Quedó registrado como revisado. Observar y rechazar se habilitan con HU13 y HU14.
-            </p>
-            <button type="button" onClick={() => setFirmando(true)} className={BOTON_PRIMARIO}>
-              Firmar
-            </button>
-          </div>
+          {doc.estado === 'OBSERVADO' ? (
+            <div className="mt-6 space-y-3">
+              <p role="status" className="rounded-lg bg-green-pale px-4 py-3 text-institutional">
+                El documento fue observado y volvió al área.
+              </p>
+              <p className="rounded-lg bg-orange-pale px-4 py-3">
+                <strong>Motivo:</strong> {doc.motivo}
+              </p>
+              <a href="#/por-revisar" className="font-medium text-institutional hover:underline">
+                Volver a Por revisar
+              </a>
+            </div>
+          ) : (
+            <>
+              <MuestraDelPdf codigo={doc.codigo} />
+              <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+                <p className="text-sm text-muted">
+                  ✓ Quedó registrado como revisado. Rechazar se habilita con HU14.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setObservando(true)}
+                    className={BOTON_SECUNDARIO}
+                  >
+                    Observar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFirmando(true)}
+                    className={BOTON_PRIMARIO}
+                  >
+                    Firmar
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+          {observando && (
+            <VentanaDeMotivo
+              titulo="Observar documento"
+              rechazo={false}
+              onConfirmar={async (motivo) => {
+                setDoc(await observarDocumento(doc.codigo, motivo))
+                setObservando(false)
+              }}
+              onCerrar={() => setObservando(false)}
+            />
+          )}
           {firmando && (
             <VentanaDeFirma
               seleccion={{

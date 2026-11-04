@@ -43,3 +43,10 @@ export const decidirEnLote = (
     method: 'POST',
     body: JSON.stringify({ codigos, motivo }),
   })
+
+/** HU13: observa un documento Pendiente con su motivo; vuelve al Área encargada. */
+export const observarDocumento = (codigo: string, motivo: string) =>
+  solicitar<Documento>(`/api/revision/documentos/${encodeURIComponent(codigo)}/observacion`, {
+    method: 'POST',
+    body: JSON.stringify({ motivo }),
+  })
