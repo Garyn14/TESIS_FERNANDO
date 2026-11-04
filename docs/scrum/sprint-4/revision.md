@@ -76,7 +76,7 @@ Conviene cerrarlas antes de la demostración pública del Sprint 5. Los textos y
 |---|---|---|
 | Revisión del Sprint 3 | Sigue sin aprobación del PO (DRA-21 a DRA-26 en revisión). El Sprint 3 sigue activo en Jira y el Sprint 4 no está iniciado | En la misma sesión que esta revisión |
 | Infraestructura en AWS (DRA-44) | Sigue diferida para no gastar crédito. Con varias instancias del backend, la sincronización (HU18) debe correr en una sola | Antes del portal público (Sprint 5) |
-| CI sin límite de tiempo | En HU30, el paso del contrato en Besu se colgó sin salida. Se canceló y el segundo intento pasó, pero un cuelgue así puede consumir hasta 6 horas de minutos de CI | Se puede agregar `timeout-minutes` a los jobs |
+| CI sin límite de tiempo | En HU30, el paso del contrato en Besu se colgó sin salida y hubo que cancelarlo a mano; el segundo intento pasó. **Resuelto:** cada job tiene ahora `timeout-minutes` (10 a 15 minutos, cuando tardan de 17 s a 3 min) y los dos pasos que usan la red Besu, 5 minutos | Hecho el 04/11 |
 | Portal público | Debe mostrar "Anulado" y "Reemplazado por". El contrato ya tiene `anulacion(codigo)` y `reemplazadoPor(codigo)` | Sprint 5 (HU19–HU21) |
 
 ## Calidad del incremento
