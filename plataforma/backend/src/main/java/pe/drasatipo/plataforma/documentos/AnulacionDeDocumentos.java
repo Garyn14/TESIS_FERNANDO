@@ -28,6 +28,9 @@ public class AnulacionDeDocumentos {
       "La transacción no se encontró, no se confirmó o no anuló este documento en el contrato.";
   static final String YA_ANULADO =
       "La anulación ya quedó registrada en la blockchain. Se confirmará al sincronizar.";
+  static final String CON_REEMISION =
+      "Este documento tiene una reemisión en revisión (%s): se anulará cuando se firme la"
+          + " reemisión.";
   static final String SIN_MOTIVO_REGISTRADO =
       "Anulado en la blockchain; el motivo no llegó a registrarse en la plataforma.";
 
@@ -56,11 +59,13 @@ public class AnulacionDeDocumentos {
   /** Documentos firmados y anulados, del firmado más reciente al más antiguo. */
   @Transactional(readOnly = true)
   public List<DocumentoFirmado> firmados() {
+    java.util.Map<Long, String> enCurso = new java.util.HashMap<>();
+    documentos.reemisionesEnCurso().forEach(f -> enCurso.put((Long) f[0], (String) f[1]));
     return documentos
         .findByEstadoInOrderByFirmadoEnDescIdAsc(
             List.of(EstadoDocumento.FIRMADO, EstadoDocumento.ANULADO))
         .stream()
-        .map(DocumentoFirmado::de)
+        .map(d -> DocumentoFirmado.de(d, enCurso.get(d.getId())))
         .toList();
   }
 
@@ -74,6 +79,14 @@ public class AnulacionDeDocumentos {
     Usuario director = registro.cuenta(nombreUsuario);
     verificarFirmante(director);
     Documento documento = firmado(codigo);
+    // HU30: con una reemisión en curso, el original se anula al firmarla.
+    documentos
+        .reemisionVigente(documento.getId())
+        .ifPresent(
+            r -> {
+              throw new ReglaDeNegocioException(
+                  HttpStatus.CONFLICT, null, CON_REEMISION.formatted(r.getCodigo()));
+            });
     documentos.solicitarAnulacion(documento.getId(), texto, java.time.OffsetDateTime.now());
     return DocumentoFirmado.de(documento);
   }
@@ -144,31 +157,52 @@ public class AnulacionDeDocumentos {
         director != null
             ? director
             : usuarios.findByBilleteraIgnoreCase(anulacion.firmante()).orElse(null);
+    // HU30: una reemisión que se firma anula al original en la misma transacción.
+    Documento reemplazo =
+        documentos
+            .reemisionVigente(documento.getId())
+            .filter(
+                r ->
+                    r.getEstado() == EstadoDocumento.PROCESANDO_FIRMA
+                        || r.getEstado() == EstadoDocumento.FIRMADO)
+            .orElse(null);
+    String porDefecto =
+        reemplazo == null
+            ? SIN_MOTIVO_REGISTRADO
+            : "Reemplazado por %s. Motivo de la reemisión: %s"
+                .formatted(reemplazo.getCodigo(), reemplazo.getMotivoReemision());
     if (documentos.marcarAnulado(
             documento.getId(),
             quien,
             anulacion.fecha().atOffset(ZoneOffset.UTC),
             anulacion.transaccion(),
             anulacion.bloque(),
-            SIN_MOTIVO_REGISTRADO)
+            porDefecto)
         == 0) {
       return false;
     }
-    String motivo = documentos.motivoDeAnulacion(documento.getId()).orElse(SIN_MOTIVO_REGISTRADO);
+    String motivo = documentos.motivoDeAnulacion(documento.getId()).orElse(porDefecto);
+    String accion =
+        reemplazo == null
+            ? "Anulado"
+            : "Anulado por reemisión (reemplazado por %s)".formatted(reemplazo.getCodigo());
     historial.save(
         new HistorialDocumento(
             documento.getId(),
             EventoDocumento.ANULADO,
-            "%s por %s con la billetera %s; transacción %s; bloque %d. Motivo: %s"
-                .formatted(
-                    director != null
-                        ? "Anulado"
-                        : "Anulación confirmada por la sincronización: anulado",
-                    quien == null ? "(billetera sin cuenta)" : quien.getNombreCompleto(),
-                    anulacion.firmante(),
-                    anulacion.transaccion(),
-                    anulacion.bloque(),
-                    motivo),
+            CambiosDeDatos.limitar(
+                "%s por %s con la billetera %s; transacción %s; bloque %d. Motivo: %s"
+                    .formatted(
+                        director != null
+                            ? accion
+                            : "Anulación confirmada por la sincronización: "
+                                + Character.toLowerCase(accion.charAt(0))
+                                + accion.substring(1),
+                        quien == null ? "(billetera sin cuenta)" : quien.getNombreCompleto(),
+                        anulacion.firmante(),
+                        anulacion.transaccion(),
+                        anulacion.bloque(),
+                        motivo)),
             quien == null ? null : quien.getId()));
     return true;
   }

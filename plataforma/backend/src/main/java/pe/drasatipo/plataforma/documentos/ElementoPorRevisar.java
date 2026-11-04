@@ -5,7 +5,7 @@ import java.time.OffsetDateTime;
 /**
  * Una fila de la bandeja "Por revisar" (HU10): un documento, o un lote completo con el nombre del
  * evento y la cantidad de certificados (RF21). {@code corregido}: reenviado tras una observación
- * (HU15).
+ * (HU15). {@code reemision}: reemplaza a un documento firmado (HU30).
  */
 public record ElementoPorRevisar(
     String codigo,
@@ -19,7 +19,8 @@ public record ElementoPorRevisar(
     String enviadoPor,
     OffsetDateTime registradoEn,
     boolean revisado,
-    boolean corregido) {
+    boolean corregido,
+    boolean reemision) {
 
   static ElementoPorRevisar de(Documento documento) {
     return new ElementoPorRevisar(
@@ -34,12 +35,13 @@ public record ElementoPorRevisar(
         documento.getRegistradoPor().getNombreCompleto(),
         documento.getRegistradoEn(),
         documento.isRevisado(),
-        documento.isCorregido());
+        documento.isCorregido(),
+        documento.isReemision());
   }
 
   /** El lote en una sola fila; está revisado cuando lo están todos sus documentos pendientes. */
   static ElementoPorRevisar deLote(
-      Documento primero, long cantidad, boolean revisado, boolean corregido) {
+      Documento primero, long cantidad, boolean revisado, boolean corregido, boolean reemision) {
     Lote lote = primero.getLote();
     return new ElementoPorRevisar(
         null,
@@ -53,6 +55,7 @@ public record ElementoPorRevisar(
         lote.getRegistradoPor().getNombreCompleto(),
         lote.getRegistradoEn(),
         revisado,
-        corregido);
+        corregido,
+        reemision);
   }
 }

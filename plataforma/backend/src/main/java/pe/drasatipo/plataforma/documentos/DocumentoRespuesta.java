@@ -1,11 +1,16 @@
 package pe.drasatipo.plataforma.documentos;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Detalle de un documento. Nunca incluye el HMAC del DNI ni el token del QR. {@code datos} son los
- * campos propios del tipo, para precargar la corrección (HU15).
+ * campos propios del tipo, para precargar la corrección (HU15) y la reemisión (HU30).
+ *
+ * <p>HU30: {@code reemision} dice de qué documento es reemisión, con su motivo y sus cambios;
+ * {@code reemisionEnCurso} y {@code reemplazadoPor} son el código de la reemisión de este documento
+ * mientras está en revisión y después de firmarse.
  */
 public record DocumentoRespuesta(
     String codigo,
@@ -26,9 +31,26 @@ public record DocumentoRespuesta(
     String firmante,
     String motivo,
     Map<String, String> datos,
-    boolean corregido) {
+    boolean corregido,
+    Reemision reemision,
+    String reemisionEnCurso,
+    String reemplazadoPor) {
+
+  /** HU30: el documento que esta reemisión reemplaza, el motivo y lo que cambia. */
+  public record Reemision(String original, String motivo, List<String> cambios) {}
 
   static DocumentoRespuesta de(Documento documento, String firmante) {
+    return de(documento, firmante, null);
+  }
+
+  /**
+   * @param suReemision la reemisión vigente de este documento (no rechazada), o null
+   */
+  static DocumentoRespuesta de(Documento documento, String firmante, Documento suReemision) {
+    boolean reemplazado =
+        suReemision != null
+            && (suReemision.getEstado() == EstadoDocumento.FIRMADO
+                || suReemision.getEstado() == EstadoDocumento.ANULADO);
     return new DocumentoRespuesta(
         documento.getCodigo(),
         documento.getTipo().getCodigo(),
@@ -51,6 +73,14 @@ public record DocumentoRespuesta(
             ? documento.getMotivoAnulacion()
             : documento.getMotivo(),
         documento.getDatos(),
-        documento.isCorregido());
+        documento.isCorregido(),
+        documento.isReemision()
+            ? new Reemision(
+                documento.getReemplazaA().getCodigo(),
+                documento.getMotivoReemision(),
+                CambiosDeDatos.deReemision(documento))
+            : null,
+        suReemision == null || reemplazado ? null : suReemision.getCodigo(),
+        reemplazado ? suReemision.getCodigo() : null);
   }
 }

@@ -23,5 +23,7 @@ public enum EventoDocumento {
   /** El Área encargada corrigió el documento observado y lo reenvió (HU15); lleva los cambios. */
   CORREGIDO,
   /** La anulación se leyó en la blockchain (HU29); el detalle lleva el motivo. */
-  ANULADO
+  ANULADO,
+  /** HU30: el Área encargada pidió reemitir el documento; lleva el código nuevo y el motivo. */
+  REEMISION_SOLICITADA
 }

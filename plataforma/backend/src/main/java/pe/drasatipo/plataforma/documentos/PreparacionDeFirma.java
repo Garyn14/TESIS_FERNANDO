@@ -38,6 +38,8 @@ public class PreparacionDeFirma {
       "Seleccione como máximo " + MAXIMO + " documentos por operación.";
   static final String NO_EXISTE = "El documento no existe.";
   static final String NO_PENDIENTE = "El documento no está pendiente.";
+  static final String ORIGINAL_NO_FIRMADO =
+      "El documento que reemplaza (%s) ya no está firmado. La reemisión sigue Pendiente.";
   static final String EN_PROCESO = "El documento ya está en proceso de firma.";
   static final String SIN_REVISAR = "El documento aún no fue revisado.";
   static final String LOTE_NO_EXISTE = "El lote no existe.";
@@ -85,13 +87,15 @@ public class PreparacionDeFirma {
   }
 
   /** Lo que la billetera registra en el contrato: código, hash del PDF y HMAC del DNI (HU11). */
-  public record Preparado(String codigo, String hash, String cid, String dniHmac) {}
+  /** {@code reemplaza}: HU30, el original que la billetera anula al registrar esta reemisión. */
+  public record Preparado(
+      String codigo, String hash, String cid, String dniHmac, String reemplaza) {}
 
   public record NoPreparado(String codigo, String motivo) {}
 
   public record Resultado(List<Preparado> preparados, List<NoPreparado> noPreparados) {}
 
-  private record Iniciado(Long id, String codigo, PdfFinal pdf, String dniHmac) {}
+  private record Iniciado(Long id, String codigo, PdfFinal pdf, String dniHmac, String reemplaza) {}
 
   /**
    * Prepara los documentos indicados y los Pendientes de los lotes indicados (HU11: un lote se
@@ -183,7 +187,9 @@ public class PreparacionDeFirma {
                     director.getId()));
           });
       LOG.info("PDF del documento {} guardado en IPFS: {}", codigo, cid);
-      preparados.add(new Preparado(codigo, iniciado.pdf().sha256(), cid, iniciado.dniHmac()));
+      preparados.add(
+          new Preparado(
+              codigo, iniciado.pdf().sha256(), cid, iniciado.dniHmac(), iniciado.reemplaza()));
     }
     return new Resultado(preparados, noPreparados);
   }
@@ -202,6 +208,14 @@ public class PreparacionDeFirma {
       LOG.error("{} está Pendiente pero ya está registrado en la blockchain", codigo);
       return new NoPreparado(codigo, YA_REGISTRADO);
     }
+    // HU30: la reemisión anula al original en la misma transacción; el original debe seguir
+    // Firmado. Si no, la reemisión sigue Pendiente.
+    Documento original = documento.getReemplazaA();
+    if (original != null
+        && documento.getEstado() == EstadoDocumento.PENDIENTE
+        && original.getEstado() != EstadoDocumento.FIRMADO) {
+      return new NoPreparado(codigo, ORIGINAL_NO_FIRMADO.formatted(original.getCodigo()));
+    }
     if (documentos.iniciarFirma(documento.getId(), OffsetDateTime.now()) == 0) {
       return new NoPreparado(codigo, motivo(documento));
     }
@@ -210,7 +224,8 @@ public class PreparacionDeFirma {
         documento.getId(),
         codigo,
         generadorDePdf.generar(documento, director.getNombreCompleto(), fechaEmision, false),
-        documento.getDniHmac());
+        documento.getDniHmac(),
+        original == null ? null : original.getCodigo());
   }
 
   /**

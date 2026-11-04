@@ -164,6 +164,14 @@ public class Documento {
   @Column(name = "motivo")
   private String motivo;
 
+  /** HU30: documento firmado que esta reemisión reemplaza; null si no es una reemisión. */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "reemplaza_a", updatable = false)
+  private Documento reemplazaA;
+
+  @Column(name = "motivo_reemision", updatable = false)
+  private String motivoReemision;
+
   protected Documento() {}
 
   /** Documento a solicitud de parte (HU08). */
@@ -202,6 +210,38 @@ public class Documento {
         lote.getDatos(),
         lote.getTexto(),
         lote.getRegistradoPor());
+  }
+
+  /**
+   * HU30 (RF50): reemisión de un documento firmado, con los datos corregidos. Conserva el tipo, el
+   * área, el lote y el número de expediente del original.
+   */
+  static Documento reemisionDe(
+      Documento original,
+      String codigo,
+      String tokenQr,
+      Beneficiario beneficiario,
+      String dniHmac,
+      Map<String, String> datos,
+      String texto,
+      Usuario registradoPor,
+      String motivo) {
+    Documento reemision =
+        new Documento(
+            codigo,
+            tokenQr,
+            original.tipo,
+            original.area,
+            original.lote,
+            original.numeroExpediente,
+            beneficiario,
+            dniHmac,
+            datos,
+            texto,
+            registradoPor);
+    reemision.reemplazaA = original;
+    reemision.motivoReemision = motivo;
+    return reemision;
   }
 
   private Documento(
@@ -370,6 +410,18 @@ public class Documento {
 
   public Long getBloqueAnulacion() {
     return bloqueAnulacion;
+  }
+
+  public Documento getReemplazaA() {
+    return reemplazaA;
+  }
+
+  public boolean isReemision() {
+    return reemplazaA != null;
+  }
+
+  public String getMotivoReemision() {
+    return motivoReemision;
   }
 
   public OffsetDateTime getCorregidoEn() {
