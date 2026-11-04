@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
-import { obtenerRed, type Red } from '../billeteras/api'
-import { conectar, ErrorBilletera, registrarDocumentos } from '../blockchain/billetera'
+import type { Red } from '../billeteras/api'
+import { ErrorBilletera, registrarDocumentos } from '../blockchain/billetera'
 import Modal from '../comun/Modal'
 import { BOTON_PRIMARIO, BOTON_SECUNDARIO } from '../comun/estilos'
-import { cancelar, confirmar, estadoBilletera, preparar } from './api'
+import { cancelar, confirmar, preparar } from './api'
+import { corta, verificarBilletera } from './billeteraDelDirector'
 import { firmar, type Paso, type Resultado } from './flujo'
 
 /** Lo que el Director eligió firmar: documentos sueltos y lotes enteros (HU11). */
@@ -28,7 +29,6 @@ type Estado =
   | { tipo: 'progreso'; paso: Paso }
   | { tipo: 'resultado'; resultado: Resultado }
 
-const corta = (direccion: string) => `${direccion.slice(0, 6)}…${direccion.slice(-4)}`
 const contar = (n: number, unidad: string) => (n === 1 ? `1 ${unidad}` : `${n} ${unidad}s`)
 
 function mensaje(e: unknown) {
@@ -65,16 +65,7 @@ export default function VentanaDeFirma({ seleccion, director, onCerrar }: Props)
   const verificar = async () => {
     setEstado({ tipo: 'verificando' })
     try {
-      const [red, registrada] = await Promise.all([obtenerRed(), estadoBilletera()])
-      if (!registrada.billetera || registrada.firmante !== true)
-        throw new ErrorBilletera(
-          registrada.aviso ?? 'Su billetera no puede firmar en este momento.',
-        )
-      const cuenta = await conectar(red)
-      if (cuenta.toLowerCase() !== registrada.billetera.toLowerCase())
-        throw new ErrorBilletera(
-          `La billetera conectada (${corta(cuenta)}) no es la registrada para su cuenta (${corta(registrada.billetera)}). Cambie de cuenta en su billetera e intente nuevamente.`,
-        )
+      const { red, cuenta } = await verificarBilletera()
       setEstado({ tipo: 'confirmar', red, cuenta })
     } catch (e) {
       setEstado({ tipo: 'error', mensaje: mensaje(e) })

@@ -37,7 +37,6 @@ export const MENU: OpcionMenu[] = [
     ruta: 'firmados',
     titulo: 'Documentos firmados',
     permiso: 'DOCUMENTO_VER_FIRMADOS',
-    pendiente: 'Se habilita en el Sprint 3.',
   },
   {
     ruta: 'buscar',

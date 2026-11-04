@@ -10,6 +10,7 @@ import PaginaLogin from './sesion/PaginaLogin'
 import PaginaBilletera from './billeteras/PaginaBilletera'
 import PaginaDetalleDocumento from './documentos/PaginaDetalleDocumento'
 import PaginaCorreccion from './documentos/PaginaCorreccion'
+import PaginaFirmados from './firma/PaginaFirmados'
 import PaginaDetalleLote from './documentos/PaginaDetalleLote'
 import PaginaFormularioDocumento from './documentos/PaginaFormularioDocumento'
 import PaginaMisDocumentos from './documentos/PaginaMisDocumentos'
@@ -136,6 +137,8 @@ export default function App() {
         <PaginaPorRevisar key={visita} director={sesion.nombreCompleto} />
       )
   // HU08: la clave vuelve a consultar en cada visita, por si cambió el área (HU05).
+  else if (opcion.ruta === 'firmados')
+    contenido = <PaginaFirmados key={visita} director={sesion.nombreCompleto} />
   else if (opcion.ruta === 'mis-documentos')
     contenido =
       detalle === 'lote' && numero ? (
