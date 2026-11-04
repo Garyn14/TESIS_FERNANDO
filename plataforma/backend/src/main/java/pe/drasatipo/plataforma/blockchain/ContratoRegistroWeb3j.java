@@ -3,8 +3,11 @@ package pe.drasatipo.plataforma.blockchain;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
 import org.web3j.abi.EventEncoder;
@@ -25,8 +28,10 @@ import org.web3j.crypto.Keys;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthCall;
+import org.web3j.protocol.core.methods.response.EthLog;
 import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
@@ -131,22 +136,96 @@ public class ContratoRegistroWeb3j implements ContratoRegistro {
     }
     List<DocumentoRegistrado> documentos = new ArrayList<>();
     for (Log log : recibo.getLogs()) {
-      List<String> temas = log.getTopics();
-      if (!contrato.equalsIgnoreCase(log.getAddress())
-          || temas.size() != 3
-          || !DOCUMENTO_REGISTRADO.equalsIgnoreCase(temas.get(0))) {
-        continue;
-      }
-      @SuppressWarnings("rawtypes")
-      List<Type> datos = FunctionReturnDecoder.decode(log.getData(), DATOS_DEL_REGISTRO);
-      documentos.add(
-          new DocumentoRegistrado(
-              (String) datos.get(0).getValue(),
-              HexFormat.of().formatHex((byte[]) datos.get(1).getValue()),
-              HexFormat.of().formatHex((byte[]) datos.get(2).getValue()),
-              direccionDeTema(temas.get(2))));
+      leerRegistro(log, contrato).ifPresent(documentos::add);
     }
     return documentos;
+  }
+
+  /** Un evento DocumentoRegistrado del contrato; vacío si el log es de otro evento o contrato. */
+  static Optional<DocumentoRegistrado> leerRegistro(Log log, String contrato) {
+    List<String> temas = log.getTopics();
+    if (!contrato.equalsIgnoreCase(log.getAddress())
+        || temas.size() != 3
+        || !DOCUMENTO_REGISTRADO.equalsIgnoreCase(temas.get(0))) {
+      return Optional.empty();
+    }
+    @SuppressWarnings("rawtypes")
+    List<Type> datos = FunctionReturnDecoder.decode(log.getData(), DATOS_DEL_REGISTRO);
+    return Optional.of(
+        new DocumentoRegistrado(
+            (String) datos.get(0).getValue(),
+            HexFormat.of().formatHex((byte[]) datos.get(1).getValue()),
+            HexFormat.of().formatHex((byte[]) datos.get(2).getValue()),
+            direccionDeTema(temas.get(2))));
+  }
+
+  @Override
+  public long bloqueActual() {
+    try {
+      return web3j.ethBlockNumber().send().getBlockNumber().longValueExact();
+    } catch (Exception e) {
+      throw noDisponible(e);
+    }
+  }
+
+  @Override
+  public List<RegistroDeFirma> registrosEntre(long desde, long hasta) {
+    String contrato = contrato();
+    try {
+      EthFilter filtro =
+          new EthFilter(
+                  DefaultBlockParameter.valueOf(BigInteger.valueOf(desde)),
+                  DefaultBlockParameter.valueOf(BigInteger.valueOf(hasta)),
+                  contrato)
+              .addSingleTopic(DOCUMENTO_REGISTRADO);
+      EthLog respuesta = web3j.ethGetLogs(filtro).send();
+      if (respuesta.hasError()) {
+        throw new IllegalStateException(
+            "eth_getLogs rechazada: " + respuesta.getError().getMessage());
+      }
+      // Agrupa los eventos por transacción, en el orden de la cadena.
+      Map<String, List<DocumentoRegistrado>> porTransaccion = new LinkedHashMap<>();
+      Map<String, Long> bloques = new HashMap<>();
+      for (EthLog.LogResult<?> resultado : respuesta.getLogs()) {
+        Log log = (Log) resultado.get();
+        if (log.isRemoved()) {
+          continue;
+        }
+        Optional<DocumentoRegistrado> registrado = leerRegistro(log, contrato);
+        if (registrado.isPresent()) {
+          porTransaccion
+              .computeIfAbsent(log.getTransactionHash(), t -> new ArrayList<>())
+              .add(registrado.get());
+          bloques.put(log.getTransactionHash(), log.getBlockNumber().longValueExact());
+        }
+      }
+      Map<Long, Instant> fechas = new HashMap<>();
+      List<RegistroDeFirma> registros = new ArrayList<>();
+      for (var entrada : porTransaccion.entrySet()) {
+        long bloque = bloques.get(entrada.getKey());
+        Instant fecha = fechas.get(bloque);
+        if (fecha == null) {
+          fecha = fechaDelBloque(bloque);
+          fechas.put(bloque, fecha);
+        }
+        registros.add(new RegistroDeFirma(entrada.getKey(), bloque, fecha, entrada.getValue()));
+      }
+      return registros;
+    } catch (BlockchainNoDisponibleException e) {
+      throw e;
+    } catch (Exception e) {
+      throw noDisponible(e);
+    }
+  }
+
+  private Instant fechaDelBloque(long bloque) throws java.io.IOException {
+    return Instant.ofEpochSecond(
+        web3j
+            .ethGetBlockByNumber(DefaultBlockParameter.valueOf(BigInteger.valueOf(bloque)), false)
+            .send()
+            .getBlock()
+            .getTimestamp()
+            .longValueExact());
   }
 
   @Override

@@ -58,10 +58,17 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
   @Query(
       "UPDATE Documento d SET d.estado = "
           + PROCESANDO
-          + " WHERE d.id = :id AND d.estado = "
+          + ", d.firmaIniciadaEn = :ahora WHERE d.id = :id AND d.estado = "
           + PENDIENTE
           + " AND d.revisadoEn IS NOT NULL")
-  int iniciarFirma(@Param("id") Long id);
+  int iniciarFirma(@Param("id") Long id, @Param("ahora") OffsetDateTime ahora);
+
+  /** Documentos que pasaron a Procesando firma antes del límite (HU18: posiblemente detenidos). */
+  @Query(
+      "SELECT d FROM Documento d WHERE d.estado = "
+          + PROCESANDO
+          + " AND d.firmaIniciadaEn < :limite ORDER BY d.firmaIniciadaEn, d.id")
+  List<Documento> detenidosEnFirma(@Param("limite") OffsetDateTime limite);
 
   /** Guarda el PDF final de un documento en Procesando firma (HU17, RF30). */
   @Modifying
@@ -113,13 +120,20 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
       @Param("estado") EstadoDocumento estado,
       @Param("motivo") String motivo);
 
+  /**
+   * Transacción con que quedó Firmado un documento, leída de la base y no de la entidad en memoria
+   * (HU18: la confirmación y la sincronización pueden aplicar el mismo evento a la vez).
+   */
+  @Query("SELECT d.transaccion FROM Documento d WHERE d.id = :id AND d.estado = " + FIRMADO)
+  Optional<String> transaccionDeFirmado(@Param("id") Long id);
+
   /** Devuelve a Pendiente un documento cuya preparación falló (HU17). */
   @Modifying
   @Query(
       "UPDATE Documento d SET d.estado = "
           + PENDIENTE
           + ", d.hashPdf = NULL, d.cid = NULL,"
-          + " d.fechaEmision = NULL, d.preparadoEn = NULL"
+          + " d.fechaEmision = NULL, d.preparadoEn = NULL, d.firmaIniciadaEn = NULL"
           + " WHERE d.id = :id AND d.estado = "
           + PROCESANDO)
   int devolverAPendiente(@Param("id") Long id);

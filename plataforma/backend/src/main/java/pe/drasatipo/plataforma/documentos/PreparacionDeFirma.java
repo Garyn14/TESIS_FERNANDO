@@ -46,6 +46,10 @@ public class PreparacionDeFirma {
   static final String NO_ES_FIRMANTE =
       "Su billetera no tiene el rol de firmante en el contrato. Pida al Administrador que se lo"
           + " otorgue.";
+  static final String YA_REGISTRADO =
+      "El código ya está registrado en la blockchain: no se registra de nuevo.";
+  static final String SIN_BLOCKCHAIN =
+      "No se pudo consultar la blockchain. El documento sigue Pendiente.";
   static final String FALLO_PDF = "No se pudo generar el PDF. El documento sigue Pendiente.";
   static final String FALLO_ALMACENAMIENTO =
       "No se pudo guardar el PDF. El documento volvió a Pendiente.";
@@ -135,6 +139,9 @@ public class PreparacionDeFirma {
       Object inicio;
       try {
         inicio = transaccion.execute(estado -> iniciar(codigo, director, fechaEmision));
+      } catch (BlockchainNoDisponibleException e) {
+        noPreparados.add(new NoPreparado(codigo, SIN_BLOCKCHAIN));
+        continue;
       } catch (RuntimeException e) {
         // La transacción se deshizo: el documento sigue Pendiente.
         LOG.error("No se pudo generar el PDF final del documento {}", codigo, e);
@@ -190,7 +197,12 @@ public class PreparacionDeFirma {
     if (documento == null) {
       return new NoPreparado(codigo, NO_EXISTE);
     }
-    if (documentos.iniciarFirma(documento.getId()) == 0) {
+    // HU18: un código ya registrado en el contrato no se registra de nuevo.
+    if (documento.getEstado() == EstadoDocumento.PENDIENTE && contrato.estaRegistrado(codigo)) {
+      LOG.error("{} está Pendiente pero ya está registrado en la blockchain", codigo);
+      return new NoPreparado(codigo, YA_REGISTRADO);
+    }
+    if (documentos.iniciarFirma(documento.getId(), OffsetDateTime.now()) == 0) {
       return new NoPreparado(codigo, motivo(documento));
     }
     // Si la generación falla, la excepción deshace también el paso a Procesando firma.

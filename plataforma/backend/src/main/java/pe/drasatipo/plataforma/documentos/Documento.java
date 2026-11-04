@@ -112,6 +112,10 @@ public class Documento {
   @Column(name = "preparado_en")
   private OffsetDateTime preparadoEn;
 
+  /** Cuándo pasó a Procesando firma (HU18: así se sabe si quedó detenido). */
+  @Column(name = "firma_iniciada_en")
+  private OffsetDateTime firmaIniciadaEn;
+
   /**
    * Firma registrada en la blockchain (HU11): quién firmó, la fecha del bloque (fecha oficial de
    * emisión, RF32), la transacción, el bloque y la billetera.
@@ -298,6 +302,10 @@ public class Documento {
 
   public OffsetDateTime getPreparadoEn() {
     return preparadoEn;
+  }
+
+  public OffsetDateTime getFirmaIniciadaEn() {
+    return firmaIniciadaEn;
   }
 
   public OffsetDateTime getFirmadoEn() {

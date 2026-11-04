@@ -49,6 +49,13 @@ plataforma:
   ipfs:
     url: ${PLATAFORMA_IPFS_URL:http://localhost:5001}
     tiempo-maximo: ${PLATAFORMA_IPFS_TIEMPO_MAXIMO:30s}
+  # Sincronización con la blockchain (HU18): lee los eventos del contrato desde el bloque en que se
+  # desplegó y devuelve a Pendiente lo detenido en Procesando firma pasado el plazo.
+  sincronizacion:
+    activa: ${PLATAFORMA_SINCRONIZACION_ACTIVA:true}
+    intervalo: ${PLATAFORMA_SINCRONIZACION_INTERVALO:30s}
+    bloque-inicial: ${PLATAFORMA_CONTRATO_BLOQUE_INICIAL:0}
+    plazo-firma: ${PLATAFORMA_FIRMA_PLAZO:15m}
   # Clave del HMAC-SHA256 del DNI (HU08, RF17), de al menos 32 caracteres. En AWS va en el gestor
   # de secretos (RNF03). Sin clave no se registran documentos.
   dni:
