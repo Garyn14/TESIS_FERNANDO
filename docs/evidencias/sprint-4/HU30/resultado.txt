@@ -1,0 +1,32 @@
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ Preparación · El Administrador registra la billetera del Director y le otorga el rol de firmante
+✓ Preparación · El área envía dos documentos y el Director los revisa
+✓ HU13 · La revisión de un documento tiene el botón Observar, que pide un motivo obligatorio
+✓ HU13 · Al confirmar, el documento queda Observado con su motivo y su historial
+✓ HU13 · El documento sale de Por revisar; el otro sigue
+✓ HU13 · El Área encargada lo ve Observado, con el motivo en su detalle
+✓ HU13 · El motivo es obligatorio, solo se observa un Pendiente y solo el Director observa
+✓ HU14 · "Rechazar" abre la ventana de motivo con el aviso de que es definitivo
+✓ HU14 · Al confirmar, el documento queda Rechazado con su motivo y su historial
+✓ HU14 · El rechazo es definitivo: no se revisa, observa ni rechaza de nuevo
+✓ HU14 · El Área encargada lo ve Rechazado, con el motivo y el aviso de que es definitivo
+✓ HU14 · El motivo es obligatorio y solo el Director rechaza
+✓ HU15 · El área corrige el documento observado con el formulario precargado y el motivo a la vista
+✓ HU15 · Vuelve a Pendiente con su mismo código, sin la revisión anterior y con los cambios en el historial
+✓ HU15 · En Por revisar aparece como "Corregido" y sin revisar; el Director lo revisa de nuevo
+✓ HU15 · En un lote, el certificado observado se corrige desde su fila, sin repetir un DNI del lote
+✓ HU15 · Solo se corrige un observado del área propia, y solo el área
+✓ Preparación HU29 · El área envía tres documentos y el Director los firma con su billetera
+✓ HU29 · Documentos firmados lista los firmados con su beneficiario, DNI, área, fecha y estado, y filtra
+✓ HU29 · El Director anula con motivo y su billetera; queda registrado en la blockchain real
+✓ HU29 · Si el Director cancela en la billetera, el documento sigue Firmado y se descarta el motivo
+✓ HU29 · Si el navegador se cierra antes de confirmar, la sincronización lo marca Anulado con el motivo guardado
+✓ HU29 · Solo se anula un firmado, con motivo; el contrato rechaza anular dos veces, un código no registrado u otra billetera
+✓ HU29 · El Área encargada ve el documento Anulado (gris, tachado) y el motivo en su detalle
+✓ HU29 · Solo el Director anula y ve Documentos firmados
+✓ HU30 · El área reemite un firmado: el formulario viene precargado, con el mismo expediente y el motivo obligatorio
+✓ HU30 · El original sigue Firmado con "Reemisión en revisión"; no se reemite dos veces ni se anula por separado
+✓ HU30 · El Director la ve como "Reemisión", con los cambios y el motivo, y al firmarla el original se anula en la misma transacción
+✓ HU30 · El área ve el original Anulado, "Reemplazado por" la reemisión, y la reemisión con su motivo
+✓ HU30 · Un certificado de un lote se reemite desde su fila, en el mismo lote y sin repetir un DNI vigente
+✓ HU30 · Solo el área del documento reemite, y solo un firmado
