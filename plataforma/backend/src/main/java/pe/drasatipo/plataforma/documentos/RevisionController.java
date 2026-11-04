@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,6 +42,37 @@ public class RevisionController {
   @PostMapping("/lotes/{numero}")
   public LoteRespuesta revisarLote(@PathVariable String numero, Authentication sesion) {
     return revision.revisarLote(sesion.getName(), numero);
+  }
+
+  /** Observación o rechazo de certificados de un lote (HU12): sin códigos, todo el lote. */
+  public record DecisionSolicitud(List<String> codigos, String motivo) {}
+
+  @PostMapping("/lotes/{numero}/observacion")
+  @PreAuthorize("hasAuthority('DOCUMENTO_OBSERVAR')")
+  public LoteRespuesta observarEnLote(
+      @PathVariable String numero,
+      @RequestBody DecisionSolicitud solicitud,
+      Authentication sesion) {
+    return revision.decidirEnLote(
+        sesion.getName(),
+        numero,
+        solicitud.codigos(),
+        solicitud.motivo(),
+        EstadoDocumento.OBSERVADO);
+  }
+
+  @PostMapping("/lotes/{numero}/rechazo")
+  @PreAuthorize("hasAuthority('DOCUMENTO_RECHAZAR')")
+  public LoteRespuesta rechazarEnLote(
+      @PathVariable String numero,
+      @RequestBody DecisionSolicitud solicitud,
+      Authentication sesion) {
+    return revision.decidirEnLote(
+        sesion.getName(),
+        numero,
+        solicitud.codigos(),
+        solicitud.motivo(),
+        EstadoDocumento.RECHAZADO);
   }
 
   /** Muestra del PDF final (HU16), para ver cómo se imprimirá. No se guarda ni se registra. */

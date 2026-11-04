@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,7 @@ public class RevisionDelDirector {
   private final RegistroDeDocumentos registro;
   private final RegistroDeLotes registroDeLotes;
   private final GeneradorDePdf generadorDePdf;
+  private final jakarta.persistence.EntityManager entidades;
 
   public RevisionDelDirector(
       DocumentoRepository documentos,
@@ -37,13 +40,15 @@ public class RevisionDelDirector {
       HistorialDocumentoRepository historial,
       RegistroDeDocumentos registro,
       RegistroDeLotes registroDeLotes,
-      GeneradorDePdf generadorDePdf) {
+      GeneradorDePdf generadorDePdf,
+      jakarta.persistence.EntityManager entidades) {
     this.documentos = documentos;
     this.lotes = lotes;
     this.historial = historial;
     this.registro = registro;
     this.registroDeLotes = registroDeLotes;
     this.generadorDePdf = generadorDePdf;
+    this.entidades = entidades;
   }
 
   @Transactional(readOnly = true)
@@ -122,6 +127,68 @@ public class RevisionDelDirector {
           "Revisado con el Lote %s por %s".formatted(numero, director.getNombreCompleto()));
     }
     return registroDeLotes.respuesta(lote);
+  }
+
+  static final String SIN_MOTIVO = "Indique el motivo.";
+  static final String MOTIVO_LARGO = "El motivo puede tener hasta 500 caracteres.";
+  static final String NO_ES_DEL_LOTE = "Uno de los certificados indicados no es de este lote.";
+
+  /**
+   * HU12 (RF24–RF27): observa o rechaza certificados Pendientes de un lote con un motivo. Sin
+   * códigos, se aplica a todos los Pendientes del lote. Los que ya no están Pendientes no cambian.
+   */
+  @Transactional
+  public LoteRespuesta decidirEnLote(
+      String nombreUsuario,
+      String numero,
+      List<String> codigos,
+      String motivo,
+      EstadoDocumento decision) {
+    String texto = motivo == null ? "" : motivo.strip();
+    if (texto.isEmpty()) {
+      throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "motivo", SIN_MOTIVO);
+    }
+    if (texto.length() > 500) {
+      throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "motivo", MOTIVO_LARGO);
+    }
+    Usuario director = registro.cuenta(nombreUsuario);
+    Lote lote =
+        lotes
+            .findByNumero(numero)
+            .orElseThrow(
+                () -> new ReglaDeNegocioException(HttpStatus.NOT_FOUND, null, LOTE_NO_PENDIENTE));
+    List<Documento> delLote = documentos.findByLoteIdOrderById(lote.getId());
+    List<Documento> pendientes =
+        delLote.stream().filter(d -> d.getEstado() == EstadoDocumento.PENDIENTE).toList();
+    if (pendientes.isEmpty()) {
+      throw new ReglaDeNegocioException(HttpStatus.NOT_FOUND, null, LOTE_NO_PENDIENTE);
+    }
+    List<Documento> elegidos = pendientes;
+    if (codigos != null && !codigos.isEmpty()) {
+      Set<String> delLoteCodigos =
+          delLote.stream().map(Documento::getCodigo).collect(Collectors.toSet());
+      if (!delLoteCodigos.containsAll(codigos)) {
+        throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "codigos", NO_ES_DEL_LOTE);
+      }
+      Set<String> pedidos = Set.copyOf(codigos);
+      elegidos = pendientes.stream().filter(d -> pedidos.contains(d.getCodigo())).toList();
+    }
+    boolean observar = decision == EstadoDocumento.OBSERVADO;
+    for (Documento documento : elegidos) {
+      if (documentos.decidir(documento.getId(), decision, texto) == 1) {
+        historial.save(
+            new HistorialDocumento(
+                documento.getId(),
+                observar ? EventoDocumento.OBSERVADO : EventoDocumento.RECHAZADO,
+                "%s por %s: %s"
+                    .formatted(
+                        observar ? "Observado" : "Rechazado", director.getNombreCompleto(), texto),
+                director.getId()));
+      }
+    }
+    // Las sentencias de actualización no pasan por las entidades ya cargadas.
+    entidades.clear();
+    return registroDeLotes.respuesta(lotes.findByNumero(numero).orElseThrow());
   }
 
   private void registrarRevision(Documento documento, Usuario director, String detalle) {

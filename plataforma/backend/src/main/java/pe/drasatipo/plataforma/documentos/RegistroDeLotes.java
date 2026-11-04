@@ -151,7 +151,12 @@ public class RegistroDeLotes {
             .map(
                 d ->
                     new LoteRespuesta.DocumentoDelLote(
-                        d.getCodigo(), d.getNombres(), d.getApellidos(), d.getDni(), d.getEstado()))
+                        d.getCodigo(),
+                        d.getNombres(),
+                        d.getApellidos(),
+                        d.getDni(),
+                        d.getEstado(),
+                        d.getMotivo()))
             .toList();
     LoteRespuesta.DocumentoDelLote primero = delLote.getFirst();
     return new LoteRespuesta(

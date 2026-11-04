@@ -132,6 +132,10 @@ public class Documento {
   @Column(name = "billetera_firmante")
   private String billeteraFirmante;
 
+  /** Motivo de la observación o del rechazo del Director (HU12); nulo en los demás estados. */
+  @Column(name = "motivo")
+  private String motivo;
+
   protected Documento() {}
 
   /** Documento a solicitud de parte (HU08). */
@@ -310,5 +314,9 @@ public class Documento {
 
   public String getBilleteraFirmante() {
     return billeteraFirmante;
+  }
+
+  public String getMotivo() {
+    return motivo;
   }
 }

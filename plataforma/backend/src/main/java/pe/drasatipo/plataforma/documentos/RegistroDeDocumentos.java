@@ -118,17 +118,17 @@ public class RegistroDeDocumentos {
     List<Documento> delArea =
         documentos.findByAreaIdOrderByRegistradoEnDescIdAsc(cuenta.getArea().getId());
     // HU09: los documentos de un lote se muestran en una sola fila, donde aparece el primero.
-    Map<Long, Long> porLote =
+    Map<Long, List<Documento>> porLote =
         delArea.stream()
             .filter(d -> d.getLote() != null)
-            .collect(Collectors.groupingBy(d -> d.getLote().getId(), Collectors.counting()));
+            .collect(Collectors.groupingBy(d -> d.getLote().getId()));
     Set<Long> mostrados = new HashSet<>();
     List<DocumentoResumen> filas = new ArrayList<>();
     for (Documento documento : delArea) {
       if (documento.getLote() == null) {
         filas.add(DocumentoResumen.de(documento));
       } else if (mostrados.add(documento.getLote().getId())) {
-        filas.add(DocumentoResumen.deLote(documento, porLote.get(documento.getLote().getId())));
+        filas.add(DocumentoResumen.deLote(porLote.get(documento.getLote().getId())));
       }
     }
     return filas;
