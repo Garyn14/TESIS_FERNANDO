@@ -37,6 +37,9 @@ public class ContratoFalso implements ContratoRegistro {
   /** Transacciones de anularDocumento confirmadas (HU29). */
   public final Map<String, AnulacionRegistrada> anulaciones = new HashMap<>();
 
+  /** HU30: originales anulados por cada transacción de registrarReemisiones. */
+  public final Map<String, List<AnulacionRegistrada>> reemplazos = new HashMap<>();
+
   public boolean caido;
 
   /** Último bloque de la red simulada; cada registro ocupa un bloque nuevo (HU18). */
@@ -52,6 +55,7 @@ public class ContratoFalso implements ContratoRegistro {
     firmas.clear();
     registrados.clear();
     anulaciones.clear();
+    reemplazos.clear();
     caido = false;
   }
 
@@ -70,6 +74,26 @@ public class ContratoFalso implements ContratoRegistro {
         hash,
         new RegistroDeFirma(hash, ++bloque, Instant.parse("2026-11-04T15:30:00Z"), registrados));
     return hash;
+  }
+
+  /**
+   * HU30: simula una transacción confirmada de registrarReemisiones: registra cada documento nuevo
+   * y anula su original en el mismo bloque. Cada elemento es {código, hash, HMAC, original}.
+   */
+  public String reemitir(String firmante, List<String[]> reemisiones) {
+    String hash = registrar(firmante, reemisiones);
+    RegistroDeFirma firma = firmas.get(hash);
+    reemplazos.put(
+        hash,
+        reemisiones.stream()
+            .map(r -> new AnulacionRegistrada(r[3], firmante, hash, firma.bloque(), firma.fecha()))
+            .toList());
+    return hash;
+  }
+
+  private java.util.stream.Stream<AnulacionRegistrada> todasLasAnulaciones() {
+    return java.util.stream.Stream.concat(
+        anulaciones.values().stream(), reemplazos.values().stream().flatMap(List::stream));
   }
 
   /** Simula una transacción confirmada del Administrador y aplica su efecto. */
@@ -128,13 +152,13 @@ public class ContratoFalso implements ContratoRegistro {
   public List<AnulacionRegistrada> anulacionesEn(String transaccion) {
     revisar();
     AnulacionRegistrada anulacion = anulaciones.get(transaccion);
-    return anulacion == null ? List.of() : List.of(anulacion);
+    return anulacion == null ? reemplazos.getOrDefault(transaccion, List.of()) : List.of(anulacion);
   }
 
   @Override
   public List<AnulacionRegistrada> anulacionesEntre(long desde, long hasta) {
     revisar();
-    return anulaciones.values().stream()
+    return todasLasAnulaciones()
         .filter(a -> a.bloque() >= desde && a.bloque() <= hasta)
         .sorted(java.util.Comparator.comparingLong(AnulacionRegistrada::bloque))
         .toList();
@@ -143,7 +167,7 @@ public class ContratoFalso implements ContratoRegistro {
   @Override
   public boolean estaAnulado(String codigo) {
     revisar();
-    return anulaciones.values().stream().anyMatch(a -> a.codigo().equals(codigo));
+    return todasLasAnulaciones().anyMatch(a -> a.codigo().equals(codigo));
   }
 
   @Override

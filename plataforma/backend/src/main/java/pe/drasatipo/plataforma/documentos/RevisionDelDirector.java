@@ -83,7 +83,8 @@ public class RevisionDelDirector {
                   delLote.getFirst(),
                   delLote.size(),
                   delLote.stream().allMatch(Documento::isRevisado),
-                  delLote.stream().anyMatch(Documento::isCorregido));
+                  delLote.stream().anyMatch(Documento::isCorregido),
+                  delLote.stream().anyMatch(Documento::isReemision));
             })
         .toList();
   }

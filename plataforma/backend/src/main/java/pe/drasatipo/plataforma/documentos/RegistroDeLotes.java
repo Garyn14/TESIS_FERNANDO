@@ -146,19 +146,29 @@ public class RegistroDeLotes {
   }
 
   LoteRespuesta respuesta(Lote lote) {
+    List<Documento> certificados = documentos.findByLoteIdOrderById(lote.getId());
+    // HU30: la reemisión de un certificado queda en el mismo lote.
+    java.util.Map<Long, Documento> reemisiones = new java.util.HashMap<>();
+    certificados.stream()
+        .filter(d -> d.isReemision() && d.getEstado() != EstadoDocumento.RECHAZADO)
+        .forEach(d -> reemisiones.put(d.getReemplazaA().getId(), d));
     List<LoteRespuesta.DocumentoDelLote> delLote =
-        documentos.findByLoteIdOrderById(lote.getId()).stream()
+        certificados.stream()
             .map(
-                d ->
-                    new LoteRespuesta.DocumentoDelLote(
-                        d.getCodigo(),
-                        d.getNombres(),
-                        d.getApellidos(),
-                        d.getDni(),
-                        d.getEstado(),
-                        d.getEstado() == EstadoDocumento.ANULADO
-                            ? d.getMotivoAnulacion()
-                            : d.getMotivo()))
+                d -> {
+                  DocumentoRespuesta vinculos =
+                      DocumentoRespuesta.de(d, null, reemisiones.get(d.getId()));
+                  return new LoteRespuesta.DocumentoDelLote(
+                      d.getCodigo(),
+                      d.getNombres(),
+                      d.getApellidos(),
+                      d.getDni(),
+                      d.getEstado(),
+                      vinculos.motivo(),
+                      vinculos.reemision(),
+                      vinculos.reemisionEnCurso(),
+                      vinculos.reemplazadoPor());
+                })
             .toList();
     LoteRespuesta.DocumentoDelLote primero = delLote.getFirst();
     return new LoteRespuesta(

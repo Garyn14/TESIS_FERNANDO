@@ -57,6 +57,28 @@ public class DocumentosController {
     return registro.corregir(sesion.getName(), codigo, solicitud);
   }
 
+  /** HU30: vista previa de la reemisión de un documento firmado, sin guardar nada. */
+  @PostMapping("/{codigo}/reemision/vista-previa")
+  @PreAuthorize("hasAuthority('DOCUMENTO_REEMITIR')")
+  public VistaPreviaRespuesta vistaPreviaReemision(
+      @PathVariable String codigo,
+      @RequestBody SolicitudReemision solicitud,
+      Authentication sesion) {
+    return registro.vistaPreviaReemision(sesion.getName(), codigo, solicitud.comoSolicitud());
+  }
+
+  /** HU30: reemite un documento firmado con los datos corregidos y el motivo. */
+  @PostMapping("/{codigo}/reemision")
+  @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("hasAuthority('DOCUMENTO_REEMITIR')")
+  public DocumentoRespuesta reemitir(
+      @PathVariable String codigo,
+      @RequestBody SolicitudReemision solicitud,
+      Authentication sesion) {
+    return registro.reemitir(
+        sesion.getName(), codigo, solicitud.comoSolicitud(), solicitud.motivo());
+  }
+
   @GetMapping("/{codigo}")
   @PreAuthorize("hasAuthority('DOCUMENTO_VER_AREA')")
   public DocumentoRespuesta detalle(@PathVariable String codigo, Authentication sesion) {

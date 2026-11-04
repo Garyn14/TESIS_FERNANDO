@@ -85,6 +85,47 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
   /** HU15: en un lote, el DNI no se repite con otro certificado del mismo lote. */
   boolean existsByLoteIdAndDniAndIdNot(Long loteId, String dni, Long id);
 
+  /** Estados de una reemisión en curso (HU30). */
+  String OBSERVADO = "pe.drasatipo.plataforma.documentos.EstadoDocumento.OBSERVADO";
+
+  String RECHAZADO = "pe.drasatipo.plataforma.documentos.EstadoDocumento.RECHAZADO";
+
+  /**
+   * HU30: el DNI ya está en otro certificado vigente del lote. No cuentan el original que se
+   * reemplaza ni los certificados anulados o rechazados.
+   */
+  @Query(
+      "SELECT count(d) > 0 FROM Documento d WHERE d.lote.id = :lote AND d.dni = :dni"
+          + " AND d.id NOT IN (:original, :propio) AND d.estado NOT IN ("
+          + ANULADO
+          + ", "
+          + RECHAZADO
+          + ")")
+  boolean dniVigenteEnElLote(
+      @Param("lote") Long loteId,
+      @Param("dni") String dni,
+      @Param("original") Long originalId,
+      @Param("propio") Long propioId);
+
+  /**
+   * HU30: la reemisión de un original que no fue rechazada: en curso (Pendiente, Procesando firma,
+   * Observada) o ya firmada. Hay a lo más una (índice único).
+   */
+  @Query("SELECT d FROM Documento d WHERE d.reemplazaA.id = :original AND d.estado <> " + RECHAZADO)
+  Optional<Documento> reemisionVigente(@Param("original") Long originalId);
+
+  /** HU30: originales con una reemisión en curso, para la lista de firmados. */
+  @Query(
+      "SELECT d.reemplazaA.id, d.codigo FROM Documento d WHERE d.reemplazaA IS NOT NULL"
+          + " AND d.estado IN ("
+          + PENDIENTE
+          + ", "
+          + PROCESANDO
+          + ", "
+          + OBSERVADO
+          + ")")
+  List<Object[]> reemisionesEnCurso();
+
   /**
    * HU15: el documento a corregir, con su fila bloqueada hasta el fin de la transacción, para que
    * dos reenvíos a la vez no lo corrijan dos veces.

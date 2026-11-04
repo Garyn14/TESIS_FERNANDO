@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pe.drasatipo.plataforma.blockchain.AnulacionRegistrada;
 import pe.drasatipo.plataforma.blockchain.BlockchainNoDisponibleException;
 import pe.drasatipo.plataforma.blockchain.ContratoRegistro;
 import pe.drasatipo.plataforma.blockchain.DocumentoRegistrado;
@@ -46,16 +47,19 @@ public class FirmaDeDocumentos {
   private final HistorialDocumentoRepository historial;
   private final RegistroDeDocumentos registro;
   private final ContratoRegistro contrato;
+  private final AnulacionDeDocumentos anulacionDeDocumentos;
 
   public FirmaDeDocumentos(
       DocumentoRepository documentos,
       HistorialDocumentoRepository historial,
       RegistroDeDocumentos registro,
-      ContratoRegistro contrato) {
+      ContratoRegistro contrato,
+      AnulacionDeDocumentos anulacionDeDocumentos) {
     this.documentos = documentos;
     this.historial = historial;
     this.registro = registro;
     this.contrato = contrato;
+    this.anulacionDeDocumentos = anulacionDeDocumentos;
   }
 
   /**
@@ -127,11 +131,23 @@ public class FirmaDeDocumentos {
         noAplicados.add(new NoAplicado(registrado.codigo(), motivo));
       }
     }
+    // HU30: en la misma transacción, cada reemisión anuló al original que reemplaza.
+    int anulados = 0;
+    try {
+      for (AnulacionRegistrada anulacion : contrato.anulacionesEn(transaccion)) {
+        if (anulacionDeDocumentos.aplicar(anulacion, director)) {
+          anulados++;
+        }
+      }
+    } catch (BlockchainNoDisponibleException e) {
+      throw new ReglaDeNegocioException(HttpStatus.SERVICE_UNAVAILABLE, null, e.getMessage());
+    }
     LOG.info(
-        "Transacción {} (bloque {}): {} documentos firmados",
+        "Transacción {} (bloque {}): {} documentos firmados y {} originales anulados por reemisión",
         transaccion,
         firma.bloque(),
-        firmados.size());
+        firmados.size(),
+        anulados);
     return new Confirmacion(transaccion, firma.bloque(), firmados, noAplicados);
   }
 

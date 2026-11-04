@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -143,8 +142,187 @@ public class RegistroDeDocumentos {
     return documentos
         .findByCodigo(codigo)
         .filter(d -> alcance.puedeVerArea(cuenta, d.getArea()))
-        .map(d -> DocumentoRespuesta.de(d, firmante()))
+        .map(this::conVinculos)
         .orElseThrow(() -> new ReglaDeNegocioException(HttpStatus.FORBIDDEN, null, DE_OTRA_AREA));
+  }
+
+  /** HU30: el detalle con la reemisión en curso o la que lo reemplazó. */
+  DocumentoRespuesta conVinculos(Documento documento) {
+    Documento reemision = documentos.reemisionVigente(documento.getId()).orElse(null);
+    return DocumentoRespuesta.de(documento, firmante(), reemision);
+  }
+
+  static final String NO_FIRMADO = "Solo se reemite un documento firmado.";
+  static final String REEMISION_EN_CURSO = "Este documento ya tiene una reemisión en revisión: %s.";
+  static final String SIN_CAMBIOS = "Corrija al menos un dato del documento.";
+
+  /** Lo validado de una reemisión, antes de guardarla. */
+  private record ReemisionValidada(
+      Documento original,
+      Beneficiario beneficiario,
+      Map<String, String> datos,
+      String texto,
+      String motivo,
+      List<String> cambios) {}
+
+  /** HU30: vista previa de la reemisión de un documento a solicitud de parte, sin guardar nada. */
+  @Transactional(readOnly = true)
+  public VistaPreviaRespuesta vistaPreviaReemision(
+      String nombreUsuario, String codigo, SolicitudDocumento solicitud) {
+    Usuario cuenta = cuenta(nombreUsuario);
+    Documento original = reemitible(cuenta, codigo, false);
+    if (original.getLote() != null) {
+      throw new ReglaDeNegocioException(
+          HttpStatus.BAD_REQUEST, null, "Un certificado de un lote no tiene vista previa propia.");
+    }
+    return VistaPreviaRespuesta.de(validarSolicitud(cuenta, original, solicitud), firmante());
+  }
+
+  /**
+   * HU30 (RF50): reemite un documento firmado del área propia con los datos corregidos. La
+   * reemisión es un documento nuevo, Pendiente, vinculado al original, con su mismo expediente y en
+   * su mismo lote. El original sigue Firmado hasta que el Director firme la reemisión.
+   */
+  @Transactional
+  public DocumentoRespuesta reemitir(
+      String nombreUsuario, String codigo, SolicitudDocumento solicitud, String motivo) {
+    Usuario cuenta = cuenta(nombreUsuario);
+    Documento original = reemitible(cuenta, codigo, true);
+    String textoMotivo = RevisionDelDirector.motivoValido(motivo);
+    if (!proteccionDni.configurada()) {
+      throw new ReglaDeNegocioException(
+          HttpStatus.SERVICE_UNAVAILABLE,
+          null,
+          "Falta configurar la clave que protege el DNI, por eso no se puede reemitir el"
+              + " documento. Comuníquese con el Administrador.");
+    }
+    ReemisionValidada validada = validarReemision(cuenta, original, solicitud, textoMotivo);
+    int anio = LocalDate.now(ZONA).getYear();
+    String nuevo;
+    do {
+      nuevo = generador.codigo(anio);
+    } while (documentos.existsByCodigo(nuevo));
+    Documento reemision =
+        Documento.reemisionDe(
+            original,
+            nuevo,
+            generador.tokenQr(),
+            validada.beneficiario(),
+            proteccionDni.hmac(validada.beneficiario().dni()),
+            validada.datos(),
+            validada.texto(),
+            cuenta,
+            textoMotivo);
+    try {
+      documentos.saveAndFlush(reemision);
+    } catch (DataIntegrityViolationException e) {
+      // Otra reemisión del mismo original se registró al mismo tiempo (índice único).
+      throw new ReglaDeNegocioException(
+          HttpStatus.CONFLICT,
+          null,
+          REEMISION_EN_CURSO.formatted(
+              documentos
+                  .reemisionVigente(original.getId())
+                  .map(Documento::getCodigo)
+                  .orElse("otra")));
+    }
+    String quien = "%s (%s)".formatted(cuenta.getNombreCompleto(), cuenta.getArea().getNombre());
+    historial.save(
+        new HistorialDocumento(
+            reemision.getId(),
+            EventoDocumento.REGISTRADO,
+            CambiosDeDatos.limitar(
+                "Reemisión de %s registrada y enviada a revisión por %s. Motivo: %s. Cambios: %s."
+                    .formatted(
+                        original.getCodigo(),
+                        quien,
+                        textoMotivo,
+                        String.join("; ", validada.cambios()))),
+            cuenta.getId()));
+    historial.save(
+        new HistorialDocumento(
+            original.getId(),
+            EventoDocumento.REEMISION_SOLICITADA,
+            CambiosDeDatos.limitar(
+                "Reemisión solicitada por %s: %s. Motivo: %s".formatted(quien, nuevo, textoMotivo)),
+            cuenta.getId()));
+    return DocumentoRespuesta.de(reemision, firmante(), null);
+  }
+
+  /**
+   * El original: del área propia (403), firmado y sin otra reemisión en curso (409). Al reemitir se
+   * bloquea su fila hasta el fin de la transacción, como en HU15.
+   */
+  private Documento reemitible(Usuario cuenta, String codigo, boolean bloquear) {
+    Documento original =
+        (bloquear ? documentos.paraCorregir(codigo) : documentos.findByCodigo(codigo))
+            .filter(d -> alcance.estaLimitada(cuenta) && alcance.puedeVerArea(cuenta, d.getArea()))
+            .orElseThrow(
+                () -> new ReglaDeNegocioException(HttpStatus.FORBIDDEN, null, DE_OTRA_AREA));
+    if (original.getEstado() != EstadoDocumento.FIRMADO) {
+      throw new ReglaDeNegocioException(HttpStatus.CONFLICT, null, NO_FIRMADO);
+    }
+    documentos
+        .reemisionVigente(original.getId())
+        .ifPresent(
+            r -> {
+              throw new ReglaDeNegocioException(
+                  HttpStatus.CONFLICT, null, REEMISION_EN_CURSO.formatted(r.getCodigo()));
+            });
+    return original;
+  }
+
+  private SolicitudValidada validarSolicitud(
+      Usuario cuenta, Documento original, SolicitudDocumento solicitud) {
+    return validar(
+        cuenta,
+        new SolicitudDocumento(
+            original.getTipo().getCodigo(),
+            original.getNumeroExpediente(),
+            solicitud.nombres(),
+            solicitud.apellidos(),
+            solicitud.dni(),
+            solicitud.datos()));
+  }
+
+  private ReemisionValidada validarReemision(
+      Usuario cuenta, Documento original, SolicitudDocumento solicitud, String motivo) {
+    Beneficiario beneficiario;
+    Map<String, String> datos;
+    String texto;
+    if (original.getLote() == null) {
+      SolicitudValidada validada = validarSolicitud(cuenta, original, solicitud);
+      beneficiario = new Beneficiario(validada.nombres(), validada.apellidos(), validada.dni());
+      datos = validada.datos();
+      texto = validada.texto();
+    } else {
+      // Como en HU15: en un lote solo cambia el beneficiario; los datos del evento son del lote.
+      Map<String, String> errores = new java.util.TreeMap<>();
+      String nombres =
+          ValidacionDeSolicitud.nombre(
+              solicitud.nombres(), "nombres", "Ingrese los nombres.", errores);
+      String apellidos =
+          ValidacionDeSolicitud.nombre(
+              solicitud.apellidos(), "apellidos", "Ingrese los apellidos.", errores);
+      String dni = ValidacionDeSolicitud.dni(solicitud.dni(), "dni", errores);
+      if (!errores.containsKey("dni")
+          && documentos.dniVigenteEnElLote(
+              original.getLote().getId(), dni, original.getId(), original.getId())) {
+        errores.put("dni", DNI_EN_EL_LOTE);
+      }
+      if (!errores.isEmpty()) {
+        throw new DatosInvalidosException(errores);
+      }
+      beneficiario = new Beneficiario(nombres, apellidos, dni);
+      datos = original.getDatos();
+      texto = original.getTexto();
+    }
+    List<String> cambios =
+        CambiosDeDatos.entre(original, original.getNumeroExpediente(), beneficiario, datos);
+    if (cambios.isEmpty()) {
+      throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, null, SIN_CAMBIOS);
+    }
+    return new ReemisionValidada(original, beneficiario, datos, texto, motivo, cambios);
   }
 
   static final String NO_OBSERVADO =
@@ -176,40 +354,33 @@ public class RegistroDeDocumentos {
           "Falta configurar la clave que protege el DNI, por eso no se puede reenviar el"
               + " documento. Comuníquese con el Administrador.");
     }
-    List<String> cambios = new ArrayList<>();
-    Map<String, String> antes = new LinkedHashMap<>();
-    antes.put("N.° de expediente", documento.getNumeroExpediente());
-    antes.put("Nombres", documento.getNombres());
-    antes.put("Apellidos", documento.getApellidos());
-    antes.put("DNI", documento.getDni());
     String expediente;
     Beneficiario beneficiario;
     Map<String, String> datos;
     String texto;
-    Map<String, String> etiquetas = new LinkedHashMap<>();
     if (documento.getLote() == null) {
       SolicitudValidada validada =
           validar(
               cuenta,
               new SolicitudDocumento(
                   documento.getTipo().getCodigo(),
-                  solicitud.numeroExpediente(),
+                  // HU30: una reemisión mantiene el expediente del original.
+                  documento.isReemision()
+                      ? documento.getNumeroExpediente()
+                      : solicitud.numeroExpediente(),
                   solicitud.nombres(),
                   solicitud.apellidos(),
                   solicitud.dni(),
                   solicitud.datos()));
-      if (documentos.existsByNumeroExpedienteAndIdNot(
-          validada.numeroExpediente(), documento.getId())) {
+      if (!documento.isReemision()
+          && documentos.existsByNumeroExpedienteAndIdNot(
+              validada.numeroExpediente(), documento.getId())) {
         throw expedienteRepetido();
       }
       expediente = validada.numeroExpediente();
       beneficiario = new Beneficiario(validada.nombres(), validada.apellidos(), validada.dni());
       datos = validada.datos();
       texto = validada.texto();
-      PlantillasDeDocumento.de(documento.getTipo().getCodigo())
-          .orElseThrow()
-          .campos()
-          .forEach(c -> etiquetas.put(c.nombre(), c.etiqueta()));
     } else {
       // En un lote solo se corrige el beneficiario: los datos del evento son del lote.
       Map<String, String> errores = new java.util.TreeMap<>();
@@ -221,8 +392,14 @@ public class RegistroDeDocumentos {
               solicitud.apellidos(), "apellidos", "Ingrese los apellidos.", errores);
       String dni = ValidacionDeSolicitud.dni(solicitud.dni(), "dni", errores);
       if (!errores.containsKey("dni")
-          && documentos.existsByLoteIdAndDniAndIdNot(
-              documento.getLote().getId(), dni, documento.getId())) {
+          && (documento.isReemision()
+              ? documentos.dniVigenteEnElLote(
+                  documento.getLote().getId(),
+                  dni,
+                  documento.getReemplazaA().getId(),
+                  documento.getId())
+              : documentos.existsByLoteIdAndDniAndIdNot(
+                  documento.getLote().getId(), dni, documento.getId()))) {
         errores.put("dni", DNI_EN_EL_LOTE);
       }
       if (!errores.isEmpty()) {
@@ -233,15 +410,7 @@ public class RegistroDeDocumentos {
       datos = documento.getDatos();
       texto = documento.getTexto();
     }
-    Map<String, String> despues = new LinkedHashMap<>();
-    despues.put("N.° de expediente", expediente);
-    despues.put("Nombres", beneficiario.nombres());
-    despues.put("Apellidos", beneficiario.apellidos());
-    despues.put("DNI", beneficiario.dni());
-    antes.forEach((campo, valor) -> anotarCambio(cambios, campo, valor, despues.get(campo)));
-    etiquetas.forEach(
-        (clave, etiqueta) ->
-            anotarCambio(cambios, etiqueta, documento.getDatos().get(clave), datos.get(clave)));
+    List<String> cambios = CambiosDeDatos.entre(documento, expediente, beneficiario, datos);
 
     documento.corregir(
         expediente, beneficiario, proteccionDni.hmac(beneficiario.dni()), datos, texto);
@@ -263,23 +432,6 @@ public class RegistroDeDocumentos {
                         : "Cambios: " + String.join("; ", cambios) + "."),
             cuenta.getId()));
     return DocumentoRespuesta.de(documento, firmante());
-  }
-
-  private static void anotarCambio(
-      List<String> cambios, String campo, String antes, String despues) {
-    if (!java.util.Objects.equals(antes, despues)) {
-      cambios.add("%s: %s → %s".formatted(campo, mostrar(antes), mostrar(despues)));
-    }
-  }
-
-  /** Las fechas ISO se muestran en día/mes/año, como en la pantalla. */
-  private static String mostrar(String valor) {
-    if (valor == null || valor.isBlank()) {
-      return "(vacío)";
-    }
-    return valor.matches("\\d{4}-\\d{2}-\\d{2}")
-        ? valor.substring(8) + "/" + valor.substring(5, 7) + "/" + valor.substring(0, 4)
-        : valor;
   }
 
   private SolicitudValidada validar(Usuario cuenta, SolicitudDocumento solicitud) {

@@ -17,12 +17,18 @@ public record LoteRespuesta(
     VistaPreviaRespuesta ejemplo,
     List<DocumentoDelLote> documentos) {
 
-  /** Un certificado del lote, con su estado y el motivo si fue observado o rechazado (HU12). */
+  /**
+   * Un certificado del lote, con su estado y el motivo si fue observado o rechazado (HU12). HU30:
+   * si es una reemisión, de qué certificado y qué cambia; en el original, su reemisión.
+   */
   public record DocumentoDelLote(
       String codigo,
       String nombres,
       String apellidos,
       String dni,
       EstadoDocumento estado,
-      String motivo) {}
+      String motivo,
+      DocumentoRespuesta.Reemision reemision,
+      String reemisionEnCurso,
+      String reemplazadoPor) {}
 }
