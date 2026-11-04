@@ -1,7 +1,8 @@
 // Prueba de punta a punta real del Sprint 3: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). Las áreas registran sus documentos
 // por la API desde el navegador (la pantalla de registro ya la recorre sprint2.cjs) y el Director
-// trabaja desde la pantalla. Recorre HU10, HU16, HU17 (la preparación de la firma, por la API) y HU11:
+// trabaja desde la pantalla. Recorre HU10, HU16, HU17 (la preparación de la firma, por la API), HU12
+// (observar, rechazar y firmar un lote) y HU11:
 // la firma con la billetera de prueba (billetera-de-prueba.cjs) en la red Besu real, comprobada
 // directamente en el contrato.
 const { chromium } = require('playwright')
@@ -521,7 +522,7 @@ const paso = async (nombre, fn) => {
     await carlos.goto(URL + '#/por-revisar/lote/' + grande)
     await carlos.getByRole('heading', { name: `Revisión de lote – Lote ${grande}` }).waitFor()
     await carlos.getByRole('link', { name: '← Volver a Por revisar' }).click()
-    await filas().first().waitFor()
+    await carlos.getByText(`Lote ${grande} · Injertos y podas en cacao · 52 certificados`, { exact: false }).waitFor()
     await casilla(`Lote ${lote}`).check()
     await casilla(`Lote ${grande}`).check()
     await barra().getByText('2 seleccionados (55 certificados)').waitFor()
@@ -579,6 +580,133 @@ const paso = async (nombre, fn) => {
     await foto(rosa, 'hu11_08_mis_documentos_lote_firmado')
     assert.equal(await nodo.getBalance(B.director.direccion), 0n)
     assert.ok(firmaDeLucia.transaccion)
+  })
+  // ------------------------------------------------------- HU12: revisar y firmar un lote
+  const nuevoLote = async (nombreEvento, beneficiarios) => {
+    const r = await enviar(rosa, '/api/lotes', {
+      tipo: 'CERTIFICADO_CAPACITACION',
+      datos: {
+        nombreEvento,
+        fechaInicio: '2026-10-12',
+        fechaFin: '2026-10-13',
+        duracionHoras: '16',
+        lugar: 'Local comunal de Pichanaqui',
+        areaOrganizadora: 'Área de Capacitación',
+      },
+      beneficiarios,
+    })
+    assert.equal(r.estado, 201)
+    return r.cuerpo.numero
+  }
+  const porNombre = (numero, nombres) =>
+    psql(`SELECT d.codigo FROM documento d JOIN lote l ON l.id = d.lote_id WHERE l.numero = '${numero}' AND d.nombres = '${nombres}'`)
+  const motivoDeVentana = (titulo) => carlos.getByRole('dialog', { name: titulo })
+  let abonos
+  await paso('HU12 · En la revisión del lote, el Director observa y rechaza beneficiarios con su motivo', async () => {
+    abonos = await nuevoLote('Elaboración de abonos orgánicos', [
+      { nombres: 'Rocío', apellidos: 'Huamán Soto', dni: '42000001' },
+      { nombres: 'Elmer', apellidos: 'Quispe Rojas', dni: '42000002' },
+      { nombres: 'Nilda', apellidos: 'Pari Ccori', dni: '42000003' },
+      { nombres: 'Wilmer', apellidos: 'Inga Pérez', dni: '42000004' },
+      { nombres: 'Flor', apellidos: 'Soto Ramos', dni: '42000005' },
+    ])
+    await carlos.goto(URL + '#/por-revisar/lote/' + abonos)
+    await carlos.getByRole('heading', { name: `Revisión de lote – Lote ${abonos}` }).waitFor()
+    const observar = carlos.getByRole('button', { name: 'Observar seleccionados' })
+    assert.ok(await observar.isDisabled())
+    await carlos.getByRole('checkbox', { name: 'Marcar a Elmer Quispe Rojas' }).check()
+    await observar.click()
+    let ventana = motivoDeVentana('Observar beneficiarios seleccionados')
+    assert.ok(await ventana.getByRole('button', { name: 'Confirmar' }).isDisabled())
+    await ventana.getByLabel('Motivo').fill('El DNI no coincide con la lista de asistencia del taller')
+    await foto(carlos, 'hu12_01_ventana_de_motivo')
+    await ventana.getByRole('button', { name: 'Confirmar' }).click()
+    await carlos.getByRole('status').getByText('1 certificado fue observado y volvió al área.').waitFor()
+
+    await carlos.getByRole('checkbox', { name: 'Marcar a Wilmer Inga Pérez' }).check()
+    await carlos.getByRole('button', { name: 'Rechazar seleccionados' }).click()
+    ventana = motivoDeVentana('Rechazar beneficiarios seleccionados')
+    await ventana.getByText('El rechazo es definitivo. El documento no podrá reenviarse.').waitFor()
+    await ventana.getByLabel('Motivo').fill('No asistió al taller')
+    await foto(carlos, 'hu12_02_ventana_de_rechazo')
+    await ventana.getByRole('button', { name: 'Confirmar' }).click()
+    await carlos.getByRole('status').getByText('1 certificado fue rechazado.').waitFor()
+    const relacion = carlos.getByRole('complementary', { name: 'Beneficiarios del lote' })
+    await relacion.getByText('Observado').waitFor()
+    await relacion.getByText('Rechazado').waitFor()
+    // Los ya decididos no se pueden marcar: su casilla deja de mostrarse.
+    assert.equal(await carlos.getByRole('checkbox', { name: 'Marcar a Elmer Quispe Rojas' }).count(), 0)
+    assert.equal(await carlos.getByRole('checkbox', { name: /^Marcar a / }).count(), 3)
+    await foto(carlos, 'hu12_03_lote_con_observado_y_rechazado')
+
+    const elmer = porNombre(abonos, 'Elmer')
+    assert.equal(psql(`SELECT estado, motivo FROM documento WHERE codigo = '${elmer}'`), 'OBSERVADO|El DNI no coincide con la lista de asistencia del taller')
+    assert.equal(
+      psql(`SELECT h.evento, h.detalle, u.nombre_usuario FROM documento_historial h JOIN documento d ON d.id = h.documento_id JOIN usuario u ON u.id = h.realizado_por WHERE d.codigo = '${elmer}' ORDER BY h.id DESC LIMIT 1`),
+      'OBSERVADO|Observado por Ing. Carlos Mendoza Rivera: El DNI no coincide con la lista de asistencia del taller|cmendoza',
+    )
+    assert.equal(psql(`SELECT estado, motivo FROM documento WHERE codigo = '${porNombre(abonos, 'Wilmer')}'`), 'RECHAZADO|No asistió al taller')
+  })
+  await paso('HU12 · "Firmar lote" firma los 3 que siguen Pendientes, en la blockchain real', async () => {
+    await carlos.getByRole('button', { name: 'Firmar lote' }).click()
+    await dialogo().getByText('Firmar 3 certificados').waitFor()
+    await dialogo().getByRole('button', { name: 'Confirmar' }).click()
+    await dialogo().getByText('Se firmaron 3 certificados.').waitFor({ timeout: 60_000 })
+    await dialogo().getByText('1 certificado fue observado y devuelto al área.').waitFor()
+    await dialogo().getByText('1 certificado fue rechazado.').waitFor()
+    await foto(carlos, 'hu12_04_firma_del_lote')
+    assert.equal(
+      psql(`SELECT count(*), count(DISTINCT d.transaccion) FROM documento d JOIN lote l ON l.id = d.lote_id WHERE l.numero = '${abonos}' AND d.estado = 'FIRMADO'`),
+      '3|1',
+    )
+    for (const [nombre, registrado] of [['Rocío', true], ['Nilda', true], ['Flor', true], ['Elmer', false], ['Wilmer', false]])
+      assert.equal((await enCadena(porNombre(abonos, nombre))).registrado, registrado, nombre)
+    await dialogo().getByRole('button', { name: 'Volver a Por revisar' }).click()
+    await carlos.getByText(`Lote ${abonos}`, { exact: false }).waitFor({ state: 'detached' })
+    await filas().first().waitFor()
+  })
+  await paso('HU12 · El área ve cuántos certificados del lote hay en cada estado y el motivo de cada uno', async () => {
+    await rosa.goto(URL + '#/mis-documentos')
+    await rosa.reload()
+    const fila = rosa.locator('main tbody tr', { hasText: `Lote ${abonos}` })
+    await fila.getByText('Observado 1').waitFor()
+    await fila.getByText('Firmado 3').waitFor()
+    await fila.getByText('Rechazado 1').waitFor()
+    await foto(rosa, 'hu12_05_mis_documentos_estados_del_lote')
+    await fila.getByRole('link').click()
+    await rosa.getByRole('heading', { name: `Lote ${abonos}` }).waitFor()
+    await rosa.getByText('Motivo: El DNI no coincide con la lista de asistencia del taller').waitFor()
+    await rosa.getByText('Motivo: No asistió al taller').waitFor()
+    await foto(rosa, 'hu12_06_detalle_del_lote_con_motivos')
+  })
+  await paso('HU12 · Observar el lote completo lo devuelve al área y lo saca de Por revisar', async () => {
+    const completo = await nuevoLote('Cosecha de café de calidad', [
+      { nombres: 'Teófilo', apellidos: 'Ramos Inga', dni: '42000011' },
+      { nombres: 'Marleny', apellidos: 'Soto Pari', dni: '42000012' },
+    ])
+    await carlos.goto(URL + '#/por-revisar/lote/' + completo)
+    await carlos.getByRole('heading', { name: `Revisión de lote – Lote ${completo}` }).waitFor()
+    await carlos.getByRole('button', { name: 'Observar lote' }).click()
+    const ventana = motivoDeVentana('Observar lote')
+    await ventana.getByLabel('Motivo').fill('Falta la lista de asistencia firmada')
+    await ventana.getByRole('button', { name: 'Confirmar' }).click()
+    await carlos.getByRole('status').getByText('2 certificados fueron observados y volvieron al área.').waitFor()
+    await carlos.getByText('El lote ya no tiene certificados pendientes.').waitFor()
+    await foto(carlos, 'hu12_07_lote_observado_completo')
+    assert.equal(
+      psql(`SELECT string_agg(DISTINCT d.estado, ',') FROM documento d JOIN lote l ON l.id = d.lote_id WHERE l.numero = '${completo}'`),
+      'OBSERVADO',
+    )
+    await carlos.goto(URL + '#/por-revisar')
+    await filas().first().waitFor()
+    assert.equal(await carlos.getByText(`Lote ${completo}`, { exact: false }).count(), 0)
+  })
+  await paso('HU12 · El motivo es obligatorio y solo el Director observa o rechaza', async () => {
+    const r = await enviar(carlos, `/api/revision/lotes/${abonos}/observacion`, { codigos: [], motivo: '  ' })
+    assert.equal(r.estado, 400)
+    assert.equal(r.cuerpo.campos.motivo, 'Indique el motivo.')
+    assert.equal((await enviar(pedro, `/api/revision/lotes/${abonos}/observacion`, { motivo: 'x' })).estado, 403)
+    assert.equal((await enviar(rosa, `/api/revision/lotes/${abonos}/rechazo`, { motivo: 'x' })).estado, 403)
   })
   await paso('HU11 · Solo el Director firma', async () => {
     assert.equal(await api(pedro, '/api/firma/billetera'), 403)
