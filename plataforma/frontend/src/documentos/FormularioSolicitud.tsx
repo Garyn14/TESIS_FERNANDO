@@ -3,6 +3,7 @@ import { ErrorApi } from '../api/cliente'
 import { BOTON_PRIMARIO, BOTON_SECUNDARIO } from '../comun/estilos'
 import Modal from '../comun/Modal'
 import {
+  corregir,
   registrar,
   vistaPrevia,
   type Documento,
@@ -19,15 +20,25 @@ const PASOS = ['Datos de la solicitud', 'Vista previa']
 /**
  * HU08: registro de un documento a solicitud de parte. Datos → vista previa → envío con
  * confirmación. El servidor valida en cada paso y, al enviar, deja el documento Pendiente.
+ * HU15: con {@code original}, corrige un documento observado: el formulario viene precargado y se
+ * reenvía a revisión con el mismo código.
  */
-export default function FormularioSolicitud({ tipo }: { tipo: TipoDocumento }) {
+export default function FormularioSolicitud({
+  tipo,
+  original,
+}: {
+  tipo: TipoDocumento
+  original?: Documento
+}) {
   const id = useId()
   const [datos, setDatos] = useState({
-    numeroExpediente: '',
-    nombres: '',
-    apellidos: '',
-    dni: '',
-    ...Object.fromEntries(tipo.campos.map((c) => [`datos.${c.nombre}`, ''])),
+    numeroExpediente: original?.numeroExpediente ?? '',
+    nombres: original?.nombres ?? '',
+    apellidos: original?.apellidos ?? '',
+    dni: original?.dni ?? '',
+    ...Object.fromEntries(
+      tipo.campos.map((c) => [`datos.${c.nombre}`, original?.datos?.[c.nombre] ?? '']),
+    ),
   } as Record<string, string>)
   const [errores, setErrores] = useState<Errores>({})
   const [errorGeneral, setErrorGeneral] = useState('')
@@ -87,7 +98,7 @@ export default function FormularioSolicitud({ tipo }: { tipo: TipoDocumento }) {
     setOcupado(true)
     setErrorGeneral('')
     try {
-      setEnviado(await registrar(solicitud()))
+      setEnviado(await (original ? corregir(original.codigo, solicitud()) : registrar(solicitud())))
     } catch (e) {
       fallo(e)
     } finally {
@@ -99,7 +110,11 @@ export default function FormularioSolicitud({ tipo }: { tipo: TipoDocumento }) {
   if (enviado)
     return (
       <div role="status" className="mt-6 rounded-xl bg-green-pale p-6">
-        <p className="text-lg font-semibold text-institutional">✓ Documento enviado a revisión</p>
+        <p className="text-lg font-semibold text-institutional">
+          {original
+            ? '✓ Documento corregido y reenviado a revisión'
+            : '✓ Documento enviado a revisión'}
+        </p>
         <p className="mt-2">
           Código de verificación: <strong className="font-mono">{enviado.codigo}</strong>
         </p>
@@ -110,9 +125,11 @@ export default function FormularioSolicitud({ tipo }: { tipo: TipoDocumento }) {
           <a href={`#/mis-documentos/${enviado.codigo}`} className={BOTON_PRIMARIO}>
             Ver el documento
           </a>
-          <a href="#/nuevo-documento" className={BOTON_SECUNDARIO}>
-            Registrar otro documento
-          </a>
+          {!original && (
+            <a href="#/nuevo-documento" className={BOTON_SECUNDARIO}>
+              Registrar otro documento
+            </a>
+          )}
         </div>
       </div>
     )
@@ -167,7 +184,7 @@ export default function FormularioSolicitud({ tipo }: { tipo: TipoDocumento }) {
               Volver
             </button>
             <button type="button" className={BOTON_PRIMARIO} onClick={() => setConfirmando(true)}>
-              Enviar a revisión
+              {original ? 'Reenviar a revisión' : 'Enviar a revisión'}
             </button>
           </div>
         </div>
@@ -193,10 +210,14 @@ export default function FormularioSolicitud({ tipo }: { tipo: TipoDocumento }) {
       )}
 
       {confirmando && previa && (
-        <Modal titulo="¿Enviar a revisión?" onCerrar={() => setConfirmando(false)}>
+        <Modal
+          titulo={original ? '¿Reenviar a revisión?' : '¿Enviar a revisión?'}
+          onCerrar={() => setConfirmando(false)}
+        >
           <p>
-            Se enviará el {previa.tipoNombre} de {previa.nombres} {previa.apellidos} al Director.
-            Una vez enviado queda Pendiente y no se puede modificar mientras esté en revisión.
+            Se {original ? 'reenviará' : 'enviará'} el {previa.tipoNombre} de {previa.nombres}{' '}
+            {previa.apellidos} al Director. Una vez enviado queda Pendiente y no se puede modificar
+            mientras esté en revisión.
           </p>
           <div className="mt-6 flex justify-end gap-3">
             <button
@@ -208,7 +229,7 @@ export default function FormularioSolicitud({ tipo }: { tipo: TipoDocumento }) {
               Cancelar
             </button>
             <button type="button" className={BOTON_PRIMARIO} onClick={enviar} disabled={ocupado}>
-              {ocupado ? 'Enviando…' : 'Enviar'}
+              {ocupado ? 'Enviando…' : original ? 'Reenviar' : 'Enviar'}
             </button>
           </div>
         </Modal>

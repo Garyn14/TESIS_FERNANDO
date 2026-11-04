@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { fechaCorta, lote as consultar, type Lote } from './api'
 import Certificado from './Certificado'
+import CorregirBeneficiario from './CorregirBeneficiario'
 import Estado from './Estado'
 
 /** Datos del evento que se muestran en el detalle, con su etiqueta. */
@@ -20,6 +21,12 @@ const DATOS_DEL_EVENTO: [string, string][] = [
 export default function PaginaDetalleLote({ numero }: { numero: string }) {
   const [datos, setDatos] = useState<Lote | null>(null)
   const [error, setError] = useState('')
+  const [corrigiendo, setCorrigiendo] = useState<Lote['documentos'][number] | null>(null)
+  const [aviso, setAviso] = useState('')
+  const cargar = () =>
+    consultar(numero)
+      .then(setDatos)
+      .catch((e) => setError(e instanceof ErrorApi ? e.message : 'No se pudo abrir el lote.'))
   useEffect(() => {
     consultar(numero)
       .then(setDatos)
@@ -52,6 +59,11 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
         <p className="mt-4 text-muted">Cargando…</p>
       ) : (
         <>
+          {aviso && (
+            <p role="status" className="mt-4 rounded-lg bg-green-pale px-4 py-3 text-institutional">
+              {aviso}
+            </p>
+          )}
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <h2 className="text-xl font-semibold">Lote {datos.numero}</h2>
             {[...new Set(datos.documentos.map((d) => d.estado))].map((e) => (
@@ -116,6 +128,15 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
                         {d.motivo && (
                           <span className="mt-1 block text-muted">Motivo: {d.motivo}</span>
                         )}
+                        {d.estado === 'OBSERVADO' && (
+                          <button
+                            type="button"
+                            onClick={() => setCorrigiendo(d)}
+                            className="mt-1 block font-medium text-institutional hover:underline"
+                          >
+                            Corregir
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -123,6 +144,25 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
               </table>
             </div>
           </div>
+          {corrigiendo && (
+            <CorregirBeneficiario
+              codigo={corrigiendo.codigo}
+              beneficiario={{
+                nombres: corrigiendo.nombres,
+                apellidos: corrigiendo.apellidos,
+                dni: corrigiendo.dni,
+              }}
+              motivo={corrigiendo.motivo ?? ''}
+              onCorregido={() => {
+                setAviso(
+                  `✓ El certificado de ${corrigiendo.nombres} ${corrigiendo.apellidos} se corrigió y se reenvió a revisión.`,
+                )
+                setCorrigiendo(null)
+                void cargar()
+              }}
+              onCerrar={() => setCorrigiendo(null)}
+            />
+          )}
         </>
       )}
     </section>

@@ -69,6 +69,10 @@ export interface Documento extends VistaPrevia {
   registradoEn: string
   /** Motivo de la observación o del rechazo del Director (HU12). */
   motivo?: string | null
+  /** Campos propios del tipo, para precargar la corrección (HU15). */
+  datos?: Record<string, string>
+  /** Reenviado tras una observación (HU15). */
+  corregido?: boolean
 }
 
 /** Una fila de Mis documentos: un documento, o un lote completo (HU09). */
@@ -98,6 +102,16 @@ export const registrar = (solicitud: SolicitudDocumento) =>
 
 /** Mis documentos: solo los del área de la persona (RF05). */
 export const documentosDelArea = () => solicitar<DocumentoResumen[]>('/api/documentos')
+
+/**
+ * HU15: corrige un documento observado y lo reenvía a revisión. En un certificado de lote solo se
+ * usan los nombres, los apellidos y el DNI.
+ */
+export const corregir = (codigo: string, solicitud: Partial<SolicitudDocumento>) =>
+  solicitar<Documento>(`/api/documentos/${encodeURIComponent(codigo)}/correccion`, {
+    method: 'POST',
+    body: JSON.stringify(solicitud),
+  })
 
 export const documento = (codigo: string) =>
   solicitar<Documento>(`/api/documentos/${encodeURIComponent(codigo)}`)
