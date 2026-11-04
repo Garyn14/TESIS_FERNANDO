@@ -232,6 +232,8 @@ class DecisionEnLoteTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.campos.codigos").value(RevisionDelDirector.NO_ES_DEL_LOTE));
     decidir(director, "2099-999", "observacion", null, "Motivo").andExpect(status().isNotFound());
+    // Un motivo de 500 caracteres, el máximo, entra completo en el historial.
+    decidir(director, otro.numero(), "rechazo", null, "y".repeat(500)).andExpect(status().isOk());
 
     decidir(area(), lote.numero(), "observacion", null, "Motivo").andExpect(status().isForbidden());
     decidir(
