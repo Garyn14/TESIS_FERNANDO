@@ -27,85 +27,30 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import pe.drasatipo.plataforma.ContenedoresDePrueba;
-import pe.drasatipo.plataforma.almacenamiento.AlmacenDeArchivos;
 import pe.drasatipo.plataforma.almacenamiento.AlmacenIpfs;
 import pe.drasatipo.plataforma.almacenamiento.AlmacenamientoNoDisponibleException;
+import pe.drasatipo.plataforma.billeteras.ContratoFalso;
 
 /** HU17 (DRA-25): preparación de la firma con el PDF final en un nodo IPFS real (Kubo). */
 @SpringBootTest(properties = "plataforma.dni.clave-hmac=" + RegistroSolicitudDeParteTest.CLAVE_HMAC)
 @AutoConfigureMockMvc
-@Import({ContenedoresDePrueba.class, PreparacionDeFirmaTest.AlmacenConFallas.class})
+@Import({ContenedoresDePrueba.class, IpfsDePrueba.class, ContratoFalso.Configuracion.class})
 class PreparacionDeFirmaTest {
-
-  /** El mismo Kubo del nodo privado, sin conexión a ninguna red. */
-  @SuppressWarnings("resource")
-  static final GenericContainer<?> KUBO =
-      new GenericContainer<>("ipfs/kubo:v0.43.1")
-          .withCommand("daemon", "--offline")
-          .withExposedPorts(5001)
-          .waitingFor(Wait.forLogMessage(".*Daemon is ready.*", 1))
-          .withStartupTimeout(Duration.ofMinutes(2));
-
-  static {
-    KUBO.start();
-  }
-
-  static String apiIpfs() {
-    return "http://" + KUBO.getHost() + ":" + KUBO.getMappedPort(5001);
-  }
-
-  @DynamicPropertySource
-  static void ipfs(DynamicPropertyRegistry propiedades) {
-    propiedades.add("plataforma.ipfs.url", PreparacionDeFirmaTest::apiIpfs);
-  }
-
-  /** El IPFS real, salvo para los archivos marcados: con ellos simula que el nodo no responde. */
-  @TestConfiguration(proxyBeanMethods = false)
-  static class AlmacenConFallas {
-    static final Set<String> FALLAN = ConcurrentHashMap.newKeySet();
-
-    @Bean
-    @Primary
-    AlmacenDeArchivos almacenConFallas(AlmacenIpfs real) {
-      return new AlmacenDeArchivos() {
-        @Override
-        public String guardar(String nombre, byte[] contenido) {
-          if (FALLAN.contains(nombre)) {
-            throw new AlmacenamientoNoDisponibleException("Nodo IPFS sin respuesta", null);
-          }
-          return real.guardar(nombre, contenido);
-        }
-
-        @Override
-        public byte[] recuperar(String cid) {
-          return real.recuperar(cid);
-        }
-      };
-    }
-  }
 
   private static int dni = 60_000_000;
 
@@ -113,14 +58,37 @@ class PreparacionDeFirmaTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired PasswordEncoder codificador;
   @Autowired AlmacenIpfs ipfs;
+  @Autowired ContratoFalso contrato;
 
   @AfterEach
   void sinFallas() {
-    AlmacenConFallas.FALLAN.clear();
+    IpfsDePrueba.FALLAN.clear();
+    contrato.caido = false;
   }
 
   private MockHttpSession sesion(String rol, String area) throws Exception {
+    if ("DIRECTOR".equals(rol)) {
+      return directorFirmante(mvc, jdbc, codificador, contrato).sesion();
+    }
     return RegistroSolicitudDePartePrueba.sesion(mvc, jdbc, codificador, rol, area);
+  }
+
+  record Director(MockHttpSession sesion, String billetera) {}
+
+  private static final java.util.concurrent.atomic.AtomicInteger billeteras =
+      new java.util.concurrent.atomic.AtomicInteger(0xd1000);
+
+  /** Un Director con billetera registrada y con el rol de firmante en el contrato (HU06). */
+  static Director directorFirmante(
+      MockMvc mvc, JdbcTemplate jdbc, PasswordEncoder codificador, ContratoFalso contrato)
+      throws Exception {
+    MockHttpSession sesion =
+        RegistroSolicitudDePartePrueba.sesion(mvc, jdbc, codificador, "DIRECTOR", null);
+    String billetera = "0x%040x".formatted(billeteras.incrementAndGet());
+    jdbc.update(
+        "UPDATE usuario SET billetera = ? WHERE id = (SELECT max(id) FROM usuario)", billetera);
+    contrato.firmantes.add(billetera);
+    return new Director(sesion, billetera);
   }
 
   private static String cuerpo(ResultActions r) throws Exception {
@@ -178,7 +146,7 @@ class PreparacionDeFirmaTest {
   private static String kubo(String operacion) throws Exception {
     return HttpClient.newHttpClient()
         .send(
-            HttpRequest.newBuilder(URI.create(apiIpfs() + "/api/v0/" + operacion))
+            HttpRequest.newBuilder(URI.create(IpfsDePrueba.apiIpfs() + "/api/v0/" + operacion))
                 .POST(HttpRequest.BodyPublishers.noBody())
                 .build(),
             HttpResponse.BodyHandlers.ofString())
@@ -256,7 +224,7 @@ class PreparacionDeFirmaTest {
     MockHttpSession director = sesion("DIRECTOR", null);
     String falla = revisado(director);
     String sigue = revisado(director);
-    AlmacenConFallas.FALLAN.add(falla + ".pdf");
+    IpfsDePrueba.FALLAN.add(falla + ".pdf");
 
     preparar(director, falla, sigue)
         .andExpect(status().isOk())
@@ -276,7 +244,7 @@ class PreparacionDeFirmaTest {
     // Vuelve a Por revisar, ya revisado, y se puede preparar de nuevo cuando IPFS responde.
     mvc.perform(get("/api/revision").session(director))
         .andExpect(jsonPath("$[?(@.codigo == '%s')].revisado".formatted(falla)).value(true));
-    AlmacenConFallas.FALLAN.clear();
+    IpfsDePrueba.FALLAN.clear();
     preparar(director, falla).andExpect(jsonPath("$.preparados[0].codigo").value(falla));
     assertThat(eventos(falla)).endsWith("ERROR_ALMACENAMIENTO", "PREPARADO");
   }
@@ -372,6 +340,89 @@ class PreparacionDeFirmaTest {
     hilos.shutdown();
     assertThat(preparados).isEqualTo(1);
     assertThat(eventos(codigo)).containsExactly("REGISTRADO", "REVISADO", "PREPARADO");
+  }
+
+  @Test
+  void sinBilleteraOSinElRolDeFirmanteNoSePreparaNada() throws Exception {
+    MockHttpSession revisor = sesion("DIRECTOR", null);
+    String codigo = revisado(revisor);
+    MockHttpSession sinBilletera =
+        RegistroSolicitudDePartePrueba.sesion(mvc, jdbc, codificador, "DIRECTOR", null);
+    preparar(sinBilletera, codigo)
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.mensaje").value(PreparacionDeFirma.SIN_BILLETERA));
+
+    Director revocado = directorFirmante(mvc, jdbc, codificador, contrato);
+    contrato.firmantes.remove(revocado.billetera());
+    preparar(revocado.sesion(), codigo)
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.mensaje").value(PreparacionDeFirma.NO_ES_FIRMANTE));
+
+    contrato.caido = true;
+    preparar(revisor, codigo).andExpect(status().isServiceUnavailable());
+    assertThat(fila(codigo).get("estado")).isEqualTo("PENDIENTE");
+  }
+
+  @Test
+  void unLoteSeSeleccionaEnteroYLaRespuestaTraeElHmacDelDni() throws Exception {
+    MockHttpSession director = sesion("DIRECTOR", null);
+    String filas =
+        IntStream.range(0, 2)
+            .mapToObj(
+                i ->
+                    "{\"nombres\": \"Ana\", \"apellidos\": \"Rojas\", \"dni\": \"%d\"}"
+                        .formatted(++dni))
+            .collect(Collectors.joining(","));
+    String numero =
+        JsonPath.read(
+            cuerpo(
+                enviar(
+                        mvc,
+                        sesion("AREA_ENCARGADA", "CAPACITACION"),
+                        "/api/lotes",
+                        """
+                        {"tipo": "CERTIFICADO_CAPACITACION",
+                         "datos": {"nombreEvento": "Poda de café",
+                                   "fechaInicio": "2026-09-22", "fechaFin": "2026-09-24",
+                                   "duracionHoras": "16", "lugar": "Pangoa",
+                                   "areaOrganizadora": "Área de Capacitación"},
+                         "beneficiarios": [%s]}
+                        """
+                            .formatted(filas))
+                    .andExpect(status().isCreated())),
+            "$.numero");
+    mvc.perform(post("/api/revision/lotes/" + numero).with(csrf()).session(director))
+        .andExpect(status().isOk());
+    String suelto = revisado(director);
+
+    String respuesta =
+        cuerpo(
+            mvc.perform(
+                    post("/api/firma/preparacion")
+                        .with(csrf())
+                        .session(director)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                            "{\"codigos\": [\"%s\"], \"lotes\": [\"%s\"]}"
+                                .formatted(suelto, numero)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.preparados.length()").value(3)));
+    List<String> hmacs = JsonPath.read(respuesta, "$.preparados[*].dniHmac");
+    String codigo = JsonPath.read(respuesta, "$.preparados[0].codigo");
+    assertThat(hmacs).allMatch(h -> h.matches("[0-9a-f]{64}"));
+    assertThat(hmacs.get(0))
+        .isEqualTo(
+            jdbc.queryForObject(
+                "SELECT dni_hmac FROM documento WHERE codigo = ?", String.class, codigo));
+
+    mvc.perform(
+            post("/api/firma/preparacion")
+                .with(csrf())
+                .session(director)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"lotes\": [\"2099-999\"]}"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.mensaje").value(PreparacionDeFirma.LOTE_NO_EXISTE));
   }
 
   @Test

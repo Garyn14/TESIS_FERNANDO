@@ -8,5 +8,7 @@ public enum EstadoDocumento {
    * El Director inició la firma: su PDF final se genera y se guarda en IPFS (HU17), y queda así
    * hasta que la firma se registra en la blockchain (HU11). HU18 corrige los que se detienen.
    */
-  PROCESANDO_FIRMA
+  PROCESANDO_FIRMA,
+  /** Registrado en la blockchain con la billetera del Director (HU11, RF31). */
+  FIRMADO
 }

@@ -112,6 +112,26 @@ public class Documento {
   @Column(name = "preparado_en")
   private OffsetDateTime preparadoEn;
 
+  /**
+   * Firma registrada en la blockchain (HU11): quién firmó, la fecha del bloque (fecha oficial de
+   * emisión, RF32), la transacción, el bloque y la billetera.
+   */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "firmado_por")
+  private Usuario firmadoPor;
+
+  @Column(name = "firmado_en")
+  private OffsetDateTime firmadoEn;
+
+  @Column(name = "transaccion")
+  private String transaccion;
+
+  @Column(name = "bloque")
+  private Long bloque;
+
+  @Column(name = "billetera_firmante")
+  private String billeteraFirmante;
+
   protected Documento() {}
 
   /** Documento a solicitud de parte (HU08). */
@@ -274,5 +294,21 @@ public class Documento {
 
   public OffsetDateTime getPreparadoEn() {
     return preparadoEn;
+  }
+
+  public OffsetDateTime getFirmadoEn() {
+    return firmadoEn;
+  }
+
+  public String getTransaccion() {
+    return transaccion;
+  }
+
+  public Long getBloque() {
+    return bloque;
+  }
+
+  public String getBilleteraFirmante() {
+    return billeteraFirmante;
   }
 }

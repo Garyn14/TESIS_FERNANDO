@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import pe.drasatipo.plataforma.almacenamiento.AlmacenDeArchivos;
+import pe.drasatipo.plataforma.blockchain.BlockchainNoDisponibleException;
+import pe.drasatipo.plataforma.blockchain.ContratoRegistro;
 import pe.drasatipo.plataforma.comun.ReglaDeNegocioException;
 import pe.drasatipo.plataforma.usuarios.Usuario;
 
@@ -38,6 +40,12 @@ public class PreparacionDeFirma {
   static final String NO_PENDIENTE = "El documento no está pendiente.";
   static final String EN_PROCESO = "El documento ya está en proceso de firma.";
   static final String SIN_REVISAR = "El documento aún no fue revisado.";
+  static final String LOTE_NO_EXISTE = "El lote no existe.";
+  static final String SIN_BILLETERA =
+      "Su cuenta no tiene billetera registrada. Pida al Administrador que la registre.";
+  static final String NO_ES_FIRMANTE =
+      "Su billetera no tiene el rol de firmante en el contrato. Pida al Administrador que se lo"
+          + " otorgue.";
   static final String FALLO_PDF = "No se pudo generar el PDF. El documento sigue Pendiente.";
   static final String FALLO_ALMACENAMIENTO =
       "No se pudo guardar el PDF. El documento volvió a Pendiente.";
@@ -45,6 +53,8 @@ public class PreparacionDeFirma {
   private static final Logger LOG = LoggerFactory.getLogger(PreparacionDeFirma.class);
 
   private final DocumentoRepository documentos;
+  private final LoteRepository lotes;
+  private final ContratoRegistro contrato;
   private final HistorialDocumentoRepository historial;
   private final RegistroDeDocumentos registro;
   private final GeneradorDePdf generadorDePdf;
@@ -53,12 +63,16 @@ public class PreparacionDeFirma {
 
   public PreparacionDeFirma(
       DocumentoRepository documentos,
+      LoteRepository lotes,
+      ContratoRegistro contrato,
       HistorialDocumentoRepository historial,
       RegistroDeDocumentos registro,
       GeneradorDePdf generadorDePdf,
       AlmacenDeArchivos almacen,
       PlatformTransactionManager transacciones) {
     this.documentos = documentos;
+    this.lotes = lotes;
+    this.contrato = contrato;
     this.historial = historial;
     this.registro = registro;
     this.generadorDePdf = generadorDePdf;
@@ -66,21 +80,45 @@ public class PreparacionDeFirma {
     this.transaccion = new TransactionTemplate(transacciones);
   }
 
-  public record Preparado(String codigo, String hash, String cid) {}
+  /** Lo que la billetera registra en el contrato: código, hash del PDF y HMAC del DNI (HU11). */
+  public record Preparado(String codigo, String hash, String cid, String dniHmac) {}
 
   public record NoPreparado(String codigo, String motivo) {}
 
   public record Resultado(List<Preparado> preparados, List<NoPreparado> noPreparados) {}
 
-  private record Iniciado(Long id, String codigo, PdfFinal pdf) {}
+  private record Iniciado(Long id, String codigo, PdfFinal pdf, String dniHmac) {}
 
-  public Resultado preparar(String nombreUsuario, List<String> codigos) {
+  /**
+   * Prepara los documentos indicados y los Pendientes de los lotes indicados (HU11: un lote se
+   * selecciona entero en Por revisar).
+   */
+  public Resultado preparar(
+      String nombreUsuario, List<String> codigos, List<String> numerosDeLote) {
     Set<String> seleccion = new LinkedHashSet<>();
     if (codigos != null) {
       codigos.stream()
           .filter(c -> c != null && !c.isBlank())
           .map(String::trim)
           .forEach(seleccion::add);
+    }
+    if (numerosDeLote != null) {
+      transaccion.executeWithoutResult(
+          estado -> {
+            for (String numero : numerosDeLote) {
+              Lote lote =
+                  lotes
+                      .findByNumero(numero == null ? "" : numero.trim())
+                      .orElseThrow(
+                          () ->
+                              new ReglaDeNegocioException(
+                                  HttpStatus.NOT_FOUND, "lotes", LOTE_NO_EXISTE));
+              documentos.findByLoteIdOrderById(lote.getId()).stream()
+                  .filter(d -> d.getEstado() == EstadoDocumento.PENDIENTE)
+                  .map(Documento::getCodigo)
+                  .forEach(seleccion::add);
+            }
+          });
     }
     if (seleccion.isEmpty()) {
       throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "codigos", SIN_CODIGOS);
@@ -89,6 +127,7 @@ public class PreparacionDeFirma {
       throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "codigos", DEMASIADOS);
     }
     Usuario director = transaccion.execute(estado -> registro.cuenta(nombreUsuario));
+    verificarFirmante(director);
     LocalDate fechaEmision = LocalDate.now(ZoneId.of("America/Lima"));
     List<Preparado> preparados = new ArrayList<>();
     List<NoPreparado> noPreparados = new ArrayList<>();
@@ -137,7 +176,7 @@ public class PreparacionDeFirma {
                     director.getId()));
           });
       LOG.info("PDF del documento {} guardado en IPFS: {}", codigo, cid);
-      preparados.add(new Preparado(codigo, iniciado.pdf().sha256(), cid));
+      preparados.add(new Preparado(codigo, iniciado.pdf().sha256(), cid, iniciado.dniHmac()));
     }
     return new Resultado(preparados, noPreparados);
   }
@@ -158,7 +197,25 @@ public class PreparacionDeFirma {
     return new Iniciado(
         documento.getId(),
         codigo,
-        generadorDePdf.generar(documento, director.getNombreCompleto(), fechaEmision, false));
+        generadorDePdf.generar(documento, director.getNombreCompleto(), fechaEmision, false),
+        documento.getDniHmac());
+  }
+
+  /**
+   * Antes de preparar, el Director debe tener su billetera registrada con el rol de firmante en el
+   * contrato (HU11): así no quedan documentos en Procesando firma que no se pueden firmar.
+   */
+  private void verificarFirmante(Usuario director) {
+    if (director.getBilletera() == null) {
+      throw new ReglaDeNegocioException(HttpStatus.CONFLICT, null, SIN_BILLETERA);
+    }
+    try {
+      if (!contrato.esFirmante(director.getBilletera())) {
+        throw new ReglaDeNegocioException(HttpStatus.CONFLICT, null, NO_ES_FIRMANTE);
+      }
+    } catch (BlockchainNoDisponibleException e) {
+      throw new ReglaDeNegocioException(HttpStatus.SERVICE_UNAVAILABLE, null, e.getMessage());
+    }
   }
 
   private static String motivo(Documento documento) {
