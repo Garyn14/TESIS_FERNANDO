@@ -9,7 +9,7 @@ const AVISOS: Record<Documento['estado'], string> = {
   PENDIENTE: 'Está en revisión del Director: no se puede modificar mientras esté Pendiente.',
   PROCESANDO_FIRMA: 'El Director está firmando este documento.',
   FIRMADO: 'Firmado por el Director y registrado en la blockchain.',
-  OBSERVADO: 'El Director lo observó y lo devolvió al área. Podrá corregirlo y reenviarlo (HU15).',
+  OBSERVADO: 'El Director lo observó y lo devolvió al área para que lo corrija.',
   RECHAZADO: 'El Director lo rechazó. El rechazo es definitivo.',
 }
 

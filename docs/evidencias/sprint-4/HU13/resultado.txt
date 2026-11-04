@@ -1,0 +1,7 @@
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ Preparación · El área envía dos documentos y el Director los revisa
+✓ HU13 · La revisión de un documento tiene el botón Observar, que pide un motivo obligatorio
+✓ HU13 · Al confirmar, el documento queda Observado con su motivo y su historial
+✓ HU13 · El documento sale de Por revisar; el otro sigue
+✓ HU13 · El Área encargada lo ve Observado, con el motivo en su detalle
+✓ HU13 · El motivo es obligatorio, solo se observa un Pendiente y solo el Director observa
