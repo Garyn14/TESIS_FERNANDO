@@ -293,4 +293,43 @@ describe('Por revisar (HU10)', () => {
     ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Firmar lote' })).not.toBeInTheDocument()
   })
+
+  it('observar un documento pide el motivo y lo devuelve al área (HU13)', async () => {
+    const DOC = {
+      ...EJEMPLO,
+      codigo: 'DRA-2026-T6N9QE',
+      origen: 'SOLICITUD_PARTE',
+      estado: 'PENDIENTE',
+      lote: null,
+      areaNombre: 'Área de Desarrollo Agrario',
+      registradoPor: 'Marco Salazar Vela',
+      registradoEn: '2026-09-28T15:00:00Z',
+    }
+    const fetch = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation((ruta) =>
+        String(ruta).endsWith('/observacion')
+          ? respuesta(200, { ...DOC, estado: 'OBSERVADO', motivo: 'Falta el expediente' })
+          : respuesta(200, DOC),
+      )
+    render(<PaginaRevisionDocumento codigo="DRA-2026-T6N9QE" />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Observar' }))
+    const ventana = screen.getByRole('dialog', { name: 'Observar documento' })
+    const confirmar = within(ventana).getByRole('button', { name: 'Confirmar' })
+    expect(confirmar).toBeDisabled()
+    fireEvent.change(within(ventana).getByLabelText('Motivo'), {
+      target: { value: 'Falta el expediente' },
+    })
+    fireEvent.click(confirmar)
+
+    expect(
+      await screen.findByText('El documento fue observado y volvió al área.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Falta el expediente')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Firmar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Observar' })).not.toBeInTheDocument()
+    const llamada = fetch.mock.calls.find(([r]) => String(r).endsWith('/observacion'))!
+    expect(llamada[0]).toBe('/api/revision/documentos/DRA-2026-T6N9QE/observacion')
+    expect(JSON.parse(String(llamada[1]?.body))).toEqual({ motivo: 'Falta el expediente' })
+  })
 })
