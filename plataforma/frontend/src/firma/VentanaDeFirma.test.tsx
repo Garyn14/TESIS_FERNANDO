@@ -137,4 +137,30 @@ describe('Ventana de firma (HU11)', () => {
     expect(billetera.conectar).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: 'Intentar nuevamente' })).toBeInTheDocument()
   })
+
+  it('en un lote habla de certificados y agrega los avisos del lote (HU12)', async () => {
+    servidor(BASE)
+    vi.mocked(billetera.conectar).mockResolvedValue(DIRECTOR)
+    vi.mocked(billetera.registrarDocumentos).mockResolvedValue(TX)
+    render(
+      <VentanaDeFirma
+        seleccion={{
+          codigos: [],
+          lotes: ['2026-007'],
+          cantidad: 2,
+          unidad: 'certificado',
+          notas: ['1 certificado fue observado y devuelto al área.'],
+          nombres: { 'DRA-2026-K7M4PX': 'Juan Ccori Pari' },
+        }}
+        director="Carlos"
+        onCerrar={() => {}}
+      />,
+    )
+    expect(await screen.findByText('Firmar 2 certificados')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
+    expect(await screen.findByText(/Se firmó 1 certificado/)).toBeInTheDocument()
+    expect(screen.getByText('1 certificado fue observado y devuelto al área.')).toBeInTheDocument()
+    expect(screen.getByText(/1 certificado no se pudo firmar/)).toBeInTheDocument()
+    expect(screen.getByText(/Juan Ccori Pari: No se pudo guardar el PDF/)).toBeInTheDocument()
+  })
 })

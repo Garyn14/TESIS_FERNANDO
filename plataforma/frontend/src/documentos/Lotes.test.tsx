@@ -299,6 +299,38 @@ describe('Lotes en Mis documentos (HU09)', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
+  it('un lote con certificados en varios estados muestra cuántos hay en cada uno (HU12)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+      respuesta(200, [
+        {
+          codigo: null,
+          lote: '2026-009',
+          cantidad: 8,
+          tipoNombre: 'Certificado de Capacitación',
+          beneficiario: '8 beneficiarios',
+          numeroExpediente: null,
+          registradoEn: '2026-10-07T15:00:00Z',
+          estado: 'OBSERVADO',
+          estados: { OBSERVADO: 1, FIRMADO: 7 },
+        },
+      ]),
+    )
+    render(<PaginaMisDocumentos areaNombre="Área de Capacitación" />)
+    const fila = (await screen.findByRole('link', { name: /Lote 2026-009/ })).closest('tr')!
+    expect(within(fila).getByText('Observado 1')).toBeInTheDocument()
+    expect(within(fila).getByText('Firmado 7')).toBeInTheDocument()
+  })
+
+  it('el detalle del lote muestra el estado y el motivo de cada certificado (HU12)', async () => {
+    const documentos = LOTE.documentos.map((d, i) =>
+      i === 0 ? { ...d, estado: 'OBSERVADO', motivo: 'El DNI no coincide' } : d,
+    )
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => respuesta(200, { ...LOTE, documentos }))
+    render(<PaginaDetalleLote numero="2026-008" />)
+    expect(await screen.findByText('Motivo: El DNI no coincide')).toBeInTheDocument()
+    expect(screen.getByText(/El estado de cada uno se muestra en la tabla/)).toBeInTheDocument()
+  })
+
   it('un lote de otra área no se muestra', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
       respuesta(403, { mensaje: 'Este lote no pertenece a su área.', campos: {} }),

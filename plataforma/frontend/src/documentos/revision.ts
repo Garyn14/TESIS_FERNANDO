@@ -31,3 +31,15 @@ export const revisarDocumento = (codigo: string) =>
 /** Abre un lote; la revisión cuenta para todos sus documentos (RF22). */
 export const revisarLote = (numero: string) =>
   solicitar<Lote>(`/api/revision/lotes/${encodeURIComponent(numero)}`, { method: 'POST' })
+
+/** HU12: observa o rechaza certificados Pendientes de un lote; sin códigos, todo el lote. */
+export const decidirEnLote = (
+  numero: string,
+  decision: 'observacion' | 'rechazo',
+  codigos: string[],
+  motivo: string,
+) =>
+  solicitar<Lote>(`/api/revision/lotes/${encodeURIComponent(numero)}/${decision}`, {
+    method: 'POST',
+    body: JSON.stringify({ codigos, motivo }),
+  })

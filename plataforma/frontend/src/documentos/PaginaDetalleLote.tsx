@@ -54,12 +54,24 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
         <>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <h2 className="text-xl font-semibold">Lote {datos.numero}</h2>
-            <Estado estado={datos.documentos[0].estado} />
+            {[...new Set(datos.documentos.map((d) => d.estado))].map((e) => (
+              <Estado
+                key={e}
+                estado={e}
+                cantidad={
+                  new Set(datos.documentos.map((d) => d.estado)).size > 1
+                    ? datos.documentos.filter((d) => d.estado === e).length
+                    : undefined
+                }
+              />
+            ))}
           </div>
           <p className="mt-1 text-muted">
             {datos.documentos.every((d) => d.estado === 'FIRMADO')
               ? `${datos.documentos.length} certificados firmados por el Director y registrados en la blockchain.`
-              : `${datos.documentos.length} certificados en revisión del Director: no se pueden modificar mientras estén Pendientes.`}
+              : datos.documentos.every((d) => d.estado === 'PENDIENTE')
+                ? `${datos.documentos.length} certificados en revisión del Director: no se pueden modificar mientras estén Pendientes.`
+                : `${datos.documentos.length} certificados. El estado de cada uno se muestra en la tabla.`}
           </p>
           <dl className="mt-4 grid rounded-xl border border-line bg-card shadow-sm sm:grid-cols-2 lg:grid-cols-4">
             {filas.map(([etiqueta, valor]) => (
@@ -80,6 +92,7 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
                     <th className="px-3 py-2 font-medium">Código</th>
                     <th className="px-3 py-2 font-medium">Beneficiario</th>
                     <th className="px-3 py-2 font-medium">DNI</th>
+                    <th className="px-3 py-2 font-medium">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -98,6 +111,12 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
                         {d.nombres} {d.apellidos}
                       </td>
                       <td className="px-3 py-2">{d.dni}</td>
+                      <td className="px-3 py-2">
+                        <Estado estado={d.estado} />
+                        {d.motivo && (
+                          <span className="mt-1 block text-muted">Motivo: {d.motivo}</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

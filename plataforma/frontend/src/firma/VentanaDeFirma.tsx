@@ -15,6 +15,10 @@ export interface Seleccion {
   cantidad: number
   /** Nombre legible de cada documento o lote, para el resultado. */
   nombres?: Record<string, string>
+  /** HU12: en un lote se habla de certificados. */
+  unidad?: 'documento' | 'certificado'
+  /** HU12: avisos que acompañan al resultado (observados y rechazados del lote). */
+  notas?: string[]
 }
 
 type Estado =
@@ -25,7 +29,7 @@ type Estado =
   | { tipo: 'resultado'; resultado: Resultado }
 
 const corta = (direccion: string) => `${direccion.slice(0, 6)}…${direccion.slice(-4)}`
-const documentos = (n: number) => (n === 1 ? '1 documento' : `${n} documentos`)
+const contar = (n: number, unidad: string) => (n === 1 ? `1 ${unidad}` : `${n} ${unidad}s`)
 
 function mensaje(e: unknown) {
   return e instanceof ErrorBilletera || e instanceof ErrorApi
@@ -108,6 +112,7 @@ export default function VentanaDeFirma({ seleccion, director, onCerrar }: Props)
     if (!ocupada) onCerrar(estado.tipo === 'resultado' ? estado.resultado : null)
   }
   const nombre = (codigo: string) => seleccion.nombres?.[codigo] ?? codigo
+  const unidad = seleccion.unidad ?? 'documento'
 
   return (
     <Modal titulo="Firmar con su billetera" onCerrar={cerrar}>
@@ -132,7 +137,7 @@ export default function VentanaDeFirma({ seleccion, director, onCerrar }: Props)
                 {director} <span className="font-mono">({corta(estado.cuenta)})</span>
               </dd>
               <dt className="text-muted">Acción</dt>
-              <dd className="font-semibold">Firmar {documentos(seleccion.cantidad)}</dd>
+              <dd className="font-semibold">Firmar {contar(seleccion.cantidad, unidad)}</dd>
               <dt className="text-muted">Red</dt>
               <dd>{estado.red.nombre}</dd>
               <dt className="text-muted">Costo de la operación</dt>
@@ -180,7 +185,12 @@ export default function VentanaDeFirma({ seleccion, director, onCerrar }: Props)
         )}
 
         {estado.tipo === 'resultado' && (
-          <ResultadoDeFirma resultado={estado.resultado} nombre={nombre} />
+          <ResultadoDeFirma
+            resultado={estado.resultado}
+            nombre={nombre}
+            unidad={unidad}
+            notas={seleccion.notas ?? []}
+          />
         )}
 
         <div className="flex justify-end gap-3 pt-2">
@@ -225,29 +235,39 @@ function Girando() {
 function ResultadoDeFirma({
   resultado,
   nombre,
+  unidad,
+  notas,
 }: {
   resultado: Resultado
   nombre: (codigo: string) => string
+  unidad: string
+  notas: string[]
 }) {
   const n = resultado.firmados.length
+  const fallidos = resultado.noFirmados.length
   return (
     <div className="space-y-3">
       <p role="status" className="rounded-lg bg-green-pale px-4 py-3 text-institutional">
         {n === 0 ? (
-          'No se firmó ningún documento.'
+          `No se firmó ningún ${unidad}.`
         ) : (
           <>
             <strong>¡Listo!</strong>{' '}
-            {n === 1 ? 'Se firmó 1 documento.' : `Se firmaron ${n} documentos.`}
+            {n === 1 ? `Se firmó 1 ${unidad}.` : `Se firmaron ${n} ${unidad}s.`}
           </>
         )}
       </p>
-      {resultado.noFirmados.length > 0 && (
+      {notas.map((nota) => (
+        <p key={nota} className="text-muted">
+          {nota}
+        </p>
+      ))}
+      {fallidos > 0 && (
         <div className="rounded-lg bg-amber-pale px-4 py-3">
           <p>
-            {resultado.noFirmados.length === 1
-              ? '1 documento no se pudo firmar y volvió a Por revisar:'
-              : `${resultado.noFirmados.length} documentos no se pudieron firmar y volvieron a Por revisar:`}
+            {fallidos === 1
+              ? `1 ${unidad} no se pudo firmar y volvió a Por revisar:`
+              : `${fallidos} ${unidad}s no se pudieron firmar y volvieron a Por revisar:`}
           </p>
           <ul className="mt-1 list-disc pl-5">
             {resultado.noFirmados.map((d) => (

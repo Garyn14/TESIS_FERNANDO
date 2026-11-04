@@ -120,7 +120,11 @@ export default function App() {
   else if (opcion.ruta === 'por-revisar')
     contenido =
       detalle === 'lote' && numero ? (
-        <PaginaRevisionLote key={`${numero}-${visita}`} numero={numero} />
+        <PaginaRevisionLote
+          key={`${numero}-${visita}`}
+          numero={numero}
+          director={sesion.nombreCompleto}
+        />
       ) : detalle ? (
         <PaginaRevisionDocumento
           key={`${detalle}-${visita}`}

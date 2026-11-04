@@ -229,4 +229,68 @@ describe('Por revisar (HU10)', () => {
     )
     expect(screen.queryByRole('figure')).not.toBeInTheDocument()
   })
+
+  it('en un lote se observan los marcados con su motivo (HU12)', async () => {
+    const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation((_ruta, init) => {
+      if (String(_ruta).endsWith('/observacion')) {
+        const documentos = LOTE.documentos.map((d) =>
+          d.codigo === 'DRA-2026-M9P2RT'
+            ? { ...d, estado: 'OBSERVADO', motivo: 'El DNI no coincide' }
+            : d,
+        )
+        expect(JSON.parse(String(init?.body))).toEqual({
+          codigos: ['DRA-2026-M9P2RT'],
+          motivo: 'El DNI no coincide',
+        })
+        return respuesta(200, { ...LOTE, documentos })
+      }
+      return respuesta(200, LOTE)
+    })
+    render(<PaginaRevisionLote numero="2026-007" />)
+    const observar = await screen.findByRole('button', { name: 'Observar seleccionados' })
+    expect(observar).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Rechazar seleccionados' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Marcar a María Elena Rojas Soto' }))
+    expect(observar).toBeEnabled()
+    fireEvent.click(observar)
+
+    const ventana = screen.getByRole('dialog', { name: 'Observar beneficiarios seleccionados' })
+    const confirmar = within(ventana).getByRole('button', { name: 'Confirmar' })
+    expect(confirmar).toBeDisabled()
+    const motivo = within(ventana).getByLabelText('Motivo')
+    expect(motivo).toHaveAttribute('placeholder', 'Explique qué debe corregirse')
+    expect(within(ventana).queryByText(/El rechazo es definitivo/)).not.toBeInTheDocument()
+    fireEvent.change(motivo, { target: { value: '  El DNI no coincide ' } })
+    fireEvent.click(confirmar)
+
+    expect(
+      await screen.findByText('1 certificado fue observado y volvió al área.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Marcar a María Elena Rojas Soto' })).toBeDisabled()
+    const relacion = screen.getByRole('complementary', { name: 'Beneficiarios del lote' })
+    expect(within(relacion).getByText('Observado')).toBeInTheDocument()
+    expect(fetch.mock.calls.some(([r]) => String(r).endsWith('/observacion'))).toBe(true)
+    expect(screen.getByText(/cuenta para sus 2 certificados pendientes/)).toBeInTheDocument()
+  })
+
+  it('rechazar el lote avisa que es definitivo (HU12)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => respuesta(200, LOTE))
+    render(<PaginaRevisionLote numero="2026-007" />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Rechazar lote' }))
+    const ventana = screen.getByRole('dialog', { name: 'Rechazar lote' })
+    expect(
+      within(ventana).getByText('El rechazo es definitivo. El documento no podrá reenviarse.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Firmar lote' })).toBeInTheDocument()
+  })
+
+  it('un lote sin pendientes no ofrece acciones (HU12)', async () => {
+    const documentos = LOTE.documentos.map((d) => ({ ...d, estado: 'RECHAZADO', motivo: 'No' }))
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => respuesta(200, { ...LOTE, documentos }))
+    render(<PaginaRevisionLote numero="2026-007" />)
+    expect(
+      await screen.findByText(/El lote ya no tiene certificados pendientes/),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Firmar lote' })).not.toBeInTheDocument()
+  })
 })
