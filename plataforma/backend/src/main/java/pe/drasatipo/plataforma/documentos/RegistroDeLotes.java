@@ -156,7 +156,9 @@ public class RegistroDeLotes {
                         d.getApellidos(),
                         d.getDni(),
                         d.getEstado(),
-                        d.getMotivo()))
+                        d.getEstado() == EstadoDocumento.ANULADO
+                            ? d.getMotivoAnulacion()
+                            : d.getMotivo()))
             .toList();
     LoteRespuesta.DocumentoDelLote primero = delLote.getFirst();
     return new LoteRespuesta(

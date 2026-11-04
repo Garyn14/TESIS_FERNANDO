@@ -16,5 +16,7 @@ public enum EstadoDocumento {
    */
   OBSERVADO,
   /** El Director lo rechazó con un motivo. Es definitivo (HU12, HU14). */
-  RECHAZADO
+  RECHAZADO,
+  /** Anulado por el Director en la blockchain (HU29): deja de ser válido. Es definitivo. */
+  ANULADO
 }

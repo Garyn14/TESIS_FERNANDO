@@ -11,6 +11,7 @@ import java.util.Set;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import pe.drasatipo.plataforma.blockchain.AnulacionRegistrada;
 import pe.drasatipo.plataforma.blockchain.BlockchainNoDisponibleException;
 import pe.drasatipo.plataforma.blockchain.CambioDeRol;
 import pe.drasatipo.plataforma.blockchain.ContratoRegistro;
@@ -33,6 +34,9 @@ public class ContratoFalso implements ContratoRegistro {
   /** Códigos registrados en el contrato. */
   public final Set<String> registrados = new HashSet<>();
 
+  /** Transacciones de anularDocumento confirmadas (HU29). */
+  public final Map<String, AnulacionRegistrada> anulaciones = new HashMap<>();
+
   public boolean caido;
 
   /** Último bloque de la red simulada; cada registro ocupa un bloque nuevo (HU18). */
@@ -47,6 +51,7 @@ public class ContratoFalso implements ContratoRegistro {
     transacciones.clear();
     firmas.clear();
     registrados.clear();
+    anulaciones.clear();
     caido = false;
   }
 
@@ -107,6 +112,38 @@ public class ContratoFalso implements ContratoRegistro {
   public Optional<RegistroDeFirma> registroDeFirmaEn(String transaccion) {
     revisar();
     return Optional.ofNullable(firmas.get(transaccion));
+  }
+
+  /** Simula una anulación confirmada de la billetera indicada (HU29) y devuelve su transacción. */
+  public String anular(String firmante, String codigo) {
+    String hash = "0x%064x".formatted(2_000_000 + anulaciones.size());
+    anulaciones.put(
+        hash,
+        new AnulacionRegistrada(
+            codigo, firmante, hash, ++bloque, Instant.parse("2026-11-05T10:00:00Z")));
+    return hash;
+  }
+
+  @Override
+  public List<AnulacionRegistrada> anulacionesEn(String transaccion) {
+    revisar();
+    AnulacionRegistrada anulacion = anulaciones.get(transaccion);
+    return anulacion == null ? List.of() : List.of(anulacion);
+  }
+
+  @Override
+  public List<AnulacionRegistrada> anulacionesEntre(long desde, long hasta) {
+    revisar();
+    return anulaciones.values().stream()
+        .filter(a -> a.bloque() >= desde && a.bloque() <= hasta)
+        .sorted(java.util.Comparator.comparingLong(AnulacionRegistrada::bloque))
+        .toList();
+  }
+
+  @Override
+  public boolean estaAnulado(String codigo) {
+    revisar();
+    return anulaciones.values().stream().anyMatch(a -> a.codigo().equals(codigo));
   }
 
   @Override

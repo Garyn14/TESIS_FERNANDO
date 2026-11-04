@@ -159,6 +159,116 @@ public class ContratoRegistroWeb3j implements ContratoRegistro {
             direccionDeTema(temas.get(2))));
   }
 
+  static final String DOCUMENTO_ANULADO =
+      EventEncoder.encode(
+          new Event(
+              "DocumentoAnulado",
+              List.of(
+                  new TypeReference<Bytes32>(true) {},
+                  new TypeReference<Utf8String>() {},
+                  new TypeReference<Address>(true) {})));
+
+  static final List<TypeReference<Type>> DATOS_DE_LA_ANULACION =
+      Utils.convert(List.of(new TypeReference<Utf8String>() {}));
+
+  /** Código de un evento DocumentoAnulado del contrato; vacío si el log es de otro evento. */
+  static Optional<String[]> leerAnulacion(Log log, String contrato) {
+    List<String> temas = log.getTopics();
+    if (!contrato.equalsIgnoreCase(log.getAddress())
+        || temas.size() != 3
+        || !DOCUMENTO_ANULADO.equalsIgnoreCase(temas.get(0))) {
+      return Optional.empty();
+    }
+    @SuppressWarnings("rawtypes")
+    List<Type> datos = FunctionReturnDecoder.decode(log.getData(), DATOS_DE_LA_ANULACION);
+    return Optional.of(
+        new String[] {(String) datos.get(0).getValue(), direccionDeTema(temas.get(2))});
+  }
+
+  @Override
+  public List<AnulacionRegistrada> anulacionesEn(String transaccion) {
+    String contrato = contrato();
+    try {
+      Optional<TransactionReceipt> recibo =
+          web3j.ethGetTransactionReceipt(transaccion).send().getTransactionReceipt();
+      if (recibo.isEmpty()
+          || !recibo.get().isStatusOK()
+          || !contrato.equalsIgnoreCase(recibo.get().getTo())) {
+        return List.of();
+      }
+      long bloque = recibo.get().getBlockNumber().longValueExact();
+      List<AnulacionRegistrada> anulaciones = new ArrayList<>();
+      Instant fecha = null;
+      for (Log log : recibo.get().getLogs()) {
+        Optional<String[]> anulacion = leerAnulacion(log, contrato);
+        if (anulacion.isPresent()) {
+          if (fecha == null) {
+            fecha = fechaDelBloque(bloque);
+          }
+          anulaciones.add(
+              new AnulacionRegistrada(
+                  anulacion.get()[0], anulacion.get()[1], transaccion, bloque, fecha));
+        }
+      }
+      return anulaciones;
+    } catch (Exception e) {
+      throw noDisponible(e);
+    }
+  }
+
+  @Override
+  public List<AnulacionRegistrada> anulacionesEntre(long desde, long hasta) {
+    String contrato = contrato();
+    try {
+      EthFilter filtro =
+          new EthFilter(
+                  DefaultBlockParameter.valueOf(BigInteger.valueOf(desde)),
+                  DefaultBlockParameter.valueOf(BigInteger.valueOf(hasta)),
+                  contrato)
+              .addSingleTopic(DOCUMENTO_ANULADO);
+      EthLog respuesta = web3j.ethGetLogs(filtro).send();
+      if (respuesta.hasError()) {
+        throw new IllegalStateException(
+            "eth_getLogs rechazada: " + respuesta.getError().getMessage());
+      }
+      Map<Long, Instant> fechas = new HashMap<>();
+      List<AnulacionRegistrada> anulaciones = new ArrayList<>();
+      for (EthLog.LogResult<?> resultado : respuesta.getLogs()) {
+        Log log = (Log) resultado.get();
+        if (log.isRemoved()) {
+          continue;
+        }
+        Optional<String[]> anulacion = leerAnulacion(log, contrato);
+        if (anulacion.isPresent()) {
+          long bloque = log.getBlockNumber().longValueExact();
+          Instant fecha = fechas.get(bloque);
+          if (fecha == null) {
+            fecha = fechaDelBloque(bloque);
+            fechas.put(bloque, fecha);
+          }
+          anulaciones.add(
+              new AnulacionRegistrada(
+                  anulacion.get()[0], anulacion.get()[1], log.getTransactionHash(), bloque, fecha));
+        }
+      }
+      return anulaciones;
+    } catch (BlockchainNoDisponibleException e) {
+      throw e;
+    } catch (Exception e) {
+      throw noDisponible(e);
+    }
+  }
+
+  @Override
+  public boolean estaAnulado(String codigo) {
+    Function llamada =
+        new Function(
+            "anulacion",
+            List.of(new Utf8String(codigo)),
+            List.of(new TypeReference<Bool>() {}, new TypeReference<Uint64>() {}));
+    return ((Bool) llamar(llamada).get(0)).getValue();
+  }
+
   @Override
   public long bloqueActual() {
     try {
