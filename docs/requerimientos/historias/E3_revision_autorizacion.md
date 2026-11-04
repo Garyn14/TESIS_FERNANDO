@@ -169,10 +169,35 @@ Los dos primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo s
 
 **Como** director, **quiero** observar un documento indicando un motivo, **para** que el área lo corrija.
 
+**Contexto**
+
+Con HU12 el Director ya puede observar certificados de un lote. Esta historia lleva la misma acción a la revisión de un documento individual, como los de a solicitud de parte. Siguiendo el prototipo, la revisión tiene los botones "Rechazar" (HU14), "Observar" y "Firmar" (HU11). El documento observado vuelve al Área encargada con el motivo, y el área lo corrige y reenvía con HU15.
+
 **Criterios de aceptación**
+
+Los tres primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] El motivo es obligatorio.
 - [ ] El documento vuelve al área encargada.
 - [ ] La observación queda en el historial.
+- [ ] En la revisión de un documento Pendiente está el botón "Observar". Abre la ventana de motivo de HU12, con el título "Observar documento" y el campo **Motivo** (obligatorio, hasta 500 caracteres, con la ayuda "Explique qué debe corregirse"). "Confirmar" está deshabilitado mientras esté vacío.
+- [ ] Al confirmar, el documento pasa a **Observado** y sale de Por revisar. La pantalla dice "El documento fue observado y volvió al área." y ya no ofrece acciones.
+- [ ] El motivo queda en el documento. El historial registra "Observado por [Director]: [motivo]", con quién y cuándo.
+- [ ] El Área encargada ve el documento como Observado (naranja) en Mis documentos. En su detalle ve el motivo y el aviso de que podrá corregirlo y reenviarlo.
+- [ ] Solo se observa un documento Pendiente. Uno que ya está en Procesando firma, Firmado u Observado no cambia y se responde que no está pendiente.
+- [ ] Solo el Director (permiso DOCUMENTO_OBSERVAR) puede observar. Sin sesión se responde 401 y con otro rol, 403 (RF04).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Rechazar un documento | HU14 |
+| Corregir y reenviar el observado | HU15 |
+| Aviso al área de la observación | HU27 (Sprint 6) |
+
+**Notas técnicas**
+
+- API: `POST /api/revision/documentos/{codigo}/observacion` con `{"motivo": "..."}`. Reutiliza la decisión de HU12: una sola sentencia condicionada a que el documento siga Pendiente.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
