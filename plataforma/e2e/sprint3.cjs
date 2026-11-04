@@ -1,10 +1,13 @@
 // Prueba de punta a punta real del Sprint 3: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). Las áreas registran sus documentos
 // por la API desde el navegador (la pantalla de registro ya la recorre sprint2.cjs) y el Director
-// trabaja desde la pantalla. Recorre HU10.
+// trabaja desde la pantalla. Recorre HU10 y HU16.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
+const fs = require('node:fs')
+const path = require('node:path')
+const os = require('node:os')
 
 const [out, URL = 'http://localhost:5173/', ADMIN_TEMPORAL = 'Admin2026!'] = process.argv.slice(2)
 const ADMIN_CLAVE = 'AdminPropia26'
@@ -200,16 +203,79 @@ const paso = async (nombre, fn) => {
     )
     assert.equal(psql(`SELECT revisado_en IS NULL FROM documento WHERE codigo = '${ultimo}'`), 't')
   })
+  // ------------------------------------------------------------- HU16: PDF final y su hash
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre']
+  const [anio, mes, dia] = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' }).split('-').map(Number)
+  const hoyEnLetras = `${dia} de ${MESES[mes - 1]} de ${anio}`
+  /** Descarga la muestra del PDF con la sesión del Director y devuelve su texto. */
+  const muestra = async (codigo, archivo) => {
+    const enlace = carlos.getByRole('link', { name: 'Ver muestra del PDF final ↗' })
+    assert.equal(await enlace.getAttribute('href'), `/api/revision/documentos/${codigo}/pdf`)
+    const respuesta = await carlos.context().request.get(new globalThis.URL(await enlace.getAttribute('href'), URL).href)
+    assert.equal(respuesta.status(), 200)
+    assert.equal(respuesta.headers()['content-type'], 'application/pdf')
+    const ruta = `${out}/${archivo}.pdf`
+    fs.writeFileSync(ruta, await respuesta.body())
+    return execFileSync('pdftotext', ['-layout', ruta, '-']).toString().replace(/\s+/g, ' ')
+  }
+  /** Lee el QR de la primera página con ZXing (del repositorio local de Maven). */
+  const leerQr = (pdf, png) => {
+    execFileSync('pdftoppm', ['-png', '-r', '110', '-singlefile', pdf, png])
+    const m2 = path.join(os.homedir(), '.m2/repository')
+    const jar = (g, a, v) => path.join(m2, g, a, v, `${a}-${v}.jar`)
+    const clase = [jar('com/google/zxing', 'core', '3.5.3'), jar('com/google/zxing', 'javase', '3.5.3'), jar('com/beust', 'jcommander', '1.82')].join(':')
+    const salida = execFileSync('java', ['-cp', clase, 'com.google.zxing.client.j2se.CommandLineRunner', `${png}.png`]).toString()
+    return salida.split('Parsed result:')[1].trim().split('\n')[0]
+  }
+  await paso('HU16 · La muestra del PDF final trae la fecha de emisión, el código, la leyenda y los datos revisados', async () => {
+    await carlos.goto(URL + '#/por-revisar/' + primero)
+    await carlos.getByRole('heading', { name: 'Revisión – Certificado de Trabajo' }).waitFor()
+    const texto = await muestra(primero, 'hu16_muestra_certificado_de_trabajo')
+    for (const esperado of [
+      'AGENCIA AGRARIA SATIPO – DRA JUNÍN',
+      'CERTIFICADO',
+      'LUCÍA PAREDES QUINTO',
+      'como asistente administrativa, del 02/01/2025 al 30/09/2026',
+      `Fecha de emisión: ${hoyEnLetras}`,
+      primero,
+      'Ing. Carlos Mendoza Rivera',
+      'Firmado digitalmente mediante blockchain',
+      `Verifique la autenticidad de este documento en localhost:5174 con el código ${primero}`,
+      'MUESTRA – SIN VALOR',
+    ])
+      assert.ok(texto.includes(esperado), `falta en el PDF: ${esperado}`)
+    assert.ok(!texto.includes('VISTA PREVIA') && !texto.includes('45829364'))
+  })
+  await paso('HU16 · El QR del PDF lleva la dirección de verificación con el token del documento', async () => {
+    const token = psql(`SELECT token_qr FROM documento WHERE codigo = '${primero}'`)
+    const leido = leerQr(`${out}/hu16_muestra_certificado_de_trabajo.pdf`, `${out}/hu16_01_muestra_certificado_de_trabajo`)
+    assert.equal(leido, `http://localhost:5174/verificar/${token}`)
+    // La muestra no cambia el documento: sigue Pendiente.
+    assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${primero}'`), 'PENDIENTE')
+  })
+  await paso('HU16 · Cada certificado de un lote tiene su propia muestra, con su nombre y su código', async () => {
+    await carlos.goto(URL + '#/por-revisar/lote/' + lote)
+    await carlos.getByRole('heading', { name: `Revisión de lote – Lote ${lote}` }).waitFor()
+    await carlos.getByRole('button', { name: 'Siguiente ›' }).click()
+    await carlos.getByText('Certificado 2 de 3').waitFor()
+    const codigo = psql(`SELECT d.codigo FROM documento d JOIN lote l ON l.id = d.lote_id WHERE l.numero = '${lote}' AND d.nombres = 'María Elena'`)
+    const texto = await muestra(codigo, 'hu16_muestra_certificado_del_lote')
+    assert.ok(texto.includes('MARÍA ELENA ROJAS SOTO') && texto.includes(codigo))
+    assert.ok(texto.includes("'Manejo integrado de plagas en café', realizado del 14 al 16 de setiembre de 2026"))
+    execFileSync('pdftoppm', ['-png', '-r', '110', '-singlefile', `${out}/hu16_muestra_certificado_del_lote.pdf`, `${out}/hu16_02_muestra_certificado_del_lote`])
+    await foto(carlos, 'hu16_03_enlace_a_la_muestra')
+  })
   await paso('HU10 · Solo el Director ve la bandeja', async () => {
     assert.deepEqual(await menu(pedro), ['Inicio', 'Mis documentos', 'Nuevo documento'])
     await pedro.goto(URL + '#/por-revisar')
     await pedro.getByText('No tiene permiso para ver esta sección.').waitFor()
     assert.equal(await api(pedro, '/api/revision'), 403)
     assert.equal((await enviar(pedro, '/api/revision/documentos/' + ultimo, {})).estado, 403)
+    assert.equal(await api(pedro, `/api/revision/documentos/${ultimo}/pdf`), 403)
   })
 
   await b.close()
-  require('node:fs').writeFileSync(`${out}/resultado.txt`, resultados.join('\n') + '\n')
+  fs.writeFileSync(`${out}/resultado.txt`, resultados.join('\n') + '\n')
   console.log(`\n${resultados.length} pasos correctos`)
 })().catch((e) => {
   console.error('✗ FALLÓ:', e.message)

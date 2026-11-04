@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { fechaCorta, type Lote } from './api'
 import Certificado from './Certificado'
+import MuestraDelPdf from './MuestraDelPdf'
 import { revisarLote } from './revision'
 
 /**
@@ -53,6 +54,7 @@ export default function PaginaRevisionLote({ numero }: { numero: string }) {
                   dni: elegido.dni,
                 }}
               />
+              <MuestraDelPdf codigo={elegido.codigo} />
               <div className="mt-3 flex items-center justify-between">
                 <button
                   type="button"

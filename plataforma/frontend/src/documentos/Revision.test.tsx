@@ -149,6 +149,10 @@ describe('Por revisar (HU10)', () => {
     expect(screen.getByRole('link', { name: '← Volver a Por revisar' })).toHaveAttribute(
       'href',
       '#/por-revisar',
+    ) // HU16: muestra del PDF final.
+    expect(screen.getByRole('link', { name: 'Ver muestra del PDF final ↗' })).toHaveAttribute(
+      'href',
+      '/api/revision/documentos/DRA-2026-T6N9QE/pdf',
     )
   })
 
@@ -171,6 +175,10 @@ describe('Por revisar (HU10)', () => {
     fireEvent.click(within(relacion).getByRole('button', { name: /Pedro Huaman Inga/ }))
     expect(screen.getByText('Certificado 3 de 3')).toBeInTheDocument()
     expect(screen.getByRole('figure')).toHaveTextContent('Pedro Huaman Inga')
+    expect(screen.getByRole('link', { name: 'Ver muestra del PDF final ↗' })).toHaveAttribute(
+      'href',
+      '/api/revision/documentos/DRA-2026-P3H8KW/pdf',
+    )
     expect(within(relacion).getByRole('button', { name: /Pedro Huaman Inga/ })).toHaveAttribute(
       'aria-pressed',
       'true',
