@@ -1,7 +1,7 @@
 // Prueba del contrato RegistroDocumentos en la red Besu real (HU06): se despliega con dos
 // administradores, el Administrador otorga y revoca el rol de firmante, y el respaldo también puede
 // hacerlo. Con el rol, el director registra 50 documentos en una sola transacción (HU11), el máximo
-// permitido, y se consultan. Todas las billeteras son nuevas y sin saldo: la red no cobra gas (RNF11).
+// permitido, y se consultan; después anula uno (HU29). Todas las billeteras son nuevas y sin saldo: la red no cobra gas (RNF11).
 //
 // Uso: BESU_RPC_URL=http://localhost:8545 npx hardhat run scripts/probar-registro-besu.ts --network besuLocal
 import assert from 'node:assert/strict'
@@ -37,6 +37,14 @@ assert.equal(registrado, true)
 assert.equal(datos.hashPdf, hashes[49])
 assert.equal(datos.firmante, director.address)
 
+// HU29: el firmante anula un documento registrado y la anulación se consulta.
+const anulacion = await (
+  await contrato.connect(director).anularDocumento(codigos[0], sinCosto)
+).wait()
+assert.equal(anulacion?.status, 1)
+assert.equal((await contrato.anulacion(codigos[0]))[0], true)
+assert.equal((await contrato.anulacion(codigos[1]))[0], false)
+
 await (await contrato.connect(respaldo).revocarFirmante(director.address, sinCosto)).wait()
 assert.equal(await contrato.esFirmante(director.address), false)
 
@@ -44,5 +52,5 @@ for (const cuenta of [despliega, administrador, respaldo, director]) {
   assert.equal(await ethers.provider.getBalance(cuenta.address), 0n)
 }
 console.log(
-  `RegistroDocumentos ${await contrato.getAddress()}: otorgado en el bloque ${otorgar?.blockNumber}, 50 documentos registrados en el bloque ${registro?.blockNumber} (gas ${registro?.gasUsed}) y revocado por el respaldo; sin costo`,
+  `RegistroDocumentos ${await contrato.getAddress()}: otorgado en el bloque ${otorgar?.blockNumber}, 50 documentos registrados en el bloque ${registro?.blockNumber} (gas ${registro?.gasUsed}), uno anulado en el bloque ${anulacion?.blockNumber} y revocado por el respaldo; sin costo`,
 )

@@ -7,7 +7,8 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 /// @notice Registro en la blockchain de los certificados y constancias firmados por el director.
 /// El administrador del contrato otorga y revoca el rol de firmante (HU06, RF08), y el firmante
 /// registra los documentos que firma (HU11, RF31): su código, el hash SHA-256 de su PDF final y el
-/// HMAC de su DNI. La anulación se agrega con HU29.
+/// HMAC de su DNI. También anula un documento registrado (HU29): el registro original no se borra,
+/// y la verificación pública lo muestra como anulado.
 /// @dev Usa el control de acceso auditado de OpenZeppelin (RNF08). Reglas propias:
 /// - El rol de administrador se asigna al desplegar a dos billeteras: la del Administrador y una de
 ///   respaldo fuera de línea (RNF05). La cuenta que despliega no recibe ningún rol.
@@ -39,6 +40,9 @@ contract RegistroDocumentos is AccessControl {
 
   /// @dev Registros por keccak256 del código de verificación.
   mapping(bytes32 => Registro) private _registros;
+
+  /// @dev Fecha del bloque de la anulación por keccak256 del código; 0 si no está anulado (HU29).
+  mapping(bytes32 => uint64) private _anulaciones;
 
   /// @notice Se registró un documento firmado (HU11). HU18 sincroniza los estados con este evento.
   /// @param clave keccak256 del código, para filtrar por documento.
@@ -83,6 +87,12 @@ contract RegistroDocumentos is AccessControl {
   /// @notice El hash del PDF o el HMAC del DNI está vacío.
   /// @param codigo Código del documento.
   error DatosIncompletos(string codigo);
+  /// @notice El código no está registrado: no se puede anular (HU29).
+  /// @param codigo Código indicado.
+  error NoRegistrado(string codigo);
+  /// @notice El documento ya está anulado (HU29).
+  /// @param codigo Código indicado.
+  error YaAnulado(string codigo);
   /// @notice El código ya está registrado: un documento no se registra dos veces.
   /// @param codigo Código repetido.
   error CodigoYaRegistrado(string codigo);
@@ -134,6 +144,35 @@ contract RegistroDocumentos is AccessControl {
       _registros[clave] = Registro(hashes[i], dniHmacs[i], msg.sender, uint64(block.timestamp));
       emit DocumentoRegistrado(clave, codigo, hashes[i], dniHmacs[i], msg.sender);
     }
+  }
+
+  /// @notice Se anuló un documento firmado (HU29). HU18 sincroniza los estados con este evento.
+  /// @param clave keccak256 del código.
+  /// @param codigo Código de verificación.
+  /// @param firmante Billetera que anuló.
+  event DocumentoAnulado(bytes32 indexed clave, string codigo, address indexed firmante);
+
+  /// @notice Anula un documento registrado (HU29, RF49). El registro original no cambia; la
+  /// verificación pública lo mostrará como anulado. El motivo queda fuera de la cadena.
+  /// @dev Solo el firmante. Emite `DocumentoAnulado`.
+  /// @param codigo Código de verificación.
+  function anularDocumento(string calldata codigo) external onlyRole(FIRMANTE_ROLE) {
+    bytes32 clave = keccak256(bytes(codigo));
+    if (_registros[clave].registradoEn == 0) revert NoRegistrado(codigo);
+    if (_anulaciones[clave] != 0) revert YaAnulado(codigo);
+    _anulaciones[clave] = uint64(block.timestamp);
+    emit DocumentoAnulado(clave, codigo, msg.sender);
+  }
+
+  /// @notice Indica si un documento está anulado y desde cuándo (HU29, HU21). Solo lectura.
+  /// @param codigo Código de verificación.
+  /// @return anulado Si está anulado.
+  /// @return anuladoEn Fecha del bloque de la anulación; 0 si no está anulado.
+  function anulacion(
+    string calldata codigo
+  ) external view returns (bool anulado, uint64 anuladoEn) {
+    anuladoEn = _anulaciones[keccak256(bytes(codigo))];
+    anulado = anuladoEn != 0;
   }
 
   /// @notice Consulta el registro de un documento (HU11, HU21). Es de solo lectura.

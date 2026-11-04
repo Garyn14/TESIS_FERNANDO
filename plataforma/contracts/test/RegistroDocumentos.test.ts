@@ -274,3 +274,65 @@ describe('RegistroDocumentos: registro de documentos', () => {
     ).to.be.revertedWithCustomError(contrato, 'DatosIncompletos')
   })
 })
+
+// HU29 (DRA-30): anulación de un documento registrado (RF49).
+describe('RegistroDocumentos: anulación de documentos', () => {
+  async function conRegistro() {
+    const [despliega, administrador, respaldo, director, otro] = await ethers.getSigners()
+    const contrato = await ethers.deployContract(
+      'RegistroDocumentos',
+      [administrador.address, respaldo.address],
+      despliega,
+    )
+    await contrato.connect(administrador).otorgarFirmante(director.address)
+    const codigo = 'DRA-2026-Q7W3RT'
+    const hash = ethers.sha256(ethers.toUtf8Bytes('pdf'))
+    await contrato
+      .connect(director)
+      .registrarDocumentos([codigo], [hash], [ethers.sha256(ethers.toUtf8Bytes('dni'))])
+    return { contrato, administrador, director, otro, codigo, hash }
+  }
+
+  it('el firmante anula un documento registrado; el registro original no cambia', async () => {
+    const { contrato, director, codigo, hash } = await conRegistro()
+    expect((await contrato.anulacion(codigo))[0]).to.equal(false)
+    const tx = contrato.connect(director).anularDocumento(codigo)
+    await expect(tx)
+      .to.emit(contrato, 'DocumentoAnulado')
+      .withArgs(ethers.id(codigo), codigo, director.address)
+    const bloque = await ethers.provider.getBlock((await (await tx).wait())!.blockNumber)
+    const [anulado, anuladoEn] = await contrato.anulacion(codigo)
+    expect(anulado).to.equal(true)
+    expect(anuladoEn).to.equal(BigInt(bloque!.timestamp))
+    const [registrado, registro] = await contrato.consultar(codigo)
+    expect(registrado).to.equal(true)
+    expect(registro.hashPdf).to.equal(hash)
+  })
+
+  it('no anula un código no registrado ni uno ya anulado', async () => {
+    const { contrato, director, codigo } = await conRegistro()
+    await expect(contrato.connect(director).anularDocumento('DRA-2026-NOEXIS'))
+      .to.be.revertedWithCustomError(contrato, 'NoRegistrado')
+      .withArgs('DRA-2026-NOEXIS')
+    await contrato.connect(director).anularDocumento(codigo)
+    await expect(contrato.connect(director).anularDocumento(codigo))
+      .to.be.revertedWithCustomError(contrato, 'YaAnulado')
+      .withArgs(codigo)
+  })
+
+  it('solo una billetera con el rol de firmante anula; ni el Administrador puede', async () => {
+    const { contrato, administrador, otro, director, codigo } = await conRegistro()
+    for (const cuenta of [administrador, otro]) {
+      await expect(contrato.connect(cuenta).anularDocumento(codigo)).to.be.revertedWithCustomError(
+        contrato,
+        'AccessControlUnauthorizedAccount',
+      )
+    }
+    await contrato.connect(administrador).revocarFirmante(director.address)
+    await expect(contrato.connect(director).anularDocumento(codigo)).to.be.revertedWithCustomError(
+      contrato,
+      'AccessControlUnauthorizedAccount',
+    )
+    expect((await contrato.anulacion(codigo))[0]).to.equal(false)
+  })
+})
