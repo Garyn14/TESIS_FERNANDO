@@ -244,10 +244,43 @@ Los tres primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo 
 
 **Como** Área encargada, **quiero** corregir un documento observado y reenviarlo, **para** continuar el trámite sin iniciar uno nuevo.
 
+**Contexto**
+
+Con HU12 y HU13, el Director observa un documento (o certificados de un lote) con un motivo, y el documento vuelve al área. Esta historia permite corregirlo y reenviarlo. Conserva su código de verificación y su historial, en vez de registrar uno nuevo. Como en el prototipo, el documento reenviado aparece en Por revisar con la etiqueta **"Corregido"**.
+
+| Documento observado | Qué se corrige |
+|---|---|
+| A solicitud de parte (HU13) | Todo el formulario del registro (HU08), precargado con los datos enviados: expediente, beneficiario y datos propios del tipo |
+| Certificado de un lote (HU12) | Los nombres, los apellidos y el DNI del beneficiario. Los datos del evento son del lote y no cambian |
+
 **Criterios de aceptación**
+
+Los tres primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] Se muestra el motivo de la observación.
 - [ ] Se aplican las mismas validaciones del registro.
 - [ ] El documento vuelve a Pendiente.
+- [ ] En el detalle de un documento Observado está el botón **"Corregir y reenviar"**. En un lote, cada certificado Observado tiene "Corregir" en su fila.
+- [ ] La corrección muestra arriba el motivo de la observación. Un documento a solicitud de parte pasa otra vez por la vista previa y se reenvía con confirmación.
+- [ ] Las validaciones son las del registro: formato y unicidad del expediente (sin contarse a sí mismo), nombres, DNI y datos del tipo. En un lote, el DNI no puede repetirse con otro certificado del mismo lote.
+- [ ] Al reenviar, el documento vuelve a **Pendiente**, conserva su código y su lote, y pierde la revisión anterior: el Director debe revisarlo de nuevo. El motivo deja de mostrarse, pero queda en el historial.
+- [ ] El historial registra "Corregido y reenviado a revisión por [persona]", con los cambios: "Apellidos: Huaman Inga → Huamán Inga".
+- [ ] En Por revisar, el documento (o su lote) aparece con la etiqueta **"Corregido"**.
+- [ ] Solo se corrige un documento Observado del área propia. Uno Pendiente, Firmado o Rechazado no se corrige: el rechazo es definitivo (HU14). Uno de otra área responde 403.
+- [ ] Solo el Área encargada (permiso DOCUMENTO_CORREGIR) corrige. Sin sesión se responde 401 y con otro rol, 403 (RF04).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Aviso al Director de que hay un documento corregido | HU26 (Sprint 6) |
+| Corregir un documento ya firmado (reemisión) | HU30 |
+
+**Notas técnicas**
+
+- API: `POST /api/documentos/{codigo}/correccion`, con la misma solicitud del registro. En un certificado de lote solo se usan los nombres, los apellidos y el DNI.
+- Se bloquea la fila del documento durante la corrección, para que dos reenvíos a la vez no lo corrijan dos veces.
+- Se recalcula el HMAC del DNI (RF17) y el texto con la plantilla.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
