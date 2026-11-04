@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { BOTON_PRIMARIO } from '../comun/estilos'
-import { documentosDelArea, fechaCorta, type DocumentoResumen } from './api'
+import { documentosDelArea, fechaCorta, type DocumentoResumen, type EstadoDocumento } from './api'
 import Estado from './Estado'
 
 /** HU08 (RF05): documentos del área de la persona, del más reciente al más antiguo. */
@@ -73,7 +73,20 @@ export default function PaginaMisDocumentos({ areaNombre }: { areaNombre: string
                   <td className="px-4 py-3 whitespace-nowrap">{d.numeroExpediente ?? '—'}</td>
                   <td className="px-4 py-3 whitespace-nowrap">{fechaCorta(d.registradoEn)}</td>
                   <td className="px-4 py-3">
-                    <Estado estado={d.estado} />
+                    {d.lote && d.estados && Object.keys(d.estados).length > 1 ? (
+                      // HU12: un lote con certificados en varios estados muestra cada uno.
+                      <span className="flex flex-wrap gap-1">
+                        {Object.entries(d.estados).map(([estado, cantidad]) => (
+                          <Estado
+                            key={estado}
+                            estado={estado as EstadoDocumento}
+                            cantidad={cantidad}
+                          />
+                        ))}
+                      </span>
+                    ) : (
+                      <Estado estado={d.estado} />
+                    )}
                   </td>
                 </tr>
               ))}

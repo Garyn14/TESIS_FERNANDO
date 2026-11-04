@@ -9,6 +9,8 @@ const AVISOS: Record<Documento['estado'], string> = {
   PENDIENTE: 'Está en revisión del Director: no se puede modificar mientras esté Pendiente.',
   PROCESANDO_FIRMA: 'El Director está firmando este documento.',
   FIRMADO: 'Firmado por el Director y registrado en la blockchain.',
+  OBSERVADO: 'El Director lo observó y lo devolvió al área. Podrá corregirlo y reenviarlo (HU15).',
+  RECHAZADO: 'El Director lo rechazó. El rechazo es definitivo.',
 }
 
 /**
@@ -67,6 +69,11 @@ export default function PaginaDetalleDocumento({ codigo }: { codigo: string }) {
             <Estado estado={doc.estado} />
           </div>
           <p className="mt-1 text-muted">{AVISOS[doc.estado]}</p>
+          {doc.motivo && (
+            <p className="mt-3 rounded-lg bg-orange-pale px-4 py-3">
+              <strong>Motivo:</strong> {doc.motivo}
+            </p>
+          )}
           <dl className="mt-4 grid rounded-xl border border-line bg-card shadow-sm sm:grid-cols-2 lg:grid-cols-4">
             {datos.map(([etiqueta, valor]) => (
               <div key={etiqueta} className="border-b border-line p-4">

@@ -55,7 +55,8 @@ export interface VistaPrevia {
   firmante: string | null
 }
 
-export type EstadoDocumento = 'PENDIENTE' | 'PROCESANDO_FIRMA' | 'FIRMADO'
+export type EstadoDocumento =
+  'PENDIENTE' | 'PROCESANDO_FIRMA' | 'FIRMADO' | 'OBSERVADO' | 'RECHAZADO'
 
 export interface Documento extends VistaPrevia {
   codigo: string
@@ -66,6 +67,8 @@ export interface Documento extends VistaPrevia {
   areaNombre: string
   registradoPor: string
   registradoEn: string
+  /** Motivo de la observación o del rechazo del Director (HU12). */
+  motivo?: string | null
 }
 
 /** Una fila de Mis documentos: un documento, o un lote completo (HU09). */
@@ -78,6 +81,8 @@ export interface DocumentoResumen {
   numeroExpediente: string | null
   registradoEn: string
   estado: EstadoDocumento
+  /** HU12: cuántos documentos hay en cada estado (en un lote pueden ser varios). */
+  estados?: Partial<Record<EstadoDocumento, number>>
 }
 
 /** Valida en el servidor y arma el texto, sin guardar nada. */
@@ -101,6 +106,8 @@ export const ESTADOS: Record<EstadoDocumento, string> = {
   PENDIENTE: 'Pendiente',
   PROCESANDO_FIRMA: 'Procesando firma',
   FIRMADO: 'Firmado',
+  OBSERVADO: 'Observado',
+  RECHAZADO: 'Rechazado',
 }
 
 const FECHA = new Intl.DateTimeFormat('es-PE', {
@@ -146,7 +153,12 @@ export interface Lote {
   datos: Record<string, string>
   periodo: string
   ejemplo: VistaPrevia
-  documentos: (Beneficiario & { codigo: string; estado: EstadoDocumento })[]
+  documentos: (Beneficiario & {
+    codigo: string
+    estado: EstadoDocumento
+    /** HU12: motivo de la observación o del rechazo. */
+    motivo?: string | null
+  })[]
 }
 
 /** Descarga la plantilla Excel de beneficiarios (RF14). */
