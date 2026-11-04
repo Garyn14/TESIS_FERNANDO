@@ -1,6 +1,10 @@
 package pe.drasatipo.plataforma.documentos;
 
 import java.util.List;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,5 +41,16 @@ public class RevisionController {
   @PostMapping("/lotes/{numero}")
   public LoteRespuesta revisarLote(@PathVariable String numero, Authentication sesion) {
     return revision.revisarLote(sesion.getName(), numero);
+  }
+
+  /** Muestra del PDF final (HU16), para ver cómo se imprimirá. No se guarda ni se registra. */
+  @GetMapping("/documentos/{codigo}/pdf")
+  public ResponseEntity<byte[]> muestraDelPdf(@PathVariable String codigo) {
+    return ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_PDF)
+        .header(
+            HttpHeaders.CONTENT_DISPOSITION,
+            ContentDisposition.inline().filename(codigo + "-muestra.pdf").build().toString())
+        .body(revision.muestraDelPdf(codigo).contenido());
   }
 }
