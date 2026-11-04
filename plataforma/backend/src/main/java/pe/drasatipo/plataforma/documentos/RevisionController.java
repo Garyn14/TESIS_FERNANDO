@@ -55,6 +55,15 @@ public class RevisionController {
         sesion.getName(), codigo, solicitud.motivo(), EstadoDocumento.OBSERVADO);
   }
 
+  /** Rechazo de un documento (HU14): es definitivo. */
+  @PostMapping("/documentos/{codigo}/rechazo")
+  @PreAuthorize("hasAuthority('DOCUMENTO_RECHAZAR')")
+  public DocumentoRespuesta rechazarDocumento(
+      @PathVariable String codigo, @RequestBody MotivoSolicitud solicitud, Authentication sesion) {
+    return revision.decidirEnDocumento(
+        sesion.getName(), codigo, solicitud.motivo(), EstadoDocumento.RECHAZADO);
+  }
+
   /** Observación o rechazo de certificados de un lote (HU12): sin códigos, todo el lote. */
   public record DecisionSolicitud(List<String> codigos, String motivo) {}
 

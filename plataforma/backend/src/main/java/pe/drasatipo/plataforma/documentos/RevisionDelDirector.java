@@ -177,7 +177,7 @@ public class RevisionDelDirector {
 
   /**
    * HU13 (RF24, RF25): observa un documento Pendiente con un motivo; vuelve al Área encargada. HU14
-   * usará la misma decisión para rechazar.
+   * (RF26): lo rechaza con un motivo; es definitivo, porque solo un Pendiente se decide o se firma.
    */
   @Transactional
   public DocumentoRespuesta decidirEnDocumento(
