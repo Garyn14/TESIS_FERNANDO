@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Levanta un entorno limpio y real para la prueba de punta a punta: PostgreSQL vacío en el puerto
 # 5433, la red Besu local (si no está levantada) con un RegistroDocumentos recién desplegado, el
-# backend en el 8080 y el frontend en el 5173. Detener con Ctrl+C.
+# backend en el 8080 y el frontend en el 5173, y un nodo IPFS privado vacío en el 5002 (HU17).
+# Detener con Ctrl+C.
 #
 #   ./e2e/levantar.sh          -> para la prueba automática: la sesión expira en 1 minuto
 #   ./e2e/levantar.sh demo     -> para la demostración (revisión del sprint): sesión de 30 minutos
@@ -41,6 +42,15 @@ docker run -d --name e2e-pg -e POSTGRES_DB=plataforma -e POSTGRES_USER=plataform
   -e POSTGRES_PASSWORD=plataforma -p 5433:5432 postgres:17-alpine >/dev/null
 until docker exec e2e-pg pg_isready -U plataforma >/dev/null 2>&1; do sleep 1; done
 
+# Nodo IPFS privado vacío (HU17), con la clave de enjambre y la configuración de infra/ipfs. Su API
+# solo escucha en 127.0.0.1.
+[ -f infra/ipfs/red/swarm.key ] || infra/ipfs/generar-clave.sh
+docker rm -f e2e-ipfs >/dev/null 2>&1 || true
+docker run -d --name e2e-ipfs -e LIBP2P_FORCE_PNET=1 -e IPFS_SWARM_KEY_FILE=/red/swarm.key \
+  -v "$PWD/infra/ipfs/red:/red:ro" -v "$PWD/infra/ipfs/init:/container-init.d:ro" \
+  -p 127.0.0.1:5002:5001 ipfs/kubo:v0.43.1 >/dev/null
+until curl -sf -X POST localhost:5002/api/v0/id >/dev/null 2>&1; do sleep 1; done
+
 (cd backend && ./mvnw -q package -DskipTests)
 # Clave del HMAC del DNI (HU08, RF17): una nueva en cada arranque, porque la base también es nueva.
 # En AWS se guarda en el gestor de secretos (RNF03).
@@ -48,11 +58,12 @@ CLAVE_HMAC=$(node -p 'require("crypto").randomBytes(32).toString("hex")')
 DB_URL=jdbc:postgresql://localhost:5433/plataforma PLATAFORMA_ADMIN_CONTRASENA='Admin2026!' \
   PLATAFORMA_ADMIN_NOMBRE='Garyn Huarhuachi Ramos' SESION_INACTIVIDAD=$INACTIVIDAD \
   PLATAFORMA_CONTRATO_DIRECCION="$CONTRATO" PLATAFORMA_CLAVE_HMAC_DNI="$CLAVE_HMAC" \
+  PLATAFORMA_IPFS_URL=http://localhost:5002 \
   java -jar backend/target/plataforma-backend-*.jar &
 BACKEND=$!
 (cd frontend && npx vite --port 5173 --strictPort) &
 FRONTEND=$!
-trap 'kill $BACKEND $FRONTEND; docker rm -f e2e-pg >/dev/null' EXIT
+trap 'kill $BACKEND $FRONTEND; docker rm -f e2e-pg e2e-ipfs >/dev/null' EXIT
 
 until curl -s localhost:8080/api/salud >/dev/null; do sleep 1; done
 if [ "$MODO" = demo ]; then

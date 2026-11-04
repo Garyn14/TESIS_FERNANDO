@@ -1,7 +1,8 @@
 // Prueba de punta a punta real del Sprint 3: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). Las áreas registran sus documentos
 // por la API desde el navegador (la pantalla de registro ya la recorre sprint2.cjs) y el Director
-// trabaja desde la pantalla. Recorre HU10 y HU16.
+// trabaja desde la pantalla. Recorre HU10, HU16 y HU17 (la preparación de la firma se llama por la API,
+// porque la pantalla de firma llega con HU11).
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
@@ -264,6 +265,105 @@ const paso = async (nombre, fn) => {
     assert.ok(texto.includes("'Manejo integrado de plagas en café', realizado del 14 al 16 de setiembre de 2026"))
     execFileSync('pdftoppm', ['-png', '-r', '110', '-singlefile', `${out}/hu16_muestra_certificado_del_lote.pdf`, `${out}/hu16_02_muestra_certificado_del_lote`])
     await foto(carlos, 'hu16_03_enlace_a_la_muestra')
+  })
+  // ------------------------------------------------------- HU17: PDF final en el IPFS privado
+  const IPFS = 'http://127.0.0.1:5002/api/v0'
+  const ipfs = (operacion, salida) =>
+    execFileSync('curl', ['-sf', '-X', 'POST', `${IPFS}/${operacion}`, ...(salida ? ['-o', salida] : [])]).toString()
+  const sha256 = (ruta) => require('node:crypto').createHash('sha256').update(fs.readFileSync(ruta)).digest('hex')
+  const eventos = (codigo) =>
+    psql(`SELECT string_agg(h.evento, ',' ORDER BY h.id) FROM documento_historial h JOIN documento d ON d.id = h.documento_id WHERE d.codigo = '${codigo}'`)
+  const delLote = () =>
+    psql(`SELECT d.codigo FROM documento d JOIN lote l ON l.id = d.lote_id WHERE l.numero = '${lote}' ORDER BY d.id`).split('\n')
+  await paso('HU17 · Al preparar la firma, el PDF final queda en IPFS, fijado, con su CID y su hash', async () => {
+    const r = await enviar(carlos, '/api/firma/preparacion', { codigos: [primero] })
+    assert.equal(r.estado, 200)
+    assert.equal(r.cuerpo.noPreparados.length, 0)
+    const { codigo, hash, cid } = r.cuerpo.preparados[0]
+    assert.equal(codigo, primero)
+    assert.match(hash, /^[0-9a-f]{64}$/)
+    assert.match(cid, /^bafy/)
+    assert.deepEqual(psql(`SELECT estado, cid, hash_pdf, fecha_emision FROM documento WHERE codigo = '${primero}'`).split('|'), [
+      'PROCESANDO_FIRMA',
+      cid,
+      hash,
+      new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' }),
+    ])
+    assert.equal(eventos(primero), 'REGISTRADO,REVISADO,PREPARADO')
+    // Lo recuperado de IPFS por su CID es el mismo archivo del hash (RF30), y es el PDF final.
+    const ruta = `${out}/hu17_pdf_final_desde_ipfs.pdf`
+    ipfs(`cat?arg=${cid}`, ruta)
+    assert.equal(sha256(ruta), hash)
+    const texto = execFileSync('pdftotext', ['-raw', ruta, '-']).toString().replace(/\s+/g, ' ')
+    assert.ok(texto.includes(`Fecha de emisión: ${hoyEnLetras}`) && texto.includes(primero) && texto.includes('LUCÍA PAREDES QUINTO'))
+    assert.ok(!texto.includes('MUESTRA') && !texto.includes('VISTA PREVIA'))
+    const token = psql(`SELECT token_qr FROM documento WHERE codigo = '${primero}'`)
+    assert.equal(leerQr(ruta, `${out}/hu17_01_pdf_final_desde_ipfs`), `http://localhost:5174/verificar/${token}`)
+    assert.equal(JSON.parse(ipfs(`pin/ls?arg=${cid}`)).Keys[cid].Type, 'recursive')
+    // El nodo es privado: sin nodos de arranque ni pares.
+    assert.equal((JSON.parse(ipfs('bootstrap/list')).Peers ?? []).length, 0)
+  })
+  await paso('HU17 · El documento sale de Por revisar y el área lo ve en Procesando firma', async () => {
+    await carlos.goto(URL + '#/por-revisar')
+    await filas().first().waitFor()
+    assert.equal(await filas().count(), 2)
+    assert.equal(await carlos.locator('main').getByText('Lucía Paredes Quinto').count(), 0)
+    await pedro.goto(URL + '#/mis-documentos')
+    const fila = pedro.locator('main tbody tr', { hasText: 'Lucía Paredes Quinto' })
+    await fila.getByText('Procesando firma').waitFor()
+    await pedro.locator('main tbody tr', { hasText: 'Kevin Ramos Ccanto' }).getByText('Pendiente').waitFor()
+    await foto(pedro, 'hu17_02_mis_documentos_procesando_firma')
+  })
+  await paso('HU17 · Si IPFS no responde, el documento vuelve a Pendiente con el error en su historial', async () => {
+    const [juan] = delLote()
+    execFileSync('docker', ['stop', 'e2e-ipfs'])
+    let r
+    try {
+      r = await enviar(carlos, '/api/firma/preparacion', { codigos: [juan, ultimo] })
+    } finally {
+      execFileSync('docker', ['start', 'e2e-ipfs'])
+    }
+    assert.equal(r.estado, 200)
+    assert.equal(r.cuerpo.preparados.length, 0)
+    assert.deepEqual(r.cuerpo.noPreparados, [
+      { codigo: juan, motivo: 'No se pudo guardar el PDF. El documento volvió a Pendiente.' },
+      { codigo: ultimo, motivo: 'El documento aún no fue revisado.' },
+    ])
+    assert.equal(psql(`SELECT estado, cid IS NULL FROM documento WHERE codigo = '${juan}'`), 'PENDIENTE|t')
+    assert.equal(eventos(juan), 'REGISTRADO,REVISADO,ERROR_ALMACENAMIENTO')
+    await carlos.reload()
+    await filas().first().waitFor()
+    await filas().nth(0).getByText('✓ Revisado').waitFor()
+  })
+  await paso('HU17 · Con IPFS de nuevo en línea, los tres certificados del lote se guardan, cada uno con su CID', async () => {
+    for (let i = 0; i < 60; i++) {
+      try {
+        ipfs('id')
+        break
+      } catch {
+        await new Promise((listo) => setTimeout(listo, 1000))
+      }
+    }
+    const codigos = delLote()
+    const r = await enviar(carlos, '/api/firma/preparacion', { codigos })
+    assert.equal(r.estado, 200)
+    assert.deepEqual(r.cuerpo.preparados.map((p) => p.codigo), codigos)
+    assert.equal(new Set(r.cuerpo.preparados.map((p) => p.cid)).size, 3)
+    for (const { cid, hash } of r.cuerpo.preparados) {
+      const ruta = `${out}/hu17_lote_${cid.slice(-8)}.pdf`
+      ipfs(`cat?arg=${cid}`, ruta)
+      assert.equal(sha256(ruta), hash)
+      fs.rmSync(ruta)
+    }
+    assert.equal(eventos(codigos[0]), 'REGISTRADO,REVISADO,ERROR_ALMACENAMIENTO,PREPARADO')
+    // Volver a prepararlos no los guarda dos veces.
+    const otra = await enviar(carlos, '/api/firma/preparacion', { codigos })
+    assert.equal(otra.cuerpo.preparados.length, 0)
+    assert.ok(otra.cuerpo.noPreparados.every((n) => n.motivo === 'El documento ya está en proceso de firma.'))
+  })
+  await paso('HU17 · Solo el Director prepara la firma', async () => {
+    assert.equal((await enviar(pedro, '/api/firma/preparacion', { codigos: [ultimo] })).estado, 403)
+    assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${ultimo}'`), 'PENDIENTE')
   })
   await paso('HU10 · Solo el Director ve la bandeja', async () => {
     assert.deepEqual(await menu(pedro), ['Inicio', 'Mis documentos', 'Nuevo documento'])

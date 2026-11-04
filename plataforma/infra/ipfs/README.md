@@ -62,6 +62,7 @@ Con `COMPOSE_PROFILES=besu,ipfs` en `.env` (ver `.env.example`), `docker compose
 - **Un solo nodo en desarrollo.** La red privada admite más nodos con la misma clave. La réplica para alta disponibilidad (RNF06) se define en la infraestructura de AWS (DRA-44).
 - **Sin el perfil `server` de Kubo.** Ese perfil bloquea las conexiones desde IPs privadas, que es justo lo que usa una red privada entre contenedores o dentro de una VPC.
 - **Archivos fijados (`pin=true`).** Así el recolector de basura de IPFS no los borra (HU17, HU25).
+- **El backend lo usa desde HU17.** Al preparar la firma, guarda cada PDF final con `add?cid-version=1&raw-leaves=false&pin=true` y conserva su CID en PostgreSQL. La dirección se configura con `PLATAFORMA_IPFS_URL`. La prueba de punta a punta usa un nodo propio y vacío en el puerto 5002, con esta misma clave y configuración.
 - **IPFS no reemplaza a la blockchain.** IPFS guarda el PDF; la blockchain guarda su hash SHA-256 (HU16). La verificación (HU21) recalcula el hash del PDF recuperado de IPFS y lo compara con el registrado.
 
 ## Verificación (29/10/2026)
