@@ -44,6 +44,11 @@ plataforma:
   # PDF. El portal se construye en el Sprint 5.
   portal:
     url: ${PLATAFORMA_PORTAL_URL:http://localhost:5174}
+  # API del nodo IPFS privado (HU17, DRA-46), donde se guardan los PDF finales. Solo escucha en el
+  # servidor (127.0.0.1): nunca se expone a Internet (RNF03).
+  ipfs:
+    url: ${PLATAFORMA_IPFS_URL:http://localhost:5001}
+    tiempo-maximo: ${PLATAFORMA_IPFS_TIEMPO_MAXIMO:30s}
   # Clave del HMAC-SHA256 del DNI (HU08, RF17), de al menos 32 caracteres. En AWS va en el gestor
   # de secretos (RNF03). Sin clave no se registran documentos.
   dni:
