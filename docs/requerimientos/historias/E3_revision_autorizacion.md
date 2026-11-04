@@ -55,15 +55,62 @@ Los tres primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo 
 
 **Como** director, **quiero** firmar uno o varios documentos revisados en una sola operación, **para** aprobar su emisión sin estar en la sede.
 
+**Contexto**
+
+La firma es el registro de cada documento en el contrato `RegistroDocumentos` de la red Besu. La billetera del Director (MetaMask) firma la transacción en su navegador, así que el servidor nunca conoce su clave (RNF05). El contrato ya tiene el rol de firmante (HU06). Esta historia le agrega el registro de documentos, y usa la preparación de HU17 (PDF final, hash y CID en IPFS).
+
+| Paso (como en el prototipo) | Qué ocurre |
+|---|---|
+| Verificando su billetera | La billetera conectada es la registrada para el Director (HU06), está en la red de la plataforma y el contrato le reconoce el rol de firmante |
+| Confirmación | La ventana muestra la cuenta, "Firmar [N] documentos" y "Costo de la operación: Sin costo". Después la billetera pide su propia confirmación |
+| Preparando los documentos | HU17: cada documento pasa a Procesando firma y su PDF final se guarda en IPFS |
+| Registrando la firma | La billetera envía al contrato el código, el hash del PDF y el HMAC del DNI de cada documento, en transacciones de hasta 50 documentos |
+| Confirmando el registro | El servidor lee cada transacción confirmada en la blockchain y pasa sus documentos a **Firmado** |
+| Resultado | "¡Listo! Se firmaron [N] documentos", y aparte los que no se pudieron firmar, con su motivo |
+
 **Criterios de aceptación**
+
+Los cuatro primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] Solo se firman documentos revisados.
 - [ ] Se verifica la billetera y la red antes de firmar.
 - [ ] Una selección de más de 50 documentos se divide en varias transacciones.
 - [ ] Un documento que falla vuelve a Pendiente sin detener al resto.
+- [ ] En Por revisar, cada fila revisada tiene una casilla. Las no revisadas la tienen deshabilitada, con el aviso "Revise el documento antes de seleccionarlo." Al seleccionar aparece la barra "[N] seleccionados ([M] certificados)" con el botón "Firmar seleccionados". Un lote se selecciona entero.
+- [ ] En la revisión de un documento está el botón "Firmar".
+- [ ] El contrato solo acepta registros de una billetera con el rol de firmante, y un código no se registra dos veces.
+- [ ] El documento firmado guarda la transacción, el bloque, la billetera que firmó y la **fecha oficial de emisión, que es la del bloque** (RF32). El servidor no marca nada como firmado sin leerlo antes en la blockchain.
+- [ ] Si el Director cancela en la billetera o una transacción falla, sus documentos vuelven a Pendiente, siguen revisados y queda el motivo en su historial. Los de las demás transacciones siguen.
+- [ ] Antes de devolver un documento a Pendiente, el servidor comprueba en el contrato que no quedó registrado.
+- [ ] Los documentos firmados salen de Por revisar, y el Área encargada los ve como **Firmado** (verde) en Mis documentos.
+- [ ] Solo el Director (permiso DOCUMENTO_FIRMAR) puede firmar. Sin sesión se responde 401 y con otro rol, 403 (RF04).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| "Firmar lote" en la revisión del lote y firmar sin los beneficiarios observados | HU12 |
+| Corregir documentos detenidos en Procesando firma si se cierra el navegador a mitad de la firma | HU18 |
+| Avisar a Mesa de Partes y al área | HU26–HU28 (Sprint 6) |
+| Pantalla Documentos firmados | HU22 |
+| Verificación pública con el registro del contrato | HU19–HU21 (Sprint 5) |
+
+**Notas técnicas**
+
+- Contrato:
+  - `registrarDocumentos(string[] codigos, bytes32[] hashes, bytes32[] dniHmacs)`, de 1 a 50 por transacción, solo para el rol de firmante;
+  - emite `DocumentoRegistrado` por cada documento;
+  - `consultar(codigo)` devuelve el hash, el HMAC del DNI, el firmante y la fecha del bloque (lo usará HU21).
+- API:
+  - `GET /api/firma/billetera`: la billetera registrada y si es firmante;
+  - `POST /api/firma/preparacion` (HU17), que ahora acepta códigos y números de lote;
+  - `POST /api/firma/confirmacion` con la transacción;
+  - `POST /api/firma/cancelacion` con los códigos no registrados.
+- Red sin costo: precio del gas 0 (RNF11).
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
-| Alta | 13 | 3 | RF23, RF28–RF31 |
+| Alta | 13 | 3 | RF23, RF28–RF31 (relacionados: RF32, RNF05) |
 
 ## HU12: Revisar y firmar un lote
 
