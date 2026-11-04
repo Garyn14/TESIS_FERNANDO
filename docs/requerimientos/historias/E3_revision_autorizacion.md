@@ -171,13 +171,50 @@ Los dos primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo s
 
 **Como** sistema, **quiero** almacenar el PDF final en la red IPFS privada, **para** conservar el original para su verificación y reimpresión.
 
+**Contexto**
+
+El PDF final y su hash se generan con HU16. El nodo IPFS privado ya existe (DRA-46): solo habla con nodos que tienen su clave de enjambre, para que los PDF, que tienen datos personales, no circulen por la red pública de IPFS (RNF03). Al firmar (HU11), antes de que el Director registre los hashes con su billetera, el sistema **prepara** cada documento. Esta historia construye esa preparación, y HU11 la usa:
+
+| Paso | Qué ocurre |
+|---|---|
+| 1 | El documento pasa a **Procesando firma**, un estado que se guarda (lo necesita HU18 para corregir los que se detengan) |
+| 2 | Se genera el PDF final con la fecha de emisión de ese día y se calcula su SHA-256 (HU16) |
+| 3 | El PDF se guarda en IPFS y queda fijado, para que no se borre |
+| 4 | Se guardan el CID, el hash y la fecha de emisión impresa. El documento sigue en Procesando firma hasta que HU11 registre la firma |
+
 **Criterios de aceptación**
+
+Los dos primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] Se guarda el identificador (CID) del archivo.
 - [ ] Si el almacenamiento falla, el documento sale de la operación, vuelve a Pendiente y se registra el error.
+- [ ] El archivo guardado en IPFS es exactamente el del hash: al recuperarlo por su CID, su SHA-256 es el guardado.
+- [ ] El PDF queda fijado (pin) en el nodo y su CID es de la versión 1 (`bafy…`).
+- [ ] Solo se preparan documentos Pendientes que el Director ya revisó (RF22, RF23). Los demás se informan como no preparados, con su motivo, sin detener al resto.
+- [ ] Si falla un documento, los demás de la operación siguen. El error queda en el historial del documento y en el registro del servidor.
+- [ ] Un documento no se prepara dos veces a la vez: si ya está en Procesando firma, se informa como no preparado.
+- [ ] El documento en Procesando firma sale de la bandeja Por revisar, y el Área encargada lo ve con ese estado en Mis documentos.
+- [ ] Solo el Director (permiso DOCUMENTO_FIRMAR) puede preparar documentos. Sin sesión se responde 401 y con otro rol, 403 (RF04).
+- [ ] La dirección de la API de IPFS se configura fuera del código (PLATAFORMA_IPFS_URL). La API solo escucha en el servidor (127.0.0.1).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Pantalla de firma, registro de los hashes en el contrato y paso a Firmado | HU11 y HU12 (usan esta preparación) |
+| Corregir los documentos detenidos en Procesando firma | HU18 |
+| Recuperar el PDF de IPFS para verificarlo o reimprimirlo | HU21 y HU25 |
+| Réplica del nodo IPFS en AWS | DRA-44 |
+
+**Notas técnicas**
+
+- API: `POST /api/firma/preparacion` con `{"codigos": [...]}`, hasta 300 por operación (un lote completo). Responde los preparados (código, hash, CID) y los no preparados (código, motivo). HU11 usa los hashes para la transacción de la billetera.
+- Cada documento se prepara en su propia transacción, para que un fallo no deshaga los demás.
+- El backend usa la API HTTP de Kubo (`add` con `pin=true` y `cid-version=1`).
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
-| Alta | 5 | 3 | RF30 |
+| Alta | 5 | 3 | RF30 (relacionados: RF23, RNF03) |
 
 ## HU18: Sincronizar los estados con la blockchain
 
