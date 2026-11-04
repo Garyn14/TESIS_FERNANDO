@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ErrorBilletera } from '../blockchain/billetera'
+import { ErrorBilletera, type DocumentoAFirmar } from '../blockchain/billetera'
 import type { Preparado } from './api'
 import { enTandas, firmar, type Dependencias, type Paso } from './flujo'
 
@@ -118,7 +118,7 @@ describe('Firma de reemisiones (HU30)', () => {
       preparado(3),
       { ...preparado(4), reemplaza: 'DRA-2026-ORIG02' },
     ]
-    const registrar = vi.fn(async (_lote: Preparado[], alEnviar: () => void) => {
+    const registrar = vi.fn(async (_lote: DocumentoAFirmar[], alEnviar: () => void) => {
       alEnviar()
       return '0x' + String(registrar.mock.calls.length).padStart(64, '0')
     })
