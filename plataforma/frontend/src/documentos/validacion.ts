@@ -89,3 +89,11 @@ export function validarBeneficiarios(filas: Beneficiario[]): Errores {
   })
   return errores
 }
+
+/** Valida el motivo como el servidor (HU13, HU30): obligatorio y de hasta 500 caracteres. */
+export function errorDeMotivo(motivo: string) {
+  if (!motivo.trim()) return 'Ingrese el motivo de la reemisión.'
+  return motivo.trim().length > 500 ? 'El motivo no puede superar los 500 caracteres.' : ''
+}
+
+export const SIN_CAMBIOS = 'Corrija al menos un dato del documento.'

@@ -19,6 +19,8 @@ export interface ElementoPorRevisar {
   revisado: boolean
   /** Reenviado por el área tras una observación (HU15). */
   corregido?: boolean
+  /** HU30: reemplaza a un documento firmado (en un lote: alguno de sus certificados). */
+  reemision?: boolean
 }
 
 /** Pendientes de todas las áreas, del más antiguo al más reciente. */

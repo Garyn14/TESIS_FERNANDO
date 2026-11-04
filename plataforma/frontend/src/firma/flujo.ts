@@ -49,7 +49,11 @@ export async function firmar(deps: Dependencias, alPaso: (p: Paso) => void): Pro
     sinConfirmar: [],
     transacciones: [],
   }
-  const tandas = enTandas(preparacion.preparados)
+  // HU30: las reemisiones van en sus propias transacciones (registrarReemisiones).
+  const tandas = [
+    ...enTandas(preparacion.preparados.filter((d) => !d.reemplaza)),
+    ...enTandas(preparacion.preparados.filter((d) => d.reemplaza)),
+  ]
   for (const [i, tanda] of tandas.entries()) {
     const posicion = { tanda: i + 1, tandas: tandas.length }
     alPaso({ tipo: 'registrando', ...posicion })

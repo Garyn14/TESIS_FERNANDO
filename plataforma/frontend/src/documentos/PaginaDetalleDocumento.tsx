@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { documento as consultar, fechaCorta, type Documento } from './api'
 import Certificado from './Certificado'
-import { BOTON_PRIMARIO } from '../comun/estilos'
+import { BOTON_PRIMARIO, BOTON_SECUNDARIO } from '../comun/estilos'
 import Estado from './Estado'
 
 /** Qué significa cada estado para el área (HU08, HU11, HU17). */
@@ -70,7 +70,12 @@ export default function PaginaDetalleDocumento({ codigo }: { codigo: string }) {
             <h2 className="text-xl font-semibold">{doc.tipoNombre}</h2>
             <Estado estado={doc.estado} />
           </div>
-          <p className="mt-1 text-muted">{AVISOS[doc.estado]}</p>
+          <p className="mt-1 text-muted">
+            {doc.reemplazadoPor
+              ? 'Se anuló al firmarse su reemisión: ya no es válido. La anulación está registrada en la blockchain.'
+              : AVISOS[doc.estado]}
+          </p>
+          <Reemision doc={doc} />
           {doc.motivo && (
             <p className="mt-3 rounded-lg bg-orange-pale px-4 py-3">
               <strong>Motivo:</strong> {doc.motivo}
@@ -110,5 +115,62 @@ export default function PaginaDetalleDocumento({ codigo }: { codigo: string }) {
         </>
       )}
     </section>
+  )
+}
+
+const enlace = (codigo: string) => (
+  <a href={`#/mis-documentos/${codigo}`} className="font-mono text-institutional hover:underline">
+    {codigo}
+  </a>
+)
+
+/** HU30: de qué documento es reemisión, o la reemisión de este documento. */
+function Reemision({ doc }: { doc: Documento }) {
+  return (
+    <>
+      {doc.reemision && (
+        <div className="mt-3 rounded-lg bg-blue-pale px-4 py-3">
+          <p>
+            <strong>Reemisión de {enlace(doc.reemision.original)}.</strong> Cuando el Director la
+            firme, el original se anulará automáticamente.
+          </p>
+          <p className="mt-1">
+            <strong>Motivo de la reemisión:</strong> {doc.reemision.motivo}
+          </p>
+        </div>
+      )}
+      {doc.reemplazadoPor && (
+        <p className="mt-3 rounded-lg bg-neutral-pale px-4 py-3">
+          <strong>Reemplazado por {enlace(doc.reemplazadoPor)}</strong>
+        </p>
+      )}
+      {doc.reemisionEnCurso && (
+        <p className="mt-3 rounded-lg bg-amber-pale px-4 py-3">
+          <strong>Reemisión en revisión:</strong> {enlace(doc.reemisionEnCurso)}. El original sigue
+          firmado hasta que el Director firme la reemisión.
+        </p>
+      )}
+      {doc.estado === 'FIRMADO' &&
+        !doc.reemisionEnCurso &&
+        (doc.lote ? (
+          <p className="mt-3 text-sm text-muted">
+            Para corregirlo, reemítalo desde el{' '}
+            <a
+              href={`#/mis-documentos/lote/${doc.lote}`}
+              className="text-institutional hover:underline"
+            >
+              detalle del Lote {doc.lote}
+            </a>
+            .
+          </p>
+        ) : (
+          <a
+            href={`#/mis-documentos/${doc.codigo}/reemitir`}
+            className={`mt-3 inline-block ${BOTON_SECUNDARIO}`}
+          >
+            ↻ Reemitir con corrección
+          </a>
+        ))}
+    </>
   )
 }

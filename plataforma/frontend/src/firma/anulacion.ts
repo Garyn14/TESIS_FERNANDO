@@ -15,6 +15,8 @@ export interface DocumentoFirmado {
   estado: EstadoDocumento
   anuladoEn: string | null
   motivoAnulacion: string | null
+  /** HU30: su reemisión en revisión; mientras tanto no se anula por separado. */
+  reemisionEnCurso?: string | null
 }
 
 const enviar = <T>(ruta: string, cuerpo: unknown) =>

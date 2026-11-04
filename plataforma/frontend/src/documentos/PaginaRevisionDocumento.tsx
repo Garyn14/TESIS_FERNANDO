@@ -4,6 +4,7 @@ import { BOTON_ADVERTENCIA, BOTON_PRIMARIO, BOTON_SECUNDARIO } from '../comun/es
 import VentanaDeFirma from '../firma/VentanaDeFirma'
 import { fechaCorta, type Documento } from './api'
 import Certificado from './Certificado'
+import AvisoDeReemision from './AvisoDeReemision'
 import MuestraDelPdf from './MuestraDelPdf'
 import { observarDocumento, rechazarDocumento, revisarDocumento } from './revision'
 import VentanaDeMotivo from './VentanaDeMotivo'
@@ -58,6 +59,7 @@ export default function PaginaRevisionDocumento({
       ) : (
         <>
           <h2 className="mt-4 text-xl font-semibold">Revisión – {doc.tipoNombre}</h2>
+          {doc.reemision && <AvisoDeReemision reemision={doc.reemision} />}
           <dl className="mt-4 grid rounded-xl border border-line bg-card shadow-sm sm:grid-cols-2 lg:grid-cols-4">
             {datos.map(([etiqueta, valor]) => (
               <div key={etiqueta} className="border-b border-line p-4">

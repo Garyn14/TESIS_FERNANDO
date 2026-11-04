@@ -10,6 +10,7 @@ import PaginaLogin from './sesion/PaginaLogin'
 import PaginaBilletera from './billeteras/PaginaBilletera'
 import PaginaDetalleDocumento from './documentos/PaginaDetalleDocumento'
 import PaginaCorreccion from './documentos/PaginaCorreccion'
+import PaginaReemision from './documentos/PaginaReemision'
 import PaginaFirmados from './firma/PaginaFirmados'
 import PaginaDetalleLote from './documentos/PaginaDetalleLote'
 import PaginaFormularioDocumento from './documentos/PaginaFormularioDocumento'
@@ -145,6 +146,8 @@ export default function App() {
         <PaginaDetalleLote key={`${numero}-${visita}`} numero={numero} />
       ) : detalle && numero === 'corregir' ? (
         <PaginaCorreccion key={`${detalle}-${visita}`} codigo={detalle} />
+      ) : detalle && numero === 'reemitir' ? (
+        <PaginaReemision key={`${detalle}-${visita}`} codigo={detalle} />
       ) : detalle ? (
         <PaginaDetalleDocumento key={`${detalle}-${visita}`} codigo={detalle} />
       ) : (

@@ -4,16 +4,19 @@ import { BOTON_PRIMARIO, BOTON_SECUNDARIO } from '../comun/estilos'
 import Modal from '../comun/Modal'
 import {
   corregir,
+  reemitir,
   registrar,
   vistaPrevia,
+  vistaPreviaReemision,
   type Documento,
   type SolicitudDocumento,
   type TipoDocumento,
   type VistaPrevia,
 } from './api'
 import CampoFormulario, { CampoDePlantilla } from './CampoFormulario'
+import CampoMotivoReemision from './CampoMotivoReemision'
 import Certificado from './Certificado'
-import { limpiar, validarSolicitud, type Errores } from './validacion'
+import { errorDeMotivo, limpiar, SIN_CAMBIOS, validarSolicitud, type Errores } from './validacion'
 
 const PASOS = ['Datos de la solicitud', 'Vista previa']
 
@@ -22,13 +25,17 @@ const PASOS = ['Datos de la solicitud', 'Vista previa']
  * confirmación. El servidor valida en cada paso y, al enviar, deja el documento Pendiente.
  * HU15: con {@code original}, corrige un documento observado: el formulario viene precargado y se
  * reenvía a revisión con el mismo código.
+ * HU30: con {@code reemision}, reemite un documento firmado: precargado, con el mismo expediente
+ * (que no se cambia) y el motivo obligatorio. Se crea un documento nuevo, vinculado al original.
  */
 export default function FormularioSolicitud({
   tipo,
   original,
+  reemision = false,
 }: {
   tipo: TipoDocumento
   original?: Documento
+  reemision?: boolean
 }) {
   const id = useId()
   const [datos, setDatos] = useState({
@@ -46,6 +53,7 @@ export default function FormularioSolicitud({
   const [confirmando, setConfirmando] = useState(false)
   const [enviado, setEnviado] = useState<Documento | null>(null)
   const [ocupado, setOcupado] = useState(false)
+  const [motivo, setMotivo] = useState('')
 
   const solicitud = (): SolicitudDocumento => ({
     tipo: tipo.codigo,
@@ -77,16 +85,34 @@ export default function FormularioSolicitud({
     } else setErrorGeneral(e instanceof ErrorApi ? e.message : 'Ocurrió un error inesperado.')
   }
 
+  /** HU30: si la reemisión no cambia ningún dato del original. */
+  const sinCambios = (s: SolicitudDocumento) =>
+    !!original &&
+    s.nombres === original.nombres &&
+    s.apellidos === original.apellidos &&
+    s.dni === original.dni &&
+    tipo.campos.every((c) => s.datos[c.nombre] === (original.datos?.[c.nombre] ?? ''))
+
   const continuar = async (evento: FormEvent) => {
     evento.preventDefault()
     const s = solicitud()
     const encontrados = validarSolicitud(s, tipo.campos)
+    const deMotivo = reemision ? errorDeMotivo(motivo) : ''
+    if (deMotivo) encontrados.motivo = deMotivo
     setErrores(encontrados)
     setErrorGeneral('')
     if (Object.keys(encontrados).length > 0) return
+    if (reemision && sinCambios(s)) {
+      setErrorGeneral(SIN_CAMBIOS)
+      return
+    }
     setOcupado(true)
     try {
-      setPrevia(await vistaPrevia(s))
+      setPrevia(
+        await (reemision && original
+          ? vistaPreviaReemision(original.codigo, datosDeReemision(s))
+          : vistaPrevia(s)),
+      )
     } catch (e) {
       fallo(e)
     } finally {
@@ -98,7 +124,13 @@ export default function FormularioSolicitud({
     setOcupado(true)
     setErrorGeneral('')
     try {
-      setEnviado(await (original ? corregir(original.codigo, solicitud()) : registrar(solicitud())))
+      setEnviado(
+        await (reemision && original
+          ? reemitir(original.codigo, { ...datosDeReemision(solicitud()), motivo: motivo.trim() })
+          : original
+            ? corregir(original.codigo, solicitud())
+            : registrar(solicitud())),
+      )
     } catch (e) {
       fallo(e)
     } finally {
@@ -111,20 +143,29 @@ export default function FormularioSolicitud({
     return (
       <div role="status" className="mt-6 rounded-xl bg-green-pale p-6">
         <p className="text-lg font-semibold text-institutional">
-          {original
-            ? '✓ Documento corregido y reenviado a revisión'
-            : '✓ Documento enviado a revisión'}
+          {reemision
+            ? '✓ Reemisión enviada a revisión'
+            : original
+              ? '✓ Documento corregido y reenviado a revisión'
+              : '✓ Documento enviado a revisión'}
         </p>
         <p className="mt-2">
           Código de verificación: <strong className="font-mono">{enviado.codigo}</strong>
         </p>
         <p className="mt-1 text-muted">
-          Quedó Pendiente: no se puede modificar mientras el Director lo revisa.
+          {reemision
+            ? `Quedó Pendiente. El original (${original?.codigo}) sigue firmado hasta que el Director firme la reemisión.`
+            : 'Quedó Pendiente: no se puede modificar mientras el Director lo revisa.'}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <a href={`#/mis-documentos/${enviado.codigo}`} className={BOTON_PRIMARIO}>
             Ver el documento
           </a>
+          {reemision && original && (
+            <a href={`#/mis-documentos/${original.codigo}`} className={BOTON_SECUNDARIO}>
+              Volver al original
+            </a>
+          )}
           {!original && (
             <a href="#/nuevo-documento" className={BOTON_SECUNDARIO}>
               Registrar otro documento
@@ -184,23 +225,46 @@ export default function FormularioSolicitud({
               Volver
             </button>
             <button type="button" className={BOTON_PRIMARIO} onClick={() => setConfirmando(true)}>
-              {original ? 'Reenviar a revisión' : 'Enviar a revisión'}
+              {original && !reemision ? 'Reenviar a revisión' : 'Enviar a revisión'}
             </button>
           </div>
         </div>
       ) : (
         <form noValidate onSubmit={continuar} className="mt-6 grid gap-4 md:grid-cols-2">
-          <CampoFormulario
-            {...campo('numeroExpediente')}
-            etiqueta="N.° de expediente"
-            ayuda="Ej.: EXP-2026-004817"
-          />
+          {reemision ? (
+            // HU30: la reemisión mantiene el expediente del original.
+            <div>
+              <p className="font-medium">N.° de expediente</p>
+              <p className="mt-1 rounded-lg border border-line bg-cream px-3 py-2 font-mono">
+                {original?.numeroExpediente}
+              </p>
+            </div>
+          ) : (
+            <CampoFormulario
+              {...campo('numeroExpediente')}
+              etiqueta="N.° de expediente"
+              ayuda="Ej.: EXP-2026-004817"
+            />
+          )}
           <CampoFormulario {...campo('dni')} etiqueta="DNI" tipo="numero" maxLength={8} />
           <CampoFormulario {...campo('nombres')} etiqueta="Nombres" />
           <CampoFormulario {...campo('apellidos')} etiqueta="Apellidos" />
           {tipo.campos.map((c) => (
             <CampoDePlantilla key={c.nombre} campo={c} {...campo(`datos.${c.nombre}`)} />
           ))}
+          {reemision && (
+            <div className="md:col-span-2">
+              <CampoMotivoReemision
+                id={`${id}-motivo`}
+                valor={motivo}
+                error={errores.motivo}
+                onCambiar={(valor) => {
+                  setMotivo(valor)
+                  setErrores((e) => ({ ...e, motivo: '' }))
+                }}
+              />
+            </div>
+          )}
           <div className="flex justify-end md:col-span-2">
             <button type="submit" className={BOTON_PRIMARIO} disabled={ocupado}>
               {ocupado ? 'Validando…' : 'Continuar a vista previa'}
@@ -211,13 +275,21 @@ export default function FormularioSolicitud({
 
       {confirmando && previa && (
         <Modal
-          titulo={original ? '¿Reenviar a revisión?' : '¿Enviar a revisión?'}
+          titulo={
+            reemision
+              ? '¿Enviar la reemisión a revisión?'
+              : original
+                ? '¿Reenviar a revisión?'
+                : '¿Enviar a revisión?'
+          }
           onCerrar={() => setConfirmando(false)}
         >
           <p>
-            Se {original ? 'reenviará' : 'enviará'} el {previa.tipoNombre} de {previa.nombres}{' '}
-            {previa.apellidos} al Director. Una vez enviado queda Pendiente y no se puede modificar
-            mientras esté en revisión.
+            Se {original && !reemision ? 'reenviará' : 'enviará'} el {previa.tipoNombre} de{' '}
+            {previa.nombres} {previa.apellidos} al Director. Una vez enviado queda Pendiente y no se
+            puede modificar mientras esté en revisión.
+            {reemision &&
+              ` Cuando el Director lo firme, el original (${original?.codigo}) se anulará automáticamente.`}
           </p>
           <div className="mt-6 flex justify-end gap-3">
             <button
@@ -229,11 +301,16 @@ export default function FormularioSolicitud({
               Cancelar
             </button>
             <button type="button" className={BOTON_PRIMARIO} onClick={enviar} disabled={ocupado}>
-              {ocupado ? 'Enviando…' : original ? 'Reenviar' : 'Enviar'}
+              {ocupado ? 'Enviando…' : original && !reemision ? 'Reenviar' : 'Enviar'}
             </button>
           </div>
         </Modal>
       )}
     </>
   )
+}
+
+/** HU30: la reemisión no envía el tipo ni el expediente: son los del original. */
+function datosDeReemision({ nombres, apellidos, dni, datos }: SolicitudDocumento) {
+  return { nombres, apellidos, dni, datos }
 }

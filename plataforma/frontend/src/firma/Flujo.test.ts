@@ -109,3 +109,34 @@ describe('Firma en tandas (HU11)', () => {
     expect(resultado.firmados).toEqual([])
   })
 })
+
+describe('Firma de reemisiones (HU30)', () => {
+  it('las reemisiones van en su propia transacción, separadas de los documentos nuevos', async () => {
+    const lista = [
+      preparado(1),
+      { ...preparado(2), reemplaza: 'DRA-2026-ORIG01' },
+      preparado(3),
+      { ...preparado(4), reemplaza: 'DRA-2026-ORIG02' },
+    ]
+    const registrar = vi.fn(async (_lote: Preparado[], alEnviar: () => void) => {
+      alEnviar()
+      return '0x' + String(registrar.mock.calls.length).padStart(64, '0')
+    })
+    const deps: Dependencias = {
+      preparar: async () => ({ preparados: lista, noPreparados: [] }),
+      registrar,
+      confirmar: async (transaccion: string) => ({
+        transaccion,
+        bloque: 1,
+        firmados: [],
+        noAplicados: [],
+      }),
+      cancelar: async (codigos: string[]) => ({ devueltos: codigos, noDevueltos: [] }),
+    }
+    await firmar(deps, () => undefined)
+    expect(registrar.mock.calls.map(([lote]) => lote.map((d) => d.reemplaza ?? null))).toEqual([
+      [null, null],
+      ['DRA-2026-ORIG01', 'DRA-2026-ORIG02'],
+    ])
+  })
+})

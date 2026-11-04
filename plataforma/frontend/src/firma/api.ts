@@ -13,6 +13,8 @@ export interface Preparado {
   hash: string
   cid: string
   dniHmac: string
+  /** HU30: el original que se anula en la misma transacción, si es una reemisión. */
+  reemplaza?: string | null
 }
 
 export interface NoFirmado {
