@@ -627,7 +627,7 @@ Los cuatro primeros son los de la Tabla 19 de la tesis. Los demás detallan cóm
 | "Firmar lote" en la revisión del lote y firmar sin los beneficiarios observados | HU12 |
 | Corregir documentos detenidos en Procesando firma si se cierra el navegador a mitad de la firma | HU18 |
 | Avisar a Mesa de Partes y al área | HU26–HU28 (Sprint 6) |
-| Pantalla Documentos firmados | HU22 |
+| Pantalla Documentos firmados, con búsqueda e historial | HU22–HU24 |
 | Verificación pública con el registro del contrato | HU19–HU21 (Sprint 5) |
 
 **Notas técnicas**
