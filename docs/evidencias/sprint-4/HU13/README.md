@@ -37,7 +37,7 @@
 | Backend | `DecisionEnLoteTest.java` | 1 caso nuevo: un motivo de 500 caracteres en un lote entra completo en el historial |
 | Frontend | `documentos/Revision.test.tsx` | 1 nueva: ventana "Observar documento", "Confirmar" deshabilitado sin motivo, cuerpo enviado, resultado sin acciones |
 
-Totales: 171 pruebas de backend y 114 de frontend.
+Totales: 168 pruebas de backend y 114 de frontend.
 
 ## Ajustes durante la verificación
 

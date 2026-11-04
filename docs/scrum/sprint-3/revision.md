@@ -91,7 +91,7 @@ Los textos son los que ya van en el PDF final y en la blockchain. Conviene cerra
 
 - **Integración continua:** cada historia se integró a `main` con los 5 jobs en verde (ejecuciones 41743421533, 41745602040, 41749276488, 41753614314, 41758193909 y 41779637849). La CI también registra 50 documentos en una transacción en la red Besu real.
 - **Pruebas automáticas al cierre:**
-  - 167 de backend (las de IPFS, contra un nodo Kubo real);
+  - 164 de backend (las de IPFS, contra un nodo Kubo real);
   - 113 de frontend;
   - 22 del contrato.
 - **Problemas reales encontrados en la verificación y corregidos:**

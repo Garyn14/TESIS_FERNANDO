@@ -61,7 +61,7 @@ La prueba del Sprint 3 ([`plataforma/e2e/sprint3.cjs`](../../../../plataforma/e2
 | Frontend | `firma/VentanaDeFirma.test.tsx` | 3: flujo completo con el resultado; otra billetera conectada; sin el rol de firmante |
 | Frontend | `documentos/Revision.test.tsx` y `Estado.test.tsx` | Casillas y barra de selección, botón Firmar, estado Firmado en verde |
 
-Totales: 157 pruebas de backend, 107 de frontend y 22 del contrato.
+Totales: 154 pruebas de backend, 107 de frontend y 22 del contrato.
 
 ## Ajustes durante la verificación
 

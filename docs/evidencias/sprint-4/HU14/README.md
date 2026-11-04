@@ -32,7 +32,7 @@
 | Backend | `plataforma/backend/src/test/java/pe/drasatipo/plataforma/documentos/RechazarDocumentoTest.java` | 3:<ul><li>queda Rechazado con su motivo y el historial, sale de Por revisar y el área lo ve;</li><li>es definitivo: no se rechaza de nuevo, no se observa, no se abre para revisar ni se prepara para firmar;</li><li>uno observado tampoco se rechaza;</li><li>motivo obligatorio y de hasta 500 caracteres;</li><li>otros roles (403) y sin sesión (401).</li></ul> |
 | Frontend | `documentos/Revision.test.tsx` | 1 nueva: la ventana "Rechazar documento" con el aviso, el resultado sin acciones y la ruta del rechazo |
 
-Totales: 174 pruebas de backend y 115 de frontend.
+Totales: 171 pruebas de backend y 115 de frontend.
 
 ## Ajustes durante la verificación
 
