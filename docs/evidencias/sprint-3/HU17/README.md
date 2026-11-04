@@ -45,7 +45,7 @@ La pantalla de firma llega con HU11, así que la prueba llama a la preparación 
 | Backend | `plataforma/backend/src/test/java/pe/drasatipo/plataforma/documentos/PreparacionDeFirmaTest.java` | 7, contra un **nodo Kubo real** levantado con Testcontainers:<ul><li>PDF guardado, fijado, con CID y hash, recuperado e idéntico;</li><li>sale de Por revisar y el área lo ve en Procesando firma;</li><li>sin revisar, inexistente o ya en proceso: se informan sin detener al resto;</li><li>si IPFS falla con uno, ese vuelve a Pendiente con el error en el historial y los demás siguen; después se puede preparar de nuevo;</li><li>los certificados de un lote, cada uno con su CID;</li><li>4 preparaciones a la vez del mismo documento guardan un solo PDF;</li><li>solo el Director, con 1 a 300 documentos;</li><li>sin nodo, el cliente de IPFS avisa con su propia excepción.</li></ul> |
 | Frontend | `plataforma/frontend/src/documentos/Estado.test.tsx` | El estado Procesando firma en azul y Pendiente en ámbar, como en el prototipo |
 
-Totales: 145 pruebas de backend y 97 de frontend.
+Totales: 142 pruebas de backend y 97 de frontend.
 
 ## Ajustes durante la verificación
 

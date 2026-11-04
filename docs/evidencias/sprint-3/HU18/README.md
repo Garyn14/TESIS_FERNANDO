@@ -47,7 +47,7 @@ En la prueba, la sincronización corre cada 3 segundos y el plazo de firma es de
 | Backend | `plataforma/backend/src/test/java/pe/drasatipo/plataforma/documentos/SincronizacionConBlockchainTest.java` | 6, con IPFS real y el contrato en memoria:<ul><li>una firma registrada sin confirmar pasa a Firmado una sola vez, a nombre del dueño de la billetera;</li><li>se reanuda desde el último bloque procesado, en tramos de hasta 5000 bloques, y sin bloques nuevos no consulta nada;</li><li>un detenido sin registrar vuelve a Pendiente solo pasado el plazo, hecho por el sistema;</li><li>un detenido registrado con otro hash no se marca ni se devuelve;</li><li>sin blockchain no cambia nada, y la tarea programada no falla;</li><li>un código ya registrado no se prepara.</li></ul> |
 | Backend | `FirmaDeDocumentosTest.java` y las demás | Siguen pasando con la lógica de aplicación compartida entre la confirmación (HU11) y la sincronización |
 
-Totales: 167 pruebas de backend y 113 de frontend.
+Totales: 164 pruebas de backend y 113 de frontend.
 
 ## Ajustes durante la verificación
 

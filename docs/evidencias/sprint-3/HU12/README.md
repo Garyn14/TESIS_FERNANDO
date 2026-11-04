@@ -47,7 +47,7 @@ La prueba del Sprint 3 ([`plataforma/e2e/sprint3.cjs`](../../../../plataforma/e2
 | Frontend | `documentos/Lotes.test.tsx` | 2 nuevas: un lote con varios estados en Mis documentos; el detalle con el estado y el motivo de cada certificado |
 | Frontend | `firma/VentanaDeFirma.test.tsx` | 1 nueva: en un lote habla de certificados, agrega los avisos y nombra a los beneficiarios que no se firmaron |
 
-Totales: 161 pruebas de backend y 113 de frontend.
+Totales: 158 pruebas de backend y 113 de frontend.
 
 ## Ajustes durante la verificación
 

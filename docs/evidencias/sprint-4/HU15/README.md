@@ -40,7 +40,7 @@
 | Frontend | `documentos/Correccion.test.tsx` | 4: el botón en el detalle; el formulario precargado con el motivo y el reenvío; un documento no observado no se corrige; la corrección de un certificado del lote con el error del DNI y el reenvío |
 | Frontend | `documentos/Revision.test.tsx` | 1 nueva: la etiqueta "Corregido" en la bandeja |
 
-Totales: 178 pruebas de backend y 120 de frontend.
+Totales: 175 pruebas de backend y 120 de frontend.
 
 ## Ajustes durante la verificación
 
