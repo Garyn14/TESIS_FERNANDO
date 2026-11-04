@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { fechaCorta, type Documento } from './api'
 import Certificado from './Certificado'
+import MuestraDelPdf from './MuestraDelPdf'
 import { revisarDocumento } from './revision'
 
 /**
@@ -57,6 +58,7 @@ export default function PaginaRevisionDocumento({ codigo }: { codigo: string }) 
           <div className="mt-6">
             <Certificado documento={doc} />
           </div>
+          <MuestraDelPdf codigo={doc.codigo} />
           <p className="mt-4 text-sm text-muted">
             ✓ Quedó registrado como revisado. Firmar, observar y rechazar se habilitan en las
             siguientes historias (HU11, HU13 y HU14).
