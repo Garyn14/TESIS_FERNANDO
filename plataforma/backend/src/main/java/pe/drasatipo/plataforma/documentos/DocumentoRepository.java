@@ -1,5 +1,6 @@
 package pe.drasatipo.plataforma.documentos;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +12,11 @@ import org.springframework.data.repository.query.Param;
 import pe.drasatipo.plataforma.usuarios.Usuario;
 
 public interface DocumentoRepository extends JpaRepository<Documento, Long> {
+
+  /** Estados para las consultas JPQL. */
+  String PENDIENTE = "pe.drasatipo.plataforma.documentos.EstadoDocumento.PENDIENTE";
+
+  String PROCESANDO = "pe.drasatipo.plataforma.documentos.EstadoDocumento.PROCESANDO_FIRMA";
 
   boolean existsByCodigo(String codigo);
 
@@ -42,4 +48,41 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
       @Param("id") Long id,
       @Param("director") Usuario director,
       @Param("ahora") OffsetDateTime ahora);
+
+  /**
+   * Inicia la preparación de la firma (HU17) en una sola sentencia: solo pasa a Procesando firma un
+   * documento Pendiente y ya revisado. Si dos solicitudes llegan a la vez, solo una lo consigue.
+   */
+  @Modifying
+  @Query(
+      "UPDATE Documento d SET d.estado = "
+          + PROCESANDO
+          + " WHERE d.id = :id AND d.estado = "
+          + PENDIENTE
+          + " AND d.revisadoEn IS NOT NULL")
+  int iniciarFirma(@Param("id") Long id);
+
+  /** Guarda el PDF final de un documento en Procesando firma (HU17, RF30). */
+  @Modifying
+  @Query(
+      "UPDATE Documento d SET d.hashPdf = :hash, d.cid = :cid, d.fechaEmision = :fecha,"
+          + " d.preparadoEn = :ahora WHERE d.id = :id AND d.estado = "
+          + PROCESANDO)
+  int guardarPdf(
+      @Param("id") Long id,
+      @Param("hash") String hash,
+      @Param("cid") String cid,
+      @Param("fecha") LocalDate fecha,
+      @Param("ahora") OffsetDateTime ahora);
+
+  /** Devuelve a Pendiente un documento cuya preparación falló (HU17). */
+  @Modifying
+  @Query(
+      "UPDATE Documento d SET d.estado = "
+          + PENDIENTE
+          + ", d.hashPdf = NULL, d.cid = NULL,"
+          + " d.fechaEmision = NULL, d.preparadoEn = NULL"
+          + " WHERE d.id = :id AND d.estado = "
+          + PROCESANDO)
+  int devolverAPendiente(@Param("id") Long id);
 }

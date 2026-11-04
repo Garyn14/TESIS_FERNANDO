@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -21,7 +22,8 @@ import pe.drasatipo.plataforma.usuarios.Usuario;
 
 /**
  * Documento registrado por el Área encargada (HU08). Mientras está Pendiente su contenido no se
- * puede modificar (RF20): todos sus datos se fijan al registrarlo. Solo se registra su revisión.
+ * puede modificar (RF20): todos sus datos se fijan al registrarlo. Solo se registran su revisión y,
+ * al firmar, su PDF final (HU17).
  */
 @Entity
 @Table(name = "documento")
@@ -93,6 +95,22 @@ public class Documento {
 
   @Column(name = "revisado_en")
   private OffsetDateTime revisadoEn;
+
+  /**
+   * PDF final guardado en IPFS al iniciarse la firma (HU17, RF30): su SHA-256, su CID y la fecha de
+   * emisión impresa. Nulos mientras no se prepare.
+   */
+  @Column(name = "hash_pdf")
+  private String hashPdf;
+
+  @Column(name = "cid")
+  private String cid;
+
+  @Column(name = "fecha_emision")
+  private LocalDate fechaEmision;
+
+  @Column(name = "preparado_en")
+  private OffsetDateTime preparadoEn;
 
   protected Documento() {}
 
@@ -240,5 +258,21 @@ public class Documento {
 
   public OffsetDateTime getRevisadoEn() {
     return revisadoEn;
+  }
+
+  public String getHashPdf() {
+    return hashPdf;
+  }
+
+  public String getCid() {
+    return cid;
+  }
+
+  public LocalDate getFechaEmision() {
+    return fechaEmision;
+  }
+
+  public OffsetDateTime getPreparadoEn() {
+    return preparadoEn;
   }
 }
