@@ -68,7 +68,7 @@ La prueba del Sprint 4 ([`plataforma/e2e/sprint4.cjs`](../../../../plataforma/e2
 
 Totales:
 - contrato: 25 pruebas;
-- backend: 184 pruebas;
+- backend: 181 pruebas;
 - frontend: 124 pruebas.
 
 ## Ajustes durante la verificación
