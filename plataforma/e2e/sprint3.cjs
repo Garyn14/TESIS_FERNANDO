@@ -216,7 +216,7 @@ const paso = async (nombre, fn) => {
     assert.equal(respuesta.headers()['content-type'], 'application/pdf')
     const ruta = `${out}/${archivo}.pdf`
     fs.writeFileSync(ruta, await respuesta.body())
-    return execFileSync('pdftotext', ['-layout', ruta, '-']).toString().replace(/\s+/g, ' ')
+    return execFileSync('pdftotext', ['-raw', ruta, '-']).toString().replace(/\s+/g, ' ')
   }
   /** Lee el QR de la primera página con ZXing (del repositorio local de Maven). */
   const leerQr = (pdf, png) => {

@@ -1,0 +1,10 @@
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ Preparación · Las áreas envían un documento, un lote y otro documento, en ese orden
+✓ HU10 · La bandeja muestra los pendientes del más antiguo al más reciente, con el lote en una fila
+✓ HU10 · Abrir un documento muestra sus datos y su vista previa, y lo registra como revisado
+✓ HU10 · En el lote se recorren los certificados y la relación; abrirlo revisa los tres
+✓ HU10 · En la base queda quién revisó y cuándo; volver a abrir no duplica el registro
+✓ HU16 · La muestra del PDF final trae la fecha de emisión, el código, la leyenda y los datos revisados
+✓ HU16 · El QR del PDF lleva la dirección de verificación con el token del documento
+✓ HU16 · Cada certificado de un lote tiene su propia muestra, con su nombre y su código
+✓ HU10 · Solo el Director ve la bandeja
