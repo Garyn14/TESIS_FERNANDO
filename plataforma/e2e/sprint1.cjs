@@ -368,7 +368,7 @@ const paso = async (nombre, fn) => {
 
     // La sesión desde la que se cambió sigue activa.
     await equipoA.getByRole('link', { name: 'Documentos firmados' }).click()
-    await equipoA.getByText('Se habilita en el Sprint 3', { exact: false }).waitFor()
+    await equipoA.getByText('Todavía no hay documentos firmados.').waitFor()
     await equipoA.context().close()
     await equipoB.context().close()
   })
