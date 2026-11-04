@@ -1,5 +1,6 @@
 package pe.drasatipo.plataforma.blockchain;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -25,6 +26,15 @@ public interface ContratoRegistro {
    * Vacío si la transacción no existe todavía, falló, es de otro contrato o no registró documentos.
    */
   Optional<RegistroDeFirma> registroDeFirmaEn(String transaccion);
+
+  /** Número del último bloque de la red (HU18). */
+  long bloqueActual();
+
+  /**
+   * Transacciones con eventos DocumentoRegistrado del contrato entre dos bloques, inclusive, en el
+   * orden de la cadena (HU18). Cada una trae la fecha de su bloque.
+   */
+  List<RegistroDeFirma> registrosEntre(long desde, long hasta);
 
   /** Indica si un código ya está registrado en el contrato (consulta de solo lectura). */
   boolean estaRegistrado(String codigo);

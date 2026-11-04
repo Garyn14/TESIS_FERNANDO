@@ -35,6 +35,12 @@ public class ContratoFalso implements ContratoRegistro {
 
   public boolean caido;
 
+  /** Último bloque de la red simulada; cada registro ocupa un bloque nuevo (HU18). */
+  public long bloque = 500;
+
+  /** Rangos consultados por registrosEntre, para comprobar dónde se reanuda (HU18). */
+  public final List<long[]> consultas = new ArrayList<>();
+
   public void reiniciar() {
     firmantes.clear();
     administradores.clear();
@@ -57,8 +63,7 @@ public class ContratoFalso implements ContratoRegistro {
     }
     firmas.put(
         hash,
-        new RegistroDeFirma(
-            hash, 500 + firmas.size(), Instant.parse("2026-11-04T15:30:00Z"), registrados));
+        new RegistroDeFirma(hash, ++bloque, Instant.parse("2026-11-04T15:30:00Z"), registrados));
     return hash;
   }
 
@@ -102,6 +107,22 @@ public class ContratoFalso implements ContratoRegistro {
   public Optional<RegistroDeFirma> registroDeFirmaEn(String transaccion) {
     revisar();
     return Optional.ofNullable(firmas.get(transaccion));
+  }
+
+  @Override
+  public long bloqueActual() {
+    revisar();
+    return bloque;
+  }
+
+  @Override
+  public List<RegistroDeFirma> registrosEntre(long desde, long hasta) {
+    revisar();
+    consultas.add(new long[] {desde, hasta});
+    return firmas.values().stream()
+        .filter(f -> f.bloque() >= desde && f.bloque() <= hasta)
+        .sorted(java.util.Comparator.comparingLong(RegistroDeFirma::bloque))
+        .toList();
   }
 
   @Override

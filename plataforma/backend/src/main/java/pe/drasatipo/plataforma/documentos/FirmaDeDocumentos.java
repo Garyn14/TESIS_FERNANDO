@@ -120,50 +120,12 @@ public class FirmaDeDocumentos {
     List<Firmado> firmados = new ArrayList<>();
     List<NoAplicado> noAplicados = new ArrayList<>();
     for (DocumentoRegistrado registrado : firma.documentos()) {
-      Documento documento = documentos.findByCodigo(registrado.codigo()).orElse(null);
-      if (documento != null
-          && documento.getEstado() == EstadoDocumento.FIRMADO
-          && transaccion.equalsIgnoreCase(documento.getTransaccion())) {
-        firmados.add(new Firmado(documento.getCodigo(), fecha.toString()));
-        continue;
+      String motivo = aplicar(firma, registrado, director, false);
+      if (motivo == null) {
+        firmados.add(new Firmado(registrado.codigo(), fecha.toString()));
+      } else {
+        noAplicados.add(new NoAplicado(registrado.codigo(), motivo));
       }
-      if (documento == null || documento.getEstado() != EstadoDocumento.PROCESANDO_FIRMA) {
-        LOG.warn(
-            "La transacción {} registró {}, que no está en proceso de firma",
-            transaccion,
-            registrado.codigo());
-        noAplicados.add(new NoAplicado(registrado.codigo(), NO_EN_PROCESO));
-        continue;
-      }
-      int cambiados =
-          documentos.marcarFirmado(
-              documento.getId(),
-              registrado.hashPdf(),
-              director,
-              fecha,
-              transaccion,
-              firma.bloque(),
-              registrado.firmante());
-      if (cambiados == 0) {
-        LOG.error(
-            "El hash registrado de {} en {} no coincide con el de su PDF",
-            registrado.codigo(),
-            transaccion);
-        noAplicados.add(new NoAplicado(registrado.codigo(), HASH_DISTINTO));
-        continue;
-      }
-      historial.save(
-          new HistorialDocumento(
-              documento.getId(),
-              EventoDocumento.FIRMADO,
-              "Firmado por %s con la billetera %s; transacción %s; bloque %d"
-                  .formatted(
-                      director.getNombreCompleto(),
-                      registrado.firmante(),
-                      transaccion,
-                      firma.bloque()),
-              director.getId()));
-      firmados.add(new Firmado(documento.getCodigo(), fecha.toString()));
     }
     LOG.info(
         "Transacción {} (bloque {}): {} documentos firmados",
@@ -171,6 +133,71 @@ public class FirmaDeDocumentos {
         firma.bloque(),
         firmados.size());
     return new Confirmacion(transaccion, firma.bloque(), firmados, noAplicados);
+  }
+
+  /**
+   * Aplica un documento registrado en el contrato (HU11, HU18): si está en Procesando firma y el
+   * hash coincide con el de su PDF, pasa a Firmado con la fecha del bloque. Repetirlo no cambia
+   * nada. Devuelve null si el documento queda Firmado, o el motivo por el que no se aplicó.
+   *
+   * @param firmante cuenta que firmó; nula si ninguna tiene esa billetera
+   * @param sincronizacion true si lo aplica la sincronización (HU18) y no la confirmación
+   */
+  String aplicar(
+      RegistroDeFirma firma,
+      DocumentoRegistrado registrado,
+      Usuario firmante,
+      boolean sincronizacion) {
+    Documento documento = documentos.findByCodigo(registrado.codigo()).orElse(null);
+    if (documento != null
+        && documento.getEstado() == EstadoDocumento.FIRMADO
+        && firma.transaccion().equalsIgnoreCase(documento.getTransaccion())) {
+      return null;
+    }
+    if (documento == null || documento.getEstado() != EstadoDocumento.PROCESANDO_FIRMA) {
+      LOG.warn(
+          "Inconsistencia: la transacción {} registró {}, que no está en proceso de firma",
+          firma.transaccion(),
+          registrado.codigo());
+      return NO_EN_PROCESO;
+    }
+    int cambiados =
+        documentos.marcarFirmado(
+            documento.getId(),
+            registrado.hashPdf(),
+            firmante,
+            firma.fecha().atOffset(ZoneOffset.UTC),
+            firma.transaccion(),
+            firma.bloque(),
+            registrado.firmante());
+    if (cambiados == 0
+        && documentos
+            .transaccionDeFirmado(documento.getId())
+            .filter(firma.transaccion()::equalsIgnoreCase)
+            .isPresent()) {
+      // La confirmación y la sincronización aplicaron el mismo evento a la vez: ya está Firmado.
+      return null;
+    }
+    if (cambiados == 0) {
+      LOG.error(
+          "Inconsistencia: el hash registrado de {} en {} no coincide con el de su PDF",
+          registrado.codigo(),
+          firma.transaccion());
+      return HASH_DISTINTO;
+    }
+    String quien =
+        firmante == null ? "la billetera" : firmante.getNombreCompleto() + " con la billetera";
+    historial.save(
+        new HistorialDocumento(
+            documento.getId(),
+            EventoDocumento.FIRMADO,
+            (sincronizacion
+                    ? "Firma confirmada por la sincronización con la blockchain: firmado por %s %s;"
+                        + " transacción %s; bloque %d"
+                    : "Firmado por %s %s; transacción %s; bloque %d")
+                .formatted(quien, registrado.firmante(), firma.transaccion(), firma.bloque()),
+            firmante == null ? null : firmante.getId()));
+    return null;
   }
 
   /**
