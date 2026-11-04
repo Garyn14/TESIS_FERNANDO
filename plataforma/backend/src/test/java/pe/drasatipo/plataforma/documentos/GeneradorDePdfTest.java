@@ -59,6 +59,8 @@ class GeneradorDePdfTest {
   private static String texto(byte[] pdf) throws Exception {
     PdfReader lector = new PdfReader(pdf);
     try {
+      // El documento cabe en una sola hoja: si algo se desborda, la leyenda pasaría a otra.
+      assertThat(lector.getNumberOfPages()).isEqualTo(1);
       return new PdfTextExtractor(lector).getTextFromPage(1).replaceAll("\\s+", " ");
     } finally {
       lector.close();

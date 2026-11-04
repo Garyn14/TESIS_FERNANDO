@@ -77,7 +77,7 @@ public class GeneradorDePdf {
   public PdfFinal generar(
       Documento documento, String firmante, LocalDate fechaEmision, boolean muestra) {
     ByteArrayOutputStream salida = new ByteArrayOutputStream();
-    Document pdf = new Document(PageSize.A4.rotate(), 64, 64, 54, 40);
+    Document pdf = new Document(PageSize.A4.rotate(), 64, 64, 62, 36);
     try {
       PdfWriter escritor = PdfWriter.getInstance(pdf, salida);
       pdf.addTitle(documento.getTipo().getNombre() + " " + documento.getCodigo());
@@ -86,18 +86,18 @@ public class GeneradorDePdf {
       marco(escritor.getDirectContentUnder(), pdf.getPageSize());
 
       pdf.add(encabezado());
-      pdf.add(centrado(documento.getTipo().getTitulo(), fuente(normal, 34, INSTITUCIONAL), 18, 4));
-      pdf.add(centrado("Otorgado a", fuente(normal, 13, TINTA), 6, 2));
+      pdf.add(centrado(documento.getTipo().getTitulo(), fuente(normal, 38, INSTITUCIONAL), 16, 2));
+      pdf.add(centrado("Otorgado a", fuente(normal, 14, TINTA), 8, 4));
       pdf.add(
           centrado(
               documento.getBeneficiario().toUpperCase(),
-              fuente(negrita, 24, INSTITUCIONAL),
-              2,
-              10));
-      Paragraph texto = centrado(documento.getTexto(), fuente(normal, 13, TINTA), 4, 0);
+              fuente(negrita, 28, INSTITUCIONAL),
+              4,
+              14));
+      Paragraph texto = centrado(documento.getTexto(), fuente(normal, 14, TINTA), 4, 0);
       texto.setIndentationLeft(60);
       texto.setIndentationRight(60);
-      texto.setLeading(19);
+      texto.setLeading(21);
       pdf.add(texto);
       pdf.add(pie(documento, firmante, fechaEmision));
       pdf.add(
@@ -105,7 +105,7 @@ public class GeneradorDePdf {
               "Verifique la autenticidad de este documento en %s con el código %s"
                   .formatted(portalImpreso(), documento.getCodigo()),
               fuente(normal, 9, TENUE),
-              10,
+              16,
               0));
 
       if (muestra) {
@@ -128,8 +128,8 @@ public class GeneradorDePdf {
   }
 
   private PdfPTable encabezado() throws IOException, DocumentException {
-    PdfPTable tabla = new PdfPTable(new float[] {1, 9});
-    tabla.setTotalWidth(330);
+    PdfPTable tabla = new PdfPTable(new float[] {1.3f, 8.7f});
+    tabla.setTotalWidth(370);
     tabla.setLockedWidth(true);
     tabla.setHorizontalAlignment(Element.ALIGN_CENTER);
     Image imagen = Image.getInstance(logo);
@@ -152,7 +152,7 @@ public class GeneradorDePdf {
       throws IOException, DocumentException {
     PdfPTable tabla = new PdfPTable(new float[] {1, 1, 1});
     tabla.setWidthPercentage(100);
-    tabla.setSpacingBefore(26);
+    tabla.setSpacingBefore(30);
 
     PdfPCell fecha =
         celda(
@@ -164,7 +164,7 @@ public class GeneradorDePdf {
     Image qr =
         Image.getInstance(
             CodigoQr.imagen(direccionDeVerificacion(documento.getTokenQr()), 300), null);
-    qr.scaleToFit(92, 92);
+    qr.scaleToFit(96, 96);
     PdfPCell conQr = celda(null);
     qr.setAlignment(Element.ALIGN_CENTER);
     conQr.addElement(qr);
