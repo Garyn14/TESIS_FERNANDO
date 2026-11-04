@@ -151,6 +151,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 03/11/2026 | [41758193909](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41758193909) | `DRA-23-firmar-lote` | ✓ Cinco jobs en verde con HU12: migración V15, observar y rechazar certificados de un lote y firmar el resto (161 pruebas de backend, 113 de frontend) |
 | 04/11/2026 | [41779637849](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41779637849) | `DRA-26-sincronizar-blockchain` | ✓ Cinco jobs en verde con HU18, la última del Sprint 3: migración V16 y sincronización con los eventos del contrato (167 pruebas de backend, 113 de frontend) |
 | 04/11/2026 | [41784094378](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41784094378) | `DRA-27-observar-documento` | ✓ Cinco jobs en verde con HU13, la primera del Sprint 4: observar un documento y migración V17 (171 pruebas de backend, 114 de frontend) |
+| 04/11/2026 | [41786330073](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41786330073) | `DRA-28-rechazar-documento` | ✓ Cinco jobs en verde con HU14: rechazar un documento (174 pruebas de backend, 115 de frontend) |
 
 ## 9. Pendientes
 
