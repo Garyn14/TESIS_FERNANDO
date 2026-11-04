@@ -53,7 +53,7 @@ until docker exec e2e-pg pg_isready -U plataforma >/dev/null 2>&1; do sleep 1; d
 docker rm -f e2e-ipfs >/dev/null 2>&1 || true
 docker run -d --name e2e-ipfs -e LIBP2P_FORCE_PNET=1 -e IPFS_SWARM_KEY_FILE=/red/swarm.key \
   -v "$PWD/infra/ipfs/red:/red:ro" -v "$PWD/infra/ipfs/init:/container-init.d:ro" \
-  -p 127.0.0.1:5002:5001 ipfs/kubo:v0.43.1 >/dev/null
+  -p 127.0.0.1:5002:5001 -p 127.0.0.1:8082:8080 ipfs/kubo:v0.43.1 >/dev/null
 until curl -sf -X POST localhost:5002/api/v0/id >/dev/null 2>&1; do sleep 1; done
 
 (cd backend && ./mvnw -q package -DskipTests)
@@ -83,9 +83,12 @@ En MetaMask (billeteras SOLO de prueba, sin valor):
      Plataforma DRA Satipo · RPC http://localhost:8545 · chainId 20260 · moneda DRA
   2. Importe la cuenta del Administrador del contrato con esta clave privada:
      ${d.billeteras.administrador.clave}
-  3. Dirección para registrar como billetera del director:
+  3. Importe también la cuenta del Director (para firmar, Sprint 3) con esta clave privada:
+     ${d.billeteras.director.clave}
+     Su dirección, para registrarla como billetera del director:
      ${d.billeteras.director.direccion}
-Contrato RegistroDocumentos: ${d.contrato}`)'
+Contrato RegistroDocumentos: ${d.contrato}
+PDF guardados en IPFS: http://localhost:8082/ipfs/<CID>  (ver e2e/ver-registro.sh)`)'
 else
   echo "Entorno listo. En otra terminal: node e2e/sprint1.cjs <carpeta de capturas>"
 fi

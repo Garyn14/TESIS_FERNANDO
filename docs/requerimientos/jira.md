@@ -13,15 +13,21 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 | 0 | 28/10 – 29/10 | Cerrado | Infraestructura: red Besu, IPFS privado y entorno de desarrollo | Tareas DRA-42, DRA-43, DRA-45, DRA-46, DRA-47 | — |
 | 1 | 29/10 – 31/10 | Cerrado (24 de 24 puntos) | Usuarios, roles, áreas y billetera del director | HU01–HU06 | 24 |
 | 2 | 01/11 – 03/11 | Cerrado (23 de 23 puntos) | Solicitudes individuales y por lista | HU07–HU09 | 23 |
-| 3 | 03/11 – 16/11 | **Activo** | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 + tarea DRA-44 (AWS, diferida) | 47 |
+| 3 | 03/11 – 16/11 | **Activo**: 6 de 6 historias en revisión (04/11) | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 + tarea DRA-44 (AWS, diferida) | 47 |
 | 4 | 17/11 – 23/11 | Futuro | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
 | 5 | 24/11 – 30/11 | Futuro | Verificación pública de autenticidad | HU19–HU21 | 16 |
 | 6 | 01/12 – 07/12 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
 | | | | | **Total** | **156** |
 
-**Avance:** 47 de 156 puntos (30 %). Velocidad: 24 puntos en el Sprint 1 y 23 en el Sprint 2.
+**Avance:** 47 de 156 puntos aprobados (30 %), y otros 47 del Sprint 3 construidos y en revisión. Si se aprueban, serán 94 de 156 (60 %). Velocidad: 24 puntos en el Sprint 1 y 23 en el Sprint 2.
 
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
+
+### Avance del Sprint 3 (04/11/2026)
+
+- **En revisión:** HU10, HU16, HU17, HU11, HU12 y HU18 (DRA-21 a DRA-26), 47 puntos. Cada una está integrada a `main`, con la CI en verde y un comentario de cierre en su ticket.
+- **Revisión:** se puede adelantar. Material en [guion de pruebas](../scrum/sprint-3/guion-de-pruebas.md) y [revision.md](../scrum/sprint-3/revision.md).
+- **Sigue diferida:** DRA-44 (infraestructura en AWS).
 
 ### Cierre del Sprint 2 (03/11/2026)
 
