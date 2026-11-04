@@ -141,7 +141,7 @@ export default function PaginaPorRevisar({ director = '' }: { director?: string 
         <div
           role="region"
           aria-label="Selección para firmar"
-          className="fixed inset-x-0 bottom-0 border-t border-line bg-card/95 shadow-lg"
+          className="fixed inset-x-0 bottom-0 border-t border-line bg-card/95 shadow-lg md:left-64"
         >
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
             <span className="font-medium">

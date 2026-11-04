@@ -15,25 +15,34 @@ Si la red no permite descargar el compilador oficial (por ejemplo, un entorno co
 
 ## Contratos
 
-| Contrato                 | Para qué                                                                                                                           | Historia         |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `RegistroDocumentos.sol` | Registro de los documentos firmados. Hoy define los roles; el registro y la anulación de documentos se agregan en HU16–HU18 y HU29 | HU06 en adelante |
-| `PruebaRed.sol`          | Solo para la prueba de humo de la red Besu; no es parte de la plataforma                                                           | DRA-45           |
+| Contrato                 | Para qué                                                                                                          | Historia         |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `RegistroDocumentos.sol` | Registro de los documentos firmados: roles (HU06) y registro de documentos (HU11). La anulación se agrega en HU29 | HU06 en adelante |
+| `PruebaRed.sol`          | Solo para la prueba de humo de la red Besu; no es parte de la plataforma                                          | DRA-45           |
 
 ### Roles de `RegistroDocumentos`
 
 | Rol                                               | Billeteras                                                             | Puede                                                                    |
 | ------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | `DEFAULT_ADMIN_ROLE` (administrador del contrato) | La del Administrador de la plataforma y una de respaldo fuera de línea | `otorgarFirmante`, `revocarFirmante` y administrar otros administradores |
-| `FIRMANTE_ROLE` = `keccak256("FIRMANTE_ROLE")`    | La del director                                                        | Registrar documentos (desde HU17)                                        |
+| `FIRMANTE_ROLE` = `keccak256("FIRMANTE_ROLE")`    | La del director                                                        | `registrarDocumentos` (HU11)                                             |
 
 Reglas propias, además de las de OpenZeppelin `AccessControl`:
 
 - Una billetera no puede ser a la vez administradora y firmante (control interno: quien administra los permisos no firma). La regla también aplica a `grantRole`.
 - Siempre debe quedar al menos un administrador: `revokeRole` y `renounceRole` del último fallan con `UltimoAdministrador`.
-- Revocar el rol de firmante no borra nada de lo registrado (RF08). Cuando exista el registro de documentos, su validez dependerá del registro y no del rol actual de quien lo firmó.
+- Revocar el rol de firmante no borra nada de lo registrado (RF08): la validez de un documento depende de su registro y no del rol actual de quien lo firmó.
 
 Los cambios de rol emiten los eventos estándar `RoleGranted` y `RoleRevoked`. El backend los usa para verificar las transacciones que envía el navegador.
+
+### Registro de documentos (HU11)
+
+| Función                                          | Quién      | Qué hace                                                                                                                                                                                      |
+| ------------------------------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `registrarDocumentos(codigos, hashes, dniHmacs)` | Firmante   | Registra de 1 a 50 documentos (`MAXIMO_POR_TRANSACCION`): código, SHA-256 del PDF final y HMAC del DNI. Emite `DocumentoRegistrado` por cada uno. Si uno no es válido, no se registra ninguno |
+| `consultar(codigo)`                              | Cualquiera | Devuelve si está registrado y su hash, HMAC, billetera firmante y fecha del bloque (la fecha oficial de emisión, RF32). Lo usará la verificación (HU21)                                       |
+
+Un código no se registra dos veces (`CodigoYaRegistrado`). El DNI nunca va a la blockchain: solo su HMAC (RF17). El navegador divide una selección de más de 50 documentos en varias transacciones; en la red Besu, 50 documentos usan unos 3,7 millones de gas, sin costo (RNF11).
 
 ## Despliegue
 

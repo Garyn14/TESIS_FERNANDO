@@ -7,7 +7,8 @@ const { JsonRpcProvider, Wallet, toBeHex } = require('ethers')
 
 /**
  * Instala la billetera en un contexto de Playwright.
- * @returns {{ usar: (clave: string) => void, redesAgregadas: string[], transacciones: string[] }}
+ * @returns {{ usar: (clave: string) => void, rechazar: (...posiciones: number[]) => void,
+ *   redesAgregadas: string[], transacciones: string[] }}
  */
 async function instalarBilletera(contexto, rpcUrl) {
   const nodo = new JsonRpcProvider(rpcUrl, undefined, { staticNetwork: true })
@@ -16,6 +17,9 @@ async function instalarBilletera(contexto, rpcUrl) {
   let redActual = '0x1'
   const redesConocidas = new Set(['0x1'])
   const estado = { redesAgregadas: [], transacciones: [] }
+  // HU11: envíos que la persona "cancela" en la billetera (posiciones contadas desde rechazar()).
+  let rechazos = new Set()
+  let envios = 0
 
   const atender = async ({ method, params = [] }) => {
     switch (method) {
@@ -35,6 +39,8 @@ async function instalarBilletera(contexto, rpcUrl) {
         redActual = params[0].chainId
         return null
       case 'eth_sendTransaction': {
+        envios++
+        if (rechazos.has(envios)) throw { code: 4001, message: 'User rejected the request.' }
         const { to, data } = params[0]
         const tx = await cuenta.connect(nodo).sendTransaction({ to, data, gasPrice: 0n, type: 0 })
         estado.transacciones.push(tx.hash)
@@ -65,7 +71,15 @@ async function instalarBilletera(contexto, rpcUrl) {
       removeListener() {},
     }
   })
-  return { ...estado, usar: (clave) => (cuenta = new Wallet(clave)), estado }
+  return {
+    ...estado,
+    usar: (clave) => (cuenta = new Wallet(clave)),
+    /** Las próximas transacciones en estas posiciones (1 = la siguiente) se cancelan (código 4001). */
+    rechazar: (...posiciones) => {
+      rechazos = new Set(posiciones.map((p) => envios + p))
+    },
+    estado,
+  }
 }
 
 module.exports = { instalarBilletera }
