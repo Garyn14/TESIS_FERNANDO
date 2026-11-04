@@ -144,13 +144,7 @@ public class RevisionDelDirector {
       List<String> codigos,
       String motivo,
       EstadoDocumento decision) {
-    String texto = motivo == null ? "" : motivo.strip();
-    if (texto.isEmpty()) {
-      throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "motivo", SIN_MOTIVO);
-    }
-    if (texto.length() > 500) {
-      throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "motivo", MOTIVO_LARGO);
-    }
+    String texto = motivoValido(motivo);
     Usuario director = registro.cuenta(nombreUsuario);
     Lote lote =
         lotes
@@ -173,22 +167,65 @@ public class RevisionDelDirector {
       Set<String> pedidos = Set.copyOf(codigos);
       elegidos = pendientes.stream().filter(d -> pedidos.contains(d.getCodigo())).toList();
     }
-    boolean observar = decision == EstadoDocumento.OBSERVADO;
     for (Documento documento : elegidos) {
-      if (documentos.decidir(documento.getId(), decision, texto) == 1) {
-        historial.save(
-            new HistorialDocumento(
-                documento.getId(),
-                observar ? EventoDocumento.OBSERVADO : EventoDocumento.RECHAZADO,
-                "%s por %s: %s"
-                    .formatted(
-                        observar ? "Observado" : "Rechazado", director.getNombreCompleto(), texto),
-                director.getId()));
-      }
+      registrarDecision(documento, decision, texto, director);
     }
     // Las sentencias de actualización no pasan por las entidades ya cargadas.
     entidades.clear();
     return registroDeLotes.respuesta(lotes.findByNumero(numero).orElseThrow());
+  }
+
+  /**
+   * HU13 (RF24, RF25): observa un documento Pendiente con un motivo; vuelve al Área encargada. HU14
+   * usará la misma decisión para rechazar.
+   */
+  @Transactional
+  public DocumentoRespuesta decidirEnDocumento(
+      String nombreUsuario, String codigo, String motivo, EstadoDocumento decision) {
+    String texto = motivoValido(motivo);
+    Usuario director = registro.cuenta(nombreUsuario);
+    Documento documento =
+        documentos
+            .findByCodigo(codigo)
+            .filter(d -> d.getEstado() == EstadoDocumento.PENDIENTE)
+            .orElseThrow(
+                () -> new ReglaDeNegocioException(HttpStatus.NOT_FOUND, null, NO_PENDIENTE));
+    if (!registrarDecision(documento, decision, texto, director)) {
+      // Cambió de estado entre la lectura y la decisión (por ejemplo, empezó a firmarse).
+      throw new ReglaDeNegocioException(HttpStatus.NOT_FOUND, null, NO_PENDIENTE);
+    }
+    entidades.clear();
+    return DocumentoRespuesta.de(
+        documentos.findByCodigo(codigo).orElseThrow(), registro.firmante());
+  }
+
+  private static String motivoValido(String motivo) {
+    String texto = motivo == null ? "" : motivo.strip();
+    if (texto.isEmpty()) {
+      throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "motivo", SIN_MOTIVO);
+    }
+    if (texto.length() > 500) {
+      throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "motivo", MOTIVO_LARGO);
+    }
+    return texto;
+  }
+
+  /** Observa o rechaza un documento si sigue Pendiente, y lo deja en su historial. */
+  private boolean registrarDecision(
+      Documento documento, EstadoDocumento decision, String texto, Usuario director) {
+    boolean observar = decision == EstadoDocumento.OBSERVADO;
+    if (documentos.decidir(documento.getId(), decision, texto) != 1) {
+      return false;
+    }
+    historial.save(
+        new HistorialDocumento(
+            documento.getId(),
+            observar ? EventoDocumento.OBSERVADO : EventoDocumento.RECHAZADO,
+            "%s por %s: %s"
+                .formatted(
+                    observar ? "Observado" : "Rechazado", director.getNombreCompleto(), texto),
+            director.getId()));
+    return true;
   }
 
   private void registrarRevision(Documento documento, Usuario director, String detalle) {

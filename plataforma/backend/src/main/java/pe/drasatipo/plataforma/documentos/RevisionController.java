@@ -44,6 +44,17 @@ public class RevisionController {
     return revision.revisarLote(sesion.getName(), numero);
   }
 
+  public record MotivoSolicitud(String motivo) {}
+
+  /** Observación de un documento (HU13): vuelve al Área encargada con el motivo. */
+  @PostMapping("/documentos/{codigo}/observacion")
+  @PreAuthorize("hasAuthority('DOCUMENTO_OBSERVAR')")
+  public DocumentoRespuesta observarDocumento(
+      @PathVariable String codigo, @RequestBody MotivoSolicitud solicitud, Authentication sesion) {
+    return revision.decidirEnDocumento(
+        sesion.getName(), codigo, solicitud.motivo(), EstadoDocumento.OBSERVADO);
+  }
+
   /** Observación o rechazo de certificados de un lote (HU12): sin códigos, todo el lote. */
   public record DecisionSolicitud(List<String> codigos, String motivo) {}
 
