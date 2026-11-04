@@ -1,0 +1,29 @@
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ Preparación · El Administrador registra la billetera del Director y le otorga el rol de firmante
+✓ Preparación · Las áreas envían un documento, un lote y otro documento, en ese orden
+✓ HU10 · La bandeja muestra los pendientes del más antiguo al más reciente, con el lote en una fila
+✓ HU10 · Abrir un documento muestra sus datos y su vista previa, y lo registra como revisado
+✓ HU10 · En el lote se recorren los certificados y la relación; abrirlo revisa los tres
+✓ HU10 · En la base queda quién revisó y cuándo; volver a abrir no duplica el registro
+✓ HU16 · La muestra del PDF final trae la fecha de emisión, el código, la leyenda y los datos revisados
+✓ HU16 · El QR del PDF lleva la dirección de verificación con el token del documento
+✓ HU16 · Cada certificado de un lote tiene su propia muestra, con su nombre y su código
+✓ HU17 · Al preparar la firma, el PDF final queda en IPFS, fijado, con su CID y su hash
+✓ HU17 · El documento sale de Por revisar y el área lo ve en Procesando firma
+✓ HU17 · Si IPFS no responde, el documento vuelve a Pendiente con el error en su historial
+✓ HU17 · Con IPFS de nuevo en línea, los tres certificados del lote se guardan, cada uno con su CID
+✓ HU17 · Solo el Director prepara la firma
+✓ HU11 · Si la firma no se completa, los preparados vuelven a Pendiente tras comprobarlo en el contrato
+✓ HU11 · En Por revisar solo se puede seleccionar lo revisado
+✓ HU11 · El Director firma un documento desde su revisión; queda registrado en la blockchain real
+✓ HU11 · Si el Director cancela en la billetera, el lote vuelve a Pendiente y no se registra
+✓ HU11 · Más de 50 documentos se registran en dos transacciones; si una falla, la otra sigue
+✓ HU11 · Los 5 que volvieron se firman en otra operación
+✓ HU11 · El área ve sus documentos Firmados; la firma no costó nada
+✓ HU12 · En la revisión del lote, el Director observa y rechaza beneficiarios con su motivo
+✓ HU12 · "Firmar lote" firma los 3 que siguen Pendientes, en la blockchain real
+✓ HU12 · El área ve cuántos certificados del lote hay en cada estado y el motivo de cada uno
+✓ HU12 · Observar el lote completo lo devuelve al área y lo saca de Por revisar
+✓ HU12 · El motivo es obligatorio y solo el Director observa o rechaza
+✓ HU11 · Solo el Director firma
+✓ HU10 · Solo el Director ve la bandeja
