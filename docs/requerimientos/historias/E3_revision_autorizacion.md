@@ -207,10 +207,34 @@ Los tres primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo 
 
 **Como** director, **quiero** rechazar un documento indicando un motivo, **para** concluir un trámite que no debe emitirse.
 
+**Contexto**
+
+Con HU12 el Director ya puede rechazar certificados de un lote, y con HU13 observa un documento individual. Esta historia agrega "Rechazar" (en rojo, como en el prototipo) a la revisión de un documento. A diferencia de la observación, el rechazo es definitivo: el documento no vuelve a revisión, no se corrige ni se firma.
+
 **Criterios de aceptación**
+
+Los tres primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] El motivo es obligatorio.
 - [ ] El rechazo es definitivo.
-- [ ] En los documentos a solicitud de parte se avisa a Mesa de Partes.
+- [ ] En los documentos a solicitud de parte se avisa a Mesa de Partes. **El aviso lo envía HU28 (Sprint 6)**, que trae las notificaciones. Hoy el rechazo queda registrado, con su motivo, para que HU28 lo informe.
+- [ ] En la revisión de un documento Pendiente está el botón "Rechazar", en rojo. Abre la ventana de motivo con el título "Rechazar documento", el campo **Motivo** (obligatorio, hasta 500 caracteres) y el aviso "El rechazo es definitivo. El documento no podrá reenviarse."
+- [ ] Al confirmar, el documento pasa a **Rechazado** y sale de Por revisar. La pantalla dice "El documento fue rechazado." con el motivo, y ya no ofrece acciones.
+- [ ] El motivo queda en el documento. El historial registra "Rechazado por [Director]: [motivo]", con quién y cuándo.
+- [ ] Un documento rechazado no se puede observar, firmar, ni volver a rechazar.
+- [ ] El Área encargada lo ve como Rechazado (rojo) en Mis documentos. En su detalle ve el motivo y el aviso de que el rechazo es definitivo.
+- [ ] Solo se rechaza un documento Pendiente. Solo el Director (permiso DOCUMENTO_RECHAZAR) puede rechazar. Sin sesión se responde 401 y con otro rol, 403 (RF04).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Aviso del rechazo a Mesa de Partes | HU28 (Sprint 6) |
+| Aviso del rechazo al Área encargada | HU27 (Sprint 6) |
+
+**Notas técnicas**
+
+- API: `POST /api/revision/documentos/{codigo}/rechazo` con `{"motivo": "..."}`. Usa la misma decisión de HU12 y HU13.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
