@@ -50,3 +50,10 @@ export const observarDocumento = (codigo: string, motivo: string) =>
     method: 'POST',
     body: JSON.stringify({ motivo }),
   })
+
+/** HU14: rechaza un documento Pendiente con su motivo; el rechazo es definitivo. */
+export const rechazarDocumento = (codigo: string, motivo: string) =>
+  solicitar<Documento>(`/api/revision/documentos/${encodeURIComponent(codigo)}/rechazo`, {
+    method: 'POST',
+    body: JSON.stringify({ motivo }),
+  })
