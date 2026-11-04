@@ -56,7 +56,7 @@ export interface VistaPrevia {
 }
 
 export type EstadoDocumento =
-  'PENDIENTE' | 'PROCESANDO_FIRMA' | 'FIRMADO' | 'OBSERVADO' | 'RECHAZADO'
+  'PENDIENTE' | 'PROCESANDO_FIRMA' | 'FIRMADO' | 'OBSERVADO' | 'RECHAZADO' | 'ANULADO'
 
 export interface Documento extends VistaPrevia {
   codigo: string
@@ -122,6 +122,7 @@ export const ESTADOS: Record<EstadoDocumento, string> = {
   FIRMADO: 'Firmado',
   OBSERVADO: 'Observado',
   RECHAZADO: 'Rechazado',
+  ANULADO: 'Anulado',
 }
 
 const FECHA = new Intl.DateTimeFormat('es-PE', {

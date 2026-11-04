@@ -8,6 +8,7 @@ const COLORES: Record<EstadoDocumento, string> = {
   FIRMADO: 'bg-green-pale text-institutional',
   OBSERVADO: 'bg-orange-pale text-orange',
   RECHAZADO: 'bg-red-50 text-red-800',
+  ANULADO: 'bg-neutral-pale text-neutral-icon line-through',
 }
 
 /** Etiqueta del estado de un documento (HU08, HU11, HU12, HU17). */

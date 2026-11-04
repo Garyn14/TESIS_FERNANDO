@@ -6,12 +6,20 @@ import { BOTON_ADVERTENCIA, BOTON_PRIMARIO, BOTON_SECUNDARIO, CAMPO } from '../c
 interface Props {
   titulo: string
   rechazo: boolean
+  /** Aviso de una acción definitiva; por defecto, el del rechazo. */
+  aviso?: string
   onConfirmar: (motivo: string) => Promise<void>
   onCerrar: () => void
 }
 
 /** Ventana de motivo del prototipo (HU12, HU13, HU14): el motivo es obligatorio. */
-export default function VentanaDeMotivo({ titulo, rechazo, onConfirmar, onCerrar }: Props) {
+export default function VentanaDeMotivo({
+  titulo,
+  rechazo,
+  aviso = 'El rechazo es definitivo. El documento no podrá reenviarse.',
+  onConfirmar,
+  onCerrar,
+}: Props) {
   const id = useId()
   const [motivo, setMotivo] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -43,11 +51,7 @@ export default function VentanaDeMotivo({ titulo, rechazo, onConfirmar, onCerrar
             className={`${CAMPO} border-line font-normal`}
           />
         </label>
-        {rechazo && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-red-800">
-            El rechazo es definitivo. El documento no podrá reenviarse.
-          </p>
-        )}
+        {rechazo && <p className="rounded-lg bg-red-50 px-3 py-2 text-red-800">{aviso}</p>}
         {error && (
           <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-red-800">
             {error}

@@ -12,6 +12,7 @@ const AVISOS: Record<Documento['estado'], string> = {
   FIRMADO: 'Firmado por el Director y registrado en la blockchain.',
   OBSERVADO: 'El Director lo observó y lo devolvió al área para que lo corrija.',
   RECHAZADO: 'El Director lo rechazó. El rechazo es definitivo.',
+  ANULADO: 'El Director lo anuló: ya no es válido. La anulación está registrada en la blockchain.',
 }
 
 /**

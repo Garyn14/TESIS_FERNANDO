@@ -25,6 +25,7 @@ const ABI = [
   'function esAdministrador(address cuenta) view returns (bool)',
   'function esFirmante(address cuenta) view returns (bool)',
   'function registrarDocumentos(string[] codigos, bytes32[] hashes, bytes32[] dniHmacs)',
+  'function anularDocumento(string codigo)',
 ]
 
 /** Traduce los errores de la billetera a lenguaje cotidiano (RNF07). */
@@ -158,6 +159,28 @@ export async function registrarDocumentos(
     const recibo = await tx.wait()
     if (!recibo || recibo.status !== 1)
       throw new ErrorBilletera('La blockchain rechazó la transacción. No se registró la firma.')
+    return tx.hash as string
+  } catch (e) {
+    throw traducir(e)
+  }
+}
+
+/**
+ * HU29 (RF49): anula un documento en el contrato con la billetera del Director y espera su
+ * confirmación. Devuelve el identificador de la transacción, que el servidor lee en la blockchain.
+ */
+export async function anularDocumento(
+  red: Red,
+  codigo: string,
+  alEnviar?: () => void,
+): Promise<string> {
+  try {
+    const c = await contrato(red)
+    const tx = await c.anularDocumento(codigo, { type: 0, gasPrice: 0n })
+    alEnviar?.()
+    const recibo = await tx.wait()
+    if (!recibo || recibo.status !== 1)
+      throw new ErrorBilletera('La blockchain rechazó la anulación. El documento sigue firmado.')
     return tx.hash as string
   } catch (e) {
     throw traducir(e)
