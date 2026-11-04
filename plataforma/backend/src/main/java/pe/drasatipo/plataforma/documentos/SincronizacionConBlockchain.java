@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import pe.drasatipo.plataforma.blockchain.AnulacionRegistrada;
 import pe.drasatipo.plataforma.blockchain.BlockchainNoDisponibleException;
 import pe.drasatipo.plataforma.blockchain.ContratoRegistro;
 import pe.drasatipo.plataforma.blockchain.DocumentoRegistrado;
@@ -29,8 +30,10 @@ import pe.drasatipo.plataforma.usuarios.UsuarioRepository;
  *   <li>lee los eventos DocumentoRegistrado desde el último bloque procesado y pasa a Firmado los
  *       documentos que siguen en Procesando firma (por ejemplo, si se cerró el navegador antes de
  *       confirmar la firma);
+ *   <li>aplica los eventos DocumentoAnulado (HU29): un Firmado pasa a Anulado;
  *   <li>ya al día con la cadena, devuelve a Pendiente los documentos que llevan más del plazo en
- *       Procesando firma y que el contrato no registró.
+ *       Procesando firma y que el contrato no registró, y descarta las anulaciones solicitadas que
+ *       no se registraron.
  * </ol>
  *
  * El último bloque procesado se guarda en la misma transacción en que se aplican sus eventos: tras
@@ -47,6 +50,7 @@ public class SincronizacionConBlockchain {
   private final ContratoRegistro contrato;
   private final RedBlockchainProperties red;
   private final FirmaDeDocumentos firma;
+  private final AnulacionDeDocumentos anulacionDeDocumentos;
   private final DocumentoRepository documentos;
   private final HistorialDocumentoRepository historial;
   private final UsuarioRepository usuarios;
@@ -59,6 +63,7 @@ public class SincronizacionConBlockchain {
       ContratoRegistro contrato,
       RedBlockchainProperties red,
       FirmaDeDocumentos firma,
+      AnulacionDeDocumentos anulacionDeDocumentos,
       DocumentoRepository documentos,
       HistorialDocumentoRepository historial,
       UsuarioRepository usuarios,
@@ -69,6 +74,7 @@ public class SincronizacionConBlockchain {
     this.contrato = contrato;
     this.red = red;
     this.firma = firma;
+    this.anulacionDeDocumentos = anulacionDeDocumentos;
     this.documentos = documentos;
     this.historial = historial;
     this.usuarios = usuarios;
@@ -79,7 +85,7 @@ public class SincronizacionConBlockchain {
   }
 
   /** Resultado de una ejecución. */
-  public record Resumen(long ultimoBloque, int firmados, int devueltos) {}
+  public record Resumen(long ultimoBloque, int firmados, int devueltos, int anulados) {}
 
   /** Tarea programada. Solo corre si el contrato está configurado. */
   @Scheduled(
@@ -91,12 +97,13 @@ public class SincronizacionConBlockchain {
     }
     try {
       Resumen resumen = sincronizar(Instant.now());
-      if (resumen.firmados() > 0 || resumen.devueltos() > 0) {
+      if (resumen.firmados() > 0 || resumen.devueltos() > 0 || resumen.anulados() > 0) {
         LOG.info(
-            "Sincronización hasta el bloque {}: {} firmados y {} devueltos a Pendiente",
+            "Sincronización hasta el bloque {}: {} firmados, {} devueltos a Pendiente y {} anulados",
             resumen.ultimoBloque(),
             resumen.firmados(),
-            resumen.devueltos());
+            resumen.devueltos(),
+            resumen.anulados());
       }
     } catch (BlockchainNoDisponibleException e) {
       // No se cambió nada: se reintenta en la siguiente ejecución.
@@ -110,10 +117,13 @@ public class SincronizacionConBlockchain {
     long actual = contrato.bloqueActual();
     long ultimo = ultimoBloque(direccion);
     int firmados = 0;
+    java.util.concurrent.atomic.AtomicInteger anulados =
+        new java.util.concurrent.atomic.AtomicInteger();
     while (ultimo < actual) {
       long desde = ultimo + 1;
       long hasta = Math.min(actual, desde + TRAMO - 1);
       List<RegistroDeFirma> registros = contrato.registrosEntre(desde, hasta);
+      List<AnulacionRegistrada> anulaciones = contrato.anulacionesEntre(desde, hasta);
       Integer aplicados =
           transaccion.execute(
               estado -> {
@@ -123,6 +133,12 @@ public class SincronizacionConBlockchain {
                     if (aplicarSiFalta(registro, documento)) {
                       cuenta++;
                     }
+                  }
+                }
+                // HU29: las anulaciones se aplican después de las firmas del mismo tramo.
+                for (AnulacionRegistrada anulacion : anulaciones) {
+                  if (anulacionDeDocumentos.aplicar(anulacion, null)) {
+                    anulados.incrementAndGet();
                   }
                 }
                 guardarUltimoBloque(direccion, hasta);
@@ -163,7 +179,16 @@ public class SincronizacionConBlockchain {
         devueltos++;
       }
     }
-    return new Resumen(ultimo, firmados, devueltos);
+    // HU29: una anulación solicitada que no llegó a la blockchain en el plazo se descarta.
+    for (Documento pendiente : documentos.anulacionesDetenidas(limite)) {
+      if (!contrato.estaAnulado(pendiente.getCodigo())) {
+        transaccion.executeWithoutResult(
+            estado -> documentos.descartarAnulacion(pendiente.getId()));
+        LOG.warn(
+            "Se descartó la anulación de {}: no se registró en el plazo", pendiente.getCodigo());
+      }
+    }
+    return new Resumen(ultimo, firmados, devueltos, anulados.get());
   }
 
   /** Aplica un documento registrado si todavía no está Firmado; true si lo pasó a Firmado ahora. */

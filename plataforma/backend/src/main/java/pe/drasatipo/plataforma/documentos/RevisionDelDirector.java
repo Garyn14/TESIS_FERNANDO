@@ -200,7 +200,7 @@ public class RevisionDelDirector {
         documentos.findByCodigo(codigo).orElseThrow(), registro.firmante());
   }
 
-  private static String motivoValido(String motivo) {
+  static String motivoValido(String motivo) {
     String texto = motivo == null ? "" : motivo.strip();
     if (texto.isEmpty()) {
       throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "motivo", SIN_MOTIVO);

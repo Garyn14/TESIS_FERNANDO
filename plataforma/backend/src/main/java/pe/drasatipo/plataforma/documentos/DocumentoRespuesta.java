@@ -46,7 +46,10 @@ public record DocumentoRespuesta(
         documento.getRegistradoPor().getNombreCompleto(),
         documento.getRegistradoEn(),
         firmante,
-        documento.getMotivo(),
+        // HU29: en un anulado, el motivo es el de la anulación.
+        documento.getEstado() == EstadoDocumento.ANULADO
+            ? documento.getMotivoAnulacion()
+            : documento.getMotivo(),
         documento.getDatos(),
         documento.isCorregido());
   }

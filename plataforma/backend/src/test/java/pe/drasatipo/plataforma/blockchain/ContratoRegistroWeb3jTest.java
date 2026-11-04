@@ -154,4 +154,31 @@ class ContratoRegistroWeb3jTest {
         .isEmpty();
     assertThat(ContratoRegistroWeb3j.leerRegistros(recibo("0x1", ADMIN, log), CONTRATO)).isEmpty();
   }
+
+  // HU29: lectura del evento DocumentoAnulado.
+  @Test
+  void elEventoDeAnulacionTieneLaFirmaDelContratoYSeLee() {
+    assertThat(ContratoRegistroWeb3j.DOCUMENTO_ANULADO)
+        .isEqualTo(org.web3j.crypto.Hash.sha3String("DocumentoAnulado(bytes32,string,address)"));
+    Log log = new Log();
+    log.setAddress(CONTRATO);
+    log.setTopics(
+        List.of(
+            ContratoRegistroWeb3j.DOCUMENTO_ANULADO,
+            org.web3j.crypto.Hash.sha3String("DRA-2026-Q7W3RT"),
+            tema(DIRECTOR)));
+    log.setData(
+        "0x"
+            + org.web3j.abi.FunctionEncoder.encodeConstructor(
+                List.of(new org.web3j.abi.datatypes.Utf8String("DRA-2026-Q7W3RT"))));
+    var anulacion = ContratoRegistroWeb3j.leerAnulacion(log, CONTRATO);
+    assertThat(anulacion).isPresent();
+    assertThat(anulacion.get()[0]).isEqualTo("DRA-2026-Q7W3RT");
+    assertThat(anulacion.get()[1]).isEqualToIgnoringCase(DIRECTOR);
+    // Un registro (DocumentoRegistrado) no se lee como anulación.
+    assertThat(
+            ContratoRegistroWeb3j.leerAnulacion(
+                registro(CONTRATO, "DRA-2026-Q7W3RT", "ab".repeat(32), "cd".repeat(32)), CONTRATO))
+        .isEmpty();
+  }
 }

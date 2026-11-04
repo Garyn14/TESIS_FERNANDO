@@ -36,6 +36,18 @@ public interface ContratoRegistro {
    */
   List<RegistroDeFirma> registrosEntre(long desde, long hasta);
 
+  /**
+   * Anulaciones (evento DocumentoAnulado, HU29) de una transacción confirmada del contrato. Vacía
+   * si la transacción no existe todavía, falló, es de otro contrato o no anuló nada.
+   */
+  List<AnulacionRegistrada> anulacionesEn(String transaccion);
+
+  /** Anulaciones del contrato entre dos bloques, inclusive, en el orden de la cadena (HU18). */
+  List<AnulacionRegistrada> anulacionesEntre(long desde, long hasta);
+
+  /** Indica si un código está anulado en el contrato (consulta de solo lectura, HU29). */
+  boolean estaAnulado(String codigo);
+
   /** Indica si un código ya está registrado en el contrato (consulta de solo lectura). */
   boolean estaRegistrado(String codigo);
 }

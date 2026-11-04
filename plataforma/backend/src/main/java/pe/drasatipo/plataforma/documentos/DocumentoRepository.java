@@ -20,6 +20,60 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
 
   String PROCESANDO = "pe.drasatipo.plataforma.documentos.EstadoDocumento.PROCESANDO_FIRMA";
   String FIRMADO = "pe.drasatipo.plataforma.documentos.EstadoDocumento.FIRMADO";
+  String ANULADO = "pe.drasatipo.plataforma.documentos.EstadoDocumento.ANULADO";
+
+  /** HU29: Documentos firmados y anulados, del firmado más reciente al más antiguo. */
+  @EntityGraph(attributePaths = {"tipo", "area", "lote"})
+  List<Documento> findByEstadoInOrderByFirmadoEnDescIdAsc(List<EstadoDocumento> estados);
+
+  /** HU29: guarda el motivo de una anulación que la billetera todavía no registra. */
+  @Modifying
+  @Query(
+      "UPDATE Documento d SET d.motivoAnulacion = :motivo, d.anulacionSolicitadaEn = :ahora"
+          + " WHERE d.id = :id AND d.estado = "
+          + FIRMADO)
+  int solicitarAnulacion(
+      @Param("id") Long id, @Param("motivo") String motivo, @Param("ahora") OffsetDateTime ahora);
+
+  /** HU29: descarta una anulación que no llegó a registrarse. */
+  @Modifying
+  @Query(
+      "UPDATE Documento d SET d.motivoAnulacion = NULL, d.anulacionSolicitadaEn = NULL"
+          + " WHERE d.id = :id AND d.estado = "
+          + FIRMADO)
+  int descartarAnulacion(@Param("id") Long id);
+
+  /** HU29: motivo de anulación leído de la base, no de la entidad en memoria. */
+  @Query("SELECT d.motivoAnulacion FROM Documento d WHERE d.id = :id")
+  Optional<String> motivoDeAnulacion(@Param("id") Long id);
+
+  /** HU18: anulaciones solicitadas antes del límite que siguen sin registrarse. */
+  @Query(
+      "SELECT d FROM Documento d WHERE d.estado = "
+          + FIRMADO
+          + " AND d.anulacionSolicitadaEn < :limite ORDER BY d.anulacionSolicitadaEn, d.id")
+  List<Documento> anulacionesDetenidas(@Param("limite") OffsetDateTime limite);
+
+  /**
+   * HU29: pasa a Anulado un documento Firmado cuya anulación se leyó en la blockchain. Si no se
+   * guardó un motivo (por ejemplo, se anuló desde otra herramienta), se usa {@code porDefecto}.
+   * Limpia las entidades en memoria para que la respuesta lea el estado nuevo.
+   */
+  @Modifying(clearAutomatically = true)
+  @Query(
+      "UPDATE Documento d SET d.estado = "
+          + ANULADO
+          + ", d.motivoAnulacion = COALESCE(d.motivoAnulacion, :porDefecto),"
+          + " d.anuladoPor = :director, d.anuladoEn = :fecha, d.transaccionAnulacion = :transaccion,"
+          + " d.bloqueAnulacion = :bloque WHERE d.id = :id AND d.estado = "
+          + FIRMADO)
+  int marcarAnulado(
+      @Param("id") Long id,
+      @Param("director") Usuario director,
+      @Param("fecha") OffsetDateTime fecha,
+      @Param("transaccion") String transaccion,
+      @Param("bloque") Long bloque,
+      @Param("porDefecto") String porDefecto);
 
   boolean existsByCodigo(String codigo);
 

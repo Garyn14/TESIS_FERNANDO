@@ -30,7 +30,8 @@ public record DocumentoResumen(
           EstadoDocumento.PROCESANDO_FIRMA,
           EstadoDocumento.OBSERVADO,
           EstadoDocumento.FIRMADO,
-          EstadoDocumento.RECHAZADO);
+          EstadoDocumento.RECHAZADO,
+          EstadoDocumento.ANULADO);
 
   static DocumentoResumen de(Documento documento) {
     return new DocumentoResumen(

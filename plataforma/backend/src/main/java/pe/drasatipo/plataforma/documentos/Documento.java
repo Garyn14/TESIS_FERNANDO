@@ -140,6 +140,26 @@ public class Documento {
   @Column(name = "corregido_en")
   private OffsetDateTime corregidoEn;
 
+  /** Anulación (HU29): el motivo se guarda al solicitarla; el resto, al leerla en la blockchain. */
+  @Column(name = "motivo_anulacion")
+  private String motivoAnulacion;
+
+  @Column(name = "anulacion_solicitada_en")
+  private OffsetDateTime anulacionSolicitadaEn;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "anulado_por")
+  private Usuario anuladoPor;
+
+  @Column(name = "anulado_en")
+  private OffsetDateTime anuladoEn;
+
+  @Column(name = "transaccion_anulacion")
+  private String transaccionAnulacion;
+
+  @Column(name = "bloque_anulacion")
+  private Long bloqueAnulacion;
+
   /** Motivo de la observación o del rechazo del Director (HU12); nulo en los demás estados. */
   @Column(name = "motivo")
   private String motivo;
@@ -330,6 +350,26 @@ public class Documento {
 
   public String getMotivo() {
     return motivo;
+  }
+
+  public String getMotivoAnulacion() {
+    return motivoAnulacion;
+  }
+
+  public OffsetDateTime getAnulacionSolicitadaEn() {
+    return anulacionSolicitadaEn;
+  }
+
+  public OffsetDateTime getAnuladoEn() {
+    return anuladoEn;
+  }
+
+  public String getTransaccionAnulacion() {
+    return transaccionAnulacion;
+  }
+
+  public Long getBloqueAnulacion() {
+    return bloqueAnulacion;
   }
 
   public OffsetDateTime getCorregidoEn() {
