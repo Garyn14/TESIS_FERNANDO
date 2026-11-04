@@ -399,7 +399,7 @@ Con HU11, el navegador del Director registra la firma con su billetera y luego a
 | El contrato registró un documento que sigue en Procesando firma | Lee el evento `DocumentoRegistrado` y, si el hash coincide con el de su PDF, lo pasa a **Firmado** con la transacción, el bloque, la billetera y la fecha del bloque (RF32) |
 | Un documento lleva más del plazo en Procesando firma y el contrato no lo registró | Lo devuelve a **Pendiente**, revisado, con el motivo en su historial |
 
-La anulación se registrará en el contrato con HU29 (Sprint 6). Esta misma sincronización leerá entonces su evento.
+La anulación se registrará en el contrato con HU29 (Sprint 4). Esta misma sincronización leerá entonces su evento.
 
 **Criterios de aceptación**
 
@@ -421,7 +421,7 @@ Los tres primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo 
 
 | Tema | Dónde se resuelve |
 |---|---|
-| Registrar y sincronizar la anulación | HU29 (Sprint 6) |
+| Registrar y sincronizar la anulación | HU29 (Sprint 4) |
 | Pantalla de auditoría con el estado de la sincronización | HU24 (Sprint 4) |
 | Avisos de firma al área y a Mesa de Partes | HU27 y HU28 (Sprint 6) |
 
