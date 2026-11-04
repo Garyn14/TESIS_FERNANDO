@@ -14,14 +14,20 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 | 1 | 29/10 – 31/10 | Cerrado (24 de 24 puntos) | Usuarios, roles, áreas y billetera del director | HU01–HU06 | 24 |
 | 2 | 01/11 – 03/11 | Cerrado (23 de 23 puntos) | Solicitudes individuales y por lista | HU07–HU09 | 23 |
 | 3 | 03/11 – 16/11 | **Activo**: 6 de 6 historias en revisión (04/11) | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 + tarea DRA-44 (AWS, diferida) | 47 |
-| 4 | 17/11 – 23/11 | Futuro | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
+| 4 | 17/11 – 23/11 | Futuro en Jira; 5 de 5 historias construidas y en revisión (04/11) | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
 | 5 | 24/11 – 30/11 | Futuro | Verificación pública de autenticidad | HU19–HU21 | 16 |
 | 6 | 01/12 – 07/12 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
 | | | | | **Total** | **156** |
 
-**Avance:** 47 de 156 puntos aprobados (30 %), y otros 47 del Sprint 3 construidos y en revisión. Si se aprueban, serán 94 de 156 (60 %). Velocidad: 24 puntos en el Sprint 1 y 23 en el Sprint 2.
+**Avance:** 47 de 156 puntos aprobados (30 %), y otros 74 construidos y en revisión: 47 del Sprint 3 y 27 del Sprint 4. Si se aprueban, serán 121 de 156 (78 %). Velocidad: 24 puntos en el Sprint 1 y 23 en el Sprint 2.
 
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
+
+### Avance del Sprint 4 (04/11/2026)
+
+- **En revisión:** HU13, HU14, HU15, HU29 y HU30 (DRA-27 a DRA-31), 27 puntos. Se construyeron mientras el Sprint 3 esperaba su revisión. Cada una está integrada a `main`, con la CI en verde y un comentario de cierre en su ticket.
+- **En Jira:** el Sprint 4 sigue sin iniciar porque el Sprint 3 está activo. Al aprobarse, se cierra el Sprint 3 y se inicia y cierra el Sprint 4 (pasos en [revision.md](../scrum/sprint-4/revision.md#cierre-en-jira-después-de-la-aprobación)).
+- **Revisión:** material en [guion de pruebas](../scrum/sprint-4/guion-de-pruebas.md) y [revision.md](../scrum/sprint-4/revision.md). Se puede hacer en la misma sesión que la del Sprint 3.
 
 ### Avance del Sprint 3 (04/11/2026)
 
