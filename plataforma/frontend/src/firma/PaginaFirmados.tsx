@@ -64,7 +64,12 @@ export default function PaginaFirmados({ director = '' }: { director?: string })
     })
 
   const accion = (d: DocumentoFirmado) =>
-    d.estado === 'FIRMADO' ? (
+    d.reemisionEnCurso ? (
+      <span className="text-sm text-amber-800">
+        Reemisión en revisión: <span className="font-mono">{d.reemisionEnCurso}</span>. Se anulará
+        al firmarla.
+      </span>
+    ) : d.estado === 'FIRMADO' ? (
       <button
         type="button"
         onClick={() => setMotivo(d)}

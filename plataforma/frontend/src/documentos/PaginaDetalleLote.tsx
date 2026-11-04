@@ -23,6 +23,7 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
   const [error, setError] = useState('')
   const [corrigiendo, setCorrigiendo] = useState<Lote['documentos'][number] | null>(null)
   const [aviso, setAviso] = useState('')
+  const [reemitiendo, setReemitiendo] = useState<Lote['documentos'][number] | null>(null)
   const cargar = () =>
     consultar(numero)
       .then(setDatos)
@@ -137,6 +138,33 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
                             Corregir
                           </button>
                         )}
+                        {d.reemision && (
+                          <span className="mt-1 block text-muted">
+                            Reemisión de <span className="font-mono">{d.reemision.original}</span>
+                          </span>
+                        )}
+                        {d.reemplazadoPor && (
+                          <span className="mt-1 block text-muted">
+                            Reemplazado por <span className="font-mono">{d.reemplazadoPor}</span>
+                          </span>
+                        )}
+                        {d.reemisionEnCurso ? (
+                          <span className="mt-1 block font-medium text-amber-800">
+                            Reemisión en revisión:{' '}
+                            <span className="font-mono">{d.reemisionEnCurso}</span>
+                          </span>
+                        ) : (
+                          d.estado === 'FIRMADO' && (
+                            <button
+                              type="button"
+                              onClick={() => setReemitiendo(d)}
+                              aria-label={`Reemitir con corrección ${d.codigo}`}
+                              className="mt-1 block font-medium text-institutional hover:underline"
+                            >
+                              ↻ Reemitir con corrección
+                            </button>
+                          )
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -161,6 +189,26 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
                 void cargar()
               }}
               onCerrar={() => setCorrigiendo(null)}
+            />
+          )}
+          {reemitiendo && (
+            <CorregirBeneficiario
+              reemision
+              codigo={reemitiendo.codigo}
+              beneficiario={{
+                nombres: reemitiendo.nombres,
+                apellidos: reemitiendo.apellidos,
+                dni: reemitiendo.dni,
+              }}
+              motivo=""
+              onCorregido={(nuevo) => {
+                setAviso(
+                  `✓ La reemisión de ${reemitiendo.codigo} se envió a revisión con el código ${nuevo}.`,
+                )
+                setReemitiendo(null)
+                void cargar()
+              }}
+              onCerrar={() => setReemitiendo(null)}
             />
           )}
         </>

@@ -73,6 +73,18 @@ export interface Documento extends VistaPrevia {
   datos?: Record<string, string>
   /** Reenviado tras una observación (HU15). */
   corregido?: boolean
+  /** HU30: el documento que esta reemisión reemplaza, el motivo y lo que cambia. */
+  reemision?: Reemision | null
+  /** HU30: código de la reemisión de este documento mientras está en revisión. */
+  reemisionEnCurso?: string | null
+  /** HU30: código de la reemisión firmada que lo reemplazó. */
+  reemplazadoPor?: string | null
+}
+
+export interface Reemision {
+  original: string
+  motivo: string
+  cambios: string[]
 }
 
 /** Una fila de Mis documentos: un documento, o un lote completo (HU09). */
@@ -112,6 +124,24 @@ export const corregir = (codigo: string, solicitud: Partial<SolicitudDocumento>)
     method: 'POST',
     body: JSON.stringify(solicitud),
   })
+
+/** HU30: datos corregidos de una reemisión; el tipo y el expediente son los del original. */
+export type SolicitudReemision = Omit<SolicitudDocumento, 'tipo' | 'numeroExpediente' | 'datos'> & {
+  datos?: Record<string, string>
+  motivo?: string
+}
+
+const rutaReemision = (codigo: string) => `/api/documentos/${encodeURIComponent(codigo)}/reemision`
+
+export const vistaPreviaReemision = (codigo: string, solicitud: SolicitudReemision) =>
+  solicitar<VistaPrevia>(`${rutaReemision(codigo)}/vista-previa`, {
+    method: 'POST',
+    body: JSON.stringify(solicitud),
+  })
+
+/** HU30: reemite un documento firmado; devuelve la reemisión, Pendiente y con otro código. */
+export const reemitir = (codigo: string, solicitud: SolicitudReemision) =>
+  solicitar<Documento>(rutaReemision(codigo), { method: 'POST', body: JSON.stringify(solicitud) })
 
 export const documento = (codigo: string) =>
   solicitar<Documento>(`/api/documentos/${encodeURIComponent(codigo)}`)
@@ -173,6 +203,9 @@ export interface Lote {
     estado: EstadoDocumento
     /** HU12: motivo de la observación o del rechazo. */
     motivo?: string | null
+    reemision?: Reemision | null
+    reemisionEnCurso?: string | null
+    reemplazadoPor?: string | null
   })[]
 }
 

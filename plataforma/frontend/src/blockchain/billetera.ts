@@ -25,6 +25,7 @@ const ABI = [
   'function esAdministrador(address cuenta) view returns (bool)',
   'function esFirmante(address cuenta) view returns (bool)',
   'function registrarDocumentos(string[] codigos, bytes32[] hashes, bytes32[] dniHmacs)',
+  'function registrarReemisiones(string[] codigos, bytes32[] hashes, bytes32[] dniHmacs, string[] originales)',
   'function anularDocumento(string codigo)',
 ]
 
@@ -135,6 +136,8 @@ export interface DocumentoAFirmar {
   codigo: string
   hash: string
   dniHmac: string
+  /** HU30: si es una reemisión, el original que se anula en la misma transacción. */
+  reemplaza?: string | null
 }
 
 /**
@@ -149,12 +152,22 @@ export async function registrarDocumentos(
 ): Promise<string> {
   try {
     const c = await contrato(red)
-    const tx = await c.registrarDocumentos(
+    const datos = [
       documentos.map((d) => d.codigo),
       documentos.map((d) => '0x' + d.hash),
       documentos.map((d) => '0x' + d.dniHmac),
-      { type: 0, gasPrice: 0n },
-    )
+    ]
+    // HU30: las reemisiones registran el nuevo y anulan el original en la misma transacción.
+    const tx = documentos.some((d) => d.reemplaza)
+      ? await c.registrarReemisiones(
+          ...datos,
+          documentos.map((d) => d.reemplaza ?? ''),
+          {
+            type: 0,
+            gasPrice: 0n,
+          },
+        )
+      : await c.registrarDocumentos(...datos, { type: 0, gasPrice: 0n })
     alEnviar?.()
     const recibo = await tx.wait()
     if (!recibo || recibo.status !== 1)

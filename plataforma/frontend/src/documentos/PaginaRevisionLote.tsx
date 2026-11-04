@@ -190,6 +190,12 @@ export default function PaginaRevisionLote({
                         <span>
                           {i + 1}. {nombre}
                           <span className="block text-sm font-normal text-muted">{d.dni}</span>
+                          {d.reemision && (
+                            <span className="block text-sm font-normal text-blue">
+                              ↻ Reemisión de {d.reemision.original}:{' '}
+                              {d.reemision.cambios.join('; ')}
+                            </span>
+                          )}
                         </span>
                         {d.estado !== 'PENDIENTE' && <Estado estado={d.estado} />}
                       </button>

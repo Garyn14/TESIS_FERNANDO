@@ -115,6 +115,11 @@ export default function PaginaPorRevisar({ director = '' }: { director?: string 
                           Corregido
                         </span>
                       )}
+                      {e.reemision && (
+                        <span className="ml-2 rounded-full bg-amber-pale px-2 py-0.5 text-xs font-medium text-amber-800">
+                          Reemisión
+                        </span>
+                      )}
                       {e.numeroExpediente && (
                         <span className="block text-sm text-muted">{e.numeroExpediente}</span>
                       )}
