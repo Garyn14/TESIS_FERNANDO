@@ -1,11 +1,13 @@
 package pe.drasatipo.plataforma.documentos;
 
+import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,6 +24,20 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
   boolean existsByCodigo(String codigo);
 
   boolean existsByNumeroExpediente(String numeroExpediente);
+
+  /** HU15: el expediente no se repite con otro documento (sin contarse a sí mismo). */
+  boolean existsByNumeroExpedienteAndIdNot(String numeroExpediente, Long id);
+
+  /** HU15: en un lote, el DNI no se repite con otro certificado del mismo lote. */
+  boolean existsByLoteIdAndDniAndIdNot(Long loteId, String dni, Long id);
+
+  /**
+   * HU15: el documento a corregir, con su fila bloqueada hasta el fin de la transacción, para que
+   * dos reenvíos a la vez no lo corrijan dos veces.
+   */
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("SELECT d FROM Documento d WHERE d.codigo = :codigo")
+  Optional<Documento> paraCorregir(@Param("codigo") String codigo);
 
   @EntityGraph(attributePaths = {"tipo", "area", "registradoPor", "lote"})
   Optional<Documento> findByCodigo(String codigo);

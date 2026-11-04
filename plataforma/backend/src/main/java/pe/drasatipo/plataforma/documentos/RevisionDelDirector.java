@@ -82,7 +82,8 @@ public class RevisionDelDirector {
               return ElementoPorRevisar.deLote(
                   delLote.getFirst(),
                   delLote.size(),
-                  delLote.stream().allMatch(Documento::isRevisado));
+                  delLote.stream().allMatch(Documento::isRevisado),
+                  delLote.stream().anyMatch(Documento::isCorregido));
             })
         .toList();
   }

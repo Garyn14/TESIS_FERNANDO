@@ -19,5 +19,7 @@ public enum EventoDocumento {
   /** El Director lo observó; el detalle lleva el motivo (HU12). */
   OBSERVADO,
   /** El Director lo rechazó; el detalle lleva el motivo (HU12). */
-  RECHAZADO
+  RECHAZADO,
+  /** El Área encargada corrigió el documento observado y lo reenvió (HU15); lleva los cambios. */
+  CORREGIDO
 }
