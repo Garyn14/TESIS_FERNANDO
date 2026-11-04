@@ -146,9 +146,10 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 03/11/2026 | [41677224185](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41677224185) | `DRA-19-fechas-dia-mes-anio` | ✓ Cinco jobs en verde con la corrección de la revisión del Sprint 2: fechas en día/mes/año (123 pruebas de backend, 90 de frontend) |
 | 03/11/2026 | [41743421533](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41743421533) | `DRA-21-por-revisar` | ✓ Cinco jobs en verde con HU10, la primera del Sprint 3: migración V12 y revisión atómica (129 pruebas de backend, 95 de frontend) |
 | 03/11/2026 | [41745602040](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41745602040) | `DRA-24-pdf-final` | ✓ Cinco jobs en verde con HU16: PDF final con OpenPDF, QR con ZXing y SHA-256 (135 pruebas de backend, 95 de frontend) |
+| 03/11/2026 | [41749276488](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41749276488) | `DRA-25-almacenar-pdf-ipfs` | ✓ Cinco jobs en verde con HU17: migración V13 y PDF final en IPFS, con pruebas del backend contra un nodo Kubo real en Testcontainers (145 pruebas de backend, 97 de frontend) |
 
 ## 9. Pendientes
 
 - ~~Instalar **GitHub for Jira**~~: instalado el 29/10/2026 (DRA-43).
-- Cuando el backend integre Besu e IPFS (Sprint 3), agregar pruebas de integración del backend contra esos servicios.
+- Pruebas de integración del backend contra Besu e IPFS: las de IPFS se agregaron con HU17 (nodo Kubo real en Testcontainers, dentro del job Backend). Las de Besu llegan con la firma (HU11).
 - Agregar análisis de dependencias vulnerables (Dependabot) en un sprint posterior.
