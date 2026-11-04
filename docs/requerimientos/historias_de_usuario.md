@@ -655,13 +655,52 @@ Los tres primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo 
 
 **Como** sistema, **quiero** generar el PDF final y calcular su hash al iniciarse la firma, **para** que lo registrado coincida con lo que se imprime.
 
+**Contexto**
+
+La vista previa (HU08, HU09) es solo una imagen en pantalla con la marca "VISTA PREVIA". Al firmar hace falta el documento definitivo: un PDF con la fecha de emisión, el código QR y el código de verificación (RF36). Su hash SHA-256 es lo que se registra en la blockchain (RF31), así que lo que se imprime y lo registrado son el mismo archivo (RF30). Esta historia construye la generación del PDF y el cálculo del hash. La firma que los usa llega con HU11, y el almacenamiento en IPFS, con HU17.
+
+**Contenido del PDF**
+
+| Elemento | Detalle |
+|---|---|
+| Formato | A4 horizontal, con el diseño de la vista previa del prototipo: encabezado y logo de la agencia, título (CERTIFICADO o CONSTANCIA), "Otorgado a", nombre del beneficiario y el texto del documento. Sin la marca de agua |
+| Fecha de emisión | El día en que se inicia la firma, escrito con el mes en letras (por ejemplo, 4 de noviembre de 2026), en hora de Lima |
+| Firma | Nombre del Director y "Director de la Agencia Agraria Satipo", con la nota "Firmado digitalmente mediante blockchain" |
+| Código QR | Lleva la dirección de verificación del portal público con el token del documento (RF16). Debajo se imprime el código de verificación |
+| Leyenda | "Verifique la autenticidad de este documento en {portal} con el código {código}" (RF36) |
+
 **Criterios de aceptación**
+
+Los dos primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] El PDF incluye la fecha de emisión, el código QR, el código de verificación y la leyenda del portal.
 - [ ] El hash se calcula con SHA-256.
+- [ ] El PDF reproduce los datos y el texto que el Área encargada envió y el Director revisó (HU08, HU09), sin la marca "VISTA PREVIA".
+- [ ] El código QR se puede leer con un lector común, y lleva a la dirección de verificación del documento: la del portal con el token aleatorio del QR, nunca el DNI.
+- [ ] El hash es el SHA-256 de los bytes exactos del archivo, en hexadecimal (64 caracteres), y es lo que se registrará en la blockchain (HU11).
+- [ ] La dirección del portal se configura fuera del código (PLATAFORMA_PORTAL_URL). El portal se construye en el Sprint 5.
+- [ ] El Director puede abrir una **muestra** del PDF final desde la revisión de un documento o de un lote, para ver cómo se imprimirá. La muestra lleva la marca "MUESTRA – SIN VALOR". No se guarda ni se registra.
+- [ ] Solo el Director (permiso DOCUMENTO_REVISAR) puede abrir la muestra, y solo de un documento Pendiente. Sin sesión se responde 401 y con otro rol, 403 (RF04).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Generar el PDF al firmar, guardar su hash y registrarlo en el contrato | HU11 (usa lo construido aquí) |
+| Guardar el PDF en IPFS y su CID | HU17 |
+| Portal de verificación al que apunta el QR | HU19–HU21 (Sprint 5) |
+| Descargar e imprimir el documento firmado | HU25 (Sprint 6) |
+
+**Notas técnicas**
+
+- El PDF se genera en el servidor con OpenPDF y el QR con ZXing, dos bibliotecas libres. El logo va dentro del backend.
+- La fecha oficial de emisión es la del bloque (RF32). La fecha impresa es la del día en que se inicia la firma: las dos coinciden en el día, porque el bloque se confirma segundos después de la firma.
+- API: GET /api/revision/documentos/{codigo}/pdf (la muestra), solo para el Director.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
-| Alta | 5 | 3 | RF30, RF36 |
+| Alta | 5 | 3 | RF30, RF36 (relacionados: RF31, RF32) |
+
 
 ### HU17: Almacenar el PDF en IPFS
 

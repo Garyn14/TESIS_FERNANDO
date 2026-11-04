@@ -40,6 +40,10 @@ plataforma:
     nombre: ${BESU_NOMBRE_RED:Plataforma DRA Satipo}
     rpc-publica: ${BESU_RPC_PUBLICA:http://localhost:8545}
     contrato: ${PLATAFORMA_CONTRATO_DIRECCION:}
+  # Portal público de verificación (HU16, RF36): su dirección va en el código QR y en la leyenda del
+  # PDF. El portal se construye en el Sprint 5.
+  portal:
+    url: ${PLATAFORMA_PORTAL_URL:http://localhost:5174}
   # Clave del HMAC-SHA256 del DNI (HU08, RF17), de al menos 32 caracteres. En AWS va en el gestor
   # de secretos (RNF03). Sin clave no se registran documentos.
   dni:

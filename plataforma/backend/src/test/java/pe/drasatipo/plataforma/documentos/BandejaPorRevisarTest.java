@@ -230,6 +230,37 @@ class BandejaPorRevisarTest {
   }
 
   @Test
+  void elDirectorAbreUnaMuestraDelPdfFinal() throws Exception {
+    String codigo = documento();
+    MockHttpSession director = sesion("DIRECTOR", null);
+    byte[] pdf =
+        mvc.perform(get("/api/revision/documentos/" + codigo + "/pdf").session(director))
+            .andExpect(status().isOk())
+            .andExpect(
+                org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                    .contentType("application/pdf"))
+            .andReturn()
+            .getResponse()
+            .getContentAsByteArray();
+    assertThat(new String(pdf, 0, 5)).isEqualTo("%PDF-");
+    com.lowagie.text.pdf.PdfReader lector = new com.lowagie.text.pdf.PdfReader(pdf);
+    String texto = new com.lowagie.text.pdf.parser.PdfTextExtractor(lector).getTextFromPage(1);
+    lector.close();
+    assertThat(texto).contains(codigo).contains("MUESTRA");
+    // La muestra no se guarda ni cambia el documento.
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT estado FROM documento WHERE codigo = ?", String.class, codigo))
+        .isEqualTo("PENDIENTE");
+    mvc.perform(get("/api/revision/documentos/DRA-2026-ZZZZZZ/pdf").session(director))
+        .andExpect(status().isNotFound());
+    mvc.perform(
+            get("/api/revision/documentos/" + codigo + "/pdf")
+                .session(sesion("AREA_ENCARGADA", "ADMINISTRACION")))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
   void permisosDeLasRutas() throws Exception {
     String codigo = documento();
     mvc.perform(get("/api/revision")).andExpect(status().isUnauthorized());

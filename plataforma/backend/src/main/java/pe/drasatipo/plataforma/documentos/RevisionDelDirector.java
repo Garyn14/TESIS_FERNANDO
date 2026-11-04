@@ -1,6 +1,8 @@
 package pe.drasatipo.plataforma.documentos;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,18 +29,21 @@ public class RevisionDelDirector {
   private final HistorialDocumentoRepository historial;
   private final RegistroDeDocumentos registro;
   private final RegistroDeLotes registroDeLotes;
+  private final GeneradorDePdf generadorDePdf;
 
   public RevisionDelDirector(
       DocumentoRepository documentos,
       LoteRepository lotes,
       HistorialDocumentoRepository historial,
       RegistroDeDocumentos registro,
-      RegistroDeLotes registroDeLotes) {
+      RegistroDeLotes registroDeLotes,
+      GeneradorDePdf generadorDePdf) {
     this.documentos = documentos;
     this.lotes = lotes;
     this.historial = historial;
     this.registro = registro;
     this.registroDeLotes = registroDeLotes;
+    this.generadorDePdf = generadorDePdf;
   }
 
   @Transactional(readOnly = true)
@@ -125,5 +130,21 @@ public class RevisionDelDirector {
           new HistorialDocumento(
               documento.getId(), EventoDocumento.REVISADO, detalle, director.getId()));
     }
+  }
+
+  /**
+   * Muestra del PDF final de un documento pendiente (HU16), con la fecha de hoy y la marca "MUESTRA
+   * – SIN VALOR". No se guarda ni se registra: el PDF definitivo se genera al firmar (HU11).
+   */
+  @Transactional(readOnly = true)
+  public PdfFinal muestraDelPdf(String codigo) {
+    Documento documento =
+        documentos
+            .findByCodigo(codigo)
+            .filter(d -> d.getEstado() == EstadoDocumento.PENDIENTE)
+            .orElseThrow(
+                () -> new ReglaDeNegocioException(HttpStatus.NOT_FOUND, null, NO_PENDIENTE));
+    return generadorDePdf.generar(
+        documento, registro.firmante(), LocalDate.now(ZoneId.of("America/Lima")), true);
   }
 }

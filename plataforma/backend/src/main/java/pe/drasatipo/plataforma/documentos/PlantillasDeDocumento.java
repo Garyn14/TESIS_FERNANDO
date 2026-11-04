@@ -158,7 +158,8 @@ public final class PlantillasDeDocumento {
     return "del " + desde + " al " + finEnLetras;
   }
 
-  private static String enLetras(LocalDate fecha) {
+  /** Fecha con el mes en letras: "4 de noviembre de 2026". */
+  static String enLetras(LocalDate fecha) {
     return fecha.getDayOfMonth()
         + " de "
         + MESES.get(fecha.getMonthValue() - 1)
