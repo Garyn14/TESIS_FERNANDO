@@ -22,6 +22,10 @@ version_node=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo
 [ "$version_node" -ge 22 ] || falta "Node.js 22 o superior (versión actual: ${version_node})"
 docker info >/dev/null 2>&1 || falta "Docker en ejecución (enciende Docker Desktop y activa la integración con WSL)"
 INACTIVIDAD=$([ "$MODO" = demo ] && echo 30m || echo 1m)
+# Sincronización con la blockchain (HU18): en la prueba, cada 3 segundos y con un plazo de firma de
+# 2 minutos, para no esperar los 15 minutos de producción.
+SINCRONIZACION=$([ "$MODO" = demo ] && echo 30s || echo 3s)
+PLAZO_FIRMA=$([ "$MODO" = demo ] && echo 15m || echo 2m)
 
 # Red Besu (HU06): se levanta si no responde.
 if ! curl -s -X POST -H 'content-type: application/json' \
@@ -35,6 +39,7 @@ for proyecto in contracts frontend; do
 done
 (cd e2e && npm install --silent)
 CONTRATO=$(cd e2e && node preparar-blockchain.cjs)
+BLOQUE_INICIAL=$(node -p 'require("./e2e/.despliegue.json").bloque')
 echo "Contrato RegistroDocumentos: $CONTRATO"
 
 docker rm -f e2e-pg >/dev/null 2>&1 || true
@@ -58,7 +63,8 @@ CLAVE_HMAC=$(node -p 'require("crypto").randomBytes(32).toString("hex")')
 DB_URL=jdbc:postgresql://localhost:5433/plataforma PLATAFORMA_ADMIN_CONTRASENA='Admin2026!' \
   PLATAFORMA_ADMIN_NOMBRE='Garyn Huarhuachi Ramos' SESION_INACTIVIDAD=$INACTIVIDAD \
   PLATAFORMA_CONTRATO_DIRECCION="$CONTRATO" PLATAFORMA_CLAVE_HMAC_DNI="$CLAVE_HMAC" \
-  PLATAFORMA_IPFS_URL=http://localhost:5002 \
+  PLATAFORMA_IPFS_URL=http://localhost:5002 PLATAFORMA_CONTRATO_BLOQUE_INICIAL="$BLOQUE_INICIAL" \
+  PLATAFORMA_SINCRONIZACION_INTERVALO=$SINCRONIZACION PLATAFORMA_FIRMA_PLAZO=$PLAZO_FIRMA \
   java -jar backend/target/plataforma-backend-*.jar &
 BACKEND=$!
 (cd frontend && npx vite --port 5173 --strictPort) &

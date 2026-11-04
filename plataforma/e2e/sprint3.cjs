@@ -2,7 +2,7 @@
 // simulaciones. Requiere una base de datos vacía (levantar.sh). Las áreas registran sus documentos
 // por la API desde el navegador (la pantalla de registro ya la recorre sprint2.cjs) y el Director
 // trabaja desde la pantalla. Recorre HU10, HU16, HU17 (la preparación de la firma, por la API), HU12
-// (observar, rechazar y firmar un lote) y HU11:
+// (observar, rechazar y firmar un lote), HU18 (sincronización con los eventos del contrato) y HU11:
 // la firma con la billetera de prueba (billetera-de-prueba.cjs) en la red Besu real, comprobada
 // directamente en el contrato.
 const { chromium } = require('playwright')
@@ -11,7 +11,7 @@ const { execFileSync } = require('node:child_process')
 const fs = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
-const { Contract, JsonRpcProvider, getAddress } = require('ethers')
+const { Contract, JsonRpcProvider, Wallet, getAddress } = require('ethers')
 const { instalarBilletera } = require('./billetera-de-prueba.cjs')
 
 const [out, URL = 'http://localhost:5173/', ADMIN_TEMPORAL = 'Admin2026!'] = process.argv.slice(2)
@@ -707,6 +707,114 @@ const paso = async (nombre, fn) => {
     assert.equal(r.cuerpo.campos.motivo, 'Indique el motivo.')
     assert.equal((await enviar(pedro, `/api/revision/lotes/${abonos}/observacion`, { motivo: 'x' })).estado, 403)
     assert.equal((await enviar(rosa, `/api/revision/lotes/${abonos}/rechazo`, { motivo: 'x' })).estado, 403)
+  })
+  // ------------------------------------------------------- HU18: sincronización con la blockchain
+  const esperarHasta = async (descripcion, condicion, maximo = 180_000) => {
+    const limite = Date.now() + maximo
+    while (Date.now() < limite) {
+      if (await condicion()) return
+      await new Promise((listo) => setTimeout(listo, 1000))
+    }
+    throw new Error('No se cumplió a tiempo: ' + descripcion)
+  }
+  // El contrato con la billetera del Director, como lo usaría el navegador (sin pasar por la pantalla).
+  const contratoDirector = new Contract(
+    DESPLIEGUE.contrato,
+    [
+      'function registrarDocumentos(string[] codigos, bytes32[] hashes, bytes32[] dniHmacs)',
+      'error CodigoYaRegistrado(string codigo)',
+    ],
+    new Wallet(B.director.clave, nodo),
+  )
+  const sinCosto = { gasPrice: 0n, type: 0 }
+  const registradoPor = (codigo) =>
+    psql(`SELECT h.detalle, coalesce(u.nombre_usuario, '(sistema)') FROM documento_historial h JOIN documento d ON d.id = h.documento_id LEFT JOIN usuario u ON u.id = h.realizado_por WHERE d.codigo = '${codigo}' ORDER BY h.id DESC LIMIT 1`).split('|')
+  let delia, hugo, iris
+  await paso('Preparación HU18 · Tres documentos revisados; dos se preparan para la firma por la API', async () => {
+    const nuevos = []
+    for (const [exp, n, a, dni] of [
+      ['EXP-2026-005393', 'Delia', 'Ramos Pari', '44100001'],
+      ['EXP-2026-005394', 'Hugo', 'Soto Inga', '44100002'],
+      ['EXP-2026-005395', 'Iris', 'Pari Quispe', '44100003'],
+    ]) {
+      const r = await enviar(pedro, '/api/documentos', trabajo(exp, n, a, dni))
+      assert.equal(r.estado, 201)
+      assert.equal((await enviar(carlos, '/api/revision/documentos/' + r.cuerpo.codigo, {})).estado, 200)
+      nuevos.push(r.cuerpo.codigo)
+    }
+    ;[delia, hugo, iris] = nuevos
+    const r = await enviar(carlos, '/api/firma/preparacion', { codigos: [delia, hugo] })
+    assert.equal(r.cuerpo.preparados.length, 2)
+    delia = r.cuerpo.preparados.find((p) => p.codigo === delia)
+    hugo = r.cuerpo.preparados.find((p) => p.codigo === hugo).codigo
+  })
+  let transaccionDelia
+  await paso('HU18 · Una firma registrada sin confirmar (navegador cerrado) se confirma sola desde los eventos', async () => {
+    // La billetera registra la firma y el navegador se cierra: el servidor nunca recibe la confirmación.
+    const tx = await contratoDirector.registrarDocumentos([delia.codigo], ['0x' + delia.hash], ['0x' + delia.dniHmac], sinCosto)
+    const recibo = await tx.wait()
+    transaccionDelia = tx.hash
+    await esperarHasta('Delia Firmado por la sincronización', () => psql(`SELECT estado FROM documento WHERE codigo = '${delia.codigo}'`) === 'FIRMADO', 60_000)
+    const [transaccion, bloque, firmadoEn] = psql(
+      `SELECT transaccion, bloque, extract(epoch FROM firmado_en)::bigint FROM documento WHERE codigo = '${delia.codigo}'`,
+    ).split('|')
+    assert.equal(transaccion, tx.hash)
+    assert.equal(Number(bloque), recibo.blockNumber)
+    assert.equal(Number(firmadoEn), (await nodo.getBlock(recibo.blockNumber)).timestamp)
+    const [detalle, quien] = registradoPor(delia.codigo)
+    assert.ok(detalle.startsWith('Firma confirmada por la sincronización con la blockchain: firmado por Ing. Carlos Mendoza Rivera'), detalle)
+    assert.ok(detalle.includes(tx.hash))
+    assert.equal(quien, 'cmendoza')
+    const [contrato, ultimo] = psql('SELECT contrato, ultimo_bloque FROM sincronizacion_blockchain').split('|')
+    assert.equal(contrato, DESPLIEGUE.contrato.toLowerCase())
+    assert.ok(Number(ultimo) >= recibo.blockNumber)
+    await pedro.goto(URL + '#/mis-documentos')
+    await pedro.reload()
+    await pedro.locator('main tbody tr', { hasText: 'Delia Ramos Pari' }).getByText('Firmado').waitFor()
+    await foto(pedro, 'hu18_01_firma_confirmada_por_la_sincronizacion')
+  })
+  await paso('HU18 · Un código ya registrado no se registra de nuevo', async () => {
+    // El contrato lo rechaza…
+    await assert.rejects(
+      contratoDirector.registrarDocumentos.staticCall([delia.codigo], ['0x' + 'ab'.repeat(32)], ['0x' + 'cd'.repeat(32)]),
+      (e) => e.revert?.name === 'CodigoYaRegistrado' && e.revert.args[0] === delia.codigo,
+    )
+    // …y la preparación no acepta un Pendiente cuyo código ya está en el contrato.
+    await (await contratoDirector.registrarDocumentos([iris], ['0x' + 'ab'.repeat(32)], ['0x' + 'cd'.repeat(32)], sinCosto)).wait()
+    const r = await enviar(carlos, '/api/firma/preparacion', { codigos: [iris] })
+    assert.equal(r.estado, 200)
+    assert.deepEqual(r.cuerpo.noPreparados, [{ codigo: iris, motivo: 'El código ya está registrado en la blockchain: no se registra de nuevo.' }])
+    assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${iris}'`), 'PENDIENTE')
+  })
+  await paso('HU18 · Un documento detenido sin registrar vuelve a Pendiente pasado el plazo de firma', async () => {
+    assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${hugo}'`), 'PROCESANDO_FIRMA')
+    // En la prueba la sesión expira al minuto sin uso: mientras se espera el plazo, las cuentas siguen activas.
+    await esperarHasta('Hugo vuelve a Pendiente', async () => {
+      for (const p of [carlos, pedro, rosa]) await api(p, '/api/sesion')
+      return psql(`SELECT estado FROM documento WHERE codigo = '${hugo}'`) === 'PENDIENTE'
+    })
+    assert.equal(psql(`SELECT revisado_en IS NOT NULL, cid IS NULL FROM documento WHERE codigo = '${hugo}'`), 't|t')
+    const [detalle, quien] = registradoPor(hugo)
+    assert.equal(detalle, 'La firma no se completó en el plazo de 2 minutos y no quedó registrada en la blockchain (sincronización). Volvió a Pendiente.')
+    assert.equal(quien, '(sistema)')
+    assert.equal((await enCadena(hugo)).registrado, false)
+    await carlos.goto(URL + '#/por-revisar')
+    await carlos.reload()
+    const fila = carlos.locator('main tbody tr', { hasText: 'Hugo Soto Inga' })
+    await fila.getByText('✓ Revisado').waitFor()
+    await foto(carlos, 'hu18_02_detenido_vuelve_a_por_revisar')
+  })
+  await paso('HU18 · La sincronización avanza con la cadena y no aplica dos veces un evento', async () => {
+    const antes = Number(psql('SELECT ultimo_bloque FROM sincronizacion_blockchain'))
+    await esperarHasta('el último bloque procesado avanza', async () => Number(psql('SELECT ultimo_bloque FROM sincronizacion_blockchain')) > antes, 60_000)
+    assert.ok(Number(psql('SELECT ultimo_bloque FROM sincronizacion_blockchain')) <= (await nodo.getBlockNumber()))
+    // Ningún documento tiene dos eventos FIRMADO, aunque la confirmación y la sincronización vean el mismo.
+    assert.equal(
+      psql(`SELECT count(*) FROM (SELECT documento_id FROM documento_historial WHERE evento = 'FIRMADO' GROUP BY documento_id HAVING count(*) > 1) repetidos`),
+      '0',
+    )
+    assert.equal(psql(`SELECT count(*) FROM documento WHERE transaccion = '${transaccionDelia}'`), '1')
+    assert.equal(psql(`SELECT count(*) FROM documento WHERE estado = 'PROCESANDO_FIRMA'`), '0')
   })
   await paso('HU11 · Solo el Director firma', async () => {
     assert.equal(await api(pedro, '/api/firma/billetera'), 403)
