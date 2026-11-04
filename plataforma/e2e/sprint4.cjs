@@ -1,7 +1,8 @@
 // Prueba de punta a punta real del Sprint 4: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). El Área encargada envía sus
 // documentos por la API desde el navegador (la pantalla ya la recorre sprint2.cjs) y el Director
-// trabaja desde la pantalla. Recorre HU13, HU14 y HU15.
+// trabaja desde la pantalla, con la billetera de prueba en la red Besu local. Recorre HU13, HU14,
+// HU15 y HU29 (anular un documento firmado, también desde la sincronización con la blockchain).
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
@@ -39,7 +40,10 @@ const paso = async (nombre, fn) => {
   const nodo = new JsonRpcProvider(BESU, undefined, { staticNetwork: true })
   const registro = new Contract(
     DESPLIEGUE.contrato,
-    ['function consultar(string codigo) view returns (bool, (bytes32 hashPdf, bytes32 dniHmac, address firmante, uint64 registradoEn))'],
+    [
+      'function consultar(string codigo) view returns (bool, (bytes32 hashPdf, bytes32 dniHmac, address firmante, uint64 registradoEn))',
+      'function anulacion(string codigo) view returns (bool, uint64)',
+    ],
     nodo,
   )
   const campo = (p, etiqueta) => p.getByLabel(etiqueta, { exact: true })
@@ -111,11 +115,30 @@ const paso = async (nombre, fn) => {
       await admin.getByRole('button', { name: 'Crear cuenta' }).click()
       await admin.getByRole('status').getByText(`Se creó la cuenta "${u}"`).waitFor()
     }
+  })
+  await paso('Preparación · El Administrador registra la billetera del Director y le otorga el rol de firmante', async () => {
+    // Como en sprint3.cjs: deja al Director listo para firmar y anular (HU29).
+    await admin.getByRole('link', { name: 'Billetera del director' }).click()
+    await admin.getByRole('button', { name: 'Registrar la billetera de cmendoza' }).click()
+    const ventana = admin.getByRole('dialog', { name: 'Billetera del director' })
+    await campo(ventana, 'Dirección de la billetera').fill(B.director.direccion)
+    await ventana.getByRole('button', { name: 'Guardar billetera' }).click()
+    const fila = admin.locator('tr', { hasText: 'cmendoza' })
+    await fila.getByText(getAddress(B.director.direccion)).waitFor()
+    billeteras.get(admin).usar(B.administrador.clave)
+    await admin.getByRole('button', { name: 'Otorgar el rol de firmante a cmendoza' }).click()
+    const otorgar = admin.getByRole('dialog', { name: 'Otorgar rol de firmante' })
+    await otorgar.getByRole('button', { name: 'Conectar billetera y continuar' }).click()
+    await otorgar.getByRole('button', { name: 'Confirmar en la billetera' }).click()
+    await otorgar.getByText('Rol de firmante otorgado', { exact: false }).waitFor({ timeout: 60_000 })
+    await otorgar.getByRole('button', { name: 'Listo' }).click()
+    await fila.getByText('✓ Firmante activo').waitFor()
     await admin.context().close()
   })
 
   const pedro = await nueva()
   const carlos = await nueva()
+  billeteras.get(carlos).usar(B.director.clave)
   let lucia, kevin
   await paso('Preparación · El área envía dos documentos y el Director los revisa', async () => {
     await primerIngreso(pedro, 'pmorales', TEMPORAL, PROPIA)
@@ -365,6 +388,216 @@ const paso = async (nombre, fn) => {
     assert.equal((await enviar(rosa, `/api/documentos/${lucia}/correccion`, cuerpo)).estado, 403)
     assert.equal((await enviar(carlos, `/api/documentos/${lucia}/correccion`, cuerpo)).estado, 403)
     assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${kevin}'`), 'RECHAZADO')
+  })
+
+  // ------------------------------------------------------------- HU29: anular un documento firmado
+  const esperarHasta = async (descripcion, condicion, maximo = 120_000) => {
+    const limite = Date.now() + maximo
+    while (Date.now() < limite) {
+      if (await condicion()) return
+      await new Promise((listo) => setTimeout(listo, 1000))
+    }
+    throw new Error('No se cumplió a tiempo: ' + descripcion)
+  }
+  // El contrato con una billetera, como lo usaría el navegador (sin pasar por la pantalla).
+  const contratoCon = (clave) =>
+    new Contract(
+      DESPLIEGUE.contrato,
+      [
+        'function anularDocumento(string codigo)',
+        'error NoRegistrado(string codigo)',
+        'error YaAnulado(string codigo)',
+        'error AccessControlUnauthorizedAccount(address account, bytes32 neededRole)',
+      ],
+      new Wallet(clave, nodo),
+    )
+  const contratoDirector = contratoCon(B.director.clave)
+  const sinCosto = { gasPrice: 0n, type: 0 }
+  const ultimoEvento = (codigo) =>
+    psql(`SELECT h.evento, h.detalle, coalesce(u.nombre_usuario, '(sistema)') FROM documento_historial h JOIN documento d ON d.id = h.documento_id LEFT JOIN usuario u ON u.id = h.realizado_por WHERE d.codigo = '${codigo}' ORDER BY h.id DESC LIMIT 1`).split('|')
+  const anulado = async (codigo) => {
+    const [si, fecha] = await registro.anulacion(codigo)
+    return { si, fecha: Number(fecha) }
+  }
+  const ventanaAnular = () => carlos.getByRole('dialog', { name: 'Anular con su billetera' })
+  const pedirAnulacion = async (codigo, motivo) => {
+    await carlos.getByRole('button', { name: `Anular ${codigo}` }).click()
+    const ventana = carlos.getByRole('dialog', { name: 'Anular documento' })
+    await ventana.getByText('La anulación es definitiva. El documento dejará de ser válido cuando se verifique su autenticidad.').waitFor()
+    assert.ok(await ventana.getByRole('button', { name: 'Confirmar' }).isDisabled())
+    await ventana.getByLabel('Motivo', { exact: false }).fill(motivo)
+    await ventana.getByRole('button', { name: 'Confirmar' }).click()
+    await ventanaAnular().getByText('Anular 1 documento').waitFor()
+  }
+  let martha, nilo, olga
+  await paso('Preparación HU29 · El área envía tres documentos y el Director los firma con su billetera', async () => {
+    const nuevos = []
+    for (const [exp, n, a, dni] of [
+      ['EXP-2026-005401', 'Martha', 'Rojas Inga', '44200001'],
+      ['EXP-2026-005402', 'Nilo', 'Huamán Soto', '44200002'],
+      ['EXP-2026-005403', 'Olga', 'Pari Ccanto', '44200003'],
+    ]) {
+      const r = await enviar(pedro, '/api/documentos', trabajo(exp, n, a, dni))
+      assert.equal(r.estado, 201)
+      assert.equal((await enviar(carlos, '/api/revision/documentos/' + r.cuerpo.codigo, {})).estado, 200)
+      nuevos.push(r.cuerpo.codigo)
+    }
+    ;[martha, nilo, olga] = nuevos
+    await carlos.goto(URL + '#/por-revisar')
+    await carlos.reload()
+    for (const nombre of ['Martha Rojas Inga', 'Nilo Huamán Soto', 'Olga Pari Ccanto'])
+      await carlos.getByRole('checkbox', { name: new RegExp('Seleccionar ' + nombre) }).check()
+    await carlos.getByRole('region', { name: 'Selección para firmar' }).getByRole('button', { name: 'Firmar seleccionados' }).click()
+    const firma = carlos.getByRole('dialog', { name: 'Firmar con su billetera' })
+    await firma.getByText('Firmar 3 documentos').waitFor()
+    await firma.getByRole('button', { name: 'Confirmar' }).click()
+    await firma.getByText('Se firmaron 3 documentos.').waitFor({ timeout: 60_000 })
+    await firma.getByRole('button', { name: 'Volver a Por revisar' }).click()
+    for (const codigo of nuevos) assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${codigo}'`), 'FIRMADO')
+  })
+  await paso('HU29 · Documentos firmados lista los firmados con su beneficiario, DNI, área, fecha y estado, y filtra', async () => {
+    await carlos.getByRole('link', { name: 'Documentos firmados' }).click()
+    const fila = carlos.locator('main tbody tr', { hasText: martha })
+    await fila.waitFor()
+    for (const texto of ['Certificado de Trabajo', 'Martha Rojas Inga', 'DNI 44200001', 'Área de Administración', 'Firmado'])
+      await fila.getByText(texto, { exact: false }).first().waitFor()
+    const cabeceras = await carlos.locator('main thead th').allTextContents()
+    assert.deepEqual(cabeceras, ['Código o lote', 'Tipo', 'Beneficiario(s)', 'Área', 'Fecha de firma', 'Estado', 'Acciones'])
+    assert.equal(await carlos.locator('main tbody tr').count(), 3)
+    await foto(carlos, 'hu29_01_documentos_firmados')
+    await carlos.getByRole('searchbox').fill('nilo')
+    await carlos.locator('main tbody tr', { hasText: martha }).waitFor({ state: 'detached' })
+    assert.equal(await carlos.locator('main tbody tr').count(), 1)
+    await carlos.getByRole('searchbox').fill(olga)
+    await carlos.locator('main tbody tr', { hasText: 'Olga Pari Ccanto' }).waitFor()
+    await carlos.getByRole('searchbox').fill('')
+  })
+  let hashMartha
+  await paso('HU29 · El Director anula con motivo y su billetera; queda registrado en la blockchain real', async () => {
+    hashMartha = psql(`SELECT hash_pdf FROM documento WHERE codigo = '${martha}'`)
+    await pedirAnulacion(martha, 'El certificado se emitió con el cargo equivocado')
+    const direccion = getAddress(B.director.direccion)
+    await ventanaAnular().getByText(`(${direccion.slice(0, 6)}…${direccion.slice(-4)})`).waitFor()
+    await ventanaAnular().getByText('Sin costo').waitFor()
+    // El servidor guardó el motivo antes de ir a la blockchain; el documento sigue firmado.
+    assert.equal(psql(`SELECT estado, motivo_anulacion FROM documento WHERE codigo = '${martha}'`), 'FIRMADO|El certificado se emitió con el cargo equivocado')
+    await foto(carlos, 'hu29_02_confirmar_anulacion')
+    const antes = billeteras.get(carlos).estado.transacciones.length
+    await ventanaAnular().getByRole('button', { name: 'Confirmar' }).click()
+    await ventanaAnular().getByText('Documento anulado.').waitFor({ timeout: 60_000 })
+    await foto(carlos, 'hu29_03_documento_anulado')
+    assert.equal(billeteras.get(carlos).estado.transacciones.length, antes + 1)
+    const tx = billeteras.get(carlos).estado.transacciones.at(-1)
+
+    const [estado, transaccion, bloque, anuladoEn, anuladoPor, motivo] = psql(
+      `SELECT d.estado, d.transaccion_anulacion, d.bloque_anulacion, extract(epoch FROM d.anulado_en)::bigint, u.nombre_usuario, d.motivo_anulacion
+       FROM documento d JOIN usuario u ON u.id = d.anulado_por WHERE d.codigo = '${martha}'`,
+    ).split('|')
+    assert.equal(estado, 'ANULADO')
+    assert.equal(transaccion, tx)
+    assert.equal(anuladoPor, 'cmendoza')
+    assert.equal(motivo, 'El certificado se emitió con el cargo equivocado')
+    const recibo = await nodo.getTransactionReceipt(tx)
+    assert.equal(Number(bloque), recibo.blockNumber)
+    assert.equal(Number(anuladoEn), (await nodo.getBlock(recibo.blockNumber)).timestamp)
+    // En la blockchain: anulado con la fecha del bloque, y el registro original intacto.
+    const enCadena = await anulado(martha)
+    assert.equal(enCadena.si, true)
+    assert.equal(enCadena.fecha, Number(anuladoEn))
+    const [registrado, r] = await registro.consultar(martha)
+    assert.equal(registrado, true)
+    assert.equal(r.hashPdf, '0x' + hashMartha)
+    const [evento, detalle, quien] = ultimoEvento(martha)
+    assert.equal(evento, 'ANULADO')
+    assert.equal(quien, 'cmendoza')
+    // La confirmación del navegador y la sincronización (cada 3 s en la prueba) leen el mismo evento:
+    // el que llega primero lo aplica, una sola vez.
+    assert.ok(
+      [`Anulado por`, `Anulación confirmada por la sincronización: anulado por`].some((inicio) =>
+        detalle.startsWith(`${inicio} Ing. Carlos Mendoza Rivera con la billetera ${direccion}; transacción ${tx}`),
+      ),
+      detalle,
+    )
+    assert.ok(detalle.endsWith('Motivo: El certificado se emitió con el cargo equivocado'), detalle)
+
+    await ventanaAnular().getByRole('button', { name: 'Volver a Documentos firmados' }).click()
+    const fila = carlos.locator('main tbody tr', { hasText: martha })
+    await fila.getByText('Anulado', { exact: true }).waitFor()
+    await fila.getByText('Motivo: El certificado se emitió con el cargo equivocado').waitFor()
+    assert.equal(await fila.getByRole('button').count(), 0)
+    await foto(carlos, 'hu29_04_firmados_con_anulado')
+  })
+  await paso('HU29 · Si el Director cancela en la billetera, el documento sigue Firmado y se descarta el motivo', async () => {
+    billeteras.get(carlos).rechazar(1)
+    await pedirAnulacion(nilo, 'Prueba de cancelación')
+    await ventanaAnular().getByRole('button', { name: 'Confirmar' }).click()
+    await ventanaAnular().getByText('Anulación cancelada en la billetera. El documento sigue firmado.').waitFor()
+    await foto(carlos, 'hu29_05_anulacion_cancelada')
+    assert.equal(psql(`SELECT estado, motivo_anulacion IS NULL, anulacion_solicitada_en IS NULL FROM documento WHERE codigo = '${nilo}'`), 'FIRMADO|t|t')
+    assert.equal((await anulado(nilo)).si, false)
+    assert.notEqual(ultimoEvento(nilo)[0], 'ANULADO')
+    await ventanaAnular().getByRole('button', { name: 'Cerrar' }).click()
+    await carlos.locator('main tbody tr', { hasText: nilo }).getByRole('button', { name: `Anular ${nilo}` }).waitFor()
+  })
+  await paso('HU29 · Si el navegador se cierra antes de confirmar, la sincronización lo marca Anulado con el motivo guardado', async () => {
+    const s = await enviar(carlos, `/api/anulacion/${olga}/solicitud`, { motivo: 'Se emitió por duplicado' })
+    assert.equal(s.estado, 200)
+    // La billetera envía la anulación y el navegador se cierra: el servidor nunca recibe la confirmación.
+    const tx = await contratoDirector.anularDocumento(olga, sinCosto)
+    const recibo = await tx.wait()
+    await esperarHasta('Olga Anulado por la sincronización', () => psql(`SELECT estado FROM documento WHERE codigo = '${olga}'`) === 'ANULADO', 60_000)
+    assert.equal(
+      psql(`SELECT d.transaccion_anulacion, d.bloque_anulacion, u.nombre_usuario, d.motivo_anulacion FROM documento d JOIN usuario u ON u.id = d.anulado_por WHERE d.codigo = '${olga}'`),
+      `${tx.hash}|${recibo.blockNumber}|cmendoza|Se emitió por duplicado`,
+    )
+    const [evento, detalle] = ultimoEvento(olga)
+    assert.equal(evento, 'ANULADO')
+    assert.ok(detalle.startsWith('Anulación confirmada por la sincronización: anulado por Ing. Carlos Mendoza Rivera'), detalle)
+    assert.ok(detalle.endsWith('Motivo: Se emitió por duplicado'), detalle)
+    // Ningún documento tiene dos eventos ANULADO, aunque se vean en la confirmación y en la sincronización.
+    assert.equal(psql(`SELECT count(*) FROM (SELECT documento_id FROM documento_historial WHERE evento = 'ANULADO' GROUP BY documento_id HAVING count(*) > 1) x`), '0')
+  })
+  await paso('HU29 · Solo se anula un firmado, con motivo; el contrato rechaza anular dos veces, un código no registrado u otra billetera', async () => {
+    const pendiente = await enviar(carlos, `/api/anulacion/${lucia}/solicitud`, { motivo: 'No corresponde' })
+    assert.equal(pendiente.estado, 409)
+    assert.equal(pendiente.cuerpo.mensaje, 'Solo se anula un documento firmado.')
+    assert.equal((await enviar(carlos, `/api/anulacion/${martha}/solicitud`, { motivo: 'Otra vez' })).estado, 409)
+    const sinMotivo = await enviar(carlos, `/api/anulacion/${nilo}/solicitud`, { motivo: '   ' })
+    assert.equal(sinMotivo.estado, 400)
+    assert.equal(psql(`SELECT estado, motivo_anulacion IS NULL FROM documento WHERE codigo = '${nilo}'`), 'FIRMADO|t')
+    const falla = async (promesa, error) => {
+      await assert.rejects(promesa, (e) => {
+        assert.equal(e.revert?.name, error, e.shortMessage)
+        return true
+      })
+    }
+    await falla(contratoDirector.anularDocumento.staticCall(martha), 'YaAnulado')
+    await falla(contratoDirector.anularDocumento.staticCall('DRA-2026-ZZZZZZ'), 'NoRegistrado')
+    await falla(contratoCon(B.otra.clave).anularDocumento.staticCall(nilo), 'AccessControlUnauthorizedAccount')
+    assert.equal((await anulado(nilo)).si, false)
+  })
+  await paso('HU29 · El Área encargada ve el documento Anulado (gris, tachado) y el motivo en su detalle', async () => {
+    await pedro.goto(URL + '#/mis-documentos')
+    await pedro.reload()
+    const fila = pedro.locator('main tbody tr', { hasText: martha })
+    const estado = fila.getByText('Anulado', { exact: true })
+    await estado.waitFor()
+    assert.match(await estado.getAttribute('class'), /line-through/)
+    await foto(pedro, 'hu29_06_mis_documentos_anulado')
+    await fila.getByRole('link', { name: martha }).click()
+    await pedro.getByText('El Director lo anuló: ya no es válido.', { exact: false }).waitFor()
+    await pedro.getByText('El certificado se emitió con el cargo equivocado').waitFor()
+    await foto(pedro, 'hu29_07_detalle_anulado')
+  })
+  await paso('HU29 · Solo el Director anula y ve Documentos firmados', async () => {
+    assert.equal(await api(pedro, '/api/firmados'), 403)
+    assert.equal((await enviar(pedro, `/api/anulacion/${nilo}/solicitud`, { motivo: 'x' })).estado, 403)
+    assert.equal((await enviar(rosa, `/api/anulacion/${nilo}/confirmacion`, { transaccion: '0x' + '1'.repeat(64) })).estado, 403)
+    assert.equal(await api(carlos, '/api/firmados'), 200)
+    const anonimo = await nueva()
+    assert.equal(await api(anonimo, '/api/firmados'), 401)
+    assert.ok(!(await menu(pedro)).includes('Documentos firmados'))
+    assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${nilo}'`), 'FIRMADO')
   })
 
   await b.close()
