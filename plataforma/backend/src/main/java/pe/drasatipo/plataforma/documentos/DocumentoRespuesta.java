@@ -1,8 +1,12 @@
 package pe.drasatipo.plataforma.documentos;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 
-/** Detalle de un documento. Nunca incluye el HMAC del DNI ni el token del QR. */
+/**
+ * Detalle de un documento. Nunca incluye el HMAC del DNI ni el token del QR. {@code datos} son los
+ * campos propios del tipo, para precargar la corrección (HU15).
+ */
 public record DocumentoRespuesta(
     String codigo,
     String tipo,
@@ -20,7 +24,9 @@ public record DocumentoRespuesta(
     String registradoPor,
     OffsetDateTime registradoEn,
     String firmante,
-    String motivo) {
+    String motivo,
+    Map<String, String> datos,
+    boolean corregido) {
 
   static DocumentoRespuesta de(Documento documento, String firmante) {
     return new DocumentoRespuesta(
@@ -40,6 +46,8 @@ public record DocumentoRespuesta(
         documento.getRegistradoPor().getNombreCompleto(),
         documento.getRegistradoEn(),
         firmante,
-        documento.getMotivo());
+        documento.getMotivo(),
+        documento.getDatos(),
+        documento.isCorregido());
   }
 }

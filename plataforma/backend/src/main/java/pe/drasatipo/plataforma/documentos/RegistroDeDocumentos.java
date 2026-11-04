@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.drasatipo.plataforma.areas.AlcanceDeArea;
 import pe.drasatipo.plataforma.areas.TipoDocumento;
+import pe.drasatipo.plataforma.comun.DatosInvalidosException;
 import pe.drasatipo.plataforma.comun.ReglaDeNegocioException;
 import pe.drasatipo.plataforma.usuarios.Rol;
 import pe.drasatipo.plataforma.usuarios.Usuario;
@@ -143,6 +145,141 @@ public class RegistroDeDocumentos {
         .filter(d -> alcance.puedeVerArea(cuenta, d.getArea()))
         .map(d -> DocumentoRespuesta.de(d, firmante()))
         .orElseThrow(() -> new ReglaDeNegocioException(HttpStatus.FORBIDDEN, null, DE_OTRA_AREA));
+  }
+
+  static final String NO_OBSERVADO =
+      "Solo se corrige un documento observado. Este documento no está observado.";
+  static final String DNI_EN_EL_LOTE = "El DNI ya está en otro certificado de este lote.";
+
+  /**
+   * HU15 (RF20, RF25): corrige un documento observado del área propia y lo reenvía a revisión. Uno
+   * a solicitud de parte pasa por las mismas validaciones del registro; en un certificado de lote
+   * solo se corrigen los nombres, los apellidos y el DNI. Los cambios quedan en el historial.
+   */
+  @Transactional
+  public DocumentoRespuesta corregir(
+      String nombreUsuario, String codigo, SolicitudDocumento solicitud) {
+    Usuario cuenta = cuenta(nombreUsuario);
+    Documento documento =
+        documentos
+            .paraCorregir(codigo)
+            .filter(d -> alcance.estaLimitada(cuenta) && alcance.puedeVerArea(cuenta, d.getArea()))
+            .orElseThrow(
+                () -> new ReglaDeNegocioException(HttpStatus.FORBIDDEN, null, DE_OTRA_AREA));
+    if (documento.getEstado() != EstadoDocumento.OBSERVADO) {
+      throw new ReglaDeNegocioException(HttpStatus.CONFLICT, null, NO_OBSERVADO);
+    }
+    if (!proteccionDni.configurada()) {
+      throw new ReglaDeNegocioException(
+          HttpStatus.SERVICE_UNAVAILABLE,
+          null,
+          "Falta configurar la clave que protege el DNI, por eso no se puede reenviar el"
+              + " documento. Comuníquese con el Administrador.");
+    }
+    List<String> cambios = new ArrayList<>();
+    Map<String, String> antes = new LinkedHashMap<>();
+    antes.put("N.° de expediente", documento.getNumeroExpediente());
+    antes.put("Nombres", documento.getNombres());
+    antes.put("Apellidos", documento.getApellidos());
+    antes.put("DNI", documento.getDni());
+    String expediente;
+    Beneficiario beneficiario;
+    Map<String, String> datos;
+    String texto;
+    Map<String, String> etiquetas = new LinkedHashMap<>();
+    if (documento.getLote() == null) {
+      SolicitudValidada validada =
+          validar(
+              cuenta,
+              new SolicitudDocumento(
+                  documento.getTipo().getCodigo(),
+                  solicitud.numeroExpediente(),
+                  solicitud.nombres(),
+                  solicitud.apellidos(),
+                  solicitud.dni(),
+                  solicitud.datos()));
+      if (documentos.existsByNumeroExpedienteAndIdNot(
+          validada.numeroExpediente(), documento.getId())) {
+        throw expedienteRepetido();
+      }
+      expediente = validada.numeroExpediente();
+      beneficiario = new Beneficiario(validada.nombres(), validada.apellidos(), validada.dni());
+      datos = validada.datos();
+      texto = validada.texto();
+      PlantillasDeDocumento.de(documento.getTipo().getCodigo())
+          .orElseThrow()
+          .campos()
+          .forEach(c -> etiquetas.put(c.nombre(), c.etiqueta()));
+    } else {
+      // En un lote solo se corrige el beneficiario: los datos del evento son del lote.
+      Map<String, String> errores = new java.util.TreeMap<>();
+      String nombres =
+          ValidacionDeSolicitud.nombre(
+              solicitud.nombres(), "nombres", "Ingrese los nombres.", errores);
+      String apellidos =
+          ValidacionDeSolicitud.nombre(
+              solicitud.apellidos(), "apellidos", "Ingrese los apellidos.", errores);
+      String dni = ValidacionDeSolicitud.dni(solicitud.dni(), "dni", errores);
+      if (!errores.containsKey("dni")
+          && documentos.existsByLoteIdAndDniAndIdNot(
+              documento.getLote().getId(), dni, documento.getId())) {
+        errores.put("dni", DNI_EN_EL_LOTE);
+      }
+      if (!errores.isEmpty()) {
+        throw new DatosInvalidosException(errores);
+      }
+      expediente = null;
+      beneficiario = new Beneficiario(nombres, apellidos, dni);
+      datos = documento.getDatos();
+      texto = documento.getTexto();
+    }
+    Map<String, String> despues = new LinkedHashMap<>();
+    despues.put("N.° de expediente", expediente);
+    despues.put("Nombres", beneficiario.nombres());
+    despues.put("Apellidos", beneficiario.apellidos());
+    despues.put("DNI", beneficiario.dni());
+    antes.forEach((campo, valor) -> anotarCambio(cambios, campo, valor, despues.get(campo)));
+    etiquetas.forEach(
+        (clave, etiqueta) ->
+            anotarCambio(cambios, etiqueta, documento.getDatos().get(clave), datos.get(clave)));
+
+    documento.corregir(
+        expediente, beneficiario, proteccionDni.hmac(beneficiario.dni()), datos, texto);
+    try {
+      documentos.saveAndFlush(documento);
+    } catch (DataIntegrityViolationException e) {
+      throw expedienteRepetido();
+    }
+    historial.save(
+        new HistorialDocumento(
+            documento.getId(),
+            EventoDocumento.CORREGIDO,
+            "Corregido y reenviado a revisión por %s (%s). %s"
+                .formatted(
+                    cuenta.getNombreCompleto(),
+                    cuenta.getArea().getNombre(),
+                    cambios.isEmpty()
+                        ? "Sin cambios en los datos."
+                        : "Cambios: " + String.join("; ", cambios) + "."),
+            cuenta.getId()));
+    return DocumentoRespuesta.de(documento, firmante());
+  }
+
+  private static void anotarCambio(
+      List<String> cambios, String campo, String antes, String despues) {
+    if (!java.util.Objects.equals(antes, despues)) {
+      cambios.add("%s: %s → %s".formatted(campo, mostrar(antes), mostrar(despues)));
+    }
+  }
+
+  /** Las fechas ISO se muestran en día/mes/año, como en la pantalla. */
+  private static String mostrar(String valor) {
+    if (valor == null || valor.isBlank()) {
+      return "(vacío)";
+    }
+    return valor.matches("\\d{4}-\\d{2}-\\d{2}")
+        ? valor.substring(8) + "/" + valor.substring(5, 7) + "/" + valor.substring(0, 4)
+        : valor;
   }
 
   private SolicitudValidada validar(Usuario cuenta, SolicitudDocumento solicitud) {

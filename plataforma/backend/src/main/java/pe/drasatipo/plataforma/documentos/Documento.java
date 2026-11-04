@@ -22,8 +22,8 @@ import pe.drasatipo.plataforma.usuarios.Usuario;
 
 /**
  * Documento registrado por el Área encargada (HU08). Mientras está Pendiente su contenido no se
- * puede modificar (RF20): todos sus datos se fijan al registrarlo. Solo se registran su revisión y,
- * al firmar, su PDF final (HU17).
+ * puede modificar (RF20). Solo se registran su revisión, su decisión y, al firmar, su PDF final
+ * (HU17). Sus datos solo cambian al corregir un documento observado (HU15).
  */
 @Entity
 @Table(name = "documento")
@@ -54,7 +54,7 @@ public class Documento {
   @Column(nullable = false)
   private EstadoDocumento estado = EstadoDocumento.PENDIENTE;
 
-  @Column(name = "numero_expediente", updatable = false)
+  @Column(name = "numero_expediente")
   private String numeroExpediente;
 
   /** Lote de la emisión por lista (HU09); nulo para los de solicitud de parte. */
@@ -62,23 +62,23 @@ public class Documento {
   @JoinColumn(name = "lote_id", updatable = false)
   private Lote lote;
 
-  @Column(nullable = false, updatable = false)
+  @Column(nullable = false)
   private String nombres;
 
-  @Column(nullable = false, updatable = false)
+  @Column(nullable = false)
   private String apellidos;
 
-  @Column(nullable = false, updatable = false)
+  @Column(nullable = false)
   private String dni;
 
-  @Column(name = "dni_hmac", nullable = false, updatable = false)
+  @Column(name = "dni_hmac", nullable = false)
   private String dniHmac;
 
   @JdbcTypeCode(SqlTypes.JSON)
-  @Column(nullable = false, updatable = false)
+  @Column(nullable = false)
   private Map<String, String> datos;
 
-  @Column(nullable = false, updatable = false)
+  @Column(nullable = false)
   private String texto;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -135,6 +135,10 @@ public class Documento {
 
   @Column(name = "billetera_firmante")
   private String billeteraFirmante;
+
+  /** Última corrección y reenvío de un documento observado (HU15): etiqueta "Corregido". */
+  @Column(name = "corregido_en")
+  private OffsetDateTime corregidoEn;
 
   /** Motivo de la observación o del rechazo del Director (HU12); nulo en los demás estados. */
   @Column(name = "motivo")
@@ -326,5 +330,40 @@ public class Documento {
 
   public String getMotivo() {
     return motivo;
+  }
+
+  public OffsetDateTime getCorregidoEn() {
+    return corregidoEn;
+  }
+
+  public boolean isCorregido() {
+    return corregidoEn != null;
+  }
+
+  /**
+   * HU15 (RF20, RF25): corrige un documento observado y lo reenvía. Vuelve a Pendiente con su mismo
+   * código, sin el motivo y sin la revisión anterior: el Director debe revisarlo de nuevo.
+   */
+  void corregir(
+      String numeroExpediente,
+      Beneficiario beneficiario,
+      String dniHmac,
+      Map<String, String> datos,
+      String texto) {
+    if (estado != EstadoDocumento.OBSERVADO) {
+      throw new IllegalStateException("Solo se corrige un documento observado");
+    }
+    this.numeroExpediente = numeroExpediente;
+    this.nombres = beneficiario.nombres();
+    this.apellidos = beneficiario.apellidos();
+    this.dni = beneficiario.dni();
+    this.dniHmac = dniHmac;
+    this.datos = Map.copyOf(datos);
+    this.texto = texto;
+    this.estado = EstadoDocumento.PENDIENTE;
+    this.motivo = null;
+    this.revisadoPor = null;
+    this.revisadoEn = null;
+    this.corregidoEn = OffsetDateTime.now();
   }
 }

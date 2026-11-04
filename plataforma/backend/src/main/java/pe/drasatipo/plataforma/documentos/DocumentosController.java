@@ -47,6 +47,16 @@ public class DocumentosController {
     return registro.delArea(sesion.getName());
   }
 
+  /** HU15: corrige un documento observado y lo reenvía a revisión. */
+  @PostMapping("/{codigo}/correccion")
+  @PreAuthorize("hasAuthority('DOCUMENTO_CORREGIR')")
+  public DocumentoRespuesta corregir(
+      @PathVariable String codigo,
+      @RequestBody SolicitudDocumento solicitud,
+      Authentication sesion) {
+    return registro.corregir(sesion.getName(), codigo, solicitud);
+  }
+
   @GetMapping("/{codigo}")
   @PreAuthorize("hasAuthority('DOCUMENTO_VER_AREA')")
   public DocumentoRespuesta detalle(@PathVariable String codigo, Authentication sesion) {
