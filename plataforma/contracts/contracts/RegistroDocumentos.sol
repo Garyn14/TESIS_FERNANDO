@@ -43,6 +43,8 @@ contract RegistroDocumentos is AccessControl {
 
   /// @dev Fecha del bloque de la anulación por keccak256 del código; 0 si no está anulado (HU29).
   mapping(bytes32 => uint64) private _anulaciones;
+  /// @dev HU30: clave del original => código del documento que lo reemplaza.
+  mapping(bytes32 => string) private _reemplazos;
 
   /// @notice Se registró un documento firmado (HU11). HU18 sincroniza los estados con este evento.
   /// @param clave keccak256 del código, para filtrar por documento.
@@ -135,15 +137,79 @@ contract RegistroDocumentos is AccessControl {
     if (cantidad == 0 || cantidad > MAXIMO_POR_TRANSACCION) revert CantidadInvalida(cantidad);
     if (hashes.length != cantidad || dniHmacs.length != cantidad) revert LongitudesDistintas();
     for (uint256 i = 0; i < cantidad; i++) {
-      string calldata codigo = codigos[i];
-      uint256 largo = bytes(codigo).length;
-      if (largo == 0 || largo > 32) revert CodigoInvalido(codigo);
-      if (hashes[i] == bytes32(0) || dniHmacs[i] == bytes32(0)) revert DatosIncompletos(codigo);
-      bytes32 clave = keccak256(bytes(codigo));
-      if (_registros[clave].registradoEn != 0) revert CodigoYaRegistrado(codigo);
-      _registros[clave] = Registro(hashes[i], dniHmacs[i], msg.sender, uint64(block.timestamp));
-      emit DocumentoRegistrado(clave, codigo, hashes[i], dniHmacs[i], msg.sender);
+      _registrar(codigos[i], hashes[i], dniHmacs[i]);
     }
+  }
+
+  /// @notice Se registró la reemisión de un documento (HU30, RF51).
+  /// @param claveOriginal keccak256 del código del original.
+  /// @param original Código del documento reemplazado, que queda anulado.
+  /// @param reemplazo Código del documento nuevo.
+  event DocumentoReemplazado(bytes32 indexed claveOriginal, string original, string reemplazo);
+
+  /// @notice Registra reemisiones (HU30, RF51): en la misma transacción registra cada documento
+  /// nuevo y anula el original que reemplaza. Si una no es válida, no se aplica ninguna.
+  /// @dev Solo el firmante. Emite `DocumentoRegistrado`, `DocumentoAnulado` y
+  /// `DocumentoReemplazado` por cada reemisión.
+  /// @param codigos Códigos de verificación de los documentos nuevos.
+  /// @param hashes SHA-256 de cada PDF final.
+  /// @param dniHmacs HMAC-SHA256 del DNI de cada beneficiario.
+  /// @param originales Código del documento que reemplaza cada uno.
+  function registrarReemisiones(
+    string[] calldata codigos,
+    bytes32[] calldata hashes,
+    bytes32[] calldata dniHmacs,
+    string[] calldata originales
+  ) external onlyRole(FIRMANTE_ROLE) {
+    uint256 cantidad = codigos.length;
+    if (cantidad == 0 || cantidad > MAXIMO_POR_TRANSACCION) revert CantidadInvalida(cantidad);
+    if (hashes.length != cantidad || dniHmacs.length != cantidad || originales.length != cantidad)
+      revert LongitudesDistintas();
+    for (uint256 i = 0; i < cantidad; i++) {
+      _reemitir(codigos[i], hashes[i], dniHmacs[i], originales[i]);
+    }
+  }
+
+  /// @notice Código del documento que reemplaza a otro (HU30, HU21). Solo lectura.
+  /// @param codigo Código de verificación del original.
+  /// @return reemplazo Código de su reemisión firmada; vacío si no fue reemplazado.
+  function reemplazadoPor(string calldata codigo) external view returns (string memory reemplazo) {
+    reemplazo = _reemplazos[keccak256(bytes(codigo))];
+  }
+
+  function _registrar(
+    string calldata codigo,
+    bytes32 hash,
+    bytes32 dniHmac
+  ) private returns (bytes32 clave) {
+    uint256 largo = bytes(codigo).length;
+    if (largo == 0 || largo > 32) revert CodigoInvalido(codigo);
+    if (hash == bytes32(0) || dniHmac == bytes32(0)) revert DatosIncompletos(codigo);
+    clave = keccak256(bytes(codigo));
+    if (_registros[clave].registradoEn != 0) revert CodigoYaRegistrado(codigo);
+    _registros[clave] = Registro(hash, dniHmac, msg.sender, uint64(block.timestamp));
+    emit DocumentoRegistrado(clave, codigo, hash, dniHmac, msg.sender);
+  }
+
+  function _reemitir(
+    string calldata codigo,
+    bytes32 hash,
+    bytes32 dniHmac,
+    string calldata original
+  ) private {
+    bytes32 clave = _registrar(codigo, hash, dniHmac);
+    bytes32 claveOriginal = _anular(original);
+    if (claveOriginal == clave) revert CodigoInvalido(original);
+    _reemplazos[claveOriginal] = codigo;
+    emit DocumentoReemplazado(claveOriginal, original, codigo);
+  }
+
+  function _anular(string calldata codigo) private returns (bytes32 clave) {
+    clave = keccak256(bytes(codigo));
+    if (_registros[clave].registradoEn == 0) revert NoRegistrado(codigo);
+    if (_anulaciones[clave] != 0) revert YaAnulado(codigo);
+    _anulaciones[clave] = uint64(block.timestamp);
+    emit DocumentoAnulado(clave, codigo, msg.sender);
   }
 
   /// @notice Se anuló un documento firmado (HU29). HU18 sincroniza los estados con este evento.
@@ -157,11 +223,7 @@ contract RegistroDocumentos is AccessControl {
   /// @dev Solo el firmante. Emite `DocumentoAnulado`.
   /// @param codigo Código de verificación.
   function anularDocumento(string calldata codigo) external onlyRole(FIRMANTE_ROLE) {
-    bytes32 clave = keccak256(bytes(codigo));
-    if (_registros[clave].registradoEn == 0) revert NoRegistrado(codigo);
-    if (_anulaciones[clave] != 0) revert YaAnulado(codigo);
-    _anulaciones[clave] = uint64(block.timestamp);
-    emit DocumentoAnulado(clave, codigo, msg.sender);
+    _anular(codigo);
   }
 
   /// @notice Indica si un documento está anulado y desde cuándo (HU29, HU21). Solo lectura.

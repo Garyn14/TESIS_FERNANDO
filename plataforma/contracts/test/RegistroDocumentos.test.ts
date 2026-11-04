@@ -335,4 +335,84 @@ describe('RegistroDocumentos: anulación de documentos', () => {
     )
     expect((await contrato.anulacion(codigo))[0]).to.equal(false)
   })
+
+  describe('reemisión (HU30)', () => {
+    const NUEVO = 'DRA-2026-R4M8TX'
+    const hashNuevo = ethers.sha256(ethers.toUtf8Bytes('pdf corregido'))
+    const dniNuevo = ethers.sha256(ethers.toUtf8Bytes('dni corregido'))
+
+    it('registra el nuevo y anula el original en la misma transacción', async () => {
+      const { contrato, director, codigo, hash } = await conRegistro()
+      expect(await contrato.reemplazadoPor(codigo)).to.equal('')
+      const tx = contrato
+        .connect(director)
+        .registrarReemisiones([NUEVO], [hashNuevo], [dniNuevo], [codigo])
+      await expect(tx)
+        .to.emit(contrato, 'DocumentoRegistrado')
+        .withArgs(ethers.id(NUEVO), NUEVO, hashNuevo, dniNuevo, director.address)
+      await expect(tx)
+        .to.emit(contrato, 'DocumentoAnulado')
+        .withArgs(ethers.id(codigo), codigo, director.address)
+      await expect(tx)
+        .to.emit(contrato, 'DocumentoReemplazado')
+        .withArgs(ethers.id(codigo), codigo, NUEVO)
+      const bloque = await ethers.provider.getBlock((await (await tx).wait())!.blockNumber)
+      const [anulado, anuladoEn] = await contrato.anulacion(codigo)
+      expect(anulado).to.equal(true)
+      expect(anuladoEn).to.equal(BigInt(bloque!.timestamp))
+      expect(await contrato.reemplazadoPor(codigo)).to.equal(NUEVO)
+      const [registrado, registro] = await contrato.consultar(NUEVO)
+      expect(registrado).to.equal(true)
+      expect(registro.hashPdf).to.equal(hashNuevo)
+      // El registro original no cambia.
+      expect((await contrato.consultar(codigo))[1].hashPdf).to.equal(hash)
+    })
+
+    it('si el original no está registrado o ya está anulado, no se aplica ninguna', async () => {
+      const { contrato, director, codigo } = await conRegistro()
+      const otro = 'DRA-2026-K2P9WX'
+      await expect(
+        contrato
+          .connect(director)
+          .registrarReemisiones(
+            [NUEVO, otro],
+            [hashNuevo, hashNuevo],
+            [dniNuevo, dniNuevo],
+            [codigo, 'DRA-2026-NOEXIS'],
+          ),
+      )
+        .to.be.revertedWithCustomError(contrato, 'NoRegistrado')
+        .withArgs('DRA-2026-NOEXIS')
+      expect((await contrato.consultar(NUEVO))[0]).to.equal(false)
+      expect((await contrato.anulacion(codigo))[0]).to.equal(false)
+
+      await contrato.connect(director).anularDocumento(codigo)
+      await expect(
+        contrato.connect(director).registrarReemisiones([NUEVO], [hashNuevo], [dniNuevo], [codigo]),
+      )
+        .to.be.revertedWithCustomError(contrato, 'YaAnulado')
+        .withArgs(codigo)
+      expect((await contrato.consultar(NUEVO))[0]).to.equal(false)
+    })
+
+    it('valida cantidades y longitudes, y solo el firmante reemite', async () => {
+      const { contrato, director, administrador, codigo } = await conRegistro()
+      await expect(
+        contrato.connect(director).registrarReemisiones([NUEVO], [hashNuevo], [dniNuevo], []),
+      ).to.be.revertedWithCustomError(contrato, 'LongitudesDistintas')
+      await expect(
+        contrato.connect(director).registrarReemisiones([], [], [], []),
+      ).to.be.revertedWithCustomError(contrato, 'CantidadInvalida')
+      await expect(
+        contrato
+          .connect(director)
+          .registrarReemisiones([codigo], [hashNuevo], [dniNuevo], [codigo]),
+      ).to.be.revertedWithCustomError(contrato, 'CodigoYaRegistrado')
+      await expect(
+        contrato
+          .connect(administrador)
+          .registrarReemisiones([NUEVO], [hashNuevo], [dniNuevo], [codigo]),
+      ).to.be.revertedWithCustomError(contrato, 'AccessControlUnauthorizedAccount')
+    })
+  })
 })
