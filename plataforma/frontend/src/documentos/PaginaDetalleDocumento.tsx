@@ -4,6 +4,13 @@ import { documento as consultar, fechaCorta, type Documento } from './api'
 import Certificado from './Certificado'
 import Estado from './Estado'
 
+/** Qué significa cada estado para el área (HU08, HU11, HU17). */
+const AVISOS: Record<Documento['estado'], string> = {
+  PENDIENTE: 'Está en revisión del Director: no se puede modificar mientras esté Pendiente.',
+  PROCESANDO_FIRMA: 'El Director está firmando este documento.',
+  FIRMADO: 'Firmado por el Director y registrado en la blockchain.',
+}
+
 /**
  * HU08: detalle de un documento del área. Mientras está Pendiente no hay ninguna opción para
  * modificarlo (RF20). Uno de otra área no se muestra (RF05).
@@ -59,9 +66,7 @@ export default function PaginaDetalleDocumento({ codigo }: { codigo: string }) {
             <h2 className="text-xl font-semibold">{doc.tipoNombre}</h2>
             <Estado estado={doc.estado} />
           </div>
-          <p className="mt-1 text-muted">
-            Está en revisión del Director: no se puede modificar mientras esté Pendiente.
-          </p>
+          <p className="mt-1 text-muted">{AVISOS[doc.estado]}</p>
           <dl className="mt-4 grid rounded-xl border border-line bg-card shadow-sm sm:grid-cols-2 lg:grid-cols-4">
             {datos.map(([etiqueta, valor]) => (
               <div key={etiqueta} className="border-b border-line p-4">
