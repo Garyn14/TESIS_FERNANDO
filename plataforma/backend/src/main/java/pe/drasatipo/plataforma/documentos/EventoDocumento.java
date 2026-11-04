@@ -9,5 +9,11 @@ public enum EventoDocumento {
   /** Su PDF final se generó y se guardó en IPFS al iniciarse la firma (HU17, RF30). */
   PREPARADO,
   /** No se pudo guardar su PDF en IPFS: salió de la firma y volvió a Pendiente (HU17). */
-  ERROR_ALMACENAMIENTO
+  ERROR_ALMACENAMIENTO,
+  /** El servidor leyó su registro en la blockchain: quedó Firmado (HU11). */
+  FIRMADO,
+  /**
+   * La firma no se completó (cancelada en la billetera o transacción fallida): volvió a Pendiente.
+   */
+  FIRMA_CANCELADA
 }

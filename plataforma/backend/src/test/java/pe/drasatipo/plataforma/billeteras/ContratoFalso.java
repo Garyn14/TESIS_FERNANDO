@@ -1,7 +1,10 @@
 package pe.drasatipo.plataforma.billeteras;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -11,23 +14,52 @@ import org.springframework.context.annotation.Primary;
 import pe.drasatipo.plataforma.blockchain.BlockchainNoDisponibleException;
 import pe.drasatipo.plataforma.blockchain.CambioDeRol;
 import pe.drasatipo.plataforma.blockchain.ContratoRegistro;
+import pe.drasatipo.plataforma.blockchain.DocumentoRegistrado;
+import pe.drasatipo.plataforma.blockchain.RegistroDeFirma;
 
 /**
  * Contrato en memoria para las pruebas del backend. La integración real con Besu se prueba en la CI
  * (scripts/probar-registro-besu.ts) y en la prueba de punta a punta (plataforma/e2e).
  */
-class ContratoFalso implements ContratoRegistro {
+public class ContratoFalso implements ContratoRegistro {
 
-  final Set<String> firmantes = new HashSet<>();
+  public final Set<String> firmantes = new HashSet<>();
   final Set<String> administradores = new HashSet<>();
   final Map<String, CambioDeRol> transacciones = new HashMap<>();
-  boolean caido;
 
-  void reiniciar() {
+  /** Transacciones de registrarDocumentos confirmadas (HU11). */
+  public final Map<String, RegistroDeFirma> firmas = new HashMap<>();
+
+  /** Códigos registrados en el contrato. */
+  public final Set<String> registrados = new HashSet<>();
+
+  public boolean caido;
+
+  public void reiniciar() {
     firmantes.clear();
     administradores.clear();
     transacciones.clear();
+    firmas.clear();
+    registrados.clear();
     caido = false;
+  }
+
+  /**
+   * Simula una transacción confirmada de registrarDocumentos de la billetera indicada y aplica su
+   * efecto. Cada elemento es {código, hash del PDF, HMAC del DNI}.
+   */
+  public String registrar(String firmante, List<String[]> documentos) {
+    String hash = "0x%064x".formatted(1_000_000 + firmas.size());
+    List<DocumentoRegistrado> registrados = new ArrayList<>();
+    for (String[] d : documentos) {
+      registrados.add(new DocumentoRegistrado(d[0], d[1], d[2], firmante));
+      this.registrados.add(d[0]);
+    }
+    firmas.put(
+        hash,
+        new RegistroDeFirma(
+            hash, 500 + firmas.size(), Instant.parse("2026-11-04T15:30:00Z"), registrados));
+    return hash;
   }
 
   /** Simula una transacción confirmada del Administrador y aplica su efecto. */
@@ -66,8 +98,20 @@ class ContratoFalso implements ContratoRegistro {
     return Optional.ofNullable(transacciones.get(transaccion));
   }
 
+  @Override
+  public Optional<RegistroDeFirma> registroDeFirmaEn(String transaccion) {
+    revisar();
+    return Optional.ofNullable(firmas.get(transaccion));
+  }
+
+  @Override
+  public boolean estaRegistrado(String codigo) {
+    revisar();
+    return registrados.contains(codigo);
+  }
+
   @TestConfiguration(proxyBeanMethods = false)
-  static class Configuracion {
+  public static class Configuracion {
     @Bean
     @Primary
     ContratoFalso contratoFalso() {

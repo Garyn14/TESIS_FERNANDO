@@ -17,6 +17,7 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
   String PENDIENTE = "pe.drasatipo.plataforma.documentos.EstadoDocumento.PENDIENTE";
 
   String PROCESANDO = "pe.drasatipo.plataforma.documentos.EstadoDocumento.PROCESANDO_FIRMA";
+  String FIRMADO = "pe.drasatipo.plataforma.documentos.EstadoDocumento.FIRMADO";
 
   boolean existsByCodigo(String codigo);
 
@@ -74,6 +75,29 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
       @Param("cid") String cid,
       @Param("fecha") LocalDate fecha,
       @Param("ahora") OffsetDateTime ahora);
+
+  /**
+   * Pasa a Firmado un documento en Procesando firma cuyo registro se leyó en la blockchain (HU11).
+   * Solo si el hash registrado es el de su PDF: si no coincide, no cambia.
+   */
+  @Modifying
+  @Query(
+      "UPDATE Documento d SET d.estado = "
+          + FIRMADO
+          + ", d.firmadoPor = :director,"
+          + " d.firmadoEn = :fecha, d.transaccion = :transaccion, d.bloque = :bloque,"
+          + " d.billeteraFirmante = :billetera"
+          + " WHERE d.id = :id AND d.estado = "
+          + PROCESANDO
+          + " AND d.hashPdf = :hash")
+  int marcarFirmado(
+      @Param("id") Long id,
+      @Param("hash") String hash,
+      @Param("director") Usuario director,
+      @Param("fecha") OffsetDateTime fecha,
+      @Param("transaccion") String transaccion,
+      @Param("bloque") Long bloque,
+      @Param("billetera") String billetera);
 
   /** Devuelve a Pendiente un documento cuya preparación falló (HU17). */
   @Modifying

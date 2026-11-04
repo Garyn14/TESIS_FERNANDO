@@ -95,4 +95,63 @@ class ContratoRegistroWeb3jTest {
     assertThat(ContratoRegistroWeb3j.FIRMANTE_ROLE)
         .isEqualTo("0x4647ec771677de1994885c32570d9834500414e0ead629825e02079c48f77991");
   }
+
+  // HU11: lectura de los documentos registrados en un recibo de registrarDocumentos.
+  private static Log registro(String direccionLog, String codigo, String hash, String hmac) {
+    Log log = new Log();
+    log.setAddress(direccionLog);
+    log.setTopics(
+        List.of(
+            ContratoRegistroWeb3j.DOCUMENTO_REGISTRADO,
+            org.web3j.crypto.Hash.sha3String(codigo),
+            tema(DIRECTOR)));
+    log.setData(
+        "0x"
+            + org.web3j.abi.FunctionEncoder.encodeConstructor(
+                List.of(
+                    new org.web3j.abi.datatypes.Utf8String(codigo),
+                    new org.web3j.abi.datatypes.generated.Bytes32(
+                        java.util.HexFormat.of().parseHex(hash)),
+                    new org.web3j.abi.datatypes.generated.Bytes32(
+                        java.util.HexFormat.of().parseHex(hmac)))));
+    return log;
+  }
+
+  @Test
+  void elEventoDeRegistroTieneLaFirmaDelContrato() {
+    assertThat(ContratoRegistroWeb3j.DOCUMENTO_REGISTRADO)
+        .isEqualTo(
+            org.web3j.crypto.Hash.sha3String(
+                "DocumentoRegistrado(bytes32,string,bytes32,bytes32,address)"));
+  }
+
+  @Test
+  void leeLosDocumentosRegistradosDeUnRecibo() {
+    String hash = "ab".repeat(32);
+    String hmac = "cd".repeat(32);
+    var documentos =
+        ContratoRegistroWeb3j.leerRegistros(
+            recibo(
+                "0x1",
+                CONTRATO,
+                registro(CONTRATO, "DRA-2026-F8R2MA", hash, hmac),
+                // Un evento de otro contrato no cuenta.
+                registro(ADMIN, "DRA-2026-ZZZZZZ", hash, hmac),
+                registro(CONTRATO, "DRA-2026-K7M4PX", hmac, hash)),
+            CONTRATO);
+    assertThat(documentos).hasSize(2);
+    assertThat(documentos.get(0).codigo()).isEqualTo("DRA-2026-F8R2MA");
+    assertThat(documentos.get(0).hashPdf()).isEqualTo(hash);
+    assertThat(documentos.get(0).dniHmac()).isEqualTo(hmac);
+    assertThat(documentos.get(0).firmante()).isEqualToIgnoringCase(DIRECTOR);
+    assertThat(documentos.get(1).codigo()).isEqualTo("DRA-2026-K7M4PX");
+  }
+
+  @Test
+  void unReciboFallidoODeOtroContratoNoRegistraNada() {
+    Log log = registro(CONTRATO, "DRA-2026-F8R2MA", "ab".repeat(32), "cd".repeat(32));
+    assertThat(ContratoRegistroWeb3j.leerRegistros(recibo("0x0", CONTRATO, log), CONTRATO))
+        .isEmpty();
+    assertThat(ContratoRegistroWeb3j.leerRegistros(recibo("0x1", ADMIN, log), CONTRATO)).isEmpty();
+  }
 }

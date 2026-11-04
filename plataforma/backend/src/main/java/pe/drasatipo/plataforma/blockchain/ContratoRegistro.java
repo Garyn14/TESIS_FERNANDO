@@ -19,4 +19,13 @@ public interface ContratoRegistro {
    * rol.
    */
   Optional<CambioDeRol> cambioDeRolEn(String transaccion);
+
+  /**
+   * Lee una transacción confirmada de registrarDocumentos (HU11) y los documentos que registró.
+   * Vacío si la transacción no existe todavía, falló, es de otro contrato o no registró documentos.
+   */
+  Optional<RegistroDeFirma> registroDeFirmaEn(String transaccion);
+
+  /** Indica si un código ya está registrado en el contrato (consulta de solo lectura). */
+  boolean estaRegistrado(String codigo);
 }
