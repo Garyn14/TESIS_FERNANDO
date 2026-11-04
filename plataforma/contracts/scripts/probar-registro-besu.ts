@@ -45,6 +45,26 @@ assert.equal(anulacion?.status, 1)
 assert.equal((await contrato.anulacion(codigos[0]))[0], true)
 assert.equal((await contrato.anulacion(codigos[1]))[0], false)
 
+// HU30: 50 reemisiones en una transacción: registra los nuevos y anula sus originales.
+const nuevos = codigos.slice(1).map((c) => c.replace('-P', '-R'))
+nuevos.push('DRA-2026-R99999')
+const originales = [...codigos.slice(1), 'DRA-2026-R00001']
+// El último reemplaza a una reemisión ya registrada en la misma transacción.
+const reemision = await (
+  await contrato.connect(director).registrarReemisiones(
+    nuevos,
+    nuevos.map((c) => ethers.sha256(ethers.toUtf8Bytes('pdf ' + c))),
+    nuevos.map((c) => ethers.sha256(ethers.toUtf8Bytes('dni ' + c))),
+    originales,
+    sinCosto,
+  )
+).wait()
+assert.equal(reemision?.status, 1)
+assert.equal(reemision?.logs.length, 150)
+assert.equal(await contrato.reemplazadoPor(codigos[49]), 'DRA-2026-R00049')
+assert.equal((await contrato.anulacion(codigos[49]))[0], true)
+assert.equal((await contrato.consultar('DRA-2026-R00049'))[0], true)
+
 await (await contrato.connect(respaldo).revocarFirmante(director.address, sinCosto)).wait()
 assert.equal(await contrato.esFirmante(director.address), false)
 
@@ -52,5 +72,5 @@ for (const cuenta of [despliega, administrador, respaldo, director]) {
   assert.equal(await ethers.provider.getBalance(cuenta.address), 0n)
 }
 console.log(
-  `RegistroDocumentos ${await contrato.getAddress()}: otorgado en el bloque ${otorgar?.blockNumber}, 50 documentos registrados en el bloque ${registro?.blockNumber} (gas ${registro?.gasUsed}), uno anulado en el bloque ${anulacion?.blockNumber} y revocado por el respaldo; sin costo`,
+  `RegistroDocumentos ${await contrato.getAddress()}: otorgado en el bloque ${otorgar?.blockNumber}, 50 documentos registrados en el bloque ${registro?.blockNumber} (gas ${registro?.gasUsed}), uno anulado en el bloque ${anulacion?.blockNumber}, 50 reemisiones en el bloque ${reemision?.blockNumber} (gas ${reemision?.gasUsed}) y revocado por el respaldo; sin costo`,
 )
