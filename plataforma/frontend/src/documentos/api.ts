@@ -55,7 +55,7 @@ export interface VistaPrevia {
   firmante: string | null
 }
 
-export type EstadoDocumento = 'PENDIENTE'
+export type EstadoDocumento = 'PENDIENTE' | 'PROCESANDO_FIRMA'
 
 export interface Documento extends VistaPrevia {
   codigo: string
@@ -97,7 +97,10 @@ export const documentosDelArea = () => solicitar<DocumentoResumen[]>('/api/docum
 export const documento = (codigo: string) =>
   solicitar<Documento>(`/api/documentos/${encodeURIComponent(codigo)}`)
 
-export const ESTADOS: Record<EstadoDocumento, string> = { PENDIENTE: 'Pendiente' }
+export const ESTADOS: Record<EstadoDocumento, string> = {
+  PENDIENTE: 'Pendiente',
+  PROCESANDO_FIRMA: 'Procesando firma',
+}
 
 const FECHA = new Intl.DateTimeFormat('es-PE', {
   day: '2-digit',
