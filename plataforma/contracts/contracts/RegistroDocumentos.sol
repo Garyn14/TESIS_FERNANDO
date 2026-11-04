@@ -5,9 +5,9 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @title Registro de documentos de la Agencia Agraria Satipo
 /// @notice Registro en la blockchain de los certificados y constancias firmados por el director.
-/// En esta versión (HU06, RF08) solo define quién puede hacer qué: el administrador del contrato
-/// otorga y revoca el rol de firmante. Las funciones para registrar y anular documentos se agregan
-/// en HU16–HU18 y HU29.
+/// El administrador del contrato otorga y revoca el rol de firmante (HU06, RF08), y el firmante
+/// registra los documentos que firma (HU11, RF31): su código, el hash SHA-256 de su PDF final y el
+/// HMAC de su DNI. La anulación se agrega con HU29.
 /// @dev Usa el control de acceso auditado de OpenZeppelin (RNF08). Reglas propias:
 /// - El rol de administrador se asigna al desplegar a dos billeteras: la del Administrador y una de
 ///   respaldo fuera de línea (RNF05). La cuenta que despliega no recibe ningún rol.
@@ -19,8 +19,40 @@ contract RegistroDocumentos is AccessControl {
   /// @notice Rol de las billeteras que pueden registrar documentos firmados (el director).
   bytes32 public constant FIRMANTE_ROLE = keccak256("FIRMANTE_ROLE");
 
+  /// @notice Máximo de documentos por transacción (HU11): una selección mayor se divide.
+  uint256 public constant MAXIMO_POR_TRANSACCION = 50;
+
+  /// @notice Registro de un documento firmado. Nunca se modifica (RNF10).
+  /// @param hashPdf SHA-256 de los bytes exactos del PDF final (RF30).
+  /// @param dniHmac HMAC-SHA256 del DNI del beneficiario; el DNI nunca va a la blockchain (RF17).
+  /// @param firmante Billetera que lo firmó.
+  /// @param registradoEn Fecha del bloque: es la fecha oficial de emisión (RF32).
+  struct Registro {
+    bytes32 hashPdf;
+    bytes32 dniHmac;
+    address firmante;
+    uint64 registradoEn;
+  }
+
   /// @dev Cantidad de billeteras con el rol de administrador.
   uint256 private _administradores;
+
+  /// @dev Registros por keccak256 del código de verificación.
+  mapping(bytes32 => Registro) private _registros;
+
+  /// @notice Se registró un documento firmado (HU11). HU18 sincroniza los estados con este evento.
+  /// @param clave keccak256 del código, para filtrar por documento.
+  /// @param codigo Código de verificación (DRA-AAAA-XXXXXX).
+  /// @param hashPdf SHA-256 del PDF final.
+  /// @param dniHmac HMAC-SHA256 del DNI.
+  /// @param firmante Billetera que firmó.
+  event DocumentoRegistrado(
+    bytes32 indexed clave,
+    string codigo,
+    bytes32 hashPdf,
+    bytes32 dniHmac,
+    address indexed firmante
+  );
 
   /// @notice La dirección es la dirección cero.
   error DireccionInvalida();
@@ -40,6 +72,20 @@ contract RegistroDocumentos is AccessControl {
   /// @notice La billetera no tiene el rol de firmante.
   /// @param cuenta Billetera indicada.
   error NoEsFirmante(address cuenta);
+  /// @notice Se deben registrar de 1 a MAXIMO_POR_TRANSACCION documentos.
+  /// @param cantidad Cantidad recibida.
+  error CantidadInvalida(uint256 cantidad);
+  /// @notice Las listas de códigos, hashes y HMAC deben tener el mismo largo.
+  error LongitudesDistintas();
+  /// @notice El código está vacío o es demasiado largo.
+  /// @param codigo Código rechazado.
+  error CodigoInvalido(string codigo);
+  /// @notice El hash del PDF o el HMAC del DNI está vacío.
+  /// @param codigo Código del documento.
+  error DatosIncompletos(string codigo);
+  /// @notice El código ya está registrado: un documento no se registra dos veces.
+  /// @param codigo Código repetido.
+  error CodigoYaRegistrado(string codigo);
 
   /// @notice Despliega el contrato con dos administradores (RNF05).
   /// @param administrador Billetera del Administrador de la plataforma.
@@ -62,6 +108,43 @@ contract RegistroDocumentos is AccessControl {
   /// @param cuenta Billetera del director.
   function revocarFirmante(address cuenta) external onlyRole(DEFAULT_ADMIN_ROLE) {
     if (!_revokeRole(FIRMANTE_ROLE, cuenta)) revert NoEsFirmante(cuenta);
+  }
+
+  /// @notice Registra documentos firmados (HU11, RF31). Si uno no es válido, no se registra
+  /// ninguno de esta transacción.
+  /// @dev Solo el firmante. Emite `DocumentoRegistrado` por cada documento.
+  /// @param codigos Códigos de verificación.
+  /// @param hashes SHA-256 de cada PDF final.
+  /// @param dniHmacs HMAC-SHA256 del DNI de cada beneficiario.
+  function registrarDocumentos(
+    string[] calldata codigos,
+    bytes32[] calldata hashes,
+    bytes32[] calldata dniHmacs
+  ) external onlyRole(FIRMANTE_ROLE) {
+    uint256 cantidad = codigos.length;
+    if (cantidad == 0 || cantidad > MAXIMO_POR_TRANSACCION) revert CantidadInvalida(cantidad);
+    if (hashes.length != cantidad || dniHmacs.length != cantidad) revert LongitudesDistintas();
+    for (uint256 i = 0; i < cantidad; i++) {
+      string calldata codigo = codigos[i];
+      uint256 largo = bytes(codigo).length;
+      if (largo == 0 || largo > 32) revert CodigoInvalido(codigo);
+      if (hashes[i] == bytes32(0) || dniHmacs[i] == bytes32(0)) revert DatosIncompletos(codigo);
+      bytes32 clave = keccak256(bytes(codigo));
+      if (_registros[clave].registradoEn != 0) revert CodigoYaRegistrado(codigo);
+      _registros[clave] = Registro(hashes[i], dniHmacs[i], msg.sender, uint64(block.timestamp));
+      emit DocumentoRegistrado(clave, codigo, hashes[i], dniHmacs[i], msg.sender);
+    }
+  }
+
+  /// @notice Consulta el registro de un documento (HU11, HU21). Es de solo lectura.
+  /// @param codigo Código de verificación.
+  /// @return registrado Si el código está registrado.
+  /// @return registro Hash, HMAC, firmante y fecha del bloque; vacío si no está registrado.
+  function consultar(
+    string calldata codigo
+  ) external view returns (bool registrado, Registro memory registro) {
+    registro = _registros[keccak256(bytes(codigo))];
+    registrado = registro.registradoEn != 0;
   }
 
   /// @notice Indica si una billetera tiene hoy el rol de firmante.
