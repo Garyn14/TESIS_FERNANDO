@@ -1,7 +1,7 @@
 // Prueba de punta a punta real del Sprint 4: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). El Área encargada envía sus
 // documentos por la API desde el navegador (la pantalla ya la recorre sprint2.cjs) y el Director
-// trabaja desde la pantalla. Recorre HU13.
+// trabaja desde la pantalla. Recorre HU13 y HU14.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
@@ -187,6 +187,72 @@ const paso = async (nombre, fn) => {
     assert.equal(otraVez.cuerpo.mensaje, 'Este documento no está pendiente de revisión.')
     assert.equal((await enviar(pedro, `/api/revision/documentos/${kevin}/observacion`, { motivo: 'x' })).estado, 403)
     assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${kevin}'`), 'PENDIENTE')
+  })
+
+  // ------------------------------------------------------------- HU14: rechazar un documento
+  const RECHAZO = 'El solicitante no trabajó en la agencia en ese periodo'
+  const ventanaRechazo = () => carlos.getByRole('dialog', { name: 'Rechazar documento' })
+  await paso('HU14 · "Rechazar" abre la ventana de motivo con el aviso de que es definitivo', async () => {
+    await carlos.goto(URL + '#/por-revisar')
+    await carlos.reload()
+    await carlos.locator('main tbody tr', { hasText: 'Kevin Ramos Ccanto' }).getByRole('link').click()
+    await carlos.getByRole('heading', { name: 'Revisión – Certificado de Trabajo' }).waitFor()
+    await carlos.getByRole('button', { name: 'Observar' }).waitFor()
+    await carlos.getByRole('button', { name: 'Firmar' }).waitFor()
+    await carlos.getByRole('button', { name: 'Rechazar' }).click()
+    await ventanaRechazo().getByText('El rechazo es definitivo. El documento no podrá reenviarse.').waitFor()
+    const confirmar = ventanaRechazo().getByRole('button', { name: 'Confirmar' })
+    assert.ok(await confirmar.isDisabled())
+    await ventanaRechazo().getByLabel('Motivo').fill(RECHAZO)
+    assert.ok(await confirmar.isEnabled())
+    await foto(carlos, 'hu14_01_ventana_rechazar_documento')
+  })
+  await paso('HU14 · Al confirmar, el documento queda Rechazado con su motivo y su historial', async () => {
+    await ventanaRechazo().getByRole('button', { name: 'Confirmar' }).click()
+    await carlos.getByRole('status').getByText('El documento fue rechazado.').waitFor()
+    await carlos.getByText(RECHAZO).waitFor()
+    for (const accion of ['Rechazar', 'Observar', 'Firmar'])
+      assert.equal(await carlos.getByRole('button', { name: accion }).count(), 0)
+    await foto(carlos, 'hu14_02_documento_rechazado')
+    assert.equal(psql(`SELECT estado, motivo FROM documento WHERE codigo = '${kevin}'`), `RECHAZADO|${RECHAZO}`)
+    assert.equal(
+      psql(`SELECT h.evento, h.detalle, u.nombre_usuario FROM documento_historial h JOIN documento d ON d.id = h.documento_id JOIN usuario u ON u.id = h.realizado_por WHERE d.codigo = '${kevin}' ORDER BY h.id DESC LIMIT 1`),
+      `RECHAZADO|Rechazado por Ing. Carlos Mendoza Rivera: ${RECHAZO}|cmendoza`,
+    )
+  })
+  await paso('HU14 · El rechazo es definitivo: no se revisa, observa ni rechaza de nuevo', async () => {
+    for (const [ruta, cuerpo] of [
+      [`/api/revision/documentos/${kevin}/rechazo`, { motivo: 'Otra vez' }],
+      [`/api/revision/documentos/${kevin}/observacion`, { motivo: 'Corregir' }],
+      [`/api/revision/documentos/${kevin}`, {}],
+    ])
+      assert.equal((await enviar(carlos, ruta, cuerpo)).estado, 404, ruta)
+    assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${kevin}'`), 'RECHAZADO')
+    await carlos.getByRole('link', { name: 'Volver a Por revisar', exact: true }).click()
+    await carlos.getByText('¡Todo al día!').waitFor()
+    await foto(carlos, 'hu14_03_bandeja_al_dia')
+  })
+  await paso('HU14 · El Área encargada lo ve Rechazado, con el motivo y el aviso de que es definitivo', async () => {
+    await pedro.goto(URL + '#/mis-documentos')
+    await pedro.reload()
+    const fila = pedro.locator('main tbody tr', { hasText: 'Kevin Ramos Ccanto' })
+    await fila.getByText('Rechazado').waitFor()
+    await pedro.locator('main tbody tr', { hasText: 'Lucía Paredes Quinto' }).getByText('Observado').waitFor()
+    await foto(pedro, 'hu14_04_mis_documentos_rechazado')
+    await fila.getByRole('link').click()
+    await pedro.getByText('El Director lo rechazó. El rechazo es definitivo.').waitFor()
+    await pedro.getByText(RECHAZO).waitFor()
+    await foto(pedro, 'hu14_05_detalle_rechazado')
+  })
+  await paso('HU14 · El motivo es obligatorio y solo el Director rechaza', async () => {
+    const r = await enviar(pedro, '/api/documentos', trabajo('EXP-2026-005393', 'Iris', 'Pari Quispe', '44100003'))
+    assert.equal(r.estado, 201)
+    const iris = r.cuerpo.codigo
+    const vacio = await enviar(carlos, `/api/revision/documentos/${iris}/rechazo`, { motivo: '' })
+    assert.equal(vacio.estado, 400)
+    assert.equal(vacio.cuerpo.campos.motivo, 'Indique el motivo.')
+    assert.equal((await enviar(pedro, `/api/revision/documentos/${iris}/rechazo`, { motivo: 'x' })).estado, 403)
+    assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${iris}'`), 'PENDIENTE')
   })
 
   await b.close()
