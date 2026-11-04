@@ -1,7 +1,7 @@
 // Prueba de punta a punta real del Sprint 4: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). El Área encargada envía sus
 // documentos por la API desde el navegador (la pantalla ya la recorre sprint2.cjs) y el Director
-// trabaja desde la pantalla. Recorre HU13 y HU14.
+// trabaja desde la pantalla. Recorre HU13, HU14 y HU15.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
@@ -253,6 +253,118 @@ const paso = async (nombre, fn) => {
     assert.equal(vacio.cuerpo.campos.motivo, 'Indique el motivo.')
     assert.equal((await enviar(pedro, `/api/revision/documentos/${iris}/rechazo`, { motivo: 'x' })).estado, 403)
     assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${iris}'`), 'PENDIENTE')
+  })
+
+  // ------------------------------------------------- HU15: corregir y reenviar un observado
+  await paso('HU15 · El área corrige el documento observado con el formulario precargado y el motivo a la vista', async () => {
+    await pedro.goto(URL + '#/mis-documentos/' + lucia)
+    await pedro.getByRole('link', { name: 'Corregir y reenviar' }).click()
+    await pedro.getByRole('heading', { name: 'Corregir y reenviar – Certificado de Trabajo' }).waitFor()
+    await pedro.getByText(MOTIVO).waitFor()
+    const campoDe = (etiqueta) => pedro.getByLabel(etiqueta, { exact: false })
+    assert.equal(await campoDe('N.° de expediente').inputValue(), 'EXP-2026-005391')
+    assert.equal(await campoDe('Apellidos').inputValue(), 'Paredes Quinto')
+    assert.equal(await campoDe('Cargo').inputValue(), 'asistente administrativa')
+    assert.equal(await campoDe('Fecha de inicio').inputValue(), '02/01/2025')
+    await campoDe('Cargo').fill('secretaria')
+    await campoDe('Apellidos').fill('Paredes Quintana')
+    await foto(pedro, 'hu15_01_correccion_precargada')
+    await pedro.getByRole('button', { name: 'Continuar a vista previa' }).click()
+    await pedro.getByRole('figure').getByText('como secretaria', { exact: false }).waitFor()
+    await pedro.getByRole('button', { name: 'Reenviar a revisión' }).click()
+    await pedro.getByRole('dialog', { name: '¿Reenviar a revisión?' }).getByRole('button', { name: 'Reenviar' }).click()
+    await pedro.getByText('✓ Documento corregido y reenviado a revisión').waitFor()
+    await foto(pedro, 'hu15_02_reenviado')
+  })
+  await paso('HU15 · Vuelve a Pendiente con su mismo código, sin la revisión anterior y con los cambios en el historial', async () => {
+    assert.equal(
+      psql(`SELECT estado, motivo IS NULL, revisado_en IS NULL, corregido_en IS NOT NULL, apellidos FROM documento WHERE codigo = '${lucia}'`),
+      'PENDIENTE|t|t|t|Paredes Quintana',
+    )
+    const [evento, detalle, quien] = psql(
+      `SELECT h.evento, h.detalle, u.nombre_usuario FROM documento_historial h JOIN documento d ON d.id = h.documento_id JOIN usuario u ON u.id = h.realizado_por WHERE d.codigo = '${lucia}' ORDER BY h.id DESC LIMIT 1`,
+    ).split('|')
+    assert.equal(evento, 'CORREGIDO')
+    assert.equal(quien, 'pmorales')
+    for (const parte of [
+      'Corregido y reenviado a revisión por Pedro Morales Ccanto (Área de Administración).',
+      'Apellidos: Paredes Quinto → Paredes Quintana',
+      'Cargo: asistente administrativa → secretaria',
+    ])
+      assert.ok(detalle.includes(parte), detalle)
+    // La observación sigue en el historial.
+    assert.ok(psql(`SELECT string_agg(h.evento, ',' ORDER BY h.id) FROM documento_historial h JOIN documento d ON d.id = h.documento_id WHERE d.codigo = '${lucia}'`).includes('OBSERVADO,CORREGIDO'))
+  })
+  await paso('HU15 · En Por revisar aparece como "Corregido" y sin revisar; el Director lo revisa de nuevo', async () => {
+    await carlos.goto(URL + '#/por-revisar')
+    await carlos.reload()
+    const fila = carlos.locator('main tbody tr', { hasText: 'Lucía Paredes Quintana' })
+    await fila.getByText('Corregido').waitFor()
+    await fila.getByText('Sin revisar').waitFor()
+    await foto(carlos, 'hu15_03_bandeja_corregido')
+    await fila.getByRole('link').click()
+    await carlos.getByRole('heading', { name: 'Revisión – Certificado de Trabajo' }).waitFor()
+    await carlos.getByRole('figure').getByText('como secretaria', { exact: false }).waitFor()
+    await carlos.getByRole('button', { name: 'Firmar' }).waitFor()
+    assert.equal(psql(`SELECT revisado_en IS NOT NULL FROM documento WHERE codigo = '${lucia}'`), 't')
+  })
+  const rosa = await nueva()
+  let gladys, juanDni
+  await paso('HU15 · En un lote, el certificado observado se corrige desde su fila, sin repetir un DNI del lote', async () => {
+    await primerIngreso(rosa, 'rquispe', TEMPORAL, PROPIA)
+    juanDni = '45218736'
+    const l = await enviar(rosa, '/api/lotes', {
+      tipo: 'CERTIFICADO_CAPACITACION',
+      datos: {
+        nombreEvento: 'Manejo integrado de plagas en café',
+        fechaInicio: '2026-09-14',
+        fechaFin: '2026-09-16',
+        duracionHoras: '24',
+        lugar: 'Local comunal de Río Negro, Satipo',
+        areaOrganizadora: 'Área de Capacitación',
+      },
+      beneficiarios: [
+        { nombres: 'Juan', apellidos: 'Ccori Pari', dni: juanDni },
+        { nombres: 'Gladys', apellidos: 'Sanchez Naupari', dni: '45903318' },
+        { nombres: 'Nelly', apellidos: 'Mayta Huarcaya', dni: '48132760' },
+      ],
+    })
+    assert.equal(l.estado, 201)
+    const numero = l.cuerpo.numero
+    const revisado = await enviar(carlos, `/api/revision/lotes/${numero}`, {})
+    gladys = revisado.cuerpo.documentos.find((d) => d.nombres === 'Gladys').codigo
+    const obs = await enviar(carlos, `/api/revision/lotes/${numero}/observacion`, { codigos: [gladys], motivo: 'El apellido no coincide con el DNI' })
+    assert.equal(obs.estado, 200)
+
+    await rosa.goto(URL + '#/mis-documentos/lote/' + numero)
+    await rosa.getByRole('heading', { name: `Lote ${numero}` }).waitFor()
+    await rosa.locator('main tbody tr', { hasText: 'Gladys' }).getByRole('button', { name: 'Corregir' }).click()
+    const ventana = rosa.getByRole('dialog', { name: 'Corregir certificado' })
+    await ventana.getByText('El apellido no coincide con el DNI').waitFor()
+    await ventana.getByLabel('DNI', { exact: false }).fill(juanDni)
+    await ventana.getByRole('button', { name: 'Reenviar a revisión' }).click()
+    await ventana.getByText('El DNI ya está en otro certificado de este lote.').waitFor()
+    await ventana.getByLabel('DNI', { exact: false }).fill('45903318')
+    await ventana.getByLabel('Apellidos', { exact: false }).fill('Sánchez Ñaupari')
+    await foto(rosa, 'hu15_04_corregir_certificado_del_lote')
+    await ventana.getByRole('button', { name: 'Reenviar a revisión' }).click()
+    await rosa.getByRole('status').getByText('se corrigió y se reenvió a revisión', { exact: false }).waitFor()
+    await rosa.locator('main tbody tr', { hasText: 'Sánchez Ñaupari' }).getByText('Pendiente').waitFor()
+    await foto(rosa, 'hu15_05_lote_con_certificado_reenviado')
+    assert.equal(psql(`SELECT estado, apellidos, revisado_en IS NULL FROM documento WHERE codigo = '${gladys}'`), 'PENDIENTE|Sánchez Ñaupari|t')
+    await carlos.goto(URL + '#/por-revisar')
+    await carlos.reload()
+    await carlos.locator('main tbody tr', { hasText: `Lote ${numero}` }).getByText('Corregido').waitFor()
+  })
+  await paso('HU15 · Solo se corrige un observado del área propia, y solo el área', async () => {
+    const cuerpo = { numeroExpediente: 'EXP-2026-005392', nombres: 'Kevin', apellidos: 'Ramos', dni: '46385127', datos: {} }
+    const rechazado = await enviar(pedro, `/api/documentos/${kevin}/correccion`, cuerpo)
+    assert.equal(rechazado.estado, 409)
+    assert.equal(rechazado.cuerpo.mensaje, 'Solo se corrige un documento observado. Este documento no está observado.')
+    assert.equal((await enviar(pedro, `/api/documentos/${lucia}/correccion`, cuerpo)).estado, 409)
+    assert.equal((await enviar(rosa, `/api/documentos/${lucia}/correccion`, cuerpo)).estado, 403)
+    assert.equal((await enviar(carlos, `/api/documentos/${lucia}/correccion`, cuerpo)).estado, 403)
+    assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${kevin}'`), 'RECHAZADO')
   })
 
   await b.close()
