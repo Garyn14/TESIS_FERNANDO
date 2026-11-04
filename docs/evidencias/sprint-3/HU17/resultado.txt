@@ -1,0 +1,15 @@
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ Preparación · Las áreas envían un documento, un lote y otro documento, en ese orden
+✓ HU10 · La bandeja muestra los pendientes del más antiguo al más reciente, con el lote en una fila
+✓ HU10 · Abrir un documento muestra sus datos y su vista previa, y lo registra como revisado
+✓ HU10 · En el lote se recorren los certificados y la relación; abrirlo revisa los tres
+✓ HU10 · En la base queda quién revisó y cuándo; volver a abrir no duplica el registro
+✓ HU16 · La muestra del PDF final trae la fecha de emisión, el código, la leyenda y los datos revisados
+✓ HU16 · El QR del PDF lleva la dirección de verificación con el token del documento
+✓ HU16 · Cada certificado de un lote tiene su propia muestra, con su nombre y su código
+✓ HU17 · Al preparar la firma, el PDF final queda en IPFS, fijado, con su CID y su hash
+✓ HU17 · El documento sale de Por revisar y el área lo ve en Procesando firma
+✓ HU17 · Si IPFS no responde, el documento vuelve a Pendiente con el error en su historial
+✓ HU17 · Con IPFS de nuevo en línea, los tres certificados del lote se guardan, cada uno con su CID
+✓ HU17 · Solo el Director prepara la firma
+✓ HU10 · Solo el Director ve la bandeja
