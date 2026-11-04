@@ -332,4 +332,42 @@ describe('Por revisar (HU10)', () => {
     expect(llamada[0]).toBe('/api/revision/documentos/DRA-2026-T6N9QE/observacion')
     expect(JSON.parse(String(llamada[1]?.body))).toEqual({ motivo: 'Falta el expediente' })
   })
+
+  it('rechazar un documento avisa que es definitivo y no deja acciones (HU14)', async () => {
+    const DOC = {
+      ...EJEMPLO,
+      codigo: 'DRA-2026-T6N9QE',
+      origen: 'SOLICITUD_PARTE',
+      estado: 'PENDIENTE',
+      lote: null,
+      areaNombre: 'Área de Desarrollo Agrario',
+      registradoPor: 'Marco Salazar Vela',
+      registradoEn: '2026-09-28T15:00:00Z',
+    }
+    const fetch = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation((ruta) =>
+        String(ruta).endsWith('/rechazo')
+          ? respuesta(200, { ...DOC, estado: 'RECHAZADO', motivo: 'No es productor activo' })
+          : respuesta(200, DOC),
+      )
+    render(<PaginaRevisionDocumento codigo="DRA-2026-T6N9QE" />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Rechazar' }))
+    const ventana = screen.getByRole('dialog', { name: 'Rechazar documento' })
+    expect(
+      within(ventana).getByText('El rechazo es definitivo. El documento no podrá reenviarse.'),
+    ).toBeInTheDocument()
+    fireEvent.change(within(ventana).getByLabelText('Motivo'), {
+      target: { value: 'No es productor activo' },
+    })
+    fireEvent.click(within(ventana).getByRole('button', { name: 'Confirmar' }))
+
+    expect(await screen.findByText('El documento fue rechazado.')).toBeInTheDocument()
+    expect(screen.getByText('No es productor activo')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Rechazar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Firmar' })).not.toBeInTheDocument()
+    expect(
+      fetch.mock.calls.some(([r]) => r === '/api/revision/documentos/DRA-2026-T6N9QE/rechazo'),
+    ).toBe(true)
+  })
 })

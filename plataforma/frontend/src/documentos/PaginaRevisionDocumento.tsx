@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
-import { BOTON_PRIMARIO, BOTON_SECUNDARIO } from '../comun/estilos'
+import { BOTON_ADVERTENCIA, BOTON_PRIMARIO, BOTON_SECUNDARIO } from '../comun/estilos'
 import VentanaDeFirma from '../firma/VentanaDeFirma'
 import { fechaCorta, type Documento } from './api'
 import Certificado from './Certificado'
 import MuestraDelPdf from './MuestraDelPdf'
-import { observarDocumento, revisarDocumento } from './revision'
+import { observarDocumento, rechazarDocumento, revisarDocumento } from './revision'
 import VentanaDeMotivo from './VentanaDeMotivo'
 
 /**
  * HU10: revisión de un documento. Abrirlo registra la revisión (RF22). HU11: se firma desde aquí.
- * HU13: se observa con un motivo y vuelve al área. Rechazar llega con HU14.
+ * HU13: se observa con un motivo y vuelve al área. HU14: se rechaza con un motivo; es definitivo.
  */
 export default function PaginaRevisionDocumento({
   codigo,
@@ -22,7 +22,7 @@ export default function PaginaRevisionDocumento({
   const [doc, setDoc] = useState<Documento | null>(null)
   const [error, setError] = useState('')
   const [firmando, setFirmando] = useState(false)
-  const [observando, setObservando] = useState(false)
+  const [decision, setDecision] = useState<'observacion' | 'rechazo' | null>(null)
   useEffect(() => {
     revisarDocumento(codigo)
       .then(setDoc)
@@ -69,12 +69,16 @@ export default function PaginaRevisionDocumento({
           <div className="mt-6">
             <Certificado documento={doc} />
           </div>
-          {doc.estado === 'OBSERVADO' ? (
+          {doc.estado === 'OBSERVADO' || doc.estado === 'RECHAZADO' ? (
             <div className="mt-6 space-y-3">
               <p role="status" className="rounded-lg bg-green-pale px-4 py-3 text-institutional">
-                El documento fue observado y volvió al área.
+                {doc.estado === 'OBSERVADO'
+                  ? 'El documento fue observado y volvió al área.'
+                  : 'El documento fue rechazado.'}
               </p>
-              <p className="rounded-lg bg-orange-pale px-4 py-3">
+              <p
+                className={`rounded-lg px-4 py-3 ${doc.estado === 'OBSERVADO' ? 'bg-orange-pale' : 'bg-red-50'}`}
+              >
                 <strong>Motivo:</strong> {doc.motivo}
               </p>
               <a href="#/por-revisar" className="font-medium text-institutional hover:underline">
@@ -85,13 +89,18 @@ export default function PaginaRevisionDocumento({
             <>
               <MuestraDelPdf codigo={doc.codigo} />
               <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-                <p className="text-sm text-muted">
-                  ✓ Quedó registrado como revisado. Rechazar se habilita con HU14.
-                </p>
+                <p className="text-sm text-muted">✓ Quedó registrado como revisado.</p>
                 <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={() => setObservando(true)}
+                    onClick={() => setDecision('rechazo')}
+                    className={BOTON_ADVERTENCIA}
+                  >
+                    Rechazar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDecision('observacion')}
                     className={BOTON_SECUNDARIO}
                   >
                     Observar
@@ -107,15 +116,20 @@ export default function PaginaRevisionDocumento({
               </div>
             </>
           )}
-          {observando && (
+          {decision && (
             <VentanaDeMotivo
-              titulo="Observar documento"
-              rechazo={false}
+              titulo={decision === 'rechazo' ? 'Rechazar documento' : 'Observar documento'}
+              rechazo={decision === 'rechazo'}
               onConfirmar={async (motivo) => {
-                setDoc(await observarDocumento(doc.codigo, motivo))
-                setObservando(false)
+                setDoc(
+                  await (decision === 'rechazo' ? rechazarDocumento : observarDocumento)(
+                    doc.codigo,
+                    motivo,
+                  ),
+                )
+                setDecision(null)
               }}
-              onCerrar={() => setObservando(false)}
+              onCerrar={() => setDecision(null)}
             />
           )}
           {firmando && (
