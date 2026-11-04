@@ -77,3 +77,4 @@ Totales:
   - En la primera ejecución llegó antes la sincronización. La prueba esperaba solo el texto de la confirmación desde la pantalla, y se corrigió para aceptar los dos orígenes.
   - Sigue comprobando que no haya eventos ANULADO duplicados.
 - El detalle del área sigue mostrando la plantilla como vista previa, igual que en los documentos firmados. Mostrar el PDF firmado corresponde a HU25 (Sprint 6).
+- La regresión del Sprint 1 esperaba en "Documentos firmados" el aviso provisional "Se habilita en el Sprint 3". Ahora es una pantalla real, y `sprint1.cjs` comprueba su estado vacío ("Todavía no hay documentos firmados."). Con ese cambio pasó completa.
