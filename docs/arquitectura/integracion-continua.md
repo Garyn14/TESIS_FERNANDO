@@ -149,6 +149,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 03/11/2026 | [41749276488](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41749276488) | `DRA-25-almacenar-pdf-ipfs` | ✓ Cinco jobs en verde con HU17: migración V13 y PDF final en IPFS, con pruebas del backend contra un nodo Kubo real en Testcontainers (145 pruebas de backend, 97 de frontend) |
 | 03/11/2026 | [41753614314](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41753614314) | `DRA-22-firmar-documentos` | ✓ Cinco jobs en verde con HU11: `registrarDocumentos` en el contrato (22 pruebas de Hardhat y 50 documentos en una transacción en la red Besu real), migración V14 y firma con la billetera (157 pruebas de backend, 107 de frontend) |
 | 03/11/2026 | [41758193909](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41758193909) | `DRA-23-firmar-lote` | ✓ Cinco jobs en verde con HU12: migración V15, observar y rechazar certificados de un lote y firmar el resto (161 pruebas de backend, 113 de frontend) |
+| 04/11/2026 | [41779637849](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41779637849) | `DRA-26-sincronizar-blockchain` | ✓ Cinco jobs en verde con HU18, la última del Sprint 3: migración V16 y sincronización con los eventos del contrato (167 pruebas de backend, 113 de frontend) |
 
 ## 9. Pendientes
 
