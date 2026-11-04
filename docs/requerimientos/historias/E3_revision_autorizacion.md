@@ -308,11 +308,48 @@ Los dos primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo s
 
 **Como** sistema, **quiero** sincronizar el estado de los documentos con la blockchain, **para** que ninguna firma o anulación quede sin reflejarse.
 
+**Contexto**
+
+Con HU11, el navegador del Director registra la firma con su billetera y luego avisa al servidor para confirmarla. Si el navegador se cierra o pierde la conexión entre esos dos pasos, la firma queda en la blockchain y el documento queda detenido en Procesando firma. También puede quedar detenido un documento preparado (HU17) cuya transacción nunca se envió. Esta historia agrega una tarea del servidor que se ejecuta cada cierto tiempo y corrige las dos situaciones:
+
+| Situación | Qué hace la sincronización |
+|---|---|
+| El contrato registró un documento que sigue en Procesando firma | Lee el evento `DocumentoRegistrado` y, si el hash coincide con el de su PDF, lo pasa a **Firmado** con la transacción, el bloque, la billetera y la fecha del bloque (RF32) |
+| Un documento lleva más del plazo en Procesando firma y el contrato no lo registró | Lo devuelve a **Pendiente**, revisado, con el motivo en su historial |
+
+La anulación se registrará en el contrato con HU29 (Sprint 6). Esta misma sincronización leerá entonces su evento.
+
 **Criterios de aceptación**
+
+Los tres primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] Se leen los eventos del smart contract y se reanuda desde el último bloque procesado.
 - [ ] Los documentos detenidos en proceso de firma se corrigen.
 - [ ] Un código ya registrado no se registra de nuevo.
+- [ ] El último bloque procesado se guarda en PostgreSQL, en la misma transacción en que se aplican sus eventos. Si el servidor se reinicia, continúa desde ahí sin aplicar dos veces el mismo evento.
+- [ ] La primera vez empieza en el bloque donde se desplegó el contrato (PLATAFORMA_CONTRATO_BLOQUE_INICIAL). Lee como máximo 5000 bloques por consulta.
+- [ ] Un evento cuyo hash no coincide con el del PDF preparado no marca nada y queda en el registro del servidor como inconsistencia.
+- [ ] Un documento detenido solo vuelve a Pendiente después de que la sincronización se pone al día con la blockchain y de comprobar en el contrato que no está registrado.
+- [ ] La preparación (HU17) no acepta un documento cuyo código ya está registrado en el contrato. El contrato también lo rechaza (`CodigoYaRegistrado`, HU11).
+- [ ] El historial distingue lo que hizo la sincronización: "Firma confirmada por la sincronización…" o "La firma no se completó en el plazo…".
+- [ ] Si la blockchain no responde, no se cambia nada y se reintenta en la siguiente ejecución.
+- [ ] El intervalo (PLATAFORMA_SINCRONIZACION_INTERVALO, 30 segundos) y el plazo de un documento detenido (PLATAFORMA_FIRMA_PLAZO, 15 minutos) se configuran fuera del código.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Registrar y sincronizar la anulación | HU29 (Sprint 6) |
+| Pantalla de auditoría con el estado de la sincronización | HU24 (Sprint 4) |
+| Avisos de firma al área y a Mesa de Partes | HU27 y HU28 (Sprint 6) |
+
+**Notas técnicas**
+
+- Tarea programada de Spring (`@Scheduled`). Solo corre si el contrato está configurado.
+- Lee los eventos con `eth_getLogs`, filtrando por el contrato y el evento `DocumentoRegistrado`.
+- Tabla `sincronizacion_blockchain` con el último bloque procesado. Columna `firma_iniciada_en` en el documento.
+- Un evento de la sincronización lo registra la cuenta dueña de la billetera que firmó; si no se encuentra, queda como hecho por el sistema.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
-| Alta | 13 | 3 | RF32–RF35 |
+| Alta | 13 | 3 | RF32–RF35 (relacionados: RNF10) |
