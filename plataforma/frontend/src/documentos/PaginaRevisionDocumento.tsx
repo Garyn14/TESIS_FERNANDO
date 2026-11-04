@@ -1,17 +1,26 @@
 import { useEffect, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
+import { BOTON_PRIMARIO } from '../comun/estilos'
+import VentanaDeFirma from '../firma/VentanaDeFirma'
 import { fechaCorta, type Documento } from './api'
 import Certificado from './Certificado'
 import MuestraDelPdf from './MuestraDelPdf'
 import { revisarDocumento } from './revision'
 
 /**
- * HU10: revisión de un documento. Abrirlo registra la revisión (RF22). Firmar, observar y rechazar
- * llegan con HU11, HU13 y HU14.
+ * HU10: revisión de un documento. Abrirlo registra la revisión (RF22). HU11: se firma desde aquí.
+ * Observar y rechazar llegan con HU13 y HU14.
  */
-export default function PaginaRevisionDocumento({ codigo }: { codigo: string }) {
+export default function PaginaRevisionDocumento({
+  codigo,
+  director = '',
+}: {
+  codigo: string
+  director?: string
+}) {
   const [doc, setDoc] = useState<Documento | null>(null)
   const [error, setError] = useState('')
+  const [firmando, setFirmando] = useState(false)
   useEffect(() => {
     revisarDocumento(codigo)
       .then(setDoc)
@@ -59,10 +68,29 @@ export default function PaginaRevisionDocumento({ codigo }: { codigo: string }) 
             <Certificado documento={doc} />
           </div>
           <MuestraDelPdf codigo={doc.codigo} />
-          <p className="mt-4 text-sm text-muted">
-            ✓ Quedó registrado como revisado. Firmar, observar y rechazar se habilitan en las
-            siguientes historias (HU11, HU13 y HU14).
-          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-sm text-muted">
+              ✓ Quedó registrado como revisado. Observar y rechazar se habilitan con HU13 y HU14.
+            </p>
+            <button type="button" onClick={() => setFirmando(true)} className={BOTON_PRIMARIO}>
+              Firmar
+            </button>
+          </div>
+          {firmando && (
+            <VentanaDeFirma
+              seleccion={{
+                codigos: [doc.codigo],
+                lotes: [],
+                cantidad: 1,
+                nombres: { [doc.codigo]: `${doc.tipoNombre} – ${doc.nombres} ${doc.apellidos}` },
+              }}
+              director={director}
+              onCerrar={(resultado) => {
+                setFirmando(false)
+                if (resultado) window.location.hash = '#/por-revisar'
+              }}
+            />
+          )}
         </>
       )}
     </section>

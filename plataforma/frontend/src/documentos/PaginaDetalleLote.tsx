@@ -57,8 +57,9 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
             <Estado estado={datos.documentos[0].estado} />
           </div>
           <p className="mt-1 text-muted">
-            {datos.documentos.length} certificados en revisión del Director: no se pueden modificar
-            mientras estén Pendientes.
+            {datos.documentos.every((d) => d.estado === 'FIRMADO')
+              ? `${datos.documentos.length} certificados firmados por el Director y registrados en la blockchain.`
+              : `${datos.documentos.length} certificados en revisión del Director: no se pueden modificar mientras estén Pendientes.`}
           </p>
           <dl className="mt-4 grid rounded-xl border border-line bg-card shadow-sm sm:grid-cols-2 lg:grid-cols-4">
             {filas.map(([etiqueta, valor]) => (

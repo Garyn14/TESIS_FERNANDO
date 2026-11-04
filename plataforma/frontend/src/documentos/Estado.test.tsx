@@ -12,4 +12,9 @@ describe('Estado de un documento (HU17)', () => {
     render(<Estado estado="PROCESANDO_FIRMA" />)
     expect(screen.getByText('Procesando firma')).toHaveClass('bg-blue-pale', 'text-blue')
   })
+
+  it('muestra Firmado en verde (HU11)', () => {
+    render(<Estado estado="FIRMADO" />)
+    expect(screen.getByText('Firmado')).toHaveClass('bg-green-pale', 'text-institutional')
+  })
 })

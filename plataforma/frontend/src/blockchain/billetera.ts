@@ -14,13 +14,17 @@ declare global {
   }
 }
 
-export class ErrorBilletera extends Error {}
+export class ErrorBilletera extends Error {
+  /** true si la persona canceló en la billetera. */
+  cancelada = false
+}
 
 const ABI = [
   'function otorgarFirmante(address cuenta)',
   'function revocarFirmante(address cuenta)',
   'function esAdministrador(address cuenta) view returns (bool)',
   'function esFirmante(address cuenta) view returns (bool)',
+  'function registrarDocumentos(string[] codigos, bytes32[] hashes, bytes32[] dniHmacs)',
 ]
 
 /** Traduce los errores de la billetera a lenguaje cotidiano (RNF07). */
@@ -32,7 +36,10 @@ function traducir(e: unknown): ErrorBilletera {
     error?.code === 'ACTION_REJECTED' ||
     error?.info?.error?.code === 4001
   )
-    return new ErrorBilletera('Operación cancelada en la billetera. No se cambió nada.')
+    return Object.assign(
+      new ErrorBilletera('Operación cancelada en la billetera. No se cambió nada.'),
+      { cancelada: true },
+    )
   return new ErrorBilletera(
     'La billetera no pudo completar la operación. Revise su conexión e intente nuevamente.',
   )
@@ -116,6 +123,41 @@ export async function cambiarRolDeFirmante(
     const recibo = await tx.wait()
     if (!recibo || recibo.status !== 1)
       throw new ErrorBilletera('La blockchain rechazó la operación. No se cambió nada.')
+    return tx.hash as string
+  } catch (e) {
+    throw traducir(e)
+  }
+}
+
+/** Un documento a registrar: código, SHA-256 del PDF y HMAC del DNI, en hexadecimal (HU11). */
+export interface DocumentoAFirmar {
+  codigo: string
+  hash: string
+  dniHmac: string
+}
+
+/**
+ * HU11 (RF31): registra hasta 50 documentos en el contrato con la billetera del Director y espera
+ * su confirmación. Devuelve el identificador de la transacción, que el servidor lee en la
+ * blockchain. La red no cobra gas (RNF11).
+ */
+export async function registrarDocumentos(
+  red: Red,
+  documentos: DocumentoAFirmar[],
+  alEnviar?: () => void,
+): Promise<string> {
+  try {
+    const c = await contrato(red)
+    const tx = await c.registrarDocumentos(
+      documentos.map((d) => d.codigo),
+      documentos.map((d) => '0x' + d.hash),
+      documentos.map((d) => '0x' + d.dniHmac),
+      { type: 0, gasPrice: 0n },
+    )
+    alEnviar?.()
+    const recibo = await tx.wait()
+    if (!recibo || recibo.status !== 1)
+      throw new ErrorBilletera('La blockchain rechazó la transacción. No se registró la firma.')
     return tx.hash as string
   } catch (e) {
     throw traducir(e)

@@ -112,6 +112,37 @@ describe('Por revisar (HU10)', () => {
     )
   })
 
+  it('solo los revisados se seleccionan; la barra cuenta los certificados de los lotes (HU11)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+      respuesta(200, [
+        BANDEJA[0],
+        { ...BANDEJA[1], revisado: true },
+        {
+          ...BANDEJA[0],
+          codigo: 'DRA-2026-ZZZZZZ',
+          beneficiario: 'Kevin Ramos Ccanto',
+          revisado: false,
+        },
+      ]),
+    )
+    render(<PaginaPorRevisar director="Ing. Carlos Mendoza Rivera" />)
+    const sinRevisar = await screen.findByRole('checkbox', {
+      name: 'Seleccionar Kevin Ramos Ccanto',
+    })
+    expect(sinRevisar).toBeDisabled()
+    expect(sinRevisar).toHaveAttribute('title', 'Revise el documento antes de seleccionarlo.')
+    expect(screen.queryByRole('region', { name: 'Selección para firmar' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Seleccionar Teodoro Inga Mamani' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Seleccionar Lote 2026-007/ }))
+    const barra = screen.getByRole('region', { name: 'Selección para firmar' })
+    expect(barra).toHaveTextContent('2 seleccionados (9 certificados)')
+    expect(within(barra).getByRole('button', { name: 'Firmar seleccionados' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Seleccionar Teodoro Inga Mamani' }))
+    expect(barra).toHaveTextContent('1 seleccionado (8 certificados)')
+  })
+
   it('sin pendientes avisa que todo está al día', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(() => respuesta(200, []))
     render(<PaginaPorRevisar />)
@@ -149,7 +180,8 @@ describe('Por revisar (HU10)', () => {
     expect(screen.getByRole('link', { name: '← Volver a Por revisar' })).toHaveAttribute(
       'href',
       '#/por-revisar',
-    ) // HU16: muestra del PDF final.
+    ) // HU16: muestra del PDF final. HU11: se firma desde la revisión.
+    expect(screen.getByRole('button', { name: 'Firmar' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ver muestra del PDF final ↗' })).toHaveAttribute(
       'href',
       '/api/revision/documentos/DRA-2026-T6N9QE/pdf',

@@ -122,9 +122,13 @@ export default function App() {
       detalle === 'lote' && numero ? (
         <PaginaRevisionLote key={`${numero}-${visita}`} numero={numero} />
       ) : detalle ? (
-        <PaginaRevisionDocumento key={`${detalle}-${visita}`} codigo={detalle} />
+        <PaginaRevisionDocumento
+          key={`${detalle}-${visita}`}
+          codigo={detalle}
+          director={sesion.nombreCompleto}
+        />
       ) : (
-        <PaginaPorRevisar key={visita} />
+        <PaginaPorRevisar key={visita} director={sesion.nombreCompleto} />
       )
   // HU08: la clave vuelve a consultar en cada visita, por si cambió el área (HU05).
   else if (opcion.ruta === 'mis-documentos')

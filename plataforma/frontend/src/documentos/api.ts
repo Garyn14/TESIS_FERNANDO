@@ -55,7 +55,7 @@ export interface VistaPrevia {
   firmante: string | null
 }
 
-export type EstadoDocumento = 'PENDIENTE' | 'PROCESANDO_FIRMA'
+export type EstadoDocumento = 'PENDIENTE' | 'PROCESANDO_FIRMA' | 'FIRMADO'
 
 export interface Documento extends VistaPrevia {
   codigo: string
@@ -100,6 +100,7 @@ export const documento = (codigo: string) =>
 export const ESTADOS: Record<EstadoDocumento, string> = {
   PENDIENTE: 'Pendiente',
   PROCESANDO_FIRMA: 'Procesando firma',
+  FIRMADO: 'Firmado',
 }
 
 const FECHA = new Intl.DateTimeFormat('es-PE', {
