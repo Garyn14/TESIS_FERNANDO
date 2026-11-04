@@ -143,11 +143,6 @@ export default function PaginaDetalleLote({ numero }: { numero: string }) {
                             Reemisión de <span className="font-mono">{d.reemision.original}</span>
                           </span>
                         )}
-                        {d.reemplazadoPor && (
-                          <span className="mt-1 block text-muted">
-                            Reemplazado por <span className="font-mono">{d.reemplazadoPor}</span>
-                          </span>
-                        )}
                         {d.reemisionEnCurso ? (
                           <span className="mt-1 block font-medium text-amber-800">
                             Reemisión en revisión:{' '}
