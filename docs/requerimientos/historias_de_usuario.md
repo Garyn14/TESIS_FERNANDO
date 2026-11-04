@@ -651,13 +651,54 @@ Los cuatro primeros son los de la Tabla 19 de la tesis. Los demás detallan cóm
 
 **Como** director, **quiero** revisar y firmar un lote como una unidad, **para** aprobar los certificados de un evento sin abrirlos uno por uno.
 
+**Contexto**
+
+Un lote (HU09) reúne los certificados de un mismo evento. Abrirlo ya cuenta como revisión de todos sus certificados (HU10), y la bandeja ya permite seleccionarlo entero para firmarlo (HU11). Esta historia completa la revisión del lote: el Director puede observar o rechazar algunos beneficiarios, o el lote completo, y firmar el resto desde la misma pantalla. Como en el prototipo (flujo F3), si observa 1 de 8 certificados y firma el lote, se firman 7 y el observado vuelve al área.
+
+| Acción en la revisión del lote | Qué ocurre |
+|---|---|
+| Observar seleccionados / Observar lote | Los certificados pasan a **Observado** con el motivo y vuelven al Área encargada, que los podrá corregir con HU15 |
+| Rechazar seleccionados / Rechazar lote | Los certificados pasan a **Rechazado** con el motivo. El rechazo es definitivo |
+| Firmar lote | Se firman los certificados del lote que siguen Pendientes, con la ventana de firma de HU11 |
+
 **Criterios de aceptación**
-- [ ] Revisar el certificado de ejemplo y la relación cuenta como revisión de todo el lote.
+
+Los dos primeros son los de la Tabla 19 de la tesis. Los demás detallan cómo se cumplen.
+
+- [ ] Revisar el certificado de ejemplo y la relación cuenta como revisión de todo el lote. Ya se cumple desde HU10.
 - [ ] Se puede observar o rechazar beneficiarios individuales o el lote completo.
+- [ ] La relación tiene una casilla por certificado Pendiente. "Observar seleccionados" y "Rechazar seleccionados" se habilitan solo con certificados marcados.
+- [ ] La ventana de motivo:
+  - tiene el título de la acción ("Observar beneficiarios seleccionados", "Observar lote", "Rechazar beneficiarios seleccionados" o "Rechazar lote");
+  - pide el campo **Motivo**, obligatorio y de hasta 500 caracteres, con la ayuda "Explique qué debe corregirse" dentro del campo;
+  - "Confirmar" está deshabilitado mientras el motivo esté vacío;
+  - al rechazar, avisa: "El rechazo es definitivo. El documento no podrá reenviarse."
+- [ ] El motivo queda en el documento y en su historial, con quién lo decidió y cuándo.
+- [ ] Solo cambian los certificados Pendientes del lote. Los ya firmados, observados o rechazados no se tocan.
+- [ ] "Firmar lote" firma los certificados que siguen Pendientes. El resultado dice "¡Listo! Se firmaron [N] certificados", y aparte cuántos fueron observados y devueltos al área y cuántos fueron rechazados. Los que no se pudieron firmar se muestran con el nombre del beneficiario.
+- [ ] Un lote sin certificados Pendientes sale de Por revisar.
+- [ ] El Área encargada ve en Mis documentos cuántos certificados del lote hay en cada estado (por ejemplo, "Firmado 7 · Observado 1"). En el detalle del lote ve el estado de cada certificado y el motivo de los observados y rechazados.
+- [ ] Solo el Director observa (permiso DOCUMENTO_OBSERVAR) y rechaza (permiso DOCUMENTO_RECHAZAR). Sin sesión se responde 401 y con otro rol, 403 (RF04).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Observar o rechazar un documento a solicitud de parte | HU13 y HU14 (Sprint 4) |
+| Corregir y reenviar los observados | HU15 (Sprint 4) |
+| Avisos al área y a Mesa de Partes | HU26–HU28 (Sprint 6) |
+
+**Notas técnicas**
+
+- API:
+  - `POST /api/revision/lotes/{numero}/observacion`;
+  - `POST /api/revision/lotes/{numero}/rechazo`.
+  - Las dos reciben `{"codigos": [...], "motivo": "..."}`. Sin códigos, la acción se aplica a todo el lote.
+- Cada cambio de estado es una sola sentencia condicionada a que el certificado siga Pendiente, como la revisión de HU10.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
-| Alta | 8 | 3 | RF22, RF27 |
+| Alta | 8 | 3 | RF22, RF27 (relacionados: RF24–RF26) |
 
 ### HU13: Observar un documento
 
