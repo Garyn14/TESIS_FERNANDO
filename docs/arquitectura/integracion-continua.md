@@ -153,6 +153,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 04/11/2026 | [41784094378](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41784094378) | `DRA-27-observar-documento` | ✓ Cinco jobs en verde con HU13, la primera del Sprint 4: observar un documento y migración V17 (171 pruebas de backend, 114 de frontend) |
 | 04/11/2026 | [41786330073](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41786330073) | `DRA-28-rechazar-documento` | ✓ Cinco jobs en verde con HU14: rechazar un documento (174 pruebas de backend, 115 de frontend) |
 | 04/11/2026 | [41789172913](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41789172913) | `DRA-29-corregir-y-reenviar` | ✓ Cinco jobs en verde con HU15: corregir y reenviar un observado, migración V18 (178 pruebas de backend, 120 de frontend) |
+| 04/11/2026 | [41793444955](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41793444955) | `DRA-30-anular-documento` | ✓ Cinco jobs en verde con HU29: anular un documento firmado, `anularDocumento` en el contrato y migración V19 (25 pruebas del contrato, 184 de backend, 124 de frontend) |
 
 ## 9. Pendientes
 
