@@ -1,19 +1,25 @@
 // Prueba de punta a punta real del Sprint 3: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). Las áreas registran sus documentos
 // por la API desde el navegador (la pantalla de registro ya la recorre sprint2.cjs) y el Director
-// trabaja desde la pantalla. Recorre HU10, HU16 y HU17 (la preparación de la firma se llama por la API,
-// porque la pantalla de firma llega con HU11).
+// trabaja desde la pantalla. Recorre HU10, HU16, HU17 (la preparación de la firma, por la API) y HU11:
+// la firma con la billetera de prueba (billetera-de-prueba.cjs) en la red Besu real, comprobada
+// directamente en el contrato.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
 const fs = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
+const { Contract, JsonRpcProvider, getAddress } = require('ethers')
+const { instalarBilletera } = require('./billetera-de-prueba.cjs')
 
 const [out, URL = 'http://localhost:5173/', ADMIN_TEMPORAL = 'Admin2026!'] = process.argv.slice(2)
 const ADMIN_CLAVE = 'AdminPropia26'
 const TEMPORAL = 'Demo2026'
 const PROPIA = 'Propia2026'
+const BESU = process.env.BESU_RPC_URL ?? 'http://localhost:8545'
+const DESPLIEGUE = JSON.parse(fs.readFileSync(process.env.E2E_DESPLIEGUE ?? `${__dirname}/.despliegue.json`, 'utf8'))
+const B = DESPLIEGUE.billeteras
 const resultados = []
 const paso = async (nombre, fn) => {
   await fn()
@@ -23,12 +29,21 @@ const paso = async (nombre, fn) => {
 
 ;(async () => {
   const b = await chromium.launch()
+  const billeteras = new Map()
   const nueva = async () => {
     const c = await b.newContext({ viewport: { width: 1280, height: 800 } })
     const p = await c.newPage()
+    billeteras.set(p, await instalarBilletera(c, BESU))
     await p.goto(URL)
     return p
   }
+  // Lectura independiente del contrato, directo en la red Besu (no pasa por el backend).
+  const nodo = new JsonRpcProvider(BESU, undefined, { staticNetwork: true })
+  const registro = new Contract(
+    DESPLIEGUE.contrato,
+    ['function consultar(string codigo) view returns (bool, (bytes32 hashPdf, bytes32 dniHmac, address firmante, uint64 registradoEn))'],
+    nodo,
+  )
   const campo = (p, etiqueta) => p.getByLabel(etiqueta, { exact: true })
   const ingresar = async (p, u, c) => {
     await campo(p, 'Usuario').fill(u)
@@ -98,6 +113,24 @@ const paso = async (nombre, fn) => {
       await admin.getByRole('button', { name: 'Crear cuenta' }).click()
       await admin.getByRole('status').getByText(`Se creó la cuenta "${u}"`).waitFor()
     }
+  })
+  await paso('Preparación · El Administrador registra la billetera del Director y le otorga el rol de firmante', async () => {
+    // La pantalla ya la recorre sprint1.cjs (HU06); aquí solo se deja al Director listo para firmar.
+    await admin.getByRole('link', { name: 'Billetera del director' }).click()
+    await admin.getByRole('button', { name: 'Registrar la billetera de cmendoza' }).click()
+    const ventana = admin.getByRole('dialog', { name: 'Billetera del director' })
+    await campo(ventana, 'Dirección de la billetera').fill(B.director.direccion)
+    await ventana.getByRole('button', { name: 'Guardar billetera' }).click()
+    const fila = admin.locator('tr', { hasText: 'cmendoza' })
+    await fila.getByText(getAddress(B.director.direccion)).waitFor()
+    billeteras.get(admin).usar(B.administrador.clave)
+    await admin.getByRole('button', { name: 'Otorgar el rol de firmante a cmendoza' }).click()
+    const otorgar = admin.getByRole('dialog', { name: 'Otorgar rol de firmante' })
+    await otorgar.getByRole('button', { name: 'Conectar billetera y continuar' }).click()
+    await otorgar.getByRole('button', { name: 'Confirmar en la billetera' }).click()
+    await otorgar.getByText('Rol de firmante otorgado', { exact: false }).waitFor({ timeout: 60_000 })
+    await otorgar.getByRole('button', { name: 'Listo' }).click()
+    await fila.getByText('✓ Firmante activo').waitFor()
     await admin.context().close()
   })
 
@@ -136,6 +169,7 @@ const paso = async (nombre, fn) => {
 
   // ------------------------------------------------------- HU10: bandeja "Por revisar"
   const carlos = await nueva()
+  billeteras.get(carlos).usar(B.director.clave)
   const filas = () => carlos.locator('main tbody tr')
   await paso('HU10 · La bandeja muestra los pendientes del más antiguo al más reciente, con el lote en una fila', async () => {
     await primerIngreso(carlos, 'cmendoza', TEMPORAL, PROPIA)
@@ -364,6 +398,192 @@ const paso = async (nombre, fn) => {
   await paso('HU17 · Solo el Director prepara la firma', async () => {
     assert.equal((await enviar(pedro, '/api/firma/preparacion', { codigos: [ultimo] })).estado, 403)
     assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${ultimo}'`), 'PENDIENTE')
+  })
+  // ------------------------------------------------------- HU11: firma con la billetera
+  const dialogo = () => carlos.getByRole('dialog', { name: 'Firmar con su billetera' })
+  const enCadena = async (codigo) => {
+    const [registrado, r] = await registro.consultar(codigo)
+    return { registrado, hashPdf: r.hashPdf, firmante: r.firmante, registradoEn: Number(r.registradoEn) }
+  }
+  const casilla = (texto) => carlos.getByRole('checkbox', { name: new RegExp('Seleccionar ' + texto) })
+  const barra = () => carlos.getByRole('region', { name: 'Selección para firmar' })
+  await paso('HU11 · Si la firma no se completa, los preparados vuelven a Pendiente tras comprobarlo en el contrato', async () => {
+    // Los documentos que dejó preparados HU17 nunca se registraron en la blockchain.
+    const codigos = [primero, ...delLote()]
+    const r = await enviar(carlos, '/api/firma/cancelacion', { codigos, motivo: 'Firma no completada' })
+    assert.equal(r.estado, 200)
+    assert.deepEqual(r.cuerpo.devueltos, codigos)
+    for (const codigo of codigos) {
+      assert.equal(psql(`SELECT estado, cid IS NULL, revisado_en IS NOT NULL FROM documento WHERE codigo = '${codigo}'`), 'PENDIENTE|t|t')
+      assert.ok(eventos(codigo).endsWith(',FIRMA_CANCELADA'))
+      assert.equal((await enCadena(codigo)).registrado, false)
+    }
+  })
+  await paso('HU11 · En Por revisar solo se puede seleccionar lo revisado', async () => {
+    await carlos.goto(URL + '#/por-revisar')
+    await carlos.reload() // ya estaba en Por revisar: se recarga la bandeja
+    await filas().first().waitFor()
+    assert.equal(await filas().count(), 3)
+    const kevin = casilla('Kevin Ramos Ccanto')
+    assert.ok(await kevin.isDisabled())
+    assert.equal(await kevin.getAttribute('title'), 'Revise el documento antes de seleccionarlo.')
+    assert.ok(await casilla('Lucía Paredes Quinto').isEnabled())
+    assert.ok(await casilla(`Lote ${lote}`).isEnabled())
+    assert.equal(await barra().count(), 0)
+  })
+  let firmaDeLucia
+  await paso('HU11 · El Director firma un documento desde su revisión; queda registrado en la blockchain real', async () => {
+    await carlos.goto(URL + '#/por-revisar/' + primero)
+    await carlos.getByRole('heading', { name: 'Revisión – Certificado de Trabajo' }).waitFor()
+    await carlos.getByRole('button', { name: 'Firmar' }).click()
+    await dialogo().getByText('Firmar 1 documento').waitFor()
+    const direccion = getAddress(B.director.direccion)
+    await dialogo().getByText(`(${direccion.slice(0, 6)}…${direccion.slice(-4)})`).waitFor()
+    await dialogo().getByText('Ing. Carlos Mendoza Rivera', { exact: false }).waitFor()
+    await dialogo().getByText('Sin costo').waitFor()
+    await foto(carlos, 'hu11_01_confirmar_firma')
+    const antes = billeteras.get(carlos).estado.transacciones.length
+    await dialogo().getByRole('button', { name: 'Confirmar' }).click()
+    await dialogo().getByText('Se firmó 1 documento.').waitFor({ timeout: 60_000 })
+    await foto(carlos, 'hu11_02_firma_lista')
+    assert.equal(billeteras.get(carlos).estado.transacciones.length, antes + 1)
+
+    const [estado, transaccion, bloque, billetera, firmadoEn, hash, cid, firmadoPor] = psql(
+      `SELECT d.estado, d.transaccion, d.bloque, d.billetera_firmante, extract(epoch FROM d.firmado_en)::bigint,
+              d.hash_pdf, d.cid, u.nombre_usuario
+       FROM documento d JOIN usuario u ON u.id = d.firmado_por WHERE d.codigo = '${primero}'`,
+    ).split('|')
+    assert.equal(estado, 'FIRMADO')
+    assert.equal(transaccion, billeteras.get(carlos).estado.transacciones.at(-1))
+    assert.equal(billetera, direccion)
+    assert.equal(firmadoPor, 'cmendoza')
+    // Comprobación independiente en el contrato: el hash del PDF, la billetera y la fecha del bloque.
+    const r = await enCadena(primero)
+    assert.equal(r.registrado, true)
+    assert.equal(r.hashPdf, '0x' + hash)
+    assert.equal(r.firmante, direccion)
+    assert.equal(String(r.registradoEn), firmadoEn)
+    const recibo = await nodo.getTransactionReceipt(transaccion)
+    assert.equal(recibo.status, 1)
+    assert.equal(recibo.blockNumber, Number(bloque))
+    assert.equal(recibo.gasPrice, 0n)
+    // El PDF guardado en IPFS es el del hash registrado (RF30, RF31).
+    const ruta = `${out}/hu11_pdf_firmado_desde_ipfs.pdf`
+    ipfs(`cat?arg=${cid}`, ruta)
+    assert.equal('0x' + sha256(ruta), r.hashPdf)
+    assert.equal(eventos(primero).split(',').at(-1), 'FIRMADO')
+    firmaDeLucia = { transaccion, bloque }
+
+    await dialogo().getByRole('button', { name: 'Volver a Por revisar' }).click()
+    await carlos.getByText('Documentos enviados por las áreas, del más antiguo al más reciente.').waitFor()
+    await filas().first().waitFor()
+    assert.equal(await carlos.locator('main').getByText('Lucía Paredes Quinto').count(), 0)
+  })
+  await paso('HU11 · Si el Director cancela en la billetera, el lote vuelve a Pendiente y no se registra', async () => {
+    await casilla(`Lote ${lote}`).check()
+    await barra().getByText('1 seleccionado (3 certificados)').waitFor()
+    await foto(carlos, 'hu11_03_barra_de_seleccion')
+    await barra().getByRole('button', { name: 'Firmar seleccionados' }).click()
+    await dialogo().getByText('Firmar 3 documentos').waitFor()
+    billeteras.get(carlos).rechazar(1)
+    await dialogo().getByRole('button', { name: 'Confirmar' }).click()
+    await dialogo().getByText('No se firmó ningún documento.').waitFor({ timeout: 60_000 })
+    await dialogo().getByText('3 documentos no se pudieron firmar y volvieron a Por revisar:').waitFor()
+    assert.equal(await dialogo().getByText('Firma cancelada en la billetera.', { exact: false }).count(), 3)
+    await foto(carlos, 'hu11_04_firma_cancelada')
+    for (const codigo of delLote()) {
+      assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${codigo}'`), 'PENDIENTE')
+      assert.ok(eventos(codigo).endsWith(',PREPARADO,FIRMA_CANCELADA'))
+      assert.equal((await enCadena(codigo)).registrado, false)
+    }
+    await dialogo().getByRole('button', { name: 'Volver a Por revisar' }).click()
+    await dialogo().waitFor({ state: 'detached' })
+    await filas().first().waitFor()
+    await filas().nth(0).getByText('✓ Revisado').waitFor()
+  })
+  let grande
+  await paso('HU11 · Más de 50 documentos se registran en dos transacciones; si una falla, la otra sigue', async () => {
+    const l = await enviar(rosa, '/api/lotes', {
+      tipo: 'CERTIFICADO_CAPACITACION',
+      datos: {
+        nombreEvento: 'Injertos y podas en cacao',
+        fechaInicio: '2026-10-05',
+        fechaFin: '2026-10-07',
+        duracionHoras: '24',
+        lugar: 'Local comunal de Mazamari',
+        areaOrganizadora: 'Área de Capacitación',
+      },
+      beneficiarios: Array.from({ length: 52 }, (_, i) => ({ nombres: 'Ana', apellidos: 'Soto Inga', dni: String(41000000 + i) })),
+    })
+    assert.equal(l.estado, 201)
+    grande = l.cuerpo.numero
+    // El Director lo revisa: abrir el lote cuenta para sus 52 certificados.
+    await carlos.goto(URL + '#/por-revisar/lote/' + grande)
+    await carlos.getByRole('heading', { name: `Revisión de lote – Lote ${grande}` }).waitFor()
+    await carlos.getByRole('link', { name: '← Volver a Por revisar' }).click()
+    await filas().first().waitFor()
+    await casilla(`Lote ${lote}`).check()
+    await casilla(`Lote ${grande}`).check()
+    await barra().getByText('2 seleccionados (55 certificados)').waitFor()
+    await barra().getByRole('button', { name: 'Firmar seleccionados' }).click()
+    await dialogo().getByText('Firmar 55 documentos').waitFor()
+    await dialogo().getByText('se registrarán en 2 operaciones', { exact: false }).waitFor()
+    // La segunda transacción se cancela en la billetera; la primera sigue.
+    const antes = billeteras.get(carlos).estado.transacciones.length
+    billeteras.get(carlos).rechazar(2)
+    await dialogo().getByRole('button', { name: 'Confirmar' }).click()
+    await dialogo().getByText('Se firmaron 50 documentos.').waitFor({ timeout: 120_000 })
+    await dialogo().getByText('5 documentos no se pudieron firmar y volvieron a Por revisar:').waitFor()
+    await foto(carlos, 'hu11_05_firma_en_dos_operaciones')
+    const enviadas = billeteras.get(carlos).estado.transacciones.slice(antes)
+    assert.equal(enviadas.length, 1)
+    assert.equal((await nodo.getTransactionReceipt(enviadas[0])).logs.length, 50)
+    const conteo = (estado) =>
+      psql(`SELECT count(*) FROM documento d JOIN lote l ON l.id = d.lote_id WHERE l.numero IN ('${lote}', '${grande}') AND d.estado = '${estado}'`)
+    assert.equal(conteo('FIRMADO'), '50')
+    assert.equal(conteo('PENDIENTE'), '5')
+    assert.equal(psql(`SELECT count(DISTINCT transaccion) FROM documento WHERE transaccion = '${enviadas[0]}'`), '1')
+    await dialogo().getByRole('button', { name: 'Volver a Por revisar' }).click()
+  })
+  await paso('HU11 · Los 5 que volvieron se firman en otra operación', async () => {
+    // La bandeja se recarga al cerrar la ventana: el lote queda con sus 5 pendientes.
+    await carlos.getByText(`Lote ${grande} · Injertos y podas en cacao · 5 certificados`, { exact: false }).waitFor()
+    await casilla(`Lote ${grande}`).check()
+    await barra().getByText('1 seleccionado (5 certificados)').waitFor()
+    await barra().getByRole('button', { name: 'Firmar seleccionados' }).click()
+    await dialogo().getByRole('button', { name: 'Confirmar' }).click()
+    await dialogo().getByText('Se firmaron 5 documentos.').waitFor({ timeout: 60_000 })
+    await dialogo().getByRole('button', { name: 'Volver a Por revisar' }).click()
+    await carlos.getByText(`Lote ${grande}`, { exact: false }).waitFor({ state: 'detached' })
+    assert.equal(await filas().count(), 1)
+    await filas().nth(0).getByText('Kevin Ramos Ccanto').waitFor()
+    assert.equal(
+      psql(`SELECT count(*), count(DISTINCT transaccion) FROM documento d JOIN lote l ON l.id = d.lote_id WHERE l.numero = '${grande}' AND d.estado = 'FIRMADO'`),
+      '52|2',
+    )
+    for (const codigo of psql(`SELECT d.codigo FROM documento d JOIN lote l ON l.id = d.lote_id WHERE l.numero = '${grande}' ORDER BY d.id DESC LIMIT 3`).split('\n'))
+      assert.equal((await enCadena(codigo)).registrado, true)
+    await foto(carlos, 'hu11_06_bandeja_despues_de_firmar')
+  })
+  await paso('HU11 · El área ve sus documentos Firmados; la firma no costó nada', async () => {
+    await pedro.goto(URL + '#/mis-documentos')
+    await pedro.reload() // ya estaba en Mis documentos (HU17)
+    await pedro.locator('main tbody tr', { hasText: 'Lucía Paredes Quinto' }).getByText('Firmado').waitFor()
+    await pedro.locator('main tbody tr', { hasText: 'Kevin Ramos Ccanto' }).getByText('Pendiente').waitFor()
+    await foto(pedro, 'hu11_07_mis_documentos_firmado')
+    await pedro.locator('main tbody tr', { hasText: 'Lucía Paredes Quinto' }).getByRole('link').click()
+    await pedro.getByText('Firmado por el Director y registrado en la blockchain.').waitFor()
+    await rosa.goto(URL + '#/mis-documentos')
+    await rosa.reload()
+    await rosa.locator('main tbody tr', { hasText: `Lote ${grande}` }).getByText('Firmado').waitFor()
+    await foto(rosa, 'hu11_08_mis_documentos_lote_firmado')
+    assert.equal(await nodo.getBalance(B.director.direccion), 0n)
+    assert.ok(firmaDeLucia.transaccion)
+  })
+  await paso('HU11 · Solo el Director firma', async () => {
+    assert.equal(await api(pedro, '/api/firma/billetera'), 403)
+    assert.equal((await enviar(pedro, '/api/firma/confirmacion', { transaccion: firmaDeLucia.transaccion })).estado, 403)
+    assert.equal((await enviar(pedro, '/api/firma/cancelacion', { codigos: [primero] })).estado, 403)
   })
   await paso('HU10 · Solo el Director ve la bandeja', async () => {
     assert.deepEqual(await menu(pedro), ['Inicio', 'Mis documentos', 'Nuevo documento'])
