@@ -50,4 +50,6 @@ Comprobación rápida: `curl http://localhost:8080/api/salud` responde `{"estado
 | `SESION_COOKIE_SEGURA` | `false`. Poner `true` en producción (HTTPS) |
 | `PLATAFORMA_CONTRATO_DIRECCION` | *(vacía)*. Dirección del contrato `RegistroDocumentos` desplegado (HU06). Ver [contracts/README.md](contracts/README.md#despliegue) |
 | `BESU_RPC_PUBLICA` | `http://localhost:8545`. Nodo que usa la billetera del navegador |
+| `PLATAFORMA_CONTRATO_BLOQUE_INICIAL` | `0`. Bloque en que se desplegó el contrato: desde ahí empieza la sincronización la primera vez (HU18) |
+| `PLATAFORMA_SINCRONIZACION_INTERVALO` / `PLATAFORMA_FIRMA_PLAZO` | `30s` / `15m`. Cada cuánto se sincroniza con la blockchain, y cuánto puede estar un documento en Procesando firma antes de volver a Pendiente (HU18) |
 | `PLATAFORMA_IPFS_URL` | `http://localhost:5001`. API del nodo IPFS privado, donde se guardan los PDF finales (HU17). Ver [infra/ipfs](infra/ipfs/README.md) |
