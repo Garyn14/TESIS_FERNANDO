@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Levanta un entorno limpio y real para la prueba de punta a punta: PostgreSQL vacío en el puerto
 # 5433, la red Besu local (si no está levantada) con un RegistroDocumentos recién desplegado, el
-# backend en el 8080 y el frontend en el 5173, y un nodo IPFS privado vacío en el 5002 (HU17).
+# backend en el 8080, el frontend en el 5173, el portal público en el 5174 (HU19) y un nodo IPFS
+# privado vacío en el 5002 (HU17).
 # Detener con Ctrl+C.
 #
 #   ./e2e/levantar.sh          -> para la prueba automática: la sesión expira en 1 minuto
@@ -34,7 +35,7 @@ if ! curl -s -X POST -H 'content-type: application/json' \
   (cd infra && docker compose --profile besu up -d --wait)
 fi
 # Dependencias de un clon nuevo: se instalan solo si faltan.
-for proyecto in contracts frontend; do
+for proyecto in contracts frontend portal; do
   [ -d "$proyecto/node_modules" ] || (echo "Instalando dependencias de $proyecto…" && cd "$proyecto" && npm ci --silent)
 done
 (cd e2e && npm install --silent)
@@ -69,7 +70,10 @@ DB_URL=jdbc:postgresql://localhost:5433/plataforma PLATAFORMA_ADMIN_CONTRASENA='
 BACKEND=$!
 (cd frontend && npx vite --port 5173 --strictPort) &
 FRONTEND=$!
-trap 'kill $BACKEND $FRONTEND; docker rm -f e2e-pg e2e-ipfs >/dev/null' EXIT
+# Portal público de verificación (HU19–HU21), al que apunta el código QR de cada documento.
+(cd portal && npx vite --port 5174 --strictPort) &
+PORTAL=$!
+trap 'kill $BACKEND $FRONTEND $PORTAL; docker rm -f e2e-pg e2e-ipfs >/dev/null' EXIT
 
 until curl -s localhost:8080/api/salud >/dev/null; do sleep 1; done
 if [ "$MODO" = demo ]; then
@@ -77,6 +81,7 @@ if [ "$MODO" = demo ]; then
     const d = require("./e2e/.despliegue.json")
     console.log(`
 Demostración lista en http://localhost:5173  (Administrador: admin / Admin2026!)
+Portal público de verificación: http://localhost:5174  (el QR de cada documento apunta aquí)
 
 En MetaMask (billeteras SOLO de prueba, sin valor):
   1. Agregue la red manualmente o deje que la plataforma la proponga:

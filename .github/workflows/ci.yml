@@ -45,6 +45,27 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  portal:
+    name: Portal (React + Vite)
+    runs-on: ubuntu-latest
+    # Sin límite, un paso colgado consume hasta 6 horas de minutos de CI.
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: plataforma/portal
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: plataforma/portal/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build
+
   contracts:
     name: Contratos (Hardhat)
     runs-on: ubuntu-latest
