@@ -17,10 +17,27 @@ const NO_DISPONIBLE =
 
 const ruta = (token: string) => `/api/verificacion/${encodeURIComponent(token)}`
 
-export async function verificar(token: string): Promise<Verificacion> {
+/** HU19: verificación con el token del código QR. */
+export const verificar = (token: string) => consultar(ruta(token))
+
+/** HU20 (RF40): verificación con el código impreso; nunca trae el documento. */
+export const verificarCodigo = (codigo: string) =>
+  consultar(`/api/verificacion/codigo/${encodeURIComponent(codigo)}`)
+
+/**
+ * HU20: el código tal como se escribe, con minúsculas, espacios o sin guiones, en el formato
+ * DRA-AAAA-XXXXXX, sin caracteres que se confunden (RNF04). Null si no tiene el formato.
+ */
+export function normalizarCodigo(escrito: string): string | null {
+  const limpio = escrito.trim().toUpperCase().replace(/[\s-]/g, '')
+  const encontrado = /^DRA(\d{4})([ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6})$/.exec(limpio)
+  return encontrado ? `DRA-${encontrado[1]}-${encontrado[2]}` : null
+}
+
+async function consultar(url: string): Promise<Verificacion> {
   let respuesta: Response
   try {
-    respuesta = await fetch(ruta(token), { headers: { Accept: 'application/json' } })
+    respuesta = await fetch(url, { headers: { Accept: 'application/json' } })
   } catch {
     throw new VerificacionNoDisponible(NO_DISPONIBLE)
   }

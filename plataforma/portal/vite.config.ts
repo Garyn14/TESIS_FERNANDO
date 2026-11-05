@@ -11,7 +11,8 @@ export default defineConfig({
     port: 5174,
     strictPort: true,
     proxy: {
-      '/api/verificacion': 'http://localhost:8080',
+      // xfwd: el backend recibe la IP del visitante en X-Forwarded-For para el límite por IP (HU20).
+      '/api/verificacion': { target: 'http://localhost:8080', xfwd: true },
     },
   },
   test: {
