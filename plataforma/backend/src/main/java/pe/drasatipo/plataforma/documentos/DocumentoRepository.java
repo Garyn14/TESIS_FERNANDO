@@ -77,6 +77,10 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
 
   boolean existsByCodigo(String codigo);
 
+  /** HU19, HU21: el documento del token de su código QR. */
+  @EntityGraph(attributePaths = {"tipo"})
+  Optional<Documento> findByTokenQr(String tokenQr);
+
   boolean existsByNumeroExpediente(String numeroExpediente);
 
   /** HU15: el expediente no se repite con otro documento (sin contarse a sí mismo). */

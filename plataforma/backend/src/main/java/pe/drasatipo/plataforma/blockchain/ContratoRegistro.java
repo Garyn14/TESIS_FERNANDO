@@ -50,4 +50,13 @@ public interface ContratoRegistro {
 
   /** Indica si un código ya está registrado en el contrato (consulta de solo lectura). */
   boolean estaRegistrado(String codigo);
+
+  /** HU21: el registro de un código en el contrato (lectura); vacío si no está registrado. */
+  Optional<RegistroEnContrato> registroDe(String codigo);
+
+  /** HU21: la fecha del bloque de la anulación de un código; vacío si no está anulado. */
+  Optional<java.time.Instant> anuladoEn(String codigo);
+
+  /** HU21: el código del documento que reemplazó a este (HU30); vacío si no fue reemplazado. */
+  Optional<String> reemplazadoPor(String codigo);
 }
