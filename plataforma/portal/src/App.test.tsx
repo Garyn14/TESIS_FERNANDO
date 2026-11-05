@@ -118,4 +118,16 @@ describe('Portal de verificación (HU19)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Intentar nuevamente' }))
     expect(await screen.findByRole('region', { name: 'Documento válido' })).toBeInTheDocument()
   })
+
+  it('cada visita consulta una sola vez, aunque React monte la página dos veces', async () => {
+    const fetch = servidor(200, VALIDO)
+    const { StrictMode } = await import('react')
+    render(
+      <StrictMode>
+        <App ruta={`/verificar/${TOKEN}`} />
+      </StrictMode>,
+    )
+    await screen.findByRole('region', { name: 'Documento válido' })
+    expect(fetch.mock.calls.filter(([r]) => r === `/api/verificacion/${TOKEN}`)).toHaveLength(1)
+  })
 })

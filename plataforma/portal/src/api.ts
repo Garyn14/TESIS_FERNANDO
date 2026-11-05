@@ -17,12 +17,27 @@ const NO_DISPONIBLE =
 
 const ruta = (token: string) => `/api/verificacion/${encodeURIComponent(token)}`
 
+/**
+ * Consultas en curso: si la misma verificación se pide otra vez antes de responder (por ejemplo,
+ * React en modo estricto monta dos veces), se reutiliza. Así cada visita cuenta una sola vez para
+ * el límite de 10 consultas por minuto (HU20).
+ */
+const enCurso = new Map<string, Promise<Verificacion>>()
+
+function unaVez(url: string): Promise<Verificacion> {
+  const pendiente = enCurso.get(url)
+  if (pendiente) return pendiente
+  const consulta = consultar(url).finally(() => enCurso.delete(url))
+  enCurso.set(url, consulta)
+  return consulta
+}
+
 /** HU19: verificación con el token del código QR. */
-export const verificar = (token: string) => consultar(ruta(token))
+export const verificar = (token: string) => unaVez(ruta(token))
 
 /** HU20 (RF40): verificación con el código impreso; nunca trae el documento. */
 export const verificarCodigo = (codigo: string) =>
-  consultar(`/api/verificacion/codigo/${encodeURIComponent(codigo)}`)
+  unaVez(`/api/verificacion/codigo/${encodeURIComponent(codigo)}`)
 
 /**
  * HU20: el código tal como se escribe, con minúsculas, espacios o sin guiones, en el formato
