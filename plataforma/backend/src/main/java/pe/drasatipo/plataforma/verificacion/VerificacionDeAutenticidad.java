@@ -56,6 +56,33 @@ public class VerificacionDeAutenticidad {
    */
   public record Comprobacion(ResultadoVerificacion resultado, byte[] pdf) {}
 
+  /** El código impreso: DRA-AAAA-XXXXXX, sin caracteres que se confunden (RF16, RNF04). */
+  private static final Pattern CODIGO =
+      Pattern.compile("^DRA(\\d{4})([ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6})$");
+
+  /**
+   * HU20: el código escrito tal como aparece en el documento; acepta minúsculas, espacios y guiones
+   * opcionales. Vacío si no tiene el formato.
+   */
+  static Optional<String> normalizarCodigo(String escrito) {
+    if (escrito == null) {
+      return Optional.empty();
+    }
+    var encontrado =
+        CODIGO.matcher(escrito.strip().toUpperCase(java.util.Locale.ROOT).replaceAll("[\\s-]", ""));
+    return encontrado.matches()
+        ? Optional.of("DRA-" + encontrado.group(1) + "-" + encontrado.group(2))
+        : Optional.empty();
+  }
+
+  /** HU20 (RF40): verifica el documento del código de verificación. */
+  @Transactional(readOnly = true)
+  public Comprobacion porCodigo(String codigo) {
+    return normalizarCodigo(codigo)
+        .map(c -> comprobar(documentos.findByCodigo(c), "código"))
+        .orElseGet(() -> new Comprobacion(ResultadoVerificacion.noValido(), null));
+  }
+
   /** Verifica el documento del token del QR (HU19). */
   @Transactional(readOnly = true)
   public Comprobacion porToken(String token) {

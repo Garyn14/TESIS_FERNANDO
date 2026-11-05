@@ -14,6 +14,9 @@ spring:
 
 # Sesión del servidor (HU03, RNF02): expira tras 30 minutos de inactividad.
 server:
+  # HU20: detrás de un proxy de confianza (la red interna o el propio servidor), la IP del visitante
+  # se toma de X-Forwarded-For. De cualquier otro origen, se ignora.
+  forward-headers-strategy: native
   servlet:
     session:
       timeout: ${SESION_INACTIVIDAD:30m}
@@ -44,6 +47,9 @@ plataforma:
   # PDF. El portal se construye en el Sprint 5.
   portal:
     url: ${PLATAFORMA_PORTAL_URL:http://localhost:5174}
+  # HU20 (RNF04): consultas al portal de verificación por minuto y por IP.
+  verificacion:
+    consultas-por-minuto: ${PLATAFORMA_VERIFICACION_CONSULTAS_POR_MINUTO:10}
   # API del nodo IPFS privado (HU17, DRA-46), donde se guardan los PDF finales. Solo escucha en el
   # servidor (127.0.0.1): nunca se expone a Internet (RNF03).
   ipfs:
