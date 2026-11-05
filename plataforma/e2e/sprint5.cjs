@@ -1,7 +1,8 @@
 // Prueba de punta a punta real del Sprint 5: navegador + frontend + backend + PostgreSQL + IPFS +
 // red Besu local, sin simulaciones. Requiere el entorno de levantar.sh. Recorre HU21 (comprobar la
 // autenticidad de un documento con su registro en la blockchain y el PDF en IPFS), sin sesión, como
-// lo hará el portal público, y HU19 (el portal público al que lleva el código QR, en un celular).
+// lo hará el portal público; HU19 (el portal público al que lleva el código QR, en un celular) y
+// HU20 (verificar con el código impreso, y el límite de 10 consultas por minuto por IP).
 const { chromium, devices } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
@@ -171,12 +172,16 @@ const paso = async (nombre, fn) => {
   }
   const anonimo = await nueva()
   /** Verificación pública desde un navegador sin sesión, con el tiempo de respuesta. */
+  // HU20: cada consulta desde otra IP (X-Forwarded-For, que el backend acepta del proxy local),
+  // para que el límite de 10 por minuto no corte la prueba.
+  let visitante = 0
+  const otraIp = () => `198.51.100.${(++visitante % 250) + 1}`
   const verificar = (token) =>
-    anonimo.evaluate(async (t) => {
+    anonimo.evaluate(async ([t, ip]) => {
       const inicio = performance.now()
-      const r = await fetch('/api/verificacion/' + t)
+      const r = await fetch('/api/verificacion/' + t, { headers: { 'X-Forwarded-For': ip } })
       return { estado: r.status, cuerpo: await r.json(), ms: performance.now() - inicio }
-    }, token)
+    }, [token, otraIp()])
   const tokenDe = (codigo) => psql(`SELECT token_qr FROM documento WHERE codigo = '${codigo}'`)
   const guardar = (nombre, datos) => fs.writeFileSync(`${out}/${nombre}.json`, JSON.stringify(datos, null, 2) + '\n')
   const tiempos = []
@@ -313,7 +318,9 @@ const paso = async (nombre, fn) => {
   // ---------------------------------------------- HU19: verificar mediante el código QR (portal)
   const PORTAL = process.env.E2E_PORTAL ?? 'http://localhost:5174'
   // Un celular, sin sesión ni billetera: quien escanea el QR del documento.
-  const celular = await (await b.newContext({ ...devices['Pixel 7'] })).newPage()
+  const celular = await (
+    await b.newContext({ ...devices['Pixel 7'], extraHTTPHeaders: { 'X-Forwarded-For': '203.0.113.10' } })
+  ).newPage()
   const fotoCelular = (nombre) => celular.screenshot({ path: `${out}/${nombre}.png`, fullPage: true })
   const fechaEnLima = (segundos) =>
     new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Lima' }).format(new Date(segundos * 1000))
@@ -327,8 +334,12 @@ const paso = async (nombre, fn) => {
     await celular.goto(PORTAL)
     await celular.getByRole('heading', { name: 'Verifique un documento' }).waitFor()
     await celular.getByText('Escanéelo con la cámara de su celular.').waitFor()
-    assert.equal(await celular.locator('input').count(), 0)
-    assert.equal((await celular.context().cookies()).length, 0)
+    // Sin inicio de sesión: ningún campo de contraseña; el único campo es el del código (HU20).
+    assert.equal(await celular.locator('input[type=password]').count(), 0)
+    assert.equal(await celular.locator('input').count(), 1)
+    await celular.getByLabel('Código de verificación').waitFor()
+    const galletas = await celular.context().cookies()
+    assert.equal(galletas.length, 0, JSON.stringify(galletas))
     await fotoCelular('hu19_01_portada_celular')
   })
   await paso('HU19 · Al abrir el QR de un documento válido: el resultado en menos de dos segundos y el documento completo', async () => {
@@ -355,7 +366,9 @@ const paso = async (nombre, fn) => {
     assert.equal(pdf.tipo, 'application/pdf')
     assert.equal('0x' + require('node:crypto').createHash('sha256').update(Buffer.from(pdf.bytes)).digest('hex'), registrado.hashPdf)
     await fotoCelular('hu19_02_valido_celular')
-    const escritorio = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage()
+    const escritorio = await (
+      await b.newContext({ viewport: { width: 1280, height: 900 }, extraHTTPHeaders: { 'X-Forwarded-For': '203.0.113.11' } })
+    ).newPage()
     await escritorio.goto(`${PORTAL}/verificar/${tokenDe(kevin)}`)
     await escritorio.getByRole('heading', { name: 'Documento válido', level: 1 }).waitFor()
     await escritorio.getByRole('img', { name: 'Documento verificado' }).locator('canvas').first().waitFor({ timeout: 15_000 })
@@ -396,6 +409,84 @@ const paso = async (nombre, fn) => {
     await celular.getByRole('heading', { name: 'Documento válido', level: 1 }).waitFor()
   })
 
+  // ------------------------------------- HU20: verificar mediante el código de verificación
+  const conCodigo = await (
+    await b.newContext({ ...devices['Pixel 7'], extraHTTPHeaders: { 'X-Forwarded-For': '203.0.113.20' } })
+  ).newPage()
+  const campoCodigo = () => conCodigo.getByLabel('Código de verificación')
+  await paso('HU20 · Con el código escrito en minúsculas y con espacios: el resultado, solo con los datos básicos', async () => {
+    await conCodigo.goto(PORTAL)
+    const escrito = kevin.toLowerCase().replaceAll('-', ' ')
+    await campoCodigo().fill(escrito)
+    const inicio = Date.now()
+    await conCodigo.getByRole('button', { name: 'Verificar' }).click()
+    const resultado = conCodigo.getByRole('region', { name: 'Documento válido' })
+    await resultado.waitFor()
+    const ms = Date.now() - inicio
+    fs.writeFileSync(`${out}/hu20_tiempo_valido.txt`, `${ms} ms desde que se pulsa "Verificar" hasta que se ve el resultado\n`)
+    assert.ok(ms < 2000, `tardó ${ms} ms`)
+    assert.equal(await campoCodigo().inputValue(), kevin)
+    const [, registrado] = await registro.consultar(kevin)
+    for (const texto of ['Certificado de Trabajo', 'Kevin Ramos Ccanto', fechaEnLima(Number(registrado.registradoEn)), 'Vigente'])
+      await resultado.getByText(texto, { exact: true }).waitFor()
+    // RF40: con el código no se muestra el documento.
+    assert.equal(await conCodigo.getByRole('region', { name: 'Documento completo' }).count(), 0)
+    assert.equal(await conCodigo.locator('canvas').count(), 0)
+    await conCodigo.getByText('Para ver el documento completo, escanee su código QR.').waitFor()
+    await conCodigo.screenshot({ path: `${out}/hu20_01_valido_con_codigo.png`, fullPage: true })
+  })
+  await paso('HU20 · Un código con otro formato se señala sin consultar al servidor; uno anulado muestra su fecha', async () => {
+    const pedidos = []
+    const anotar = (r) => r.url().includes('/api/verificacion') && pedidos.push(r.url())
+    conCodigo.on('request', anotar)
+    await campoCodigo().fill('DRA-2026-F8R2M0')
+    await conCodigo.getByRole('button', { name: 'Verificar' }).click()
+    await conCodigo.getByText('Ingrese el código tal como aparece en el documento, por ejemplo DRA-2026-F8R2MA.').waitFor()
+    assert.equal(await campoCodigo().getAttribute('aria-invalid'), 'true')
+    await conCodigo.screenshot({ path: `${out}/hu20_02_formato_invalido.png`, fullPage: true })
+    conCodigo.off('request', anotar)
+    assert.deepEqual(pedidos, [])
+    await campoCodigo().fill(martha)
+    await conCodigo.getByRole('button', { name: 'Verificar' }).click()
+    const anulado = conCodigo.getByRole('region', { name: 'Documento anulado' })
+    await anulado.getByText('Fecha de anulación').waitFor()
+    await anulado.getByText('Martha Rojas Inga').waitFor()
+    await conCodigo.screenshot({ path: `${out}/hu20_03_anulado_con_codigo.png`, fullPage: true })
+  })
+  await paso('HU20 · Cada IP tiene 10 consultas por minuto, entre código y QR; la siguiente recibe 429', async () => {
+    // Un visitante nuevo, con su propia IP (la del contexto, sin otra en cada consulta).
+    const limitado = await (
+      await b.newContext({ ...devices['Pixel 7'], extraHTTPHeaders: { 'X-Forwarded-For': '203.0.113.30' } })
+    ).newPage()
+    await limitado.goto(PORTAL)
+    const consultar = (ruta) =>
+      limitado.evaluate(async (r) => {
+        const res = await fetch(r)
+        return { estado: res.status, espera: res.headers.get('retry-after'), cuerpo: await res.json() }
+      }, ruta)
+    const respuestas = []
+    for (let i = 0; i < 5; i++) {
+      respuestas.push(await consultar(`/api/verificacion/codigo/${kevin}`))
+      respuestas.push(await consultar(`/api/verificacion/${tokenDe(kevin)}`))
+    }
+    assert.deepEqual(respuestas.map((r) => r.estado), Array(10).fill(200))
+    const undecima = await consultar(`/api/verificacion/codigo/${kevin}`)
+    guardar('hu20_04_demasiadas_consultas', { estado: undecima.estado, 'retry-after': undecima.espera, ...undecima.cuerpo })
+    assert.equal(undecima.estado, 429)
+    assert.ok(Number(undecima.espera) >= 1 && Number(undecima.espera) <= 60, undecima.espera)
+    assert.equal(undecima.cuerpo.mensaje, 'Hizo demasiadas consultas en poco tiempo. Espere un minuto e intente nuevamente.')
+    assert.equal((await consultar(`/api/verificacion/${tokenDe(kevin)}`)).estado, 429)
+    // La pantalla lo informa.
+    await limitado.getByLabel('Código de verificación').fill(kevin)
+    await limitado.getByRole('button', { name: 'Verificar' }).click()
+    await limitado.getByRole('alert').getByText('Hizo demasiadas consultas en poco tiempo.', { exact: false }).waitFor()
+    await limitado.screenshot({ path: `${out}/hu20_05_demasiadas_consultas.png`, fullPage: true })
+    await limitado.context().close()
+    // Otro visitante sigue consultando.
+    await campoCodigo().fill(kevin)
+    await conCodigo.getByRole('button', { name: 'Verificar' }).click()
+    await conCodigo.getByRole('region', { name: 'Documento válido' }).waitFor()
+  })
   await b.close()
   fs.writeFileSync(`${out}/resultado.txt`, resultados.join('\n') + '\n')
   console.log(`\n${resultados.length} pasos correctos`)
