@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -199,5 +200,42 @@ class VerificacionDeAutenticidadTest {
     // Solo GET: otro método requiere sesión.
     mvc.perform(post("/api/verificacion/" + token(codigo)).with(csrf()))
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void elDocumentoCompletoSoloSeEntregaSiEsValidoYSinCache() throws Exception {
+    DocumentosDePrueba d = datos();
+    Director director = d.director();
+    MockHttpSession area = d.area("ADMINISTRACION");
+    String valido = d.firmado(director, area);
+    var respuesta =
+        mvc.perform(get("/api/verificacion/%s/documento".formatted(token(valido))))
+            .andExpect(status().isOk())
+            .andExpect(
+                org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                    .contentType("application/pdf"))
+            .andExpect(
+                org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                    .string("Cache-Control", "no-store"))
+            .andExpect(
+                org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                    .string("X-Frame-Options", "SAMEORIGIN"))
+            .andReturn()
+            .getResponse();
+    // Es el PDF cuyo hash está registrado en el contrato.
+    String hash = VerificacionDeAutenticidad.sha256(respuesta.getContentAsByteArray());
+    assertThat(contrato.registroDe(valido).orElseThrow().hashPdf()).isEqualTo(hash);
+    assertThat(respuesta.getHeader("Content-Disposition"))
+        .startsWith("inline")
+        .doesNotContain(valido);
+
+    // Anulado, no válido o con un token inválido: no se entrega.
+    String anulado = d.firmado(director, area);
+    contrato.anular(director.billetera(), anulado);
+    for (String t : List.of(token(anulado), token(d.revisado(director, area)), "x")) {
+      mvc.perform(get("/api/verificacion/%s/documento".formatted(t)))
+          .andExpect(status().isNotFound())
+          .andExpect(jsonPath("$.mensaje").value(VerificacionController.SIN_DOCUMENTO));
+    }
   }
 }

@@ -62,6 +62,8 @@ public class SeguridadConfig {
                     .authenticated())
         .securityContext(c -> c.securityContextRepository(contextos))
         .csrf(c -> c.spa().csrfTokenRepository(tokensCsrf))
+        // HU19: el portal muestra el PDF verificado en un marco de su propio origen.
+        .headers(h -> h.frameOptions(f -> f.sameOrigin()))
         .httpBasic(b -> b.disable())
         .formLogin(f -> f.disable())
         .logout(l -> l.disable());
