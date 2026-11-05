@@ -8,6 +8,10 @@
 #   ./e2e/levantar.sh          -> para la prueba automática: la sesión expira en 1 minuto
 #   ./e2e/levantar.sh demo     -> para la demostración (revisión del sprint): sesión de 30 minutos
 #                                 y datos para importar las billeteras de prueba en MetaMask
+#
+# Para escanear el QR con un celular real (HU19), la dirección del portal debe ser la de esta
+# computadora en la red local, no localhost:
+#   PLATAFORMA_PORTAL_URL=http://192.168.1.20:5174 ./e2e/levantar.sh demo
 set -euo pipefail
 cd "$(dirname "$0")/.."
 MODO=${1:-prueba}
@@ -60,18 +64,23 @@ until curl -sf -X POST localhost:5002/api/v0/id >/dev/null 2>&1; do sleep 1; don
 (cd backend && ./mvnw -q package -DskipTests)
 # Clave del HMAC del DNI (HU08, RF17): una nueva en cada arranque, porque la base también es nueva.
 # En AWS se guarda en el gestor de secretos (RNF03).
+# Dirección del portal público (HU19): va en el QR y en la leyenda de cada PDF final.
+PORTAL_URL=${PLATAFORMA_PORTAL_URL:-http://localhost:5174}
 CLAVE_HMAC=$(node -p 'require("crypto").randomBytes(32).toString("hex")')
 DB_URL=jdbc:postgresql://localhost:5433/plataforma PLATAFORMA_ADMIN_CONTRASENA='Admin2026!' \
   PLATAFORMA_ADMIN_NOMBRE='Garyn Huarhuachi Ramos' SESION_INACTIVIDAD=$INACTIVIDAD \
   PLATAFORMA_CONTRATO_DIRECCION="$CONTRATO" PLATAFORMA_CLAVE_HMAC_DNI="$CLAVE_HMAC" \
   PLATAFORMA_IPFS_URL=http://localhost:5002 PLATAFORMA_CONTRATO_BLOQUE_INICIAL="$BLOQUE_INICIAL" \
   PLATAFORMA_SINCRONIZACION_INTERVALO=$SINCRONIZACION PLATAFORMA_FIRMA_PLAZO=$PLAZO_FIRMA \
+  PLATAFORMA_PORTAL_URL="$PORTAL_URL" \
   java -jar backend/target/plataforma-backend-*.jar &
 BACKEND=$!
 (cd frontend && npx vite --port 5173 --strictPort) &
 FRONTEND=$!
 # Portal público de verificación (HU19–HU21), al que apunta el código QR de cada documento.
-(cd portal && npx vite --port 5174 --strictPort) &
+# Si el portal tiene una dirección de la red local, escucha también en la red para el celular.
+PORTAL_RED=$([[ "$PORTAL_URL" == http://localhost* ]] || echo --host)
+(cd portal && npx vite --port 5174 --strictPort $PORTAL_RED) &
 PORTAL=$!
 trap 'kill $BACKEND $FRONTEND $PORTAL; docker rm -f e2e-pg e2e-ipfs >/dev/null' EXIT
 
@@ -81,7 +90,7 @@ if [ "$MODO" = demo ]; then
     const d = require("./e2e/.despliegue.json")
     console.log(`
 Demostración lista en http://localhost:5173  (Administrador: admin / Admin2026!)
-Portal público de verificación: http://localhost:5174  (el QR de cada documento apunta aquí)
+Portal público de verificación: '"$PORTAL_URL"'  (el QR de cada documento apunta aquí)
 
 En MetaMask (billeteras SOLO de prueba, sin valor):
   1. Agregue la red manualmente o deje que la plataforma la proponga:

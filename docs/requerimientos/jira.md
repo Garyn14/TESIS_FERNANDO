@@ -15,13 +15,19 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 | 2 | 01/11 – 03/11 | Cerrado (23 de 23 puntos) | Solicitudes individuales y por lista | HU07–HU09 | 23 |
 | 3 | 03/11 – 05/11 | Cerrado (47 de 47 puntos; validación del PO en el Sprint 5) | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 | 47 |
 | 4 | 04/11 – 05/11 | Cerrado (27 de 27 puntos; validación del PO en el Sprint 5) | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
-| 5 | 05/11 – 12/11 | **Activo** | Verificación pública de autenticidad y validación del PO de los Sprints 3 y 4 | HU19–HU21 + tareas DRA-48 (validación del PO) y DRA-44 (AWS, diferida) | 16 |
+| 5 | 05/11 – 12/11 | **Activo**: 3 de 3 historias en revisión (05/11) | Verificación pública de autenticidad y validación del PO de los Sprints 3 y 4 | HU19–HU21 + tareas DRA-48 (validación del PO) y DRA-44 (AWS, diferida) | 16 |
 | 6 | 12/11 – 19/11 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
 | | | | | **Total** | **156** |
 
 **Avance:** 121 de 156 puntos cerrados (78 %). De ellos, 47 (Sprints 1 y 2) están aprobados por el PO; los 74 de los Sprints 3 y 4 esperan su validación en el Sprint 5. Velocidad: 24 puntos en el Sprint 1, 23 en el Sprint 2, 47 en el Sprint 3 y 27 en el Sprint 4.
 
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
+
+### Avance del Sprint 5 (05/11/2026)
+
+- **En revisión:** HU21, HU19 y HU20 (DRA-34, DRA-32 y DRA-33), 16 puntos. Se hizo HU21 primero porque el portal muestra su resultado. Cada una está integrada a `main`, con la CI en verde (6 jobs) y un comentario de cierre en su ticket.
+- **Revisión:** material en el [guion de pruebas](../scrum/sprint-5/guion-de-pruebas.md) y en [revision.md](../scrum/sprint-5/revision.md). El PO prueba el portal con su celular. En la misma sesión se puede hacer la validación pendiente de los Sprints 3 y 4 (DRA-48).
+- **Sigue diferida:** DRA-44 (infraestructura en AWS). La necesita el portal para publicarse en internet.
 
 ### Cierre de los Sprints 3 y 4 (05/11/2026)
 
