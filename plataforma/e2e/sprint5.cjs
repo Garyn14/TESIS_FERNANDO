@@ -1,8 +1,8 @@
 // Prueba de punta a punta real del Sprint 5: navegador + frontend + backend + PostgreSQL + IPFS +
 // red Besu local, sin simulaciones. Requiere el entorno de levantar.sh. Recorre HU21 (comprobar la
 // autenticidad de un documento con su registro en la blockchain y el PDF en IPFS), sin sesión, como
-// lo hará el portal público.
-const { chromium } = require('playwright')
+// lo hará el portal público, y HU19 (el portal público al que lleva el código QR, en un celular).
+const { chromium, devices } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
 const fs = require('node:fs')
@@ -308,6 +308,92 @@ const paso = async (nombre, fn) => {
     const maximo = Math.max(...tiempos)
     fs.writeFileSync(`${out}/hu21_07_tiempos.txt`, tiempos.map((t) => t.toFixed(0) + ' ms').join('\n') + `\nmáximo: ${maximo.toFixed(0)} ms\n`)
     assert.ok(maximo < 2000, `la más lenta tardó ${maximo} ms`)
+  })
+
+  // ---------------------------------------------- HU19: verificar mediante el código QR (portal)
+  const PORTAL = process.env.E2E_PORTAL ?? 'http://localhost:5174'
+  // Un celular, sin sesión ni billetera: quien escanea el QR del documento.
+  const celular = await (await b.newContext({ ...devices['Pixel 7'] })).newPage()
+  const fotoCelular = (nombre) => celular.screenshot({ path: `${out}/${nombre}.png`, fullPage: true })
+  const fechaEnLima = (segundos) =>
+    new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Lima' }).format(new Date(segundos * 1000))
+  const abrirQr = async (codigo, titulo) => {
+    const inicio = Date.now()
+    await celular.goto(`${PORTAL}/verificar/${tokenDe(codigo)}`)
+    await celular.getByRole('heading', { name: titulo, level: 1 }).waitFor()
+    return Date.now() - inicio
+  }
+  await paso('HU19 · El portal se abre sin registro y su portada explica cómo verificar con el QR', async () => {
+    await celular.goto(PORTAL)
+    await celular.getByRole('heading', { name: 'Verifique un documento' }).waitFor()
+    await celular.getByText('Escanéelo con la cámara de su celular.').waitFor()
+    assert.equal(await celular.locator('input').count(), 0)
+    assert.equal((await celular.context().cookies()).length, 0)
+    await fotoCelular('hu19_01_portada_celular')
+  })
+  await paso('HU19 · Al abrir el QR de un documento válido: el resultado en menos de dos segundos y el documento completo', async () => {
+    const ms = await abrirQr(kevin, 'Documento válido')
+    fs.writeFileSync(`${out}/hu19_tiempo_valido.txt`, `${ms} ms desde que se abre el enlace del QR hasta que se ve el resultado\n`)
+    assert.ok(ms < 2000, `tardó ${ms} ms`)
+    const resultado = celular.getByRole('region', { name: 'Documento válido' })
+    const [, registrado] = await registro.consultar(kevin)
+    for (const texto of ['Certificado de Trabajo', 'Kevin Ramos Ccanto', fechaEnLima(Number(registrado.registradoEn)), 'Vigente'])
+      await resultado.getByText(texto, { exact: true }).waitFor()
+    const documento = celular.getByRole('region', { name: 'Documento completo' })
+    await documento.getByRole('link', { name: 'Abrir el documento' }).waitFor()
+    await documento.getByRole('link', { name: 'Descargar PDF' }).waitFor()
+    // El documento que muestra el portal es el PDF cuyo hash está en la blockchain.
+    // El documento se dibuja dentro de la página: los celulares no muestran un PDF incrustado.
+    const visor = documento.getByRole('img', { name: 'Documento verificado' })
+    await visor.locator('canvas').first().waitFor({ timeout: 15_000 })
+    assert.ok((await visor.locator('canvas').first().boundingBox()).height > 200)
+    const src = await documento.getByRole('link', { name: 'Abrir el documento' }).getAttribute('href')
+    const pdf = await celular.evaluate(async (u) => {
+      const r = await fetch(u)
+      return { tipo: r.headers.get('content-type'), bytes: Array.from(new Uint8Array(await r.arrayBuffer())) }
+    }, src)
+    assert.equal(pdf.tipo, 'application/pdf')
+    assert.equal('0x' + require('node:crypto').createHash('sha256').update(Buffer.from(pdf.bytes)).digest('hex'), registrado.hashPdf)
+    await fotoCelular('hu19_02_valido_celular')
+    const escritorio = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage()
+    await escritorio.goto(`${PORTAL}/verificar/${tokenDe(kevin)}`)
+    await escritorio.getByRole('heading', { name: 'Documento válido', level: 1 }).waitFor()
+    await escritorio.getByRole('img', { name: 'Documento verificado' }).locator('canvas').first().waitFor({ timeout: 15_000 })
+    await escritorio.screenshot({ path: `${out}/hu19_03_valido_escritorio.png`, fullPage: true })
+    await escritorio.context().close()
+  })
+  await paso('HU19 · Un documento reemplazado se ve Anulado, con la fecha y la versión corregida, sin el documento', async () => {
+    await abrirQr(lucia, 'Documento anulado')
+    const resultado = celular.getByRole('region', { name: 'Documento anulado' })
+    await resultado.getByText('Fecha de anulación').waitFor()
+    await resultado.getByText('Existe una versión corregida de este documento. Solicítela a la Agencia Agraria Satipo.').waitFor()
+    assert.equal(await celular.getByRole('region', { name: 'Documento completo' }).count(), 0)
+    assert.ok(!(await celular.content()).includes(nuevaLucia))
+    assert.equal(await celular.evaluate((u) => fetch(u).then((r) => r.status), `/api/verificacion/${tokenDe(lucia)}/documento`), 404)
+    await fotoCelular('hu19_04_anulado_celular')
+  })
+  await paso('HU19 · Un documento no emitido o un enlace inválido se ven No válidos, sin datos', async () => {
+    await abrirQr(pendiente, 'Documento no válido')
+    const resultado = celular.getByRole('region', { name: 'Documento no válido' })
+    await resultado.getByText('No encontramos un documento válido con estos datos.').waitFor()
+    assert.equal(await resultado.getByText('Titular').count(), 0)
+    assert.equal(await celular.getByRole('region', { name: 'Documento completo' }).count(), 0)
+    await fotoCelular('hu19_05_no_valido_celular')
+    await celular.goto(`${PORTAL}/verificar/enlace-alterado`)
+    await celular.getByRole('heading', { name: 'Documento no válido', level: 1 }).waitFor()
+  })
+  await paso('HU19 · Si la verificación no está disponible, se puede intentar nuevamente', async () => {
+    execFileSync('docker', ['stop', 'e2e-ipfs'])
+    try {
+      await celular.goto(`${PORTAL}/verificar/${tokenDe(kevin)}`)
+      await celular.getByRole('alert').getByText('No se pudo verificar el documento en este momento.', { exact: false }).waitFor()
+      await fotoCelular('hu19_06_no_disponible_celular')
+    } finally {
+      execFileSync('docker', ['start', 'e2e-ipfs'])
+    }
+    await esperarHasta('IPFS de vuelta', async () => (await verificar(tokenDe(kevin))).estado === 200, 60_000)
+    await celular.getByRole('button', { name: 'Intentar nuevamente' }).click()
+    await celular.getByRole('heading', { name: 'Documento válido', level: 1 }).waitFor()
   })
 
   await b.close()

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fechaLarga, urlDelDocumento, verificar, type Verificacion } from './api'
+import VisorPdf from './VisorPdf'
 
 type Estado =
   | { tipo: 'verificando' }
@@ -127,7 +128,7 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: string | null }) {
   )
 }
 
-/** El documento completo, verificado: incrustado y con enlaces para los celulares. */
+/** El documento completo, verificado: dibujado en la página y con enlaces para abrirlo o bajarlo. */
 function Documento({ token }: { token: string }) {
   const url = urlDelDocumento(token)
   return (
@@ -157,11 +158,7 @@ function Documento({ token }: { token: string }) {
           </a>
         </div>
       </div>
-      <iframe
-        src={url}
-        title="Documento verificado"
-        className="block h-[75vh] min-h-[28rem] w-full rounded-b-xl"
-      />
+      <VisorPdf url={url} titulo="Documento verificado" />
     </section>
   )
 }
