@@ -53,9 +53,19 @@ class VerificacionDeAutenticidadTest {
         "SELECT token_qr FROM documento WHERE codigo = ?", String.class, codigo);
   }
 
-  /** Verificación pública, sin sesión. */
+  private static final java.util.concurrent.atomic.AtomicInteger visitantes =
+      new java.util.concurrent.atomic.AtomicInteger();
+
+  /** Verificación pública, sin sesión, desde otra IP cada vez (el límite por IP es de HU20). */
   private ResultActions verificar(String token) throws Exception {
-    return mvc.perform(get("/api/verificacion/" + token));
+    int n = visitantes.incrementAndGet();
+    return mvc.perform(
+        get("/api/verificacion/" + token)
+            .with(
+                pedido -> {
+                  pedido.setRemoteAddr("10.21.%d.%d".formatted(n / 250, n % 250 + 1));
+                  return pedido;
+                }));
   }
 
   private static String cuerpo(ResultActions r) throws Exception {

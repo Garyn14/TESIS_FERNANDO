@@ -1,5 +1,6 @@
 package pe.drasatipo.plataforma.verificacion;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -18,16 +19,39 @@ import pe.drasatipo.plataforma.verificacion.ResultadoVerificacion.Resultado;
 @RequestMapping("/api/verificacion")
 public class VerificacionController {
 
-  private final VerificacionDeAutenticidad verificacion;
+  static final String DEMASIADAS =
+      "Hizo demasiadas consultas en poco tiempo. Espere un minuto e intente nuevamente.";
 
-  public VerificacionController(VerificacionDeAutenticidad verificacion) {
+  private final VerificacionDeAutenticidad verificacion;
+  private final LimiteDeConsultas limite;
+
+  public VerificacionController(VerificacionDeAutenticidad verificacion, LimiteDeConsultas limite) {
     this.verificacion = verificacion;
+    this.limite = limite;
   }
 
-  /** HU21: resultado de la verificación del documento del token del QR. */
+  /** HU21, HU19: resultado de la verificación del documento del token del QR. */
   @GetMapping("/{token}")
-  public ResultadoVerificacion porToken(@PathVariable String token) {
-    return verificacion.porToken(token).resultado();
+  public ResponseEntity<?> porToken(@PathVariable String token, HttpServletRequest pedido) {
+    return limitado(pedido, () -> verificacion.porToken(token).resultado());
+  }
+
+  /** HU20 (RF40): resultado con el código de verificación; nunca entrega el documento. */
+  @GetMapping("/codigo/{codigo}")
+  public ResponseEntity<?> porCodigo(@PathVariable String codigo, HttpServletRequest pedido) {
+    return limitado(pedido, () -> verificacion.porCodigo(codigo).resultado());
+  }
+
+  /** RNF04: hasta N consultas por minuto por IP; la siguiente responde 429 con Retry-After. */
+  private ResponseEntity<?> limitado(
+      HttpServletRequest pedido, java.util.function.Supplier<ResultadoVerificacion> consulta) {
+    var espera = limite.consumir(pedido.getRemoteAddr());
+    if (espera.isPresent()) {
+      return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+          .header(HttpHeaders.RETRY_AFTER, String.valueOf(espera.getAsLong()))
+          .body(java.util.Map.of("mensaje", DEMASIADAS, "campos", java.util.Map.of()));
+    }
+    return ResponseEntity.ok(consulta.get());
   }
 
   static final String SIN_DOCUMENTO = "El documento no está disponible.";

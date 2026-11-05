@@ -23,6 +23,7 @@
     <poi.version>5.4.1</poi.version>
     <openpdf.version>2.0.3</openpdf.version>
     <zxing.version>3.5.3</zxing.version>
+    <bucket4j.version>8.18.0</bucket4j.version>
     <spotless.version>3.10.4</spotless.version>
   </properties>
 
@@ -76,6 +77,12 @@
       <groupId>com.github.librepdf</groupId>
       <artifactId>openpdf</artifactId>
       <version>${openpdf.version}</version>
+    </dependency>
+    <!-- HU20 (RNF04): límite de consultas por IP en el portal público. -->
+    <dependency>
+      <groupId>com.bucket4j</groupId>
+      <artifactId>bucket4j_jdk17-core</artifactId>
+      <version>${bucket4j.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.zxing</groupId>
