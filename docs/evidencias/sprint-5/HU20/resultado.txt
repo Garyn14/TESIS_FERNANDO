@@ -1,0 +1,17 @@
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ Preparación · El Administrador registra la billetera del Director y le otorga el rol de firmante
+✓ Preparación · El área envía cuatro documentos y el Director firma tres con su billetera
+✓ HU21 · Un documento firmado se verifica sin sesión: Válido, con la fecha del bloque y sin datos internos
+✓ HU21 · Si el PDF guardado no coincide con el hash registrado, es No válido y no entrega datos
+✓ HU21 · Anulado en el contrato: se informa la fecha del bloque de la anulación
+✓ HU21 · Reemplazado por una reemisión: Anulado, con "versión corregida" y sin revelar su código
+✓ HU21 · Si IPFS no responde, no se informa No válido: "No se pudo verificar…" (503)
+✓ HU21 · Cada verificación responde en menos de dos segundos (RNF01)
+✓ HU19 · El portal se abre sin registro y su portada explica cómo verificar con el QR
+✓ HU19 · Al abrir el QR de un documento válido: el resultado en menos de dos segundos y el documento completo
+✓ HU19 · Un documento reemplazado se ve Anulado, con la fecha y la versión corregida, sin el documento
+✓ HU19 · Un documento no emitido o un enlace inválido se ven No válidos, sin datos
+✓ HU19 · Si la verificación no está disponible, se puede intentar nuevamente
+✓ HU20 · Con el código escrito en minúsculas y con espacios: el resultado, solo con los datos básicos
+✓ HU20 · Un código con otro formato se señala sin consultar al servidor; uno anulado muestra su fecha
+✓ HU20 · Cada IP tiene 10 consultas por minuto, entre código y QR; la siguiente recibe 429
