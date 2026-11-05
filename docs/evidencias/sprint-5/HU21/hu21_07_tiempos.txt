@@ -1,0 +1,11 @@
+31 ms
+22 ms
+34 ms
+33 ms
+30 ms
+33 ms
+29 ms
+29 ms
+26 ms
+35 ms
+máximo: 35 ms
