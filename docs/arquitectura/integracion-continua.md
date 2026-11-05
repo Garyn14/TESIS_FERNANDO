@@ -156,6 +156,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 04/11/2026 | [41793444955](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41793444955) | `DRA-30-anular-documento` | ✓ Cinco jobs en verde con HU29: anular un documento firmado, `anularDocumento` en el contrato y migración V19 (25 pruebas del contrato, 181 de backend, 124 de frontend) |
 | 04/11/2026 | [41841771480](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41841771480) | `DRA-31-reemitir-documento` | ✓ Cinco jobs en verde con HU30: reemitir un documento firmado, `registrarReemisiones` en el contrato (50 reemisiones en una transacción en Besu) y migración V20 (28 pruebas del contrato, 186 de backend, 130 de frontend). El primer intento se canceló porque el paso del contrato en Besu quedó colgado sin salida (antes había tardado 14 s); el segundo intento pasó completo |
 | 04/11/2026 | [41897054361](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41897054361) | `DRA-43-timeout-ci` | ✓ Cinco jobs en verde con límite de tiempo: `timeout-minutes` de 10 a 15 por job y de 5 en los dos pasos que usan la red Besu, para que un cuelgue falle rápido en lugar de consumir hasta 6 horas |
+| 05/11/2026 | [41967370698](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41967370698) | `DRA-34-comprobar-autenticidad` | ✓ Cinco jobs en verde con HU21, la primera del Sprint 5: comprobación de autenticidad con el contrato y el PDF en IPFS, y su API pública (191 pruebas de backend, 130 de frontend, 28 del contrato) |
 
 ## 9. Pendientes
 
