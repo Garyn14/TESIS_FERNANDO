@@ -9,10 +9,52 @@
 
 **Como** entidad externa, **quiero** escanear el código QR de un documento, **para** comprobar su autenticidad y ver el documento completo.
 
+**Contexto**
+
+El PDF final de cada documento lleva un código QR (HU16) que apunta a `{portal}/verificar/{token}`. El token es aleatorio, de 256 bits, y nunca contiene el DNI. Esta historia construye ese **portal público de verificación**. Es un proyecto aparte de la plataforma interna, sin inicio de sesión ni menú, pensado para abrirse en el celular de quien escanea el QR. El resultado lo calcula la comprobación de autenticidad de HU21.
+
+| Paso | Qué ve la persona |
+|---|---|
+| 1 | Escanea el QR y se abre el portal en su navegador. Mientras se comprueba, ve "Verificando el documento…" |
+| 2 | Ve el resultado: **Documento válido**, **Documento anulado** o **Documento no válido**, con su explicación |
+| 3 | Si es válido, ve el tipo, el titular, la fecha de emisión y el estado, y debajo **el documento completo**, que puede abrir o descargar |
+
 **Criterios de aceptación**
-- [ ] No se requiere registro.
-- [ ] El resultado se muestra en menos de dos segundos.
+
+Los tres primeros son los de la Tabla 20 de la tesis. Los demás detallan cómo se cumplen.
+
+- [ ] No se requiere registro: el portal no pide usuario ni contraseña.
+- [ ] El resultado se muestra en menos de dos segundos (RNF01). Mientras tanto se ve un indicador de progreso.
 - [ ] Si el documento es válido, se muestra completo.
+  - Es el PDF final guardado en IPFS, el mismo cuyo hash se comprobó en la blockchain.
+  - Se ve dentro de la página, con los botones "Abrir el documento" y "Descargar PDF" para los celulares que no muestran PDF incrustados.
+- [ ] **Válido:** "Documento válido", con el mensaje de HU21, y:
+  - el tipo de documento y el titular;
+  - la fecha de emisión con el mes en letras (por ejemplo, 4 de noviembre de 2026), en hora de Lima;
+  - el estado "Vigente".
+- [ ] **Anulado:**
+  - "Documento anulado", con el tipo, el titular, la fecha de emisión y la fecha de anulación;
+  - si fue reemplazado, el aviso "Existe una versión corregida de este documento. Solicítela a la Agencia Agraria Satipo.", sin su código (RF41);
+  - **no se muestra el documento**, para que no se use como válido.
+- [ ] **No válido:** "Documento no válido" y "No encontramos un documento válido con estos datos.", sin ningún dato ni documento.
+- [ ] Si la verificación no está disponible, el portal muestra el mensaje de HU21 y el botón "Intentar nuevamente".
+- [ ] El documento solo se entrega si la verificación es Válida (`GET /api/verificacion/{token}/documento`). En cualquier otro caso responde 404. No se guarda en caché.
+- [ ] La página se adapta al celular (360 px de ancho) y a la computadora, con la identidad de la agencia (logo y colores de la plataforma).
+- [ ] La portada (`/`) explica cómo verificar un documento con el QR. El ingreso del código de verificación llega con HU20.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Verificar escribiendo el código de verificación | HU20 |
+| Límite de 10 consultas por minuto por IP (RNF04) | HU20 |
+| Publicar el portal en internet (dominio y servidor) | DRA-44 (AWS) |
+
+**Notas técnicas**
+
+- Proyecto nuevo `plataforma/portal`: React + Vite + Tailwind (ADR-001), con la guía visual de la plataforma, en el puerto 5174 (`PLATAFORMA_PORTAL_URL`).
+- Ruta `/verificar/{token}`, que es la del QR. Usa `GET /api/verificacion/{token}` (HU21) y `GET /api/verificacion/{token}/documento`.
+- La CI suma el job "Portal (React + Vite)", y `levantar.sh` levanta también el portal.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
