@@ -1,5 +1,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
+// pdf.js necesita un lienzo real: en jsdom solo se comprueba qué documento se pide.
+vi.mock('pdfjs-dist', () => ({
+  GlobalWorkerOptions: {},
+  getDocument: vi.fn(() => ({ promise: Promise.resolve({ numPages: 0 }) })),
+}))
 import App from './App'
 import { tokenDeLaRuta } from './ruta'
 
@@ -52,9 +58,9 @@ describe('Portal de verificación (HU19)', () => {
     expect(fetch).toHaveBeenCalledWith(`/api/verificacion/${TOKEN}`, expect.anything())
 
     const documento = screen.getByRole('region', { name: 'Documento completo' })
-    expect(within(documento).getByTitle('Documento verificado')).toHaveAttribute(
-      'src',
-      `/api/verificacion/${TOKEN}/documento`,
+    expect(within(documento).getByRole('img', { name: 'Documento verificado' })).toBeInTheDocument()
+    await vi.waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(`/api/verificacion/${TOKEN}/documento`),
     )
     expect(within(documento).getByRole('link', { name: 'Abrir el documento' })).toHaveAttribute(
       'href',
