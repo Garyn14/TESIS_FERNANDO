@@ -1,21 +1,12 @@
 import { useEffect, useState } from 'react'
-import { fechaLarga, urlDelDocumento, verificar, type Verificacion } from './api'
+import { urlDelDocumento, verificar, type Verificacion } from './api'
+import TarjetaResultado from './TarjetaResultado'
 import VisorPdf from './VisorPdf'
 
 type Estado =
   | { tipo: 'verificando' }
   | { tipo: 'no-disponible'; mensaje: string }
   | { tipo: 'listo'; verificacion: Verificacion }
-
-const ENCABEZADOS = {
-  VALIDO: { titulo: 'Documento válido', icono: '✓', clase: 'border-institutional bg-green-pale' },
-  ANULADO: {
-    titulo: 'Documento anulado',
-    icono: '⊘',
-    clase: 'border-neutral-icon bg-neutral-pale',
-  },
-  NO_VALIDO: { titulo: 'Documento no válido', icono: '✕', clase: 'border-red-700 bg-red-50' },
-}
 
 /**
  * HU19 (RF39): resultado de la verificación del documento del código QR y, si es válido, el
@@ -69,61 +60,10 @@ export default function PaginaVerificacion({ token }: { token: string }) {
     )
 
   const v = estado.verificacion
-  const encabezado = ENCABEZADOS[v.resultado]
   return (
     <div className="space-y-6">
-      <section
-        aria-labelledby="resultado"
-        className={`rounded-xl border-2 p-6 shadow-sm ${encabezado.clase}`}
-      >
-        <div className="flex items-start gap-3">
-          <span
-            aria-hidden="true"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-card text-xl font-bold"
-          >
-            {encabezado.icono}
-          </span>
-          <div>
-            <h1 id="resultado" className="text-2xl font-semibold">
-              {encabezado.titulo}
-            </h1>
-            <p className="mt-1">{v.mensaje}</p>
-          </div>
-        </div>
-        {v.resultado !== 'NO_VALIDO' && (
-          <dl className="mt-5 grid gap-x-6 gap-y-3 rounded-lg bg-card p-4 sm:grid-cols-2">
-            <Dato etiqueta="Tipo de documento" valor={v.tipo} />
-            <Dato etiqueta="Titular" valor={v.titular} />
-            <Dato
-              etiqueta="Fecha de emisión"
-              valor={v.fechaEmision && fechaLarga(v.fechaEmision)}
-            />
-            <Dato etiqueta="Estado" valor={v.resultado === 'VALIDO' ? 'Vigente' : 'Anulado'} />
-            {v.anuladoEn && <Dato etiqueta="Fecha de anulación" valor={fechaLarga(v.anuladoEn)} />}
-          </dl>
-        )}
-        {v.versionCorregida && (
-          <p className="mt-4 rounded-lg bg-card p-4">
-            Existe una versión corregida de este documento. Solicítela a la Agencia Agraria Satipo.
-          </p>
-        )}
-        {v.resultado === 'NO_VALIDO' && (
-          <p className="mt-4 text-sm">
-            Compruebe que escaneó el código QR del documento original. Si cree que es un error,
-            comuníquese con la Agencia Agraria Satipo.
-          </p>
-        )}
-      </section>
+      <TarjetaResultado v={v} />
       {v.resultado === 'VALIDO' && <Documento token={token} />}
-    </div>
-  )
-}
-
-function Dato({ etiqueta, valor }: { etiqueta: string; valor: string | null }) {
-  return (
-    <div>
-      <dt className="text-sm text-muted">{etiqueta}</dt>
-      <dd className="font-semibold">{valor}</dd>
     </div>
   )
 }
