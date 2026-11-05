@@ -1,0 +1,1 @@
+226 ms desde que se abre el enlace del QR hasta que se ve el resultado
