@@ -2,7 +2,7 @@
 
 - **Sprint:** 3, del 03/11 al 16/11/2026. El trabajo terminó el 04/11, así que la revisión se puede adelantar.
 - **Objetivo (Jira):** revisión y firma con registro en la blockchain.
-- **Resultado:** 6 de 6 historias construidas e integradas, con 47 puntos, todas **En revisión**. Falta la aprobación del PO (ver [Acta](#acta)).
+- **Resultado:** 6 de 6 historias cerradas, con 47 puntos. El Sprint se cerró el 05/11/2026 **sin la validación del PO**, que queda para el Sprint 5 (DRA-48; ver [Acta](#acta)).
 - **Participantes (Tabla 24 de la tesis):**
   - Product Owner: Christhian Danny Escalante Rosas.
   - Scrum Master: Jefferson Ventura Ruiz.
@@ -101,16 +101,17 @@ Los textos son los que ya van en el PDF final y en la blockchain. Conviene cerra
 
 ## Acta
 
-*Se completa en la reunión de revisión.*
-
-- **Fecha de la validación:**
-- **Cómo se validó:** con el [guion de pruebas](guion-de-pruebas.md). La decisión sobre cada historia queda en su ticket de Jira.
+- **Cierre del Sprint 3:** 05/11/2026, por decisión del equipo, **sin la validación del PO**. Las pruebas del PO quedan para el Sprint 5, en la tarea **DRA-48** ("Validación del PO de los Sprints 3 y 4").
+- **Cómo se cerró:** las 6 historias estaban construidas, integradas a `main` con la CI en verde y verificadas con la prueba de punta a punta. Pasaron a **Finalizada** en Jira, con un comentario que deja constancia de que la validación del PO está pendiente.
+- **Validación pendiente:** se hará con el [guion de pruebas](guion-de-pruebas.md). Si el PO observa algo, se registra como ajuste en el Sprint 5. Su decisión sobre cada historia se agregará a la tabla.
 
 | Historia | Ticket | Puntos | Decisión | Registro en Jira |
 |---|---|---|---|---|
-| HU10: Ver los documentos por revisar | DRA-21 | 3 | | |
-| HU16: Generar el PDF final y su hash | DRA-24 | 5 | | |
-| HU11: Firmar uno o varios documentos | DRA-22 | 13 | | |
-| HU12: Revisar y firmar un lote | DRA-23 | 8 | | |
-| HU17: Almacenar el PDF en IPFS | DRA-25 | 5 | | |
-| HU18: Sincronizar los estados con la blockchain | DRA-26 | 13 | | |
+| HU10: Ver los documentos por revisar | DRA-21 | 3 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 05/11; validación en DRA-48 |
+| HU16: Generar el PDF final y su hash | DRA-24 | 5 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 05/11; validación en DRA-48 |
+| HU11: Firmar uno o varios documentos | DRA-22 | 13 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 05/11; validación en DRA-48 |
+| HU12: Revisar y firmar un lote | DRA-23 | 8 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 05/11; validación en DRA-48 |
+| HU17: Almacenar el PDF en IPFS | DRA-25 | 5 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 05/11; validación en DRA-48 |
+| HU18: Sincronizar los estados con la blockchain | DRA-26 | 13 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 05/11; validación en DRA-48 |
+
+**Resultado:** 6 de 6 historias cerradas, con 47 puntos. La velocidad del Sprint 3 es de 47 puntos. DRA-44 (AWS) sigue diferida y pasó al Sprint 5.

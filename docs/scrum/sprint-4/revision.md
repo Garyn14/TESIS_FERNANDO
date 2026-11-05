@@ -1,8 +1,8 @@
 # Revisión del Sprint 4
 
-- **Sprint:** 4, previsto del 17/11 al 23/11/2026. El trabajo se adelantó y terminó el 04/11, mientras el Sprint 3 esperaba su revisión. En Jira, el Sprint 4 todavía no está iniciado.
+- **Sprint:** 4, previsto del 17/11 al 23/11/2026. El trabajo se adelantó y se hizo el 04/11, mientras el Sprint 3 esperaba su revisión. En Jira se inició y se cerró con esas fechas reales.
 - **Objetivo (Jira):** observar, rechazar, corregir, anular y reemitir documentos.
-- **Resultado:** 5 de 5 historias construidas e integradas, con 27 puntos, todas **En revisión**. Falta la aprobación del PO (ver [Acta](#acta)).
+- **Resultado:** 5 de 5 historias cerradas, con 27 puntos. El Sprint se cerró el 05/11/2026 **sin la validación del PO**, que queda para el Sprint 5 (DRA-48; ver [Acta](#acta)).
 - **Participantes (Tabla 24 de la tesis):**
   - Product Owner: Christhian Danny Escalante Rosas.
   - Scrum Master: Jefferson Ventura Ruiz.
@@ -74,7 +74,7 @@ Conviene cerrarlas antes de la demostración pública del Sprint 5. Los textos y
 
 | Tema | Qué falta | Cuándo |
 |---|---|---|
-| Revisión del Sprint 3 | Sigue sin aprobación del PO (DRA-21 a DRA-26 en revisión). El Sprint 3 sigue activo en Jira y el Sprint 4 no está iniciado | En la misma sesión que esta revisión |
+| Validación del PO de los Sprints 3 y 4 | Los dos se cerraron el 05/11 sin las pruebas del PO, por decisión del equipo | Sprint 5, tarea DRA-48 |
 | Infraestructura en AWS (DRA-44) | Sigue diferida para no gastar crédito. Con varias instancias del backend, la sincronización (HU18) debe correr en una sola | Antes del portal público (Sprint 5) |
 | CI sin límite de tiempo | En HU30, el paso del contrato en Besu se colgó sin salida y hubo que cancelarlo a mano; el segundo intento pasó. **Resuelto:** cada job tiene ahora `timeout-minutes` (10 a 15 minutos, cuando tardan de 17 s a 3 min) y los dos pasos que usan la red Besu, 5 minutos | Hecho el 04/11 |
 | Portal público | Debe mostrar "Anulado" y "Reemplazado por". El contrato ya tiene `anulacion(codigo)` y `reemplazadoPor(codigo)` | Sprint 5 (HU19–HU21) |
@@ -94,21 +94,16 @@ Conviene cerrarlas antes de la demostración pública del Sprint 5. Los textos y
 
 ## Acta
 
-*Se completa en la reunión de revisión.*
-
-- **Fecha de la validación:**
-- **Cómo se validó:** con el [guion de pruebas](guion-de-pruebas.md). La decisión sobre cada historia queda en su ticket de Jira.
+- **Cierre del Sprint 4:** 05/11/2026, por decisión del equipo, **sin la validación del PO**. Las pruebas del PO quedan para el Sprint 5, en la tarea **DRA-48** ("Validación del PO de los Sprints 3 y 4").
+- **Cómo se cerró:** las 5 historias estaban construidas, integradas a `main` con la CI en verde y verificadas con la prueba de punta a punta. Pasaron a **Finalizada** en Jira, con un comentario que deja constancia de que la validación del PO está pendiente.
+- **Validación pendiente:** se hará con el [guion de pruebas](guion-de-pruebas.md). Si el PO observa algo, se registra como ajuste en el Sprint 5. Su decisión sobre cada historia se agregará a la tabla.
 
 | Historia | Ticket | Puntos | Decisión | Registro en Jira |
 |---|---|---|---|---|
-| HU13: Observar un documento | DRA-27 | 3 | | |
-| HU14: Rechazar un documento | DRA-28 | 3 | | |
-| HU15: Corregir y reenviar un documento observado | DRA-29 | 5 | | |
-| HU29: Anular un documento firmado | DRA-30 | 8 | | |
-| HU30: Reemitir un documento con datos corregidos | DRA-31 | 8 | | |
+| HU13: Observar un documento | DRA-27 | 3 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 05/11; validación en DRA-48 |
+| HU14: Rechazar un documento | DRA-28 | 3 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 05/11; validación en DRA-48 |
+| HU15: Corregir y reenviar un documento observado | DRA-29 | 5 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 05/11; validación en DRA-48 |
+| HU29: Anular un documento firmado | DRA-30 | 8 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 05/11; validación en DRA-48 |
+| HU30: Reemitir un documento con datos corregidos | DRA-31 | 8 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 05/11; validación en DRA-48 |
 
-## Cierre en Jira (después de la aprobación)
-
-1. Cerrar el Sprint 3 (DRA-21 a DRA-26 en **Listo**) y mover DRA-44 al Sprint 4.
-2. Iniciar el Sprint 4 y, con las aprobaciones, pasar DRA-27 a DRA-31 a **Listo**.
-3. Cerrar el Sprint 4, mover DRA-44 al Sprint 5 y completar el acta en este documento y en [jira.md](../../requerimientos/jira.md).
+**Resultado:** 5 de 5 historias cerradas, con 27 puntos. En Jira, el Sprint 4 se inició y se cerró el mismo día, con las fechas reales del trabajo (04/11 al 05/11). La velocidad del Sprint 4 es de 27 puntos. Con los Sprints 1 a 4 se cerraron 121 de 156 puntos (78 %).

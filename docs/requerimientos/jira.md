@@ -6,34 +6,32 @@ Cargado el 28/10/2026 a partir de [historias_de_usuario.md](historias_de_usuario
 
 ## Calendario de sprints (reprogramado)
 
-Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario se reprogramó conservando la duración relativa: sprints de 1 semana y el Sprint 3 de dos semanas. El 29/10/2026, al cerrar el Sprint 0 antes de lo previsto, se **adelantó todo el calendario** y el Sprint 1 se inició ese mismo día. El 01/11/2026, tras cerrar el Sprint 1 el 31/10 (4 días antes de lo previsto), se **volvió a adelantar el calendario**: el Sprint 2 empieza el 01/11 y los siguientes se corren 4 días, con la misma duración. El 03/11/2026, al cerrar el Sprint 2 cuatro días antes, se **adelantó una vez más**: el Sprint 3 empieza el 03/11 y el Sprint 6 termina el 07/12.
+Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario se reprogramó conservando la duración relativa: sprints de 1 semana y el Sprint 3 de dos semanas. El 29/10/2026, al cerrar el Sprint 0 antes de lo previsto, se **adelantó todo el calendario** y el Sprint 1 se inició ese mismo día. El 01/11/2026, tras cerrar el Sprint 1 el 31/10 (4 días antes de lo previsto), se **volvió a adelantar el calendario**: el Sprint 2 empieza el 01/11 y los siguientes se corren 4 días, con la misma duración. El 03/11/2026, al cerrar el Sprint 2 cuatro días antes, se **adelantó una vez más**: el Sprint 3 empieza el 03/11 y el Sprint 6 termina el 07/12. El 05/11/2026 se cerraron los Sprints 3 y 4 y se **adelantó otra vez**: el Sprint 5 va del 05/11 al 12/11 y el Sprint 6, del 12/11 al 19/11.
 
 | Sprint | Fechas | Estado | Objetivo | Historias | Puntos |
 |---|---|---|---|---|---|
 | 0 | 28/10 – 29/10 | Cerrado | Infraestructura: red Besu, IPFS privado y entorno de desarrollo | Tareas DRA-42, DRA-43, DRA-45, DRA-46, DRA-47 | — |
 | 1 | 29/10 – 31/10 | Cerrado (24 de 24 puntos) | Usuarios, roles, áreas y billetera del director | HU01–HU06 | 24 |
 | 2 | 01/11 – 03/11 | Cerrado (23 de 23 puntos) | Solicitudes individuales y por lista | HU07–HU09 | 23 |
-| 3 | 03/11 – 16/11 | **Activo**: 6 de 6 historias en revisión (04/11) | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 + tarea DRA-44 (AWS, diferida) | 47 |
-| 4 | 17/11 – 23/11 | Futuro en Jira; 5 de 5 historias construidas y en revisión (04/11) | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
-| 5 | 24/11 – 30/11 | Futuro | Verificación pública de autenticidad | HU19–HU21 | 16 |
-| 6 | 01/12 – 07/12 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
+| 3 | 03/11 – 05/11 | Cerrado (47 de 47 puntos; validación del PO en el Sprint 5) | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 | 47 |
+| 4 | 04/11 – 05/11 | Cerrado (27 de 27 puntos; validación del PO en el Sprint 5) | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
+| 5 | 05/11 – 12/11 | **Activo** | Verificación pública de autenticidad y validación del PO de los Sprints 3 y 4 | HU19–HU21 + tareas DRA-48 (validación del PO) y DRA-44 (AWS, diferida) | 16 |
+| 6 | 12/11 – 19/11 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
 | | | | | **Total** | **156** |
 
-**Avance:** 47 de 156 puntos aprobados (30 %), y otros 74 construidos y en revisión: 47 del Sprint 3 y 27 del Sprint 4. Si se aprueban, serán 121 de 156 (78 %). Velocidad: 24 puntos en el Sprint 1 y 23 en el Sprint 2.
+**Avance:** 121 de 156 puntos cerrados (78 %). De ellos, 47 (Sprints 1 y 2) están aprobados por el PO; los 74 de los Sprints 3 y 4 esperan su validación en el Sprint 5. Velocidad: 24 puntos en el Sprint 1, 23 en el Sprint 2, 47 en el Sprint 3 y 27 en el Sprint 4.
 
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
 
-### Avance del Sprint 4 (04/11/2026)
+### Cierre de los Sprints 3 y 4 (05/11/2026)
 
-- **En revisión:** HU13, HU14, HU15, HU29 y HU30 (DRA-27 a DRA-31), 27 puntos. Se construyeron mientras el Sprint 3 esperaba su revisión. Cada una está integrada a `main`, con la CI en verde y un comentario de cierre en su ticket.
-- **En Jira:** el Sprint 4 sigue sin iniciar porque el Sprint 3 está activo. Al aprobarse, se cierra el Sprint 3 y se inicia y cierra el Sprint 4 (pasos en [revision.md](../scrum/sprint-4/revision.md#cierre-en-jira-después-de-la-aprobación)).
-- **Revisión:** material en [guion de pruebas](../scrum/sprint-4/guion-de-pruebas.md) y [revision.md](../scrum/sprint-4/revision.md). Se puede hacer en la misma sesión que la del Sprint 3.
-
-### Avance del Sprint 3 (04/11/2026)
-
-- **En revisión:** HU10, HU16, HU17, HU11, HU12 y HU18 (DRA-21 a DRA-26), 47 puntos. Cada una está integrada a `main`, con la CI en verde y un comentario de cierre en su ticket.
-- **Revisión:** se puede adelantar. Material en [guion de pruebas](../scrum/sprint-3/guion-de-pruebas.md) y [revision.md](../scrum/sprint-3/revision.md).
-- **Sigue diferida:** DRA-44 (infraestructura en AWS).
+- **Finalizadas sin la validación del PO**, por decisión del equipo:
+  - Sprint 3: HU10, HU16, HU17, HU11, HU12 y HU18 (DRA-21 a DRA-26), 47 puntos;
+  - Sprint 4: HU13, HU14, HU15, HU29 y HU30 (DRA-27 a DRA-31), 27 puntos.
+- **Cómo se cerraron:** cada historia estaba integrada a `main`, con la CI en verde y verificada con su prueba de punta a punta. Cada ticket tiene un comentario que deja constancia de que la validación del PO está pendiente.
+- **Validación del PO:** queda para el Sprint 5, en la tarea **DRA-48**, con los guiones de pruebas del [Sprint 3](../scrum/sprint-3/guion-de-pruebas.md) y del [Sprint 4](../scrum/sprint-4/guion-de-pruebas.md). Actas en la [revisión del Sprint 3](../scrum/sprint-3/revision.md#acta) y la [del Sprint 4](../scrum/sprint-4/revision.md#acta).
+- **En Jira,** el Sprint 4 se inició y se cerró el mismo día, con las fechas reales del trabajo (04/11 al 05/11). El Sprint 5 empezó el 05/11.
+- **Movida al Sprint 5:** DRA-44 (infraestructura en AWS), que sigue diferida.
 
 ### Cierre del Sprint 2 (03/11/2026)
 
