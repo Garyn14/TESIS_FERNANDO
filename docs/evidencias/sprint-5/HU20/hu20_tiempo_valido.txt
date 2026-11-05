@@ -1,0 +1,1 @@
+125 ms desde que se pulsa "Verificar" hasta que se ve el resultado

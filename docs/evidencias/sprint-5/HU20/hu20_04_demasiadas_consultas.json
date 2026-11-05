@@ -1,0 +1,6 @@
+{
+  "estado": 429,
+  "retry-after": "60",
+  "campos": {},
+  "mensaje": "Hizo demasiadas consultas en poco tiempo. Espere un minuto e intente nuevamente."
+}
