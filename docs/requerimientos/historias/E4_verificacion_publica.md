@@ -64,10 +64,43 @@ Los tres primeros son los de la Tabla 20 de la tesis. Los demás detallan cómo 
 
 **Como** entidad externa, **quiero** ingresar el código de verificación de un documento, **para** comprobar su autenticidad cuando no puedo escanear el código QR.
 
+**Contexto**
+
+Cada documento lleva impreso, debajo del QR, su **código de verificación** con el formato `DRA-AAAA-XXXXXX` (RF16). Los seis caracteres finales excluyen los que se confunden entre sí, como O y 0 o I y 1 (RNF04). Sirve cuando el QR no se puede escanear, por ejemplo en una fotocopia borrosa o cuando se lo dictan por teléfono a quien verifica.
+
+Como el código es corto y está a la vista, quien lo ingresa ve **menos** que con el QR (RF40): el resultado, el tipo, el titular, la fecha de emisión y el estado, sin el documento. La comprobación es la misma de HU21. Para que nadie pueda probar códigos al azar, el portal limita las consultas a diez por minuto por dirección IP (RNF04).
+
 **Criterios de aceptación**
+
+Los tres primeros son los de la Tabla 20 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] Se valida el formato del código.
+  - El portal acepta minúsculas, espacios alrededor y los guiones opcionales: "dra 2026 f8r2ma" se lee como `DRA-2026-F8R2MA`.
+  - Un formato inválido se señala junto al campo, sin consultar al servidor: "Ingrese el código tal como aparece en el documento, por ejemplo DRA-2026-F8R2MA."
+  - El servidor vuelve a validarlo, y un código mal formado responde No válido sin consultar la blockchain.
 - [ ] Se muestran solo el tipo de documento, el nombre del titular, la fecha de emisión y el estado.
-- [ ] Se limita el número de consultas por dirección IP.
+  - **No se muestra el documento** ni se puede descargar con el código (RF40).
+  - En un anulado se agregan la fecha de anulación y si existe una versión corregida, sin su código (RF41).
+- [ ] Se limita el número de consultas por dirección IP: **10 por minuto** (RNF04).
+  - El límite cuenta las consultas con el código y con el QR.
+  - La consulta número 11 dentro del minuto responde 429: "Hizo demasiadas consultas en poco tiempo. Espere un minuto e intente nuevamente.", con la cabecera `Retry-After`.
+  - El límite se configura fuera del código (`PLATAFORMA_VERIFICACION_CONSULTAS_POR_MINUTO`).
+- [ ] La portada del portal tiene el campo **Código de verificación** y el botón "Verificar". El resultado aparece debajo, con las mismas tarjetas de HU19 (Válido, Anulado, No válido) y el indicador de progreso.
+- [ ] El resultado se muestra en menos de dos segundos (RNF01) y no requiere registro (RF37).
+- [ ] La IP es la del visitante, aunque el portal esté detrás de un proxy. Se usa `X-Forwarded-For` solo cuando viene de un proxy de confianza: la red interna o el propio servidor.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Registrar cada consulta para la auditoría | HU24 (Sprint 6) |
+| Un límite compartido entre varias instancias del backend | DRA-44 (AWS). Hoy el límite vive en la memoria de cada instancia |
+
+**Notas técnicas**
+
+- API: `GET /api/verificacion/codigo/{codigo}`. Responde con el mismo formato de HU21.
+- El límite usa Bucket4j (ADR-001), con un balde por IP en memoria. Los baldes inactivos se descartan.
+- La descarga del documento (HU19) no cuenta para el límite, porque solo responde con un token válido de 256 bits.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
