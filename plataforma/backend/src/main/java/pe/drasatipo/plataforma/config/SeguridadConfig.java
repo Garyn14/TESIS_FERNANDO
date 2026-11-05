@@ -55,6 +55,9 @@ public class SeguridadConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/sesion")
                     .permitAll()
+                    // HU19–HU21 (RF37): el portal de verificación es público, sin sesión.
+                    .requestMatchers(HttpMethod.GET, "/api/verificacion/**")
+                    .permitAll()
                     .anyRequest()
                     .authenticated())
         .securityContext(c -> c.securityContextRepository(contextos))

@@ -40,6 +40,9 @@ public class ContratoFalso implements ContratoRegistro {
   /** HU30: originales anulados por cada transacción de registrarReemisiones. */
   public final Map<String, List<AnulacionRegistrada>> reemplazos = new HashMap<>();
 
+  /** HU30: código original => código de la reemisión que lo reemplazó. */
+  public final Map<String, String> reemplazadoPor = new HashMap<>();
+
   public boolean caido;
 
   /** Último bloque de la red simulada; cada registro ocupa un bloque nuevo (HU18). */
@@ -56,6 +59,7 @@ public class ContratoFalso implements ContratoRegistro {
     registrados.clear();
     anulaciones.clear();
     reemplazos.clear();
+    reemplazadoPor.clear();
     caido = false;
   }
 
@@ -88,6 +92,7 @@ public class ContratoFalso implements ContratoRegistro {
         reemisiones.stream()
             .map(r -> new AnulacionRegistrada(r[3], firmante, hash, firma.bloque(), firma.fecha()))
             .toList());
+    reemisiones.forEach(r -> reemplazadoPor.put(r[3], r[0]));
     return hash;
   }
 
@@ -190,6 +195,36 @@ public class ContratoFalso implements ContratoRegistro {
   public boolean estaRegistrado(String codigo) {
     revisar();
     return registrados.contains(codigo);
+  }
+
+  @Override
+  public Optional<pe.drasatipo.plataforma.blockchain.RegistroEnContrato> registroDe(String codigo) {
+    revisar();
+    return firmas.values().stream()
+        .flatMap(
+            f ->
+                f.documentos().stream()
+                    .filter(d -> d.codigo().equals(codigo))
+                    .map(
+                        d ->
+                            new pe.drasatipo.plataforma.blockchain.RegistroEnContrato(
+                                d.hashPdf(), d.dniHmac(), d.firmante(), f.fecha())))
+        .findFirst();
+  }
+
+  @Override
+  public Optional<Instant> anuladoEn(String codigo) {
+    revisar();
+    return todasLasAnulaciones()
+        .filter(a -> a.codigo().equals(codigo))
+        .map(AnulacionRegistrada::fecha)
+        .findFirst();
+  }
+
+  @Override
+  public Optional<String> reemplazadoPor(String codigo) {
+    revisar();
+    return Optional.ofNullable(reemplazadoPor.get(codigo));
   }
 
   @TestConfiguration(proxyBeanMethods = false)

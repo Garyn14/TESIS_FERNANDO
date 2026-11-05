@@ -260,13 +260,62 @@ public class ContratoRegistroWeb3j implements ContratoRegistro {
   }
 
   @Override
-  public boolean estaAnulado(String codigo) {
+  public Optional<RegistroEnContrato> registroDe(String codigo) {
+    @SuppressWarnings("rawtypes")
+    List<Type> valores = llamar(funcionConsultar(codigo));
+    if (!((Bool) valores.get(0)).getValue()) {
+      return Optional.empty();
+    }
+    return Optional.of(
+        new RegistroEnContrato(
+            HexFormat.of().formatHex(((Bytes32) valores.get(1)).getValue()),
+            HexFormat.of().formatHex(((Bytes32) valores.get(2)).getValue()),
+            Keys.toChecksumAddress(((Address) valores.get(3)).getValue()),
+            Instant.ofEpochSecond(((Uint64) valores.get(4)).getValue().longValueExact())));
+  }
+
+  @Override
+  public Optional<Instant> anuladoEn(String codigo) {
+    @SuppressWarnings("rawtypes")
+    List<Type> valores = llamar(funcionAnulacion(codigo));
+    return ((Bool) valores.get(0)).getValue()
+        ? Optional.of(Instant.ofEpochSecond(((Uint64) valores.get(1)).getValue().longValueExact()))
+        : Optional.empty();
+  }
+
+  @Override
+  public Optional<String> reemplazadoPor(String codigo) {
     Function llamada =
         new Function(
-            "anulacion",
+            "reemplazadoPor",
             List.of(new Utf8String(codigo)),
-            List.of(new TypeReference<Bool>() {}, new TypeReference<Uint64>() {}));
-    return ((Bool) llamar(llamada).get(0)).getValue();
+            List.of(new TypeReference<Utf8String>() {}));
+    String reemplazo = ((Utf8String) llamar(llamada).get(0)).getValue();
+    return reemplazo.isEmpty() ? Optional.empty() : Optional.of(reemplazo);
+  }
+
+  private static Function funcionAnulacion(String codigo) {
+    return new Function(
+        "anulacion",
+        List.of(new Utf8String(codigo)),
+        List.of(new TypeReference<Bool>() {}, new TypeReference<Uint64>() {}));
+  }
+
+  private static Function funcionConsultar(String codigo) {
+    return new Function(
+        "consultar",
+        List.of(new Utf8String(codigo)),
+        List.of(
+            new TypeReference<Bool>() {},
+            new TypeReference<Bytes32>() {},
+            new TypeReference<Bytes32>() {},
+            new TypeReference<Address>() {},
+            new TypeReference<Uint64>() {}));
+  }
+
+  @Override
+  public boolean estaAnulado(String codigo) {
+    return ((Bool) llamar(funcionAnulacion(codigo)).get(0)).getValue();
   }
 
   @Override
@@ -340,17 +389,7 @@ public class ContratoRegistroWeb3j implements ContratoRegistro {
 
   @Override
   public boolean estaRegistrado(String codigo) {
-    Function llamada =
-        new Function(
-            "consultar",
-            List.of(new Utf8String(codigo)),
-            List.of(
-                new TypeReference<Bool>() {},
-                new TypeReference<Bytes32>() {},
-                new TypeReference<Bytes32>() {},
-                new TypeReference<Address>() {},
-                new TypeReference<Uint64>() {}));
-    return ((Bool) llamar(llamada).get(0)).getValue();
+    return ((Bool) llamar(funcionConsultar(codigo)).get(0)).getValue();
   }
 
   /** Busca en el recibo el evento RoleGranted o RoleRevoked del rol de firmante. */
