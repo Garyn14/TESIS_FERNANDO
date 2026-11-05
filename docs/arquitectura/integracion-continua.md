@@ -158,6 +158,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 04/11/2026 | [41897054361](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41897054361) | `DRA-43-timeout-ci` | ✓ Cinco jobs en verde con límite de tiempo: `timeout-minutes` de 10 a 15 por job y de 5 en los dos pasos que usan la red Besu, para que un cuelgue falle rápido en lugar de consumir hasta 6 horas |
 | 05/11/2026 | [41967370698](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41967370698) | `DRA-34-comprobar-autenticidad` | ✓ Cinco jobs en verde con HU21, la primera del Sprint 5: comprobación de autenticidad con el contrato y el PDF en IPFS, y su API pública (191 pruebas de backend, 130 de frontend, 28 del contrato) |
 | 05/11/2026 | [41969603568](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41969603568) | `DRA-32-verificar-con-qr` | ✓ **Seis** jobs en verde con HU19: portal público de verificación (job nuevo "Portal (React + Vite)"), la ruta del QR y el documento verificado (192 pruebas de backend, 6 del portal, 130 de frontend, 28 del contrato) |
+| 05/11/2026 | [41972278652](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41972278652) | `DRA-33-verificar-con-codigo` | ✓ Seis jobs en verde con HU20, la última del Sprint 5: verificación con el código y límite de 10 consultas por minuto por IP con Bucket4j (195 pruebas de backend, 11 del portal, 130 de frontend, 28 del contrato) |
 
 ## 9. Pendientes
 
