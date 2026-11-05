@@ -1,0 +1,9 @@
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ Preparación · El Administrador registra la billetera del Director y le otorga el rol de firmante
+✓ Preparación · El área envía cuatro documentos y el Director firma tres con su billetera
+✓ HU21 · Un documento firmado se verifica sin sesión: Válido, con la fecha del bloque y sin datos internos
+✓ HU21 · Si el PDF guardado no coincide con el hash registrado, es No válido y no entrega datos
+✓ HU21 · Anulado en el contrato: se informa la fecha del bloque de la anulación
+✓ HU21 · Reemplazado por una reemisión: Anulado, con "versión corregida" y sin revelar su código
+✓ HU21 · Si IPFS no responde, no se informa No válido: "No se pudo verificar…" (503)
+✓ HU21 · Cada verificación responde en menos de dos segundos (RNF01)

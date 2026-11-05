@@ -1,0 +1,9 @@
+{
+  "resultado": "VALIDO",
+  "mensaje": "El documento es auténtico: coincide con su registro en la blockchain.",
+  "tipo": "Certificado de Trabajo",
+  "titular": "Lucía Paredes Quinto",
+  "fechaEmision": "2026-11-05T04:14:41Z",
+  "anuladoEn": null,
+  "versionCorregida": false
+}

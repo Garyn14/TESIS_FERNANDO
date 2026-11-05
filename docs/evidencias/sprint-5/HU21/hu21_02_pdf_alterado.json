@@ -1,0 +1,9 @@
+{
+  "resultado": "NO_VALIDO",
+  "mensaje": "No encontramos un documento válido con estos datos.",
+  "tipo": null,
+  "titular": null,
+  "fechaEmision": null,
+  "anuladoEn": null,
+  "versionCorregida": false
+}
