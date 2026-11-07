@@ -2,7 +2,7 @@
 
 - **Sprint:** 5, del 05/11 al 12/11/2026. El trabajo terminó el 05/11, así que la revisión se puede adelantar.
 - **Objetivo (Jira):** habilitar la verificación pública de autenticidad y validar con el PO los Sprints 3 y 4.
-- **Resultado:** 3 de 3 historias construidas e integradas, con 16 puntos, todas **En revisión**. Falta la aprobación del PO (ver [Acta](#acta)). La validación de los Sprints 3 y 4 (DRA-48) también está pendiente y se puede hacer en la misma sesión.
+- **Resultado:** 3 de 3 historias cerradas, con 16 puntos. El Sprint se cerró el 07/11/2026 **sin la validación del PO**, que queda para el final del proyecto (DRA-48; ver [Acta](#acta)).
 - **Participantes (Tabla 24 de la tesis):**
   - Product Owner: Christhian Danny Escalante Rosas.
   - Scrum Master: Jefferson Ventura Ruiz.
@@ -102,14 +102,14 @@ Las tomé al refinar cada historia. El sistema ya funciona así; si el PO pide c
 
 ## Acta
 
-*Se completa en la reunión de revisión.*
-
-- **Fecha de la validación:**
-- **Cómo se validó:** con el [guion de pruebas](guion-de-pruebas.md). La decisión sobre cada historia queda en su ticket de Jira.
+- **Cierre del Sprint 5:** 07/11/2026, por decisión del equipo, **sin la validación del PO**, igual que en los Sprints 3 y 4.
+- **Cómo se cerró:** las 3 historias estaban construidas, integradas a `main` con la CI en verde (6 jobs) y verificadas con la prueba de punta a punta. Pasaron a **Finalizada** en Jira, con un comentario que deja constancia de que la validación del PO está pendiente.
+- **Validación pendiente:** el PO probará los Sprints 3, 4 y 5 **al final del proyecto**, en la tarea **DRA-48** ("Validación final del PO de los Sprints 3, 4 y 5"), que pasó al Sprint 6 junto con DRA-44 (AWS, diferida). Se hará con el [guion de pruebas](guion-de-pruebas.md). **Cada observación del PO se registrará como un ticket nuevo**; las historias cerradas no se reabren.
 
 | Historia | Ticket | Puntos | Decisión | Registro en Jira |
 |---|---|---|---|---|
-| HU21: Comprobar la autenticidad del documento | DRA-34 | 8 | | |
-| HU19: Verificar mediante el código QR | DRA-32 | 5 | | |
-| HU20: Verificar mediante el código de verificación | DRA-33 | 3 | | |
-| Validación del PO de los Sprints 3 y 4 | DRA-48 | — | | |
+| HU21: Comprobar la autenticidad del documento | DRA-34 | 8 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 07/11; validación en DRA-48 |
+| HU19: Verificar mediante el código QR | DRA-32 | 5 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 07/11; validación en DRA-48 |
+| HU20: Verificar mediante el código de verificación | DRA-33 | 3 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 07/11; validación en DRA-48 |
+
+**Resultado:** 3 de 3 historias cerradas, con 16 puntos. En Jira, el Sprint 5 se cerró el 07/11/2026. La velocidad del Sprint 5 es de 16 puntos. Con los Sprints 1 a 5 se cerraron 137 de 156 puntos (88 %).

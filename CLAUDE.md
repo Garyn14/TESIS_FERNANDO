@@ -41,11 +41,12 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 | Sprint | Estado |
 |---|---|
 | 0–2 | Cerrados y aprobados por el PO (47 puntos) |
-| 3 (HU10–12, HU16–18) y 4 (HU13–15, HU29–30) | Cerrados el 05/11 **sin la validación del PO**, por decisión del equipo (74 puntos). La validación quedó en la tarea **DRA-48** del Sprint 5 |
-| 5 (HU19–21) | **Activo** (05/11–12/11). Las tres historias están construidas y En revisión. Revisión preparada en `docs/scrum/sprint-5/` |
-| 6 (HU22–28) | Futuro (12/11–19/11): búsqueda, estado, historial y auditoría, descarga e impresión, avisos |
+| 3 (HU10–12, HU16–18), 4 (HU13–15, HU29–30) y 5 (HU19–21) | Cerrados **sin la validación del PO**, por decisión del equipo: el 3 y el 4 el 05/11 (74 puntos), el 5 el 07/11 (16 puntos) |
+| 6 (HU22–28) | Siguiente (en Jira, del 12/11 al 19/11): búsqueda, estado, historial y auditoría, descarga e impresión, avisos. Ya contiene DRA-48 (la validación final del PO) y DRA-44 (AWS, diferida) |
 
-**Lo siguiente:** el usuario decide entre esperar la sesión con el PO (guiones de los Sprints 3, 4 y 5) y completar las actas, o cerrar el Sprint 5 como se cerraron el 3 y el 4 (historias a Listo con un comentario de "validación del PO pendiente") y empezar el Sprint 6.
+**Lo siguiente:** iniciar el Sprint 6 en Jira y construir sus historias con el flujo de siempre.
+
+**Validación del PO:** se hace **al final del proyecto** (DRA-48), con los guiones de los Sprints 3 a 6. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
 
 **Pendientes conocidos:**
 - DRA-44 (AWS), con el dominio del portal todavía por definir;
