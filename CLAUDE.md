@@ -5,7 +5,7 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
 ## Dónde está todo
 
 - **Código:** `plataforma/` con:
-  - `backend`: Spring Boot 4.1, Java 21, Flyway V1–V20;
+  - `backend`: Spring Boot 4.1, Java 21, Flyway V1–V21;
   - `frontend`: plataforma interna, React 19 + Vite, puerto 5173;
   - `portal`: portal público de verificación, puerto 5174;
   - `contracts`: Hardhat, `RegistroDocumentos.sol`;
@@ -42,9 +42,9 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 |---|---|
 | 0–2 | Cerrados y aprobados por el PO (47 puntos) |
 | 3 (HU10–12, HU16–18), 4 (HU13–15, HU29–30) y 5 (HU19–21) | Cerrados **sin la validación del PO**, por decisión del equipo: el 3 y el 4 el 05/11 (74 puntos), el 5 el 07/11 (16 puntos) |
-| 6 (HU22–28) | **En curso** (en Jira, del 08/11 al 15/11): búsqueda, estado, historial y auditoría, descarga e impresión, avisos. Contiene también DRA-48 (la validación final del PO) y DRA-44 (AWS, diferida). **HU22 a HU24 (DRA-35 a DRA-37) en revisión** el 08/11 |
+| 6 (HU22–28) | **En curso** (en Jira, del 08/11 al 15/11): búsqueda, estado, historial y auditoría, descarga e impresión, avisos. Contiene también DRA-48 (la validación final del PO) y DRA-44 (AWS, diferida). **HU22 a HU25 (DRA-35 a DRA-38) en revisión** el 08/11 |
 
-**Lo siguiente:** HU25 (DRA-38), descargar o imprimir un documento firmado desde su ficha (`plataforma/frontend/src/consulta/PaginaFichaDocumento.tsx`; el PDF final está en IPFS). Luego HU26 a HU28 (avisos) con el flujo de siempre. La prueba de punta a punta del sprint es `plataforma/e2e/sprint6.cjs`.
+**Lo siguiente:** HU26 a HU28 (DRA-39 a DRA-41), los avisos (E6, `docs/requerimientos/historias/E6_notificaciones.md`): al Director por documentos pendientes, al Área encargada por resultados y a Mesa de Partes por entregas y rechazos. La consulta interna de Mesa de Partes está en `plataforma/frontend/src/consulta` y `backend/.../consulta`. La prueba de punta a punta del sprint es `plataforma/e2e/sprint6.cjs`.
 
 **Validación del PO:** se hace **al final del proyecto** (DRA-48), con los guiones de los Sprints 3 a 6. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
 
