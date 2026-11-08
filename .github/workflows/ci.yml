@@ -155,3 +155,38 @@ jobs:
       - name: Registros del nodo si falla
         if: failure()
         run: docker compose --profile ipfs logs --tail 100
+
+  infra-aws:
+    name: Infraestructura AWS (Terraform y servidor)
+    runs-on: ubuntu-latest
+    # Sin límite, un paso colgado consume hasta 6 horas de minutos de CI.
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: plataforma/infra/aws
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.4
+          terraform_wrapper: false
+      - name: Formato de Terraform
+        run: terraform fmt -recursive -check
+      - name: Validar el ambiente QA
+        working-directory: plataforma/infra/aws/qa
+        run: terraform init -backend=false -input=false && terraform validate
+      - name: Pruebas de la plantilla (proveedores simulados, sin cuenta de AWS)
+        working-directory: plataforma/infra/aws/modulos/ambiente
+        run: terraform init -input=false && terraform test
+      - name: Revisar los scripts del servidor
+        run: shellcheck servidor/*.sh
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Construir el backend
+        working-directory: plataforma/backend
+        run: ./mvnw -B -q package -DskipTests
+      - name: Servidor de AWS en Docker (nginx, /rpc, HU20 y persistencia)
+        run: ./servidor/probar-servidor.sh ../../backend/target/plataforma-backend-*.jar

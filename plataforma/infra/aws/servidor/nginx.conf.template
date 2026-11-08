@@ -1,0 +1,46 @@
+# nginx del servidor en AWS (DRA-51, DRA-54). La imagen oficial reemplaza ${ORIGEN_SECRETO} al
+# arrancar; las variables propias de nginx ($host, $http_…) no se tocan.
+#
+# Solo atiende pedidos que traen el encabezado secreto que agrega CloudFront: el grupo de seguridad
+# ya limita el puerto 80 a CloudFront, y el secreto evita que otra distribución de CloudFront (de
+# cualquier cuenta de AWS) use este servidor como origen.
+
+map $http_x_origen_secreto $origen_valido {
+    default             0;
+    "${ORIGEN_SECRETO}" 1;
+}
+
+server {
+    listen 80 default_server;
+    server_tokens off;
+
+    # Las listas de Excel y los PDF suben por la API (Spring acepta hasta 1 MB por archivo).
+    client_max_body_size 2m;
+
+    if ($origen_valido = 0) {
+        return 403;
+    }
+
+    # API del backend. HU20: CloudFront pone en X-Forwarded-For la IP del visitante (al final de la
+    # lista). Se reenvía tal cual, sin agregar la IP de CloudFront: el backend confía en este nginx
+    # (red interna de Docker) y toma la última IP de la lista, que es la que agregó CloudFront.
+    location /api/ {
+        proxy_pass http://backend:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 120s;
+    }
+
+    # RPC de la red Besu para la billetera del Director (HU06, HU11). El nodo 1 solo ofrece
+    # ETH, NET y WEB3 (ver docker-compose.qa.yml).
+    location = /rpc {
+        limit_except POST OPTIONS { deny all; }
+        proxy_pass http://besu-nodo1:8545/;
+        proxy_set_header Host besu-nodo1;
+    }
+
+    location / {
+        return 404;
+    }
+}
