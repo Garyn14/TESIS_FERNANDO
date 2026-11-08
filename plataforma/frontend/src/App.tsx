@@ -20,6 +20,7 @@ import PaginaRevisionDocumento from './documentos/PaginaRevisionDocumento'
 import PaginaRevisionLote from './documentos/PaginaRevisionLote'
 import PaginaNuevoDocumento from './documentos/PaginaNuevoDocumento'
 import PaginaUsuarios from './usuarios/PaginaUsuarios'
+import PaginaBuscarDocumentos from './consulta/PaginaBuscarDocumentos'
 
 const SIN_SESION = 'Inicie sesión para continuar.'
 
@@ -138,6 +139,8 @@ export default function App() {
         <PaginaPorRevisar key={visita} director={sesion.nombreCompleto} />
       )
   // HU08: la clave vuelve a consultar en cada visita, por si cambió el área (HU05).
+  // HU22: la clave vuelve a buscar en cada visita, con los documentos al día.
+  else if (opcion.ruta === 'buscar') contenido = <PaginaBuscarDocumentos key={visita} />
   else if (opcion.ruta === 'firmados')
     contenido = <PaginaFirmados key={visita} director={sesion.nombreCompleto} />
   else if (opcion.ruta === 'mis-documentos')

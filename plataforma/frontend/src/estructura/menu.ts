@@ -42,7 +42,6 @@ export const MENU: OpcionMenu[] = [
     ruta: 'buscar',
     titulo: 'Buscar documentos',
     permiso: 'DOCUMENTO_BUSCAR',
-    pendiente: 'Se habilita en el Sprint 6 (HU22).',
   },
 ]
 
