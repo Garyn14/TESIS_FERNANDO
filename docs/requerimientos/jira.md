@@ -26,7 +26,7 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 ### Avance del Sprint 6 (08/11/2026)
 
 - **Iniciado en Jira** el 08/11, con fin el 15/11 y el objetivo "Implementar la consulta interna, la auditoría y las notificaciones".
-- **En revisión:** HU22 (DRA-35), Buscar documentos, 3 puntos. Integrada a `main`, con la CI en verde (6 jobs) y un comentario de cierre en su ticket. Evidencia en [docs/evidencias/sprint-6/HU22](../evidencias/sprint-6/HU22/README.md).
+- **En revisión:** HU22 (DRA-35), Buscar documentos, 3 puntos; y HU23 (DRA-36), Ver el estado de un documento, 2 puntos. Integrada a `main`, con la CI en verde (6 jobs) y un comentario de cierre en su ticket. Evidencia en [HU22](../evidencias/sprint-6/HU22/README.md) y [HU23](../evidencias/sprint-6/HU23/README.md).
 
 ### Cierre del Sprint 5 (07/11/2026)
 
