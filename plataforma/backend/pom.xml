@@ -22,9 +22,9 @@
     <web3j.version>6.1.0</web3j.version>
     <poi.version>5.4.1</poi.version>
     <openpdf.version>2.0.3</openpdf.version>
-    <zxing.version>3.5.3</zxing.version>
-    <bucket4j.version>8.18.0</bucket4j.version>
-    <spotless.version>3.10.4</spotless.version>
+    <zxing.version>3.5.4</zxing.version>
+    <bucket4j.version>8.22.0</bucket4j.version>
+    <spotless.version>3.11.0</spotless.version>
   </properties>
 
   <dependencies>
