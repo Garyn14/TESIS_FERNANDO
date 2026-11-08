@@ -133,8 +133,7 @@ function Resultados({ filas }: { filas: FilaDeBusqueda[] }) {
           <tr>
             <th className={`${CELDA} font-medium`}>Código o lote</th>
             <th className={`${CELDA} font-medium`}>Tipo</th>
-            <th className={`${CELDA} font-medium`}>Beneficiario</th>
-            <th className={`${CELDA} font-medium`}>DNI</th>
+            <th className={`${CELDA} font-medium`}>Beneficiario y DNI</th>
             <th className={`${CELDA} font-medium`}>N.° de expediente</th>
             <th className={`${CELDA} font-medium`}>Área</th>
             <th className={`${CELDA} font-medium`}>Fecha de envío</th>
@@ -162,8 +161,10 @@ function FilaDocumento({ fila, enLote = false }: { fila: FilaDeBusqueda; enLote?
         {fila.codigo}
       </td>
       <td className={CELDA}>{fila.tipoNombre}</td>
-      <td className={CELDA}>{fila.beneficiario}</td>
-      <td className={`${CELDA} font-mono`}>{fila.dni}</td>
+      <td className={CELDA}>
+        {fila.beneficiario}
+        <span className="block font-mono text-sm text-muted">{fila.dni}</span>
+      </td>
       <td className={`${CELDA} whitespace-nowrap`}>{fila.numeroExpediente ?? '—'}</td>
       <td className={CELDA}>{fila.areaNombre}</td>
       <td className={`${CELDA} whitespace-nowrap`}>{fechaCorta(fila.registradoEn)}</td>
@@ -202,7 +203,6 @@ function FilaLote({ fila }: { fila: FilaDeBusqueda }) {
             </span>
           )}
         </td>
-        <td className={CELDA}>—</td>
         <td className={CELDA}>—</td>
         <td className={CELDA}>{fila.areaNombre}</td>
         <td className={`${CELDA} whitespace-nowrap`}>{fechaCorta(fila.registradoEn)}</td>

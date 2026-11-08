@@ -249,6 +249,10 @@ const paso = async (nombre, fn) => {
       await loteFila.getByText(dato).waitFor()
     for (const dato of ['Certificado de Trabajo', 'Lucía Paredes Quinto', '45829364', 'EXP-2026-005391', 'Área de Administración'])
       await fila(lucia).getByText(dato).waitFor()
+    // La columna Estado se ve completa a 1280 px, sin desplazar la tabla.
+    const estado = await tabla().getByRole('columnheader', { name: 'Estado' }).boundingBox()
+    const caja = await tabla().locator('xpath=..').boundingBox()
+    assert.ok(estado.x + estado.width <= caja.x + caja.width, 'la columna Estado queda fuera de la vista')
     await foto(luz, 'hu22_01_mas_recientes')
   })
   await paso('HU22 · Por nombre: coincidencias parciales, sin tildes y en cualquier orden', async () => {
