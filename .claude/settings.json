@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Atlassian_MCP",
+      "Bash(./mvnw:*)",
+      "Bash(mvn:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(docker:*)",
+      "Bash(dockerd:*)",
+      "Bash(./e2e/levantar.sh:*)",
+      "Bash(./e2e/regresion.sh:*)",
+      "Bash(./e2e/ver-registro.sh:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}
