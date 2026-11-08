@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import Campana from '../avisos/Campana'
 import logo from '../assets/logo-dra.png'
 import Modal from '../comun/Modal'
 import type { Sesion } from '../sesion/api'
@@ -74,6 +75,8 @@ export default function Estructura({
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-card px-6 py-3">
           <h1 className="text-2xl font-semibold text-institutional">{titulo}</h1>
           <div className="flex items-center gap-3">
+            {/* HU26–HU28: avisos dentro de la plataforma. */}
+            {sesion.permisos.includes('NOTIFICACIONES_VER') && <Campana />}
             <span
               aria-hidden="true"
               className="flex h-10 w-10 items-center justify-center rounded-full bg-green-pale font-semibold text-institutional"

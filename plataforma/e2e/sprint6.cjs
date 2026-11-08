@@ -3,7 +3,8 @@
 // Partes busca documentos de todas las áreas por nombre, DNI, código, expediente o lote, con
 // filtros por estado), HU23 (la ficha de un documento con su estado explicado y sus datos) y HU24
 // (el historial y el detalle técnico de auditoría, comprobado contra IPFS y la red Besu) y HU25
-// (descargar o imprimir un documento firmado, con su registro en el historial), con
+// (descargar o imprimir un documento firmado, con su registro en el historial) y HU26 (el aviso al
+// Director de los documentos y lotes pendientes de su revisión), con
 // documentos firmados, anulados en la blockchain, rechazados, reemitidos y en trámite.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
@@ -620,6 +621,62 @@ const paso = async (nombre, fn) => {
       assert.equal((await enviar(p, `/api/consulta/documentos/${nuevaLucia}/entregas`, { forma: 'DESCARGA' })).estado, 403)
     }
     assert.equal(entregasDe(nuevaLucia), 3)
+  })
+
+  // ------------------------------------------------------ HU26: aviso al Director
+  const campanaDe = (p) => p.getByRole('banner').getByRole('button', { name: /^Avisos/ })
+  const panelDe = (p) => p.getByRole('region', { name: 'Avisos' })
+  const sinLeerDe = async (p) => Number((await campanaDe(p).getAttribute('aria-label')).match(/(\d+) sin leer/)?.[1] ?? 0)
+  await paso('HU26 · El Director tiene un aviso por cada documento y lote pendiente, con su cantidad sin leer', async () => {
+    await reingresar(carlos, 'cmendoza')
+    await campanaDe(carlos).waitFor()
+    // Desde la preparación: 4 documentos, 1 lote y la reemisión de Lucía (HU23). Un aviso por lote.
+    await esperarHasta('la campana muestra 6 sin leer', async () => (await sinLeerDe(carlos)) === 6, 10_000)
+    await campanaDe(carlos).click()
+    const textos = await panelDe(carlos).getByRole('link').allTextContents()
+    assert.equal(textos.length, 6)
+    assert.ok(textos[0].startsWith(`Reemisión pendiente: Certificado de Trabajo – Lucía Paredes Quintana (reemplaza a ${lucia})`), textos[0])
+    assert.ok(textos[1].startsWith('Nuevo lote pendiente: Lote 2026-001 – Manejo integrado de plagas en café (3 certificados)'), textos[1])
+    assert.ok(textos[5].startsWith('Nuevo documento pendiente: Certificado de Trabajo – Lucía Paredes Quinto'), textos[5])
+    for (const texto of textos) assert.match(texto, /hace (un momento|\d+ min)$/)
+    assert.equal(Number(psql("SELECT count(*) FROM aviso a JOIN usuario u ON u.id = a.destinatario_id WHERE u.nombre_usuario = 'cmendoza'")), 6)
+    await foto(carlos, 'hu26_01_avisos_del_director')
+    await carlos.keyboard.press('Escape')
+  })
+  let nuevo
+  await paso('HU26 · Un documento nuevo avisa al Director, y el aviso abre el documento y queda leído', async () => {
+    await reingresar(pedro, 'pmorales')
+    const r = await enviar(pedro, '/api/documentos', trabajo('EXP-2026-005500', 'Rosa', 'Vílchez Arana', '44200099'))
+    assert.equal(r.estado, 201)
+    nuevo = r.cuerpo.codigo
+    // Al cambiar de pantalla, la campana vuelve a consultar.
+    await carlos.getByRole('link', { name: 'Por revisar' }).click()
+    await esperarHasta('la campana muestra 7 sin leer', async () => (await sinLeerDe(carlos)) === 7, 10_000)
+    await campanaDe(carlos).click()
+    const aviso = panelDe(carlos).getByRole('link').first()
+    assert.ok((await aviso.textContent()).startsWith('Nuevo documento pendiente: Certificado de Trabajo – Rosa Vílchez Arana'))
+    await aviso.click()
+    await carlos.getByRole('heading', { name: 'Revisión – Certificado de Trabajo' }).waitFor()
+    assert.ok(carlos.url().endsWith('#/por-revisar/' + nuevo), carlos.url())
+    await esperarHasta('queda leído', async () => (await sinLeerDe(carlos)) === 6, 10_000)
+    assert.equal(psql(`SELECT leido_en IS NOT NULL FROM aviso a JOIN usuario u ON u.id = a.destinatario_id WHERE u.nombre_usuario = 'cmendoza' AND a.enlace = 'por-revisar/${nuevo}'`), 't')
+    await foto(carlos, 'hu26_02_aviso_abre_el_documento')
+  })
+  await paso('HU26 · El aviso de un lote abre el lote; Marcar todos como leídos deja la campana sin cantidad', async () => {
+    await campanaDe(carlos).click()
+    await panelDe(carlos).getByRole('link', { name: /Nuevo lote pendiente: Lote 2026-001/ }).click()
+    await carlos.getByRole('heading', { name: 'Revisión de lote – Lote 2026-001' }).waitFor()
+    await esperarHasta('quedan 5 sin leer', async () => (await sinLeerDe(carlos)) === 5, 10_000)
+    await campanaDe(carlos).click()
+    await panelDe(carlos).getByRole('button', { name: 'Marcar todos como leídos' }).click()
+    await esperarHasta('la campana queda sin cantidad', async () => (await campanaDe(carlos).getAttribute('aria-label')) === 'Avisos', 10_000)
+    await foto(carlos, 'hu26_03_todos_leidos')
+    await carlos.keyboard.press('Escape')
+    // Los avisos son de cada persona: el área que envió no recibió avisos de revisión.
+    assert.equal(Number(psql("SELECT count(*) FROM aviso a JOIN usuario u ON u.id = a.destinatario_id WHERE u.nombre_usuario IN ('pmorales', 'rquispe') AND a.tipo = 'PENDIENTE_REVISION'")), 0)
+    // Otra persona no puede marcar un aviso del Director.
+    const id = psql("SELECT a.id FROM aviso a JOIN usuario u ON u.id = a.destinatario_id WHERE u.nombre_usuario = 'cmendoza' LIMIT 1")
+    assert.equal((await enviar(luz, `/api/avisos/${id}/lectura`, {})).estado, 404)
   })
 
   await b.close()
