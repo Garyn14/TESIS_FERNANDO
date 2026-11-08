@@ -12,6 +12,14 @@ server {
     listen 5173;
     root /sitios/plataforma;
 
+    # Los workers de pdf.js son módulos .mjs: el navegador los rechaza si no llegan como JavaScript.
+    # En S3 el tipo lo fija la publicación (DRA-52 sube los .mjs con Content-Type text/javascript).
+    location ~ \.mjs$ {
+        types {}
+        default_type text/javascript;
+        try_files $uri =403;
+    }
+
     location = / {
         try_files /index.html =404;
     }
@@ -36,6 +44,14 @@ server {
 server {
     listen 5174;
     root /sitios/portal;
+
+    # Los workers de pdf.js son módulos .mjs: el navegador los rechaza si no llegan como JavaScript.
+    # En S3 el tipo lo fija la publicación (DRA-52 sube los .mjs con Content-Type text/javascript).
+    location ~ \.mjs$ {
+        types {}
+        default_type text/javascript;
+        try_files $uri =403;
+    }
 
     # rutas-del-portal.js: el último tramo sin extensión se sirve con index.html.
     location ~ /[^/.]*$ {
