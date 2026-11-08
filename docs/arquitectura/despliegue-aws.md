@@ -18,16 +18,25 @@ Nada de esta guía necesita instalar programas ni guardar claves de AWS: todo se
 
 ## 1. Proteger la cuenta y revisar los créditos
 
-1. **MFA en la cuenta raíz** (la del correo con el que se creó la cuenta). Las cuentas del plan gratuito no muestran **Security credentials** en el menú del nombre: se llega por IAM.
-   1. En el buscador de arriba, escriba **IAM** y abra el servicio. Si aparece la recomendación **Add MFA for root user**, pulse **Add MFA**. Si no aparece, abra directamente https://console.aws.amazon.com/iam/home#/security_credentials
-   2. En **Multi-factor authentication (MFA)**, pulse **Assign MFA device**.
-   3. Póngale un nombre (por ejemplo `celular-garyn`), elija **Authenticator app** y pulse **Next**. Sirven Google Authenticator, Microsoft Authenticator o una llave física.
-   4. Pulse **Show QR code** y escanéelo con la aplicación.
-   5. Escriba dos códigos seguidos de la aplicación y pulse **Add MFA**.
-2. **Créditos:** se ven en el menú del nombre de la cuenta (**Free plan status**) o en **Billing and Cost Management → Credits**. Hoy son $100 y el plan gratuito termina el **29/04/2027**.
-   - Con el **plan gratuito**, AWS cierra el acceso a los servicios cuando se acaba el crédito o vence el plazo, lo que ocurra primero.
-   - Si QA debe seguir después de esa fecha, hay que pasar la cuenta a pago (**Upgrade plan**) antes. El crédito que quede se sigue usando.
-3. **Región:** arriba a la derecha, elija **US East (N. Virginia) us-east-1**. Todo QA vive ahí, y la consola puede abrir en otra región, por ejemplo Ohio (us-east-2). Compruébelo antes del paso 2: la dirección del navegador debe decir `us-east-1`.
+La cuenta se creó con la **experiencia nueva de AWS** (plan gratuito, con *projects* y *team* en el menú del nombre). En esa experiencia (DRA-55):
+- **No hay usuario raíz.** La cuenta pertenece a su **AWS Builder ID**, que es su inicio de sesión. Por eso IAM → *Security credentials* muestra "Feature unavailable": es lo esperado y no hace falta activar nada.
+- **La región es fija.** AWS la asigna por el país de contacto, y para Perú es **US East (Ohio) us-east-2**. Todo QA vive ahí.
+- **Están todos los servicios que usa QA:** EC2, EBS, VPC, S3, CloudFront, IAM, CloudFormation, Systems Manager y Budgets.
+
+Pasos:
+1. **MFA de su inicio de sesión (AWS Builder ID):**
+   1. Abra **https://settings.aws.com**. También se llega desde el menú del nombre → **Profile**.
+   2. En el menú de la izquierda, elija **Manage security and sign-in**. Lo lleva a su perfil de AWS Builder ID.
+   3. En la página **Security**, pulse **Register device** y elija **Authenticator app**.
+   4. Escanee el código QR con Google Authenticator o Microsoft Authenticator y escriba el código que muestra.
+   5. AWS recomienda registrar **dos** dispositivos: por ejemplo, la aplicación y una llave de seguridad o el lector de huella de la computadora. Si se pierden todos, no se puede recuperar la cuenta.
+
+   Si entra a AWS con **Google, GitHub, Apple o Amazon**, active también la verificación en dos pasos de esa cuenta: es la puerta de entrada.
+2. **Créditos:** se ven en el menú del nombre (**Free plan status**) o en **Billing and Cost Management**. Hoy son $100 y el plan gratuito termina el **29/04/2027**.
+   - Cuando se acaba el crédito o vence el plazo, lo que ocurra primero, hay que pasar la cuenta al **plan de pago** para seguir usando AWS. Se hace en https://settings.aws.com → **Billing** → **Upgrade**.
+   - El cambio no se puede deshacer.
+   - En el plan de pago se puede fijar un **límite de gasto mensual** (*spend limit*) por proyecto.
+3. **Región:** compruebe que la dirección del navegador diga `us-east-2` al crear la pila del paso 2.
 
 ## 2. Crear la pila de la cuenta (CloudFormation)
 
@@ -38,7 +47,7 @@ La plantilla [`plataforma/infra/aws/cuenta/cuenta.yml`](../../plataforma/infra/a
 
 Pasos:
 1. Descargue el archivo `cuenta.yml` desde GitHub (botón **Download raw file**).
-2. En la consola, abra **CloudFormation → Stacks → Create stack → With new resources (standard)**.
+2. En la consola, en la región **us-east-2 (Ohio)**, abra **CloudFormation → Stacks → Create stack → With new resources (standard)**.
 3. Elija **Upload a template file**, suba `cuenta.yml` y pulse **Next**.
 4. Complete los datos y pulse **Next**:
    - **Stack name:** `dra-satipo-cuenta`.
