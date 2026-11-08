@@ -60,6 +60,15 @@ echo "== instancia.sh"
 comprobar "devuelve id, tipo y estado" "[ \"\$('$AQUI/instancia.sh' qa)\" = \"\$(printf 'i-0abc\tt4g.medium\tstopped')\" ]"
 comprobar "busca el servidor del ambiente, sin los ya eliminados" "grep -q 'Name=tag:Name,Values=dra-satipo-qa Name=instance-state-name,Values=pending,running,stopping,stopped' '$LLAMADAS'"
 
+echo "== Disparadores (.github/workflows/qa-*.yml)"
+FLUJOS=$(cd "$AQUI/../../../.." && pwd)/.github/workflows
+for flujo in "$FLUJOS"/qa-*.yml; do
+  # Los pasos corren en plataforma/ (defaults.run.working-directory): antes de descargar el código
+  # esa carpeta no existe y cualquier paso "run" falla (primer QA – Encender, DRA-56).
+  comprobar "$(basename "$flujo"): el primer paso descarga el código" \
+    "python3 -c 'import sys,yaml; d=yaml.safe_load(open(sys.argv[1])); assert all(j[\"steps\"][0].get(\"uses\",\"\").startswith(\"actions/checkout\") for j in d[\"jobs\"].values())' '$flujo'"
+done
+
 if [ "$fallas" -gt 0 ]; then
   echo "$fallas comprobaciones fallaron."
   exit 1

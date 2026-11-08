@@ -35,6 +35,8 @@ jobs:
       run:
         working-directory: plataforma
     steps:
+      # Primero el código: los pasos corren en plataforma/, que no existe antes de descargarlo.
+      - uses: actions/checkout@v7
       - name: Solo desde main
         if: github.ref != 'refs/heads/main'
         run: |
@@ -49,7 +51,6 @@ jobs:
             echo "::error::Faltan el secreto AWS_ACCESS_KEY_ID o la variable TF_ESTADO_BUCKET del ambiente qa en GitHub. Ver docs/arquitectura/despliegue-aws.md."
             exit 1
           fi
-      - uses: actions/checkout@v7
       - uses: aws-actions/configure-aws-credentials@v5
         with:
           # DRA-56: la cuenta prohíbe el proveedor OIDC; la clave es un secreto del ambiente qa.
