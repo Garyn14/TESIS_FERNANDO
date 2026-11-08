@@ -1,0 +1,15 @@
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ Preparación · El Administrador registra la billetera del Director y le otorga el rol de firmante
+✓ Preparación · Dos áreas envían documentos y un lote; el Director firma, rechaza y anula
+✓ HU22 · Mesa de Partes abre Buscar documentos y ve los más recientes de todas las áreas
+✓ HU22 · Por nombre: coincidencias parciales, sin tildes y en cualquier orden
+✓ HU22 · Por DNI, código de verificación y número de expediente, completos o parciales
+✓ HU22 · El número de lote muestra el lote plegado, que se despliega en sus certificados
+✓ HU22 · Los filtros por estado se combinan con el texto
+✓ HU22 · Sin resultados se informa con un mensaje; con un carácter pide al menos dos
+✓ HU22 · Solo Consulta interna puede buscar: las otras cuentas no ven la opción y reciben 403
+✓ HU23 · Desde un resultado se abre la ficha: el estado explicado y los datos básicos
+✓ HU23 · Rechazado, anulado y pendiente: cada estado con su explicación, sus fechas y su motivo
+✓ HU23 · Un certificado de lote muestra el lote, el evento y el origen de oficio
+✓ HU23 · Reemisión: el original y su reemisión se enlazan entre sí
+✓ HU23 · Un código inexistente se informa; solo Consulta interna ve la ficha
