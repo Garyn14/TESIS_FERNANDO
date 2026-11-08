@@ -192,3 +192,18 @@ run "direcciones_para_el_backend" {
     error_message = "El backend recibe la dirección del RPC para MetaMask."
   }
 }
+
+# La plantilla de la cuenta (infra/aws/cuenta/cuenta.yml) solo deja crear roles y perfiles
+# llamados dra-satipo-*-servidor: si este nombre cambia, el disparador Encender no tendría permiso.
+run "nombres_que_permite_la_cuenta" {
+  command = plan
+
+  assert {
+    condition     = can(regex("^dra-satipo-[a-z0-9]+-servidor$", aws_iam_role.servidor.name)) && aws_iam_instance_profile.servidor.name == aws_iam_role.servidor.name
+    error_message = "El rol y el perfil del servidor deben llamarse dra-satipo-<ambiente>-servidor (cuenta.yml)."
+  }
+  assert {
+    condition     = aws_iam_role_policy_attachment.ssm.policy_arn == "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+    error_message = "La cuenta solo permite adjuntar al servidor la política de SSM administrada por AWS."
+  }
+}

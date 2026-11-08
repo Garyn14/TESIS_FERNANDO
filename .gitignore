@@ -30,3 +30,6 @@ plataforma/.backend.sha256
 *.tfstate
 *.tfstate.*
 plataforma/infra/aws/modulos/**/.terraform.lock.hcl
+
+# Python
+__pycache__/

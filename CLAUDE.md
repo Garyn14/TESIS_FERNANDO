@@ -78,7 +78,8 @@ Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuen
   - El contrato de QA se despliega por `/rpc` la primera vez.
   - Sus billeteras de prueba quedan en `/dra-satipo/qa-billeteras/`, fuera del alcance del servidor.
 - **Acceso:** GitHub entra con un rol OIDC. **Nunca se guardan claves de AWS** en el repositorio ni en secretos de GitHub.
-- **Costo:** AWS Budgets avisa a $10, $25 y $50. Estimado: unos $11–14 al mes con QA encendido 10 h × 22 días y unos $2–3 al mes apagado. Hay $100 de crédito, que vence el próximo año.
+- **Cuenta:** se prepara una sola vez con `plataforma/infra/aws/cuenta/cuenta.yml` (CloudFormation): rol OIDC, bucket del estado y presupuesto. Guía para el dueño de la cuenta: `docs/arquitectura/despliegue-aws.md`. GitHub necesita el ambiente `qa`, sin revisores obligatorios, con las variables `AWS_ROL_QA` y `TF_ESTADO_BUCKET`.
+- **Costo:** AWS Budgets avisa a $10, $25 y $50 (créditos sin descontar). Estimado: unos $11–14 al mes con QA encendido 10 h × 22 días y unos $2–3 al mes apagado. Hay $100 de crédito, que vence el próximo año.
 - **PROD:** alcance por definir. Sale de la misma plantilla, con el dominio de la DRA y un certificado de ACM en las mismas distribuciones.
 
 ## Entorno de pruebas (lo que hay que saber)
