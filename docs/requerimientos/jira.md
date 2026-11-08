@@ -32,6 +32,10 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
   - DRA-53: presupuesto, alertas y preparación de la cuenta;
   - DRA-54: direcciones fijas con HTTPS mediante CloudFront.
 - No suman puntos al backlog de historias: son tareas de infraestructura, como las del Sprint 0.
+- **En revisión el 08/11:** DRA-51, DRA-54, DRA-52 y DRA-53, todas construidas, probadas sin AWS e integradas a `main` con la CI en verde. Evidencia en `docs/evidencias/infra/DRA-5x/`.
+- **Para cerrar DRA-44 en QA falta:**
+  - que el dueño de la cuenta siga los pasos 1 a 3 de [despliegue-aws.md](../arquitectura/despliegue-aws.md);
+  - el primer **QA – Encender** real.
 
 ### Cierre del Sprint 6 (08/11/2026)
 
