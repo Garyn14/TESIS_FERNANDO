@@ -24,20 +24,24 @@ flowchart LR
     A[git push a main o DRA-*] --> W[GitHub Actions: workflow CI]
     W --> B[Job Backend]
     W --> F[Job Frontend]
+    W --> P[Job Portal]
     W --> C[Job Contratos]
     W --> RB[Job Red Besu]
     W --> IP[Job IPFS privado]
+    W --> AW[Job Infraestructura AWS]
     B --> B1[Spotless: formato Java] --> B2[Compilación] --> B3[Pruebas con PostgreSQL 17 en Testcontainers] --> B4[Empaquetado JAR]
     F --> F1[npm ci] --> F2[oxlint] --> F3[Prettier] --> F4[Vitest] --> F5[Build de Vite]
+    P --> P1[npm ci] --> P2[oxlint, Prettier, Vitest y build]
     C --> C1[npm ci] --> C2[Prettier + plugin Solidity] --> C3[Compilación Hardhat] --> C4[Pruebas Hardhat]
     RB --> RB1[Generar claves y génesis] --> RB2[Levantar 4 validadores] --> RB3[Esperar bloques] --> RB4[Desplegar PruebaRed y leer evento]
     IP --> IP1[Generar clave de enjambre] --> IP2[Levantar nodo] --> IP3[Subir y recuperar por CID] --> IP4[Prueba de aislamiento]
-    B4 & F5 & C4 & RB4 & IP4 --> R{¿Los cinco en verde?}
+    AW --> AW1[terraform fmt y validate] --> AW2[terraform test sin AWS] --> AW3[shellcheck] --> AW4[Servidor de AWS en Docker]
+    B4 & F5 & P2 & C4 & RB4 & IP4 & AW4 --> R{¿Los siete en verde?}
     R -- Sí --> OK[Cambio integrable a main]
     R -- No --> KO[Se corrige en la misma rama]
 ```
 
-Los cinco jobs corren **en paralelo** y son independientes: si falla uno, los otros terminan igual y se ve qué parte del proyecto tiene el problema.
+Los siete jobs corren **en paralelo** y son independientes: si falla uno, los otros terminan igual y se ve qué parte del proyecto tiene el problema.
 
 ## 4. Qué valida cada job
 
@@ -168,6 +172,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 08/11/2026 | [42448485785](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42448485785) | `DRA-41-avisos-a-mesa-de-partes` | ✓ Seis jobs en verde con HU28, la última del Sprint 6: avisos Listo para entregar y Rechazado (con expediente y motivo) a Mesa de Partes (240 pruebas de backend, 11 del portal, 180 de frontend, 28 del contrato) |
 | 08/11/2026 | [42483487092](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42483487092) | `DRA-49-dependabot` | ✓ Seis jobs en verde con DRA-49: configuración de Dependabot y nota sobre las pruebas con Besu, sin cambios de código (240 pruebas de backend, 11 del portal, 180 de frontend, 28 del contrato) |
 | 08/11/2026 | [42485036386](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42485036386) | `DRA-50-actualizaciones-dependabot` | ✓ Seis jobs en verde con DRA-50: primeras actualizaciones de Dependabot (acciones de la CI, hardhat, menores del backend, del frontend y del portal, jsdom 31) y el formato del Spotless 3.11. Pruebas de punta a punta de los Sprints 1 a 6 con 32, 23, 34, 32, 17 y 30 pasos (240 pruebas de backend, 11 del portal, 180 de frontend, 28 del contrato) |
+| 08/11/2026 | [42489409504](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42489409504) | `DRA-51-plantilla-qa` | ✓ **Siete jobs** en verde con DRA-51: plantilla de QA en AWS con Terraform y el nuevo job "Infraestructura AWS (Terraform y servidor)", con 6 pruebas de la plantilla (`terraform test`, sin cuenta de AWS) y 16 comprobaciones del servidor en Docker (nginx, `/rpc`, HU20 y persistencia). El mensaje del commit dice 17 comprobaciones por error: el registro muestra 16 (240 pruebas de backend, 11 del portal, 180 de frontend, 28 del contrato) |
 
 ## 9. Pendientes
 
