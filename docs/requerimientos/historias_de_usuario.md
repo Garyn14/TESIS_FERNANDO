@@ -1504,8 +1504,40 @@ El primero es el de la Tabla 22 de la tesis. Los demás detallan cómo se cumple
 
 **Como** personal de Mesa de Partes, **quiero** recibir un aviso cuando un documento está listo para su entrega o es rechazado, **para** imprimirlo o comunicar el rechazo al solicitante.
 
+**Contexto**
+
+Mesa de Partes recibe las solicitudes de los ciudadanos y les entrega los documentos. Con HU22–HU25 ya puede buscarlos, ver su estado e imprimirlos. Con HU26 y HU27 hay avisos dentro de la plataforma. Esta historia avisa a **Mesa de Partes** (cada persona activa con el rol Consulta interna) en los dos momentos en que debe actuar:
+
+| Cuándo | Aviso | Abre |
+|---|---|---|
+| Se firma un documento a solicitud de parte (HU11), o una reemisión (HU30) | "Listo para entregar: Certificado de Trabajo – Lucía Paredes Quinto (expediente EXP-2026-005391)" | Su ficha, con los botones para imprimir (HU25) |
+| Se firman certificados de un lote | "Listo para entregar: Lote 2026-001 – Manejo integrado de plagas en café: 3 certificados firmados" | Buscar documentos con el lote |
+| El Director rechaza un documento a solicitud de parte (HU14) | "Rechazado: Certificado de Trabajo – Martha Rojas Inga (expediente EXP-2026-005401). Motivo: {motivo}" | Su ficha |
+| El Director rechaza certificados de un lote | "Rechazado: Lote 2026-001 – …: 2 certificados rechazados. Motivo: {motivo}" | Buscar documentos con el lote y el filtro Rechazados |
+
 **Criterios de aceptación**
+
+El primero es el de la Tabla 22 de la tesis. Los demás detallan cómo se cumple.
+
 - [ ] El aviso de rechazo incluye el motivo y el número de expediente.
+  - Los certificados de un lote no tienen expediente (son de oficio): su aviso lleva el número de lote.
+- [ ] Cuando un documento se firma, Mesa de Partes recibe el aviso "Listo para entregar", con el número de expediente. Al pulsarlo se abre su ficha (`#/buscar/{código}`) para imprimirlo.
+- [ ] Un lote genera **un solo aviso** por firma o por rechazo, con la cantidad, que abre Buscar documentos con el número de lote. Si la firma de un lote se confirma en partes, el aviso se actualiza en vez de repetirse (como en HU27).
+- [ ] La observación no se avisa a Mesa de Partes: el documento vuelve al área y sigue en trámite. La anulación tampoco: la avisa HU27 al área, y Mesa de Partes ve el estado en la ficha.
+- [ ] El aviso llega a cada persona activa con el rol Consulta interna, y no a las áreas ni al Director. Se guarda en la misma transacción que el cambio de estado.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Avisar al ciudadano directamente (correo, SMS) | No está en la tesis: los avisos son internos |
+| Avisar a Mesa de Partes de una anulación | Pregunta abierta al PO: hoy no se avisa |
+
+**Notas técnicas**
+
+- `TipoDeAviso.LISTO_PARA_ENTREGAR`, y RECHAZADO (el de HU27).
+- `Avisos.aConsultaInterna(...)`, con la misma clave que HU27 para no repetir el aviso de la firma de un lote.
+- Se crean en `AvisosDeResultado`, junto a los del área: al confirmar la firma y al rechazar.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|

@@ -10,7 +10,8 @@ import pe.drasatipo.plataforma.avisos.TipoDeAviso;
 
 /**
  * HU27 (RF47): avisos al Área encargada del resultado de lo que envió: firmado, observado,
- * rechazado o anulado. Un lote genera un solo aviso por firma o por decisión.
+ * rechazado o anulado. HU28 (RF48): avisos a Mesa de Partes de lo que está listo para entregar y de
+ * lo rechazado. Un lote genera un solo aviso por firma o por decisión.
  */
 @Component
 class AvisosDeResultado {
@@ -38,6 +39,21 @@ class AvisosDeResultado {
     return n == 1 ? "1 certificado " + participio : "%d certificados %ss".formatted(n, participio);
   }
 
+  /** HU28: el documento con su expediente, para Mesa de Partes. */
+  private static String conExpediente(Documento d) {
+    return d.getNumeroExpediente() == null
+        ? documento(d)
+        : "%s (expediente %s)".formatted(documento(d), d.getNumeroExpediente());
+  }
+
+  /** HU28: Mesa de Partes abre la ficha del documento, o busca el lote con un filtro. */
+  private static String enlaceDeConsulta(Documento d, String estado) {
+    return d.getLote() == null
+        ? "buscar/" + d.getCodigo()
+        : "buscar?texto=%s%s"
+            .formatted(d.getLote().getNumero(), estado == null ? "" : "&estado=" + estado);
+  }
+
   private static String enlace(Documento d) {
     return d.getLote() == null
         ? "mis-documentos/" + d.getCodigo()
@@ -57,6 +73,11 @@ class AvisosDeResultado {
           "Firmado: " + documento(d),
           enlace(d),
           "firmado:" + d.getCodigo());
+      avisos.aConsultaInterna(
+          TipoDeAviso.LISTO_PARA_ENTREGAR,
+          "Listo para entregar: " + conExpediente(d),
+          enlaceDeConsulta(d, null),
+          "entregar:" + d.getCodigo());
       return;
     }
     Long firmados =
@@ -73,6 +94,12 @@ class AvisosDeResultado {
             .formatted(lote(d.getLote()), certificados(firmados == null ? 1 : firmados, "firmado")),
         enlace(d),
         "firmado:%s:%s".formatted(transaccion.toLowerCase(), d.getLote().getNumero()));
+    avisos.aConsultaInterna(
+        TipoDeAviso.LISTO_PARA_ENTREGAR,
+        "Listo para entregar: %s: %s"
+            .formatted(lote(d.getLote()), certificados(firmados == null ? 1 : firmados, "firmado")),
+        enlaceDeConsulta(d, null),
+        "entregar:%s:%s".formatted(transaccion.toLowerCase(), d.getLote().getNumero()));
   }
 
   /** El Director observó o rechazó estos documentos con un motivo: uno por documento o por lote. */
@@ -90,6 +117,13 @@ class AvisosDeResultado {
                 .formatted(observar ? "Observado" : "Rechazado", documento(d), motivo),
             enlace(d),
             null);
+        if (!observar) {
+          avisos.aConsultaInterna(
+              tipo,
+              "Rechazado: %s. Motivo: %s".formatted(conExpediente(d), motivo),
+              enlaceDeConsulta(d, null),
+              null);
+        }
       } else {
         porLote.computeIfAbsent(d.getLote().getNumero(), k -> new java.util.ArrayList<>()).add(d);
       }
@@ -106,6 +140,15 @@ class AvisosDeResultado {
                       .formatted(lote(d.getLote()), certificados(delLote.size(), palabra), motivo),
                   enlace(d),
                   null);
+              if (!observar) {
+                avisos.aConsultaInterna(
+                    tipo,
+                    "Rechazado: %s: %s. Motivo: %s"
+                        .formatted(
+                            lote(d.getLote()), certificados(delLote.size(), palabra), motivo),
+                    enlaceDeConsulta(d, "RECHAZADOS"),
+                    null);
+              }
             });
   }
 

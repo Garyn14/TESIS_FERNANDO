@@ -58,6 +58,24 @@ public class Avisos {
         parametros(tipo, texto, enlace).addValue("area", areaId).addValue("clave", clave));
   }
 
+  /**
+   * HU28 (RF48): un aviso para cada persona activa de Mesa de Partes (rol Consulta interna). Con
+   * una clave, igual que {@link #aArea}, se actualiza en lugar de repetirse.
+   */
+  @Transactional
+  public void aConsultaInterna(TipoDeAviso tipo, String texto, String enlace, String clave) {
+    jdbc.update(
+        """
+        INSERT INTO aviso (destinatario_id, tipo, texto, enlace, clave)
+        SELECT u.id, :tipo, :texto, :enlace, :clave FROM usuario u JOIN rol r ON r.id = u.rol_id
+        WHERE r.codigo = 'CONSULTA_INTERNA' AND u.activo
+        ON CONFLICT (destinatario_id, clave) WHERE clave IS NOT NULL
+        DO UPDATE SET texto = EXCLUDED.texto, enlace = EXCLUDED.enlace, creado_en = now(),
+                      leido_en = NULL
+        """,
+        parametros(tipo, texto, enlace).addValue("clave", clave));
+  }
+
   private static MapSqlParameterSource parametros(TipoDeAviso tipo, String texto, String enlace) {
     return new MapSqlParameterSource()
         .addValue("tipo", tipo.name())

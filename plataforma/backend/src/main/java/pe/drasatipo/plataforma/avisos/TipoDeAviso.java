@@ -11,5 +11,9 @@ public enum TipoDeAviso {
   /** HU27: el Director rechazó un documento o certificados de un lote. */
   RECHAZADO,
   /** HU27: un documento quedó anulado en la blockchain. */
-  ANULADO
+  ANULADO,
+  /**
+   * HU28: un documento o certificados de un lote quedaron firmados y Mesa de Partes los entrega.
+   */
+  LISTO_PARA_ENTREGAR
 }
