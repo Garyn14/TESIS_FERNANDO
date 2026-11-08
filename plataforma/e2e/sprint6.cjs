@@ -375,10 +375,11 @@ const paso = async (nombre, fn) => {
       ['Área', 'Área de Administración'],
     ])
       assert.equal(await ficha(etiqueta).textContent(), valor, etiqueta)
-    // Sin datos técnicos: ni el HMAC del DNI, ni el CID, ni la transacción (HU24).
-    const pagina = await luz.locator('main').textContent()
+    // La ficha no trae datos técnicos: ni el HMAC del DNI, ni el CID, ni la transacción. Esos van
+    // en la auditoría (HU24), con su propio permiso.
+    const respuestaFicha = await luz.evaluate((c) => fetch('/api/consulta/documentos/' + c).then((r) => r.text()), lucia)
     for (const columna of ['dni_hmac', 'cid', 'transaccion'])
-      assert.ok(!pagina.includes(psql(`SELECT ${columna} FROM documento WHERE codigo = '${lucia}'`)), columna)
+      assert.ok(!respuestaFicha.includes(psql(`SELECT ${columna} FROM documento WHERE codigo = '${lucia}'`)), columna)
     await foto(luz, 'hu23_01_firmado')
     await luz.getByRole('link', { name: '← Volver a Buscar documentos' }).click()
     await esperarHasta('vuelve con la misma búsqueda', async () =>
