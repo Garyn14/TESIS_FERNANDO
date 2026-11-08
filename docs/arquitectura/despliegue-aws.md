@@ -110,6 +110,10 @@ Pasos:
      2. Importe las cuentas con **Import account** y la clave privada.
    - Después, en la plataforma, registre la dirección del Director (`DIRECTOR_DIRECCION`) como su billetera.
 
+## 4b. Probar QA de punta a punta
+
+El guion [`docs/scrum/qa/guion-de-pruebas-qa.md`](../scrum/qa/guion-de-pruebas-qa.md) (DRA-57) recorre las 30 historias en QA, desde el navegador y el celular, más el apagado y el encendido.
+
 ## 5. Uso diario
 
 | Para | Flujo en GitHub Actions |

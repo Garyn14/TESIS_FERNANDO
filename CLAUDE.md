@@ -12,7 +12,7 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
   - `infra`: Besu QBFT con 4 nodos e IPFS privado;
   - `e2e`: pruebas de punta a punta con Playwright.
 - **Requisitos e historias:** `docs/requerimientos/` (`historias_de_usuario.md`, `historias/E*.md`, `backlog.md`, `jira.md` con el calendario y el avance).
-- **Revisiones de sprint:** `docs/scrum/sprint-N/` (`revision.md` con el acta, `guion-de-pruebas.md` para el PO).
+- **Revisiones de sprint:** `docs/scrum/sprint-N/` (`revision.md` con el acta, `guion-de-pruebas.md` para el PO). Guion de punta a punta en QA: `docs/scrum/qa/guion-de-pruebas-qa.md` (DRA-57).
 - **Evidencia por historia:** `docs/evidencias/sprint-N/HUxx/README.md`, con capturas.
 - **CI registrada:** `docs/arquitectura/integracion-continua.md`, una fila por ejecución.
 - **Jira:** sitio dra-satipo.atlassian.net, proyecto DRA, cloudId `6de7c55f-9533-45fa-b0ad-c558ee6a556b`, tablero 1.
