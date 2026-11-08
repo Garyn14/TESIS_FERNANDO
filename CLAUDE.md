@@ -5,7 +5,7 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
 ## Dónde está todo
 
 - **Código:** `plataforma/` con:
-  - `backend`: Spring Boot 4.1, Java 21, Flyway V1–V22;
+  - `backend`: Spring Boot 4.1, Java 21, Flyway V1–V23;
   - `frontend`: plataforma interna, React 19 + Vite, puerto 5173;
   - `portal`: portal público de verificación, puerto 5174;
   - `contracts`: Hardhat, `RegistroDocumentos.sol`;
@@ -42,9 +42,9 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 |---|---|
 | 0–2 | Cerrados y aprobados por el PO (47 puntos) |
 | 3 (HU10–12, HU16–18), 4 (HU13–15, HU29–30) y 5 (HU19–21) | Cerrados **sin la validación del PO**, por decisión del equipo: el 3 y el 4 el 05/11 (74 puntos), el 5 el 07/11 (16 puntos) |
-| 6 (HU22–28) | **En curso** (en Jira, del 08/11 al 15/11): búsqueda, estado, historial y auditoría, descarga e impresión, avisos. Contiene también DRA-48 (la validación final del PO) y DRA-44 (AWS, diferida). **HU22 a HU26 (DRA-35 a DRA-39) en revisión** el 08/11 |
+| 6 (HU22–28) | **En curso** (en Jira, del 08/11 al 15/11): búsqueda, estado, historial y auditoría, descarga e impresión, avisos. Contiene también DRA-48 (la validación final del PO) y DRA-44 (AWS, diferida). **HU22 a HU27 (DRA-35 a DRA-40) en revisión** el 08/11 |
 
-**Lo siguiente:** HU27 y HU28 (DRA-40 y DRA-41), avisos al Área encargada y a Mesa de Partes. La infraestructura de avisos ya existe (HU26): tabla `aviso` (V22), servicio `backend/.../avisos/Avisos.java` (agregar un método por destinatario y un `TipoDeAviso`) y la campana `frontend/src/avisos/Campana.tsx`. La campana no consulta a intervalos, para no impedir el cierre por inactividad (HU03). La prueba de punta a punta del sprint es `plataforma/e2e/sprint6.cjs`.
+**Lo siguiente:** HU28 (DRA-41), avisos a Mesa de Partes (listo para entregar y rechazado, con el motivo y el número de expediente). La infraestructura de avisos está en `backend/.../avisos/Avisos.java` (agregar un método para Consulta interna y sus `TipoDeAviso`) y los avisos de resultado del área, en `documentos/AvisosDeResultado.java` (puntos de enganche: `FirmaDeDocumentos.aplicar`, `RevisionDelDirector`). Al terminar la HU28 se cierra el Sprint 6 (revisión y guion de pruebas). La prueba de punta a punta del sprint es `plataforma/e2e/sprint6.cjs`.
 
 **Validación del PO:** se hace **al final del proyecto** (DRA-48), con los guiones de los Sprints 3 a 6. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
 
