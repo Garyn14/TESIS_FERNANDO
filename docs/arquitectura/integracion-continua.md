@@ -164,6 +164,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 08/11/2026 | [42441312094](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42441312094) | `DRA-37-historial-y-auditoria` | ✓ Seis jobs en verde con HU24: historial con fecha, hora y responsable y detalle técnico de auditoría plegado, en la ficha del documento (217 pruebas de backend, 11 del portal, 161 de frontend, 28 del contrato) |
 | 08/11/2026 | [42443272623](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42443272623) | `DRA-38-descargar-o-imprimir` | ✓ Seis jobs en verde con HU25: ver, descargar e imprimir el PDF firmado comprobado con la blockchain, duplicados en el historial (V21) y filtro Listos para entregar (224 pruebas de backend, 11 del portal, 168 de frontend, 28 del contrato) |
 | 08/11/2026 | [42444614347](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42444614347) | `DRA-39-aviso-pendiente-al-director` | ✓ Seis jobs en verde con HU26: avisos dentro de la plataforma (V22) y aviso al Director de cada documento o lote pendiente, con la campana del encabezado (230 pruebas de backend, 11 del portal, 180 de frontend, 28 del contrato) |
+| 08/11/2026 | [42446007661](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42446007661) | `DRA-40-avisos-al-area` | ✓ Seis jobs en verde con HU27: avisos de firmado, observado, rechazado y anulado al Área encargada, con el motivo y un solo aviso por lote (V23) (236 pruebas de backend, 11 del portal, 180 de frontend, 28 del contrato) |
 
 ## 9. Pendientes
 
