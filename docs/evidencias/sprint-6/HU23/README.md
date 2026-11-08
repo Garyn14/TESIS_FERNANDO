@@ -7,7 +7,7 @@
 
 La prueba del Sprint 6 ([`plataforma/e2e/sprint6.cjs`](../../../../plataforma/e2e/sprint6.cjs)) recorre HU22 y HU23 con los mismos datos (ver la [evidencia de HU22](../HU22/README.md)). Resultado en [`resultado.txt`](resultado.txt): **15 de 15 pasos correctos**, 5 de ellos de HU23.
 
-**Regresión** en entornos limpios: ver la sección final.
+**Regresión** en entornos limpios: Sprint 1, 32 de 32 pasos; Sprint 2, 23 de 23 pasos; Sprint 3, 34 de 34 pasos; Sprint 4, 32 de 32 pasos; Sprint 5, 17 de 17 pasos.
 
 | Archivo | Qué muestra | Criterio |
 |---|---|---|
