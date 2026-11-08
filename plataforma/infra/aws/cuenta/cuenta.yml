@@ -4,7 +4,7 @@ Description: >-
   claves (OIDC), bucket del estado de Terraform y presupuesto con alertas por correo.
 
 # Se crea desde la consola de AWS (CloudFormation -> Crear pila -> Cargar un archivo de plantilla),
-# en la región us-east-1. Guía: docs/arquitectura/despliegue-aws.md
+# en la región us-east-2 (Ohio), la que AWS asigna a la cuenta. Guía: docs/arquitectura/despliegue-aws.md
 #
 # Lo que esta pila NO crea: el ambiente de QA en sí (lo crea el disparador "QA – Encender").
 # Borrar esta pila no borra QA; el bucket del estado se conserva a propósito (DeletionPolicy).

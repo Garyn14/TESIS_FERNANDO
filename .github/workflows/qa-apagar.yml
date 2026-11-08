@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: us-east-2 # región fija de la cuenta (DRA-55)
   AMBIENTE: qa
   TF_IN_AUTOMATION: 'true'
 

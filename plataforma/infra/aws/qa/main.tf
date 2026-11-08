@@ -8,7 +8,7 @@ terraform {
 
   backend "s3" {
     key          = "qa/terraform.tfstate"
-    region       = "us-east-1"
+    region       = "us-east-2"
     encrypt      = true
     use_lockfile = true # bloqueo en el mismo bucket, sin DynamoDB
   }
@@ -22,7 +22,8 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  # Región fija de la cuenta: la experiencia nueva de AWS asigna us-east-2 (Ohio) a Perú (DRA-55).
+  region = "us-east-2"
 
   # Etiquetas en todos los recursos: permiten ver el costo de QA aparte en Cost Explorer.
   default_tags {
