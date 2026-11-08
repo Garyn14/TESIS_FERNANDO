@@ -178,6 +178,12 @@ jobs:
       - name: Pruebas de la plantilla (proveedores simulados, sin cuenta de AWS)
         working-directory: plataforma/infra/aws/modulos/ambiente
         run: terraform init -input=false && terraform test
+      - name: Plantilla de la cuenta (cfn-lint y pruebas)
+        working-directory: plataforma/infra/aws/cuenta
+        run: |
+          pip install --quiet cfn-lint==1.60.0
+          cfn-lint cuenta.yml
+          python3 -m unittest discover -s tests -v
       - name: Función de CloudFront del portal (rutas /verificar/{token})
         run: node --test modulos/ambiente/tests/rutas-del-portal.test.cjs
       - name: Revisar los scripts del servidor

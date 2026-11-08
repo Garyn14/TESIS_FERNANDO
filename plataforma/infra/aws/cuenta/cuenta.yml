@@ -1,0 +1,244 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  DRA Satipo (DRA-53) - Preparacion de la cuenta, una sola vez: acceso de GitHub Actions sin
+  claves (OIDC), bucket del estado de Terraform y presupuesto con alertas por correo.
+
+# Se crea desde la consola de AWS (CloudFormation -> Crear pila -> Cargar un archivo de plantilla),
+# en la región us-east-1. Guía: docs/arquitectura/despliegue-aws.md
+#
+# Lo que esta pila NO crea: el ambiente de QA en sí (lo crea el disparador "QA – Encender").
+# Borrar esta pila no borra QA; el bucket del estado se conserva a propósito (DeletionPolicy).
+
+Parameters:
+  Repositorio:
+    Type: String
+    Default: Garyn14/TESIS_FERNANDO
+    Description: Repositorio de GitHub (propietario/nombre) cuyos flujos pueden entrar a AWS.
+    AllowedPattern: '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'
+  AmbienteGitHub:
+    Type: String
+    Default: qa
+    Description: >-
+      Ambiente de GitHub (Settings -> Environments) desde el que se permite entrar. Solo los
+      flujos que declaran "environment: qa" pueden asumir el rol.
+    AllowedPattern: '^[a-z0-9-]+$'
+  CorreoAlertas:
+    Type: String
+    Description: Correo que recibe las alertas de gasto del presupuesto.
+    AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+  CrearProveedorOidc:
+    Type: String
+    Default: 'si'
+    AllowedValues: ['si', 'no']
+    Description: >-
+      "si" crea el proveedor OIDC de GitHub. Elija "no" solo si la cuenta ya tiene uno para
+      token.actions.githubusercontent.com (AWS permite uno solo).
+
+Conditions:
+  CrearProveedor: !Equals [!Ref CrearProveedorOidc, 'si']
+
+Resources:
+  # Identidad de GitHub Actions: AWS confía en los tokens que firma GitHub para cada ejecución.
+  ProveedorGitHub:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CrearProveedor
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: [sts.amazonaws.com]
+
+  # Rol que asumen los disparadores de QA. Solo lo puede usar un flujo de ESTE repositorio que
+  # corra en el ambiente "qa" de GitHub: ni otra rama sin ambiente, ni otro repositorio, ni una
+  # persona. Dura como máximo 1 hora y no existe ninguna clave que se pueda filtrar.
+  RolGitHub:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'dra-satipo-github-${AmbienteGitHub}'
+      Description: Disparadores de QA en GitHub Actions (DRA-52), sin claves guardadas
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !If
+                - CrearProveedor
+                - !Ref ProveedorGitHub
+                - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com'
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                'token.actions.githubusercontent.com:aud': sts.amazonaws.com
+                'token.actions.githubusercontent.com:sub': !Sub 'repo:${Repositorio}:environment:${AmbienteGitHub}'
+      # Terraform crea red, servidor, buckets, CloudFront y parámetros. PowerUserAccess cubre todo
+      # eso y excluye IAM y la administración de la cuenta.
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/PowerUserAccess'
+      Policies:
+        # IAM solo para el rol y el perfil del servidor (nombres dra-satipo-*).
+        - PolicyName: iam-del-servidor
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: RolesYPerfilesDelProyecto
+                Effect: Allow
+                Action:
+                  - iam:CreateRole
+                  - iam:DeleteRole
+                  - iam:GetRole
+                  - iam:UpdateRole
+                  - iam:TagRole
+                  - iam:ListRoleTags
+                  - iam:UntagRole
+                  - iam:ListRolePolicies
+                  - iam:ListAttachedRolePolicies
+                  - iam:GetRolePolicy
+                  - iam:PutRolePolicy
+                  - iam:DeleteRolePolicy
+                  - iam:ListInstanceProfilesForRole
+                  - iam:CreateInstanceProfile
+                  - iam:DeleteInstanceProfile
+                  - iam:GetInstanceProfile
+                  - iam:TagInstanceProfile
+                  - iam:ListInstanceProfileTags
+                  - iam:UntagInstanceProfile
+                  - iam:AddRoleToInstanceProfile
+                  - iam:RemoveRoleFromInstanceProfile
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/dra-satipo-*-servidor'
+                  - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:instance-profile/dra-satipo-*-servidor'
+              # Al rol del servidor solo se le puede adjuntar la política de SSM administrada por AWS.
+              - Sid: SoloLaPoliticaDeSsm
+                Effect: Allow
+                Action:
+                  - iam:AttachRolePolicy
+                  - iam:DetachRolePolicy
+                Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/dra-satipo-*-servidor'
+                Condition:
+                  ArnEquals:
+                    'iam:PolicyARN': !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
+              # El rol del servidor solo se entrega a EC2.
+              - Sid: EntregarElRolAlServidor
+                Effect: Allow
+                Action: iam:PassRole
+                Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/dra-satipo-*-servidor'
+                Condition:
+                  StringEquals:
+                    'iam:PassedToService': ec2.amazonaws.com
+              - Sid: LeerPoliticasAdministradas
+                Effect: Allow
+                Action: [iam:GetPolicy, iam:GetPolicyVersion]
+                Resource: !Sub 'arn:${AWS::Partition}:iam::aws:policy/*'
+
+  # Estado de Terraform: privado, cifrado y con versiones (se puede recuperar una versión anterior).
+  # Se conserva aunque se borre la pila.
+  BucketEstado:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub 'dra-satipo-terraform-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      LifecycleConfiguration:
+        Rules:
+          - Id: versiones-antiguas
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 90
+
+  PoliticaBucketEstado:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BucketEstado
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: SoloHttps
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !GetAtt BucketEstado.Arn
+              - !Sub '${BucketEstado.Arn}/*'
+            Condition:
+              Bool:
+                'aws:SecureTransport': 'false'
+
+  # Presupuesto de TODA la cuenta. Los créditos NO se descuentan (IncludeCredit: false): si se
+  # descontaran, el gasto neto sería $0 mientras dure el crédito y las alertas nunca llegarían.
+  # Avisa al gastar $10, $25 y $50 en el mes, y si el pronóstico del mes supera $25.
+  Presupuesto:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: dra-satipo-cuenta
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit:
+          Amount: 50
+          Unit: USD
+        CostTypes:
+          IncludeCredit: false
+          IncludeRefund: false
+          IncludeTax: true
+          IncludeSupport: true
+          IncludeSubscription: true
+          IncludeRecurring: true
+          IncludeOtherSubscription: true
+          IncludeUpfront: true
+          IncludeDiscount: true
+          UseBlended: false
+          UseAmortized: false
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 10
+            ThresholdType: ABSOLUTE_VALUE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref CorreoAlertas
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 25
+            ThresholdType: ABSOLUTE_VALUE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref CorreoAlertas
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 50
+            ThresholdType: ABSOLUTE_VALUE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref CorreoAlertas
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 25
+            ThresholdType: ABSOLUTE_VALUE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref CorreoAlertas
+
+Outputs:
+  RolGitHub:
+    Description: 'Copiar en GitHub: Settings -> Environments -> qa -> variable AWS_ROL_QA'
+    Value: !GetAtt RolGitHub.Arn
+  BucketEstado:
+    Description: 'Copiar en GitHub: Settings -> Environments -> qa -> variable TF_ESTADO_BUCKET'
+    Value: !Ref BucketEstado
