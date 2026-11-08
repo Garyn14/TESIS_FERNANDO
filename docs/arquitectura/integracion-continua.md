@@ -161,6 +161,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 05/11/2026 | [41972278652](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41972278652) | `DRA-33-verificar-con-codigo` | ✓ Seis jobs en verde con HU20, la última del Sprint 5: verificación con el código y límite de 10 consultas por minuto por IP con Bucket4j (195 pruebas de backend, 11 del portal, 130 de frontend, 28 del contrato) |
 | 08/11/2026 | [42438087410](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42438087410) | `DRA-35-buscar-documentos` | ✓ Seis jobs en verde con HU22, la primera del Sprint 6: Buscar documentos para Mesa de Partes, por nombre, DNI, código, expediente o lote y con filtros por estado (205 pruebas de backend, 11 del portal, 139 de frontend, 28 del contrato) |
 | 08/11/2026 | [42439796088](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42439796088) | `DRA-36-estado-de-un-documento` | ✓ Seis jobs en verde con HU23: ficha de un documento para Mesa de Partes, con su estado explicado, sus datos básicos y las reemisiones enlazadas (211 pruebas de backend, 11 del portal, 153 de frontend, 28 del contrato) |
+| 08/11/2026 | [42441312094](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42441312094) | `DRA-37-historial-y-auditoria` | ✓ Seis jobs en verde con HU24: historial con fecha, hora y responsable y detalle técnico de auditoría plegado, en la ficha del documento (217 pruebas de backend, 11 del portal, 161 de frontend, 28 del contrato) |
 
 ## 9. Pendientes
 
