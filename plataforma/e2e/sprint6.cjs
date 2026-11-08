@@ -362,7 +362,7 @@ const paso = async (nombre, fn) => {
     await buscar('45829364', [lucia])
     await tabla().getByRole('link', { name: lucia }).click()
     await luz.getByRole('heading', { name: lucia }).waitFor()
-    assert.equal(new URL(luz.url()).hash, `#/buscar/${lucia}?texto=45829364`)
+    assert.ok(luz.url().endsWith(`#/buscar/${lucia}?texto=45829364`), luz.url())
     await explicacion('Firmado y registrado en la blockchain. Se puede entregar al ciudadano.').waitFor()
     assert.match(await ficha('Firmado el').textContent(), /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/)
     for (const [etiqueta, valor] of [
