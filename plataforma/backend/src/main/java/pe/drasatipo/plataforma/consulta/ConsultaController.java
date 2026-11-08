@@ -14,10 +14,13 @@ public class ConsultaController {
 
   private final BusquedaDeDocumentos busqueda;
   private final FichaDeDocumentos fichas;
+  private final AuditoriaDeDocumentos auditorias;
 
-  public ConsultaController(BusquedaDeDocumentos busqueda, FichaDeDocumentos fichas) {
+  public ConsultaController(
+      BusquedaDeDocumentos busqueda, FichaDeDocumentos fichas, AuditoriaDeDocumentos auditorias) {
     this.busqueda = busqueda;
     this.fichas = fichas;
+    this.auditorias = auditorias;
   }
 
   /** HU22 (RF42): busca por nombre, DNI, código, expediente o lote, con un filtro por estado. */
@@ -34,5 +37,12 @@ public class ConsultaController {
   @PreAuthorize("hasAuthority('DOCUMENTO_BUSCAR')")
   public FichaDelDocumento ficha(@PathVariable String codigo) {
     return fichas.ficha(codigo);
+  }
+
+  /** HU24 (RF44): el historial y el detalle técnico de auditoría de un documento. */
+  @GetMapping("/documentos/{codigo}/auditoria")
+  @PreAuthorize("hasAuthority('AUDITORIA_VER')")
+  public AuditoriaDelDocumento auditoria(@PathVariable String codigo) {
+    return auditorias.auditoria(codigo);
   }
 }
