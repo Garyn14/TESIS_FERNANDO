@@ -69,7 +69,8 @@ resource "aws_vpc_security_group_ingress_rule" "http_desde_cloudfront" {
 
 resource "aws_vpc_security_group_egress_rule" "salida" {
   security_group_id = aws_security_group.servidor.id
-  description       = "Descargar imágenes de Docker, el paquete de S3 y hablar con SSM"
-  cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = "-1"
+  # AWS solo acepta letras sin tilde y algunos signos en las descripciones de las reglas.
+  description = "Salida: imagenes de Docker, paquete de S3 y SSM"
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
 }

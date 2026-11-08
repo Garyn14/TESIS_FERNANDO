@@ -207,3 +207,20 @@ run "nombres_que_permite_la_cuenta" {
     error_message = "La cuenta solo permite adjuntar al servidor la política de SSM administrada por AWS."
   }
 }
+
+# Primer QA – Encender (DRA-56): AWS rechazó una descripción con tildes. Solo admite
+# a-zA-Z0-9, espacio y . _-:/()#,@[]+=&;{}!$*
+run "descripciones_que_acepta_aws" {
+  command = plan
+
+  assert {
+    condition = alltrue([
+      for d in [
+        aws_security_group.servidor.description,
+        aws_vpc_security_group_ingress_rule.http_desde_cloudfront.description,
+        aws_vpc_security_group_egress_rule.salida.description,
+      ] : can(regex("^[a-zA-Z0-9 ._:/()#,@+=&;{}!$*\\[\\]-]*$", d))
+    ])
+    error_message = "Las descripciones del grupo de seguridad y sus reglas no pueden tener tildes ni eñes."
+  }
+}
