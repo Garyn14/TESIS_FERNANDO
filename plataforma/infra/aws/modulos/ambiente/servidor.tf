@@ -67,10 +67,12 @@ resource "aws_instance" "servidor" {
     version_compose   = "v2.40.3"
   })
 
-  # Sin créditos "unlimited": si la CPU pasa de su línea base, el servidor se pone lento en vez de
-  # cobrar extra. Para un ambiente de pruebas con presupuesto fijo es lo más seguro.
+  # Créditos "unlimited" (DRA-56). Con "standard" el servidor arrancó sin créditos y quedó
+  # limitado al 20 % de CPU: los 4 nodos Besu no llegaban a arrancar. En reposo la plataforma usa
+  # cerca de esa línea base; solo se cobra extra si el promedio de 24 h la supera, y lo acotan el
+  # límite de gasto mensual de la cuenta y las alertas del presupuesto.
   credit_specification {
-    cpu_credits = "standard"
+    cpu_credits = "unlimited"
   }
 
   # IMDSv2 obligatorio y con un solo salto: los contenedores no pueden leer las credenciales del

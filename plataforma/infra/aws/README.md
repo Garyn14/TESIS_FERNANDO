@@ -24,7 +24,7 @@ Internet ──HTTPS──> CloudFront ──HTTP + encabezado secreto──> EC
 
 - **Un solo EC2 ARM** (`t4g.medium` en QA, ajustable con `tipo_instancia`).
   - Disco gp3 cifrado de 20 GB.
-  - Créditos de CPU `standard`, para que nunca cobre de más.
+  - Créditos de CPU `unlimited` (DRA-56): con `standard` arrancaba sin créditos y Besu no alcanzaba a levantar. El extra que pueda cobrar lo acotan el límite de gasto y las alertas.
   - Corre el mismo `docker compose` de desarrollo (`infra/docker-compose.yml`) más `servidor/docker-compose.qa.yml`.
 - **Sin SSH, sin IP elástica, sin balanceador ni RDS.**
   - El grupo de seguridad solo deja entrar a CloudFront, al puerto 80.
