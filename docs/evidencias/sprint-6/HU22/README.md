@@ -69,5 +69,8 @@ La prueba del Sprint 6 ([`plataforma/e2e/sprint6.cjs`](../../../../plataforma/e2
 
 ## Ajustes durante la verificación
 
-- **La columna Estado quedaba fuera de la vista.** En la primera ejecución de la prueba, a 1280 px la tabla tenía nueve columnas y el estado solo se veía desplazándola. Ahora el DNI va debajo del nombre del beneficiario, y la prueba comprueba que la columna Estado se ve completa.
+- **La columna Estado quedaba fuera de la vista.** En la primera ejecución de la prueba, a 1280 px la tabla tenía nueve columnas y el estado solo se veía desplazándola.
+  - Primero llevé el DNI debajo del nombre del beneficiario, pero la prueba siguió fallando: el área de contenido mide 976 px.
+  - Luego reduje el texto de la tabla (`text-sm`), el relleno de las celdas y la sangría de los certificados de un lote. Lo medí en el navegador con el estado más largo ("Procesando firma") y la tabla cabe sin desplazarse.
+  - La prueba de punta a punta ahora comprueba que la columna Estado se ve completa.
 - **Compilador de Solidity sin red:** como en sprints anteriores, la prueba se corrió con `SOLC_RUTA`, porque Hardhat no pudo descargar el compilador.
