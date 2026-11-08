@@ -34,7 +34,12 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
 9. **Jira:** comentario detallado en primera persona (qué construí, cómo lo probé, decisiones a validar, lo que queda fuera, ajustes) y transición a **En revisión** (31).
 10. **Informar** al usuario en español y preguntar "¿Ok para continuar con la HUxx?".
 
-Commits con las líneas de coautoría que indique la sesión. Mantener el costo mínimo: AWS (DRA-44) sigue diferido a propósito.
+Commits con las líneas de coautoría que indique la sesión. Mantener el costo mínimo en AWS: QA se enciende solo cuando se usa.
+
+**Tickets para cambios:** cada cambio va en un ticket.
+- Si corrige o amplía una historia, el ticket nuevo se enlaza a su HU original (las historias cerradas no se reabren).
+- Si no corresponde a ninguna historia, va en un ticket independiente.
+- Un cambio menor (redacción, un ajuste de estilo, una dependencia) puede ir sin ticket, a criterio del equipo, citándolo en el commit.
 
 ## Estado al 08/11/2026
 
@@ -44,14 +49,34 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 | 3 (HU10–12, HU16–18), 4 (HU13–15, HU29–30) y 5 (HU19–21) | Cerrados **sin la validación del PO**, por decisión del equipo: el 3 y el 4 el 05/11 (74 puntos), el 5 el 07/11 (16 puntos) |
 | 6 (HU22–28) | Cerrado el 08/11 **sin la validación del PO** (19 puntos). Con él están cerradas las 30 historias del backlog: **156 de 156 puntos** |
 
-**Lo siguiente:** no quedan historias por construir. Quedan en el backlog de Jira: la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 6 (`docs/scrum/sprint-N/guion-de-pruebas.md`), y **DRA-44 (AWS)**, diferida a propósito. Cada observación del PO se registra como un ticket nuevo y se construye con el flujo de siempre. También falta actualizar la Tabla 26 de la tesis con el calendario de `jira.md`.
+**Lo siguiente:** no quedan historias por construir. Quedan en el backlog de Jira: la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 6 (`docs/scrum/sprint-N/guion-de-pruebas.md`), y **DRA-44 (AWS)**, ahora **en curso**: el ambiente de **QA**, ver la sección siguiente. Cada observación del PO se registra como un ticket nuevo y se construye con el flujo de siempre. También falta actualizar la Tabla 26 de la tesis con el calendario de `jira.md`.
 
 **Validación del PO:** se hace **al final del proyecto** (DRA-48, en el backlog), con los guiones de los Sprints 3 a 6. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
 
 **Pendientes conocidos:**
-- DRA-44 (AWS), con el dominio del portal todavía por definir;
+- PROD en AWS: alcance y dominio por definir (saldrá de la misma plantilla de QA);
 - **Dependabot** (DRA-49) propone actualizaciones cada lunes: se revisan con la CI y, si tocan el PDF, el QR o el portal, con las pruebas de punta a punta. Su `package-lock.json` a veces viene desincronizado: se regenera con `npm install`. Pospuestas hasta después de la validación del PO (DRA-50): **OpenPDF 3** (cambia el nombre de los paquetes, `com.lowagie` → hay que migrar `GeneradorDePdf`), **Apache POI 6** y **TypeScript 7** en los contratos;
 - preguntas abiertas al PO, listadas en cada `revision.md`.
+
+## Ambiente QA en AWS (DRA-44, en curso desde el 08/11/2026)
+
+Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuenta) y DRA-54 (CloudFront y HTTPS).
+
+- **Diseño:** escenario A de `docs/arquitectura/estimacion-costos-aws.md`, en us-east-1.
+  - Un solo EC2 t4g.medium (tamaño en una variable) con el mismo `docker compose` de local, detrás de nginx en el puerto 80.
+  - Frontend y portal en S3, detrás de **dos distribuciones de CloudFront** con direcciones `*.cloudfront.net` fijas y HTTPS.
+    - **Plataforma:** `/*` va a S3; `/api/*` y `/rpc` (Besu, para MetaMask) van al EC2.
+    - **Portal:** `/*` va a S3; `/api/verificacion/*` va al EC2.
+  - **Sin dominio propio en QA**, a propósito: no se sabe cuál querrá la DRA. Las direcciones fijas evitan que los QR de QA se rompan.
+- **Sin IP elástica, balanceador ni RDS.** Secretos en Parameter Store (SecureString). Estado de Terraform en S3.
+- **Disparadores** (GitHub Actions, a mano):
+  - **QA – Encender:** levanta todo y publica la última versión de `main`.
+  - **QA – Apagar:** detiene el EC2 y **conserva los datos**.
+  - **QA – Destruir:** borra todo y pide escribir `DESTRUIR-QA`.
+  - **Apagado automático** a las 00:00 de Lima. GitHub desactiva los flujos programados tras 60 días sin actividad en el repositorio.
+- **Acceso:** GitHub entra con un rol OIDC. **Nunca se guardan claves de AWS** en el repositorio ni en secretos de GitHub.
+- **Costo:** AWS Budgets avisa a $10, $25 y $50. Estimado: unos $11–14 al mes con QA encendido 10 h × 22 días y unos $2–3 al mes apagado. Hay $100 de crédito, que vence el próximo año.
+- **PROD:** alcance por definir. Sale de la misma plantilla, con el dominio de la DRA y un certificado de ACM en las mismas distribuciones.
 
 ## Entorno de pruebas (lo que hay que saber)
 

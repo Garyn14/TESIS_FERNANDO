@@ -23,6 +23,16 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
 
+### Ambiente QA en AWS (desde el 08/11/2026)
+
+- **DRA-44 pasó a En curso**, con el alcance limitado a QA. PROD queda por definir.
+- Se dividió en cuatro subtareas:
+  - DRA-51: plantilla de infraestructura con Terraform;
+  - DRA-52: disparadores Encender, Apagar y Destruir, con apagado automático a medianoche;
+  - DRA-53: presupuesto, alertas y preparación de la cuenta;
+  - DRA-54: direcciones fijas con HTTPS mediante CloudFront.
+- No suman puntos al backlog de historias: son tareas de infraestructura, como las del Sprint 0.
+
 ### Cierre del Sprint 6 (08/11/2026)
 
 - **Finalizadas sin la validación del PO**, por decisión del equipo: HU22 a HU28 (DRA-35 a DRA-41), 19 puntos. Cada ticket tiene su comentario de cierre de la historia y el del cierre del Sprint.
@@ -109,7 +119,7 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 |---|---|
 | DRA-42 | Definir el stack técnico |
 | DRA-43 | Configurar el repositorio, la estructura del proyecto y la integración continua |
-| DRA-44 | Provisionar la infraestructura en AWS (diferida: movida a los Sprints 1, 2 y 3; se crea cuando se necesite para la demo, la aceptación y la posprueba) |
+| DRA-44 | Provisionar la infraestructura en AWS (diferida durante los Sprints 1 a 6; en curso desde el 08/11/2026 con el ambiente QA, subtareas DRA-51 a DRA-54) |
 | DRA-45 | Desplegar la red Hyperledger Besu (QBFT, 4 validadores) |
 | DRA-46 | Desplegar el nodo IPFS privado |
 | DRA-47 | Procedimiento de inicialización del sistema (RF09) |
