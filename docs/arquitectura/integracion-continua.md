@@ -166,6 +166,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 08/11/2026 | [42444614347](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42444614347) | `DRA-39-aviso-pendiente-al-director` | ✓ Seis jobs en verde con HU26: avisos dentro de la plataforma (V22) y aviso al Director de cada documento o lote pendiente, con la campana del encabezado (230 pruebas de backend, 11 del portal, 180 de frontend, 28 del contrato) |
 | 08/11/2026 | [42446007661](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42446007661) | `DRA-40-avisos-al-area` | ✓ Seis jobs en verde con HU27: avisos de firmado, observado, rechazado y anulado al Área encargada, con el motivo y un solo aviso por lote (V23) (236 pruebas de backend, 11 del portal, 180 de frontend, 28 del contrato) |
 | 08/11/2026 | [42448485785](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42448485785) | `DRA-41-avisos-a-mesa-de-partes` | ✓ Seis jobs en verde con HU28, la última del Sprint 6: avisos Listo para entregar y Rechazado (con expediente y motivo) a Mesa de Partes (240 pruebas de backend, 11 del portal, 180 de frontend, 28 del contrato) |
+| 08/11/2026 | [42483487092](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/42483487092) | `DRA-49-dependabot` | ✓ Seis jobs en verde con DRA-49: configuración de Dependabot y nota sobre las pruebas con Besu, sin cambios de código (240 pruebas de backend, 11 del portal, 180 de frontend, 28 del contrato) |
 
 ## 9. Pendientes
 
