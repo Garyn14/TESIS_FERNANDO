@@ -43,17 +43,21 @@ public class AnulacionDeDocumentos {
   private final UsuarioRepository usuarios;
   private final ContratoRegistro contrato;
 
+  private final AvisosDeResultado avisosDeResultado;
+
   public AnulacionDeDocumentos(
       DocumentoRepository documentos,
       HistorialDocumentoRepository historial,
       RegistroDeDocumentos registro,
       UsuarioRepository usuarios,
-      ContratoRegistro contrato) {
+      ContratoRegistro contrato,
+      AvisosDeResultado avisosDeResultado) {
     this.documentos = documentos;
     this.historial = historial;
     this.registro = registro;
     this.usuarios = usuarios;
     this.contrato = contrato;
+    this.avisosDeResultado = avisosDeResultado;
   }
 
   /** Documentos firmados y anulados, del firmado más reciente al más antiguo. */
@@ -204,6 +208,7 @@ public class AnulacionDeDocumentos {
                         anulacion.bloque(),
                         motivo)),
             quien == null ? null : quien.getId()));
+    avisosDeResultado.anulado(documento, motivo);
     return true;
   }
 
