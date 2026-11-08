@@ -28,7 +28,7 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
    - Frontend y portal: `npx prettier --write src`, `npm run lint`, `npx vitest run`, `npm run build`.
 4. **Prueba de punta a punta** del sprint en un entorno limpio (`plataforma/e2e/sprintN.cjs`, con `./e2e/regresion.sh N`), y regresión de los sprints anteriores.
 5. **Evidencia** en `docs/evidencias/sprint-N/HUxx/README.md`, con capturas, qué se comprueba, pruebas automáticas y ajustes encontrados.
-6. **Push** y esperar la CI con los **6 jobs** en verde. **Las cantidades de pruebas se toman del registro de la CI** (`gh run view <id> --log`), nunca se calculan a mano: ya hubo que corregir cifras inventadas.
+6. **Push** y esperar la CI con los **7 jobs** en verde. **Las cantidades de pruebas se toman del registro de la CI** (`gh run view <id> --log`), nunca se calculan a mano: ya hubo que corregir cifras inventadas.
 7. **Registrar** la ejecución en `integracion-continua.md`, en un commit aparte.
 8. **Fusionar** a `main` con fast-forward y hacer push.
 9. **Jira:** comentario detallado en primera persona (qué construí, cómo lo probé, decisiones a validar, lo que queda fuera, ajustes) y transición a **En revisión** (31).

@@ -1,0 +1,44 @@
+#!/bin/bash
+# Primer arranque del servidor (user data de EC2, se ejecuta una sola vez). Instala Docker y deja
+# el comando plataforma-desplegar, que el disparador Encender (DRA-52) llama con SSM Run Command.
+# La plataforma en sí la levanta ese comando; en los encendidos siguientes, Docker vuelve a
+# levantar los contenedores solo (restart: unless-stopped).
+set -euxo pipefail
+
+dnf install -y docker
+systemctl enable --now docker
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -fsSL -o /usr/local/lib/docker/cli-plugins/docker-compose \
+  "https://github.com/docker/compose/releases/download/${version_compose}/docker-compose-linux-aarch64"
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+# Memoria de reserva en el disco: la red Besu y el backend son JVM y pueden tener picos.
+if [ ! -f /swapfile ]; then
+  fallocate -l 2G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+swapon -a
+
+mkdir -p /etc/plataforma /opt/plataforma/app
+cat > /etc/plataforma/ambiente <<'FIN'
+AMBIENTE=${ambiente}
+REGION=${region}
+BUCKET_ARTEFACTOS=${bucket_artefactos}
+FIN
+
+cat > /usr/local/bin/plataforma-desplegar <<'FIN'
+#!/bin/bash
+# Descarga el último paquete publicado y lo despliega (ver infra/aws/servidor/desplegar.sh).
+# Un solo despliegue a la vez.
+set -euo pipefail
+exec 9>/run/plataforma-desplegar.lock
+flock 9
+cloud-init status --wait >/dev/null || true
+. /etc/plataforma/ambiente
+aws s3 cp --only-show-errors --region "$REGION" "s3://$BUCKET_ARTEFACTOS/paquete.tar.gz" /opt/plataforma/paquete.tar.gz
+tar -xzf /opt/plataforma/paquete.tar.gz -C /opt/plataforma/app
+exec /opt/plataforma/app/infra/aws/servidor/desplegar.sh
+FIN
+chmod 755 /usr/local/bin/plataforma-desplegar

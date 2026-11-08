@@ -20,3 +20,13 @@ plataforma/contracts/types/
 *.iml
 .DS_Store
 despliegues/
+
+# Paquete del servidor en AWS (DRA-51) probado en local
+plataforma/backend.jar
+plataforma/.backend.sha256
+
+# Terraform (DRA-51)
+.terraform/
+*.tfstate
+*.tfstate.*
+plataforma/infra/aws/modulos/**/.terraform.lock.hcl

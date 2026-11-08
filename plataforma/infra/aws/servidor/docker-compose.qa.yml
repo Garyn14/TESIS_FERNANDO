@@ -1,0 +1,69 @@
+# Ambiente en AWS (DRA-51): se suma a infra/docker-compose.yml, el mismo de desarrollo local.
+#   docker compose --project-directory infra -f infra/docker-compose.yml \
+#     -f infra/aws/servidor/docker-compose.qa.yml --env-file plataforma.env up -d
+# (levantar.sh lo hace). Las rutas relativas parten de infra/; backend.jar va junto a infra/.
+#
+# Diferencias con el local:
+#   - Ningún servicio publica puertos en el servidor, salvo nginx (80). nginx solo atiende a
+#     CloudFront (DRA-54) y reparte: /api al backend y /rpc al nodo Besu 1.
+#   - El nodo 1 solo ofrece las API de lectura y envío de transacciones (ETH, NET, WEB3), porque
+#     /rpc es público para la billetera del Director. QBFT (votar validadores) y TXPOOL quedan
+#     solo dentro de la red de Docker, en los nodos 2 a 4.
+#   - El backend corre en un contenedor con el .jar que publica el disparador Encender (DRA-52).
+#   - Los secretos llegan por variables desde Parameter Store (RNF03), nunca desde el repositorio.
+services:
+  postgres:
+    ports: !reset []
+    restart: unless-stopped
+
+  besu-nodo1:
+    command:
+      - --config-file=/red/nodo1/config.toml
+      - --rpc-http-api=ETH,NET,WEB3
+    ports: !reset []
+
+  ipfs:
+    ports: !reset []
+
+  backend:
+    image: eclipse-temurin:21-jre
+    restart: unless-stopped
+    command: ["java", "-Xmx${BACKEND_MEMORIA:-640m}", "-jar", "/app/backend.jar"]
+    volumes:
+      - ../backend.jar:/app/backend.jar:ro
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-plataforma}
+      DB_USER: ${DB_USER:-plataforma}
+      DB_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD}
+      BESU_RPC_URL: http://besu-nodo1:8545
+      BESU_RPC_PUBLICA: ${BESU_RPC_PUBLICA:-}
+      PLATAFORMA_IPFS_URL: http://ipfs:5001
+      PLATAFORMA_CLAVE_HMAC_DNI: ${PLATAFORMA_CLAVE_HMAC_DNI:?Falta PLATAFORMA_CLAVE_HMAC_DNI}
+      PLATAFORMA_ADMIN_CONTRASENA: ${PLATAFORMA_ADMIN_CONTRASENA:?Falta PLATAFORMA_ADMIN_CONTRASENA}
+      PLATAFORMA_ADMIN_NOMBRE: ${PLATAFORMA_ADMIN_NOMBRE:-Administrador de la plataforma}
+      PLATAFORMA_CONTRATO_DIRECCION: ${PLATAFORMA_CONTRATO_DIRECCION:-}
+      PLATAFORMA_CONTRATO_BLOQUE_INICIAL: ${PLATAFORMA_CONTRATO_BLOQUE_INICIAL:-0}
+      PLATAFORMA_PORTAL_URL: ${PLATAFORMA_PORTAL_URL:-}
+      SESION_INACTIVIDAD: ${SESION_INACTIVIDAD:-30m}
+      PLATAFORMA_SINCRONIZACION_INTERVALO: ${PLATAFORMA_SINCRONIZACION_INTERVALO:-30s}
+      PLATAFORMA_FIRMA_PLAZO: ${PLATAFORMA_FIRMA_PLAZO:-15m}
+      # Detrás de CloudFront todo llega por HTTPS: la cookie de sesión solo viaja cifrada.
+      SESION_COOKIE_SEGURA: ${SESION_COOKIE_SEGURA:-true}
+    depends_on:
+      postgres: { condition: service_healthy }
+      ipfs: { condition: service_healthy }
+      besu-nodo1: { condition: service_healthy }
+    networks: [plataforma]
+
+  nginx:
+    image: nginx:${NGINX_VERSION:-1.29-alpine}
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PUERTO:-80}:80"
+    environment:
+      # Encabezado que solo conocen CloudFront y este servidor (DRA-54).
+      ORIGEN_SECRETO: ${ORIGEN_SECRETO:?Falta ORIGEN_SECRETO}
+    volumes:
+      - ./aws/servidor/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    depends_on: [backend, besu-nodo1]
+    networks: [plataforma]
