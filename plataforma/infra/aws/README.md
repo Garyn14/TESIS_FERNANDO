@@ -9,6 +9,7 @@ Ambientes de la plataforma en AWS, descritos con Terraform. Por ahora solo **QA*
 | `modulos/ambiente/` | La plantilla de un ambiente completo: red, servidor, buckets y parámetros. Sus pruebas están en `tests/` (`terraform test`, sin cuenta de AWS). |
 | `qa/` | El ambiente QA: usa la plantilla con los valores de QA. El estado de Terraform se guarda en un bucket S3, no en el repositorio. |
 | `servidor/` | Lo que corre en el servidor: el `docker compose` de AWS, nginx y los scripts para empaquetar, desplegar y probar. |
+| `acciones/` | Scripts de los disparadores de GitHub Actions (DRA-52): ubicar el servidor, ejecutar comandos con SSM, publicar el build en S3 y desplegar el contrato. `probar-acciones.sh` los prueba con un `aws` simulado. |
 | `pruebas/` | Solo para probar en local: un CloudFront simulado (nginx) y las pruebas de punta a punta de los sprints contra el servidor de AWS en Docker. No va en el paquete. |
 
 ## Cómo queda un ambiente
@@ -64,6 +65,32 @@ Dos distribuciones con direcciones `*.cloudfront.net` **fijas** y HTTPS gratis, 
 - **Servidor apagado:** CloudFront no llega al origen (502 o 504) y entrega `/_estado/apagado.json` con estado 503. Ese archivo tiene el formato de error del backend, así que la plataforma y el portal muestran "El ambiente de QA está apagado o encendiéndose…" sin cambios en su código.
 - Con el servidor detenido no hay nombre DNS público. El origen pasa a `servidor-apagado.invalid` al volver a aplicar Terraform.
 
+## Disparadores (DRA-52)
+
+Se ejecutan a mano en GitHub, en la pestaña **Actions**. Los tres comparten un candado, así que nunca corren a la vez.
+
+| Flujo | Qué hace | Tiempo aproximado |
+|---|---|---|
+| **QA – Encender** (`.github/workflows/qa-encender.yml`) | Ver los pasos debajo de la tabla. | 15–25 min la primera vez; 8–12 después |
+| **QA – Apagar** (`qa-apagar.yml`) | Detiene el servidor y **conserva los datos**. Después deja CloudFront apuntando a `servidor-apagado.invalid` (DRA-54). Corre solo todos los días a las **00:00 de Lima** y también a mano. Si QA ya está apagado o no existe, termina sin error. | 5–8 min |
+| **QA – Destruir** (`qa-destruir.yml`) | Pide escribir `DESTRUIR-QA` y borra todo con Terraform, datos incluidos. Después borra el contrato y las billeteras de Parameter Store. El próximo Encender crea un QA vacío, **con direcciones de CloudFront nuevas**. | 10–20 min |
+
+Pasos de **QA – Encender**, siempre con la última versión de `main`:
+1. Construye el backend, el frontend y el portal.
+2. Si el servidor existe y está apagado, lo enciende.
+3. Aplica Terraform, que crea lo que falte y pone en CloudFront el nombre DNS nuevo del servidor.
+4. Publica el paquete y lo despliega con SSM.
+5. Publica el frontend y el portal en S3.
+6. La primera vez, despliega el contrato por `/rpc` y vuelve a desplegar el backend con su dirección.
+7. Comprueba todo a través de CloudFront, incluido el tipo de los *workers* `.mjs` del visor del PDF.
+8. Deja las direcciones en el resumen de la ejecución.
+
+El tamaño del servidor se elige al encender (entrada `tipo_instancia`, solo `t4g`). Si se deja vacío, se conserva el actual.
+
+**Billeteras de QA:** el contrato se despliega con billeteras de prueba nuevas, sin valor, para el Administrador del contrato, el respaldo y el Director. Sus claves quedan en Parameter Store, en `/dra-satipo/qa-billeteras/` (SecureString), para importarlas en MetaMask. El servidor no puede leerlas: nunca firma.
+
+GitHub desactiva los flujos programados si el repositorio pasa **60 días sin actividad**. En ese caso, el apagado de medianoche deja de correr hasta que se reactive en la pestaña Actions.
+
 ## Pruebas
 
 ```bash
@@ -78,7 +105,7 @@ cd servidor && ./probar-servidor.sh ../../../backend/target/plataforma-backend-*
 - solo nginx publica un puerto;
 - relanzar, apagar y encender conservan la base y la cadena.
 
-La CI corre ambas pruebas en el job **Infraestructura AWS**, junto con la prueba de `rutas-del-portal.js`.
+La CI corre ambas pruebas en el job **Infraestructura AWS**. En ese mismo job también corren la prueba de `rutas-del-portal.js`, `acciones/probar-acciones.sh` y actionlint sobre los disparadores.
 
 Las pruebas de punta a punta de los sprints contra el servidor de AWS, detrás del CloudFront simulado, corren en local (tardan alrededor de una hora):
 

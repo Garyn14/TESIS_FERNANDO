@@ -1,0 +1,73 @@
+# QA – Destruir (DRA-52): borra TODO el ambiente de QA en AWS, con sus datos: servidor, disco,
+# buckets, distribuciones de CloudFront, secretos, contrato y billeteras de prueba. No se puede
+# deshacer. Para dejar de pagar sin perder nada, use "QA – Apagar". El próximo "QA – Encender"
+# crea un QA nuevo y vacío, con direcciones de CloudFront nuevas.
+name: QA – Destruir
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmacion:
+        description: Escriba DESTRUIR-QA para borrar QA con todos sus datos
+        required: true
+
+concurrency:
+  group: ambiente-qa
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AMBIENTE: qa
+  TF_IN_AUTOMATION: 'true'
+
+jobs:
+  destruir:
+    name: Destruir QA
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: plataforma
+    steps:
+      - name: Confirmación
+        env:
+          CONFIRMACION: ${{ inputs.confirmacion }}
+        run: |
+          if [ "$CONFIRMACION" != "DESTRUIR-QA" ]; then
+            echo "::error::No se destruyó nada: hay que escribir exactamente DESTRUIR-QA."
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_ROL_QA }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.4
+          terraform_wrapper: false
+
+      - name: Destruir la infraestructura (Terraform)
+        working-directory: plataforma/infra/aws/qa
+        env:
+          BUCKET: ${{ vars.TF_ESTADO_BUCKET }}
+        run: |
+          read -r _ tipo _ <<< "$(../acciones/instancia.sh "$AMBIENTE")" || true
+          terraform init -input=false -backend-config="bucket=$BUCKET"
+          terraform destroy -input=false -auto-approve -var "tipo_instancia=${tipo:-t4g.medium}"
+
+      # El contrato y las billeteras los crea "QA – Encender", no Terraform.
+      - name: Borrar el contrato y las billeteras de prueba
+        run: |
+          for ruta in "/dra-satipo/$AMBIENTE" "/dra-satipo/$AMBIENTE-billeteras"; do
+            nombres=$(aws ssm get-parameters-by-path --path "$ruta" --recursive --query 'Parameters[].Name' --output text)
+            for nombre in $nombres; do
+              aws ssm delete-parameter --name "$nombre"
+            done
+          done
+          echo "QA destruido, con todos sus datos. El próximo **QA – Encender** crea uno nuevo y vacío." >> "$GITHUB_STEP_SUMMARY"
