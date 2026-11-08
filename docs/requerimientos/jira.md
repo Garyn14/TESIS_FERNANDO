@@ -33,7 +33,8 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
   - DRA-54: direcciones fijas con HTTPS mediante CloudFront.
 - No suman puntos al backlog de historias: son tareas de infraestructura, como las del Sprint 0.
 - **En revisión el 08/11:** DRA-51, DRA-54, DRA-52 y DRA-53, todas construidas, probadas sin AWS e integradas a `main` con la CI en verde. Evidencia en `docs/evidencias/infra/DRA-5x/`.
-- **Para cerrar DRA-44 en QA falta:**
+- **08/11: QA encendido en AWS por primera vez** (DRA-55 región us-east-2, DRA-56 acceso con usuario de IAM y correcciones del primer encendido): plataforma https://d1px0ea1324c4y.cloudfront.net y portal https://d3u5jxvc0sbgm7.cloudfront.net. La cuenta pasó al plan de pago, con un límite de gasto de $20 al mes.
+- **Antes de eso faltaba:**
   - que el dueño de la cuenta siga los pasos 1 a 3 de [despliegue-aws.md](../arquitectura/despliegue-aws.md);
   - el primer **QA – Encender** real.
 
