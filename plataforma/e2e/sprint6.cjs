@@ -5,7 +5,7 @@
 // (el historial y el detalle técnico de auditoría, comprobado contra IPFS y la red Besu) y HU25
 // (descargar o imprimir un documento firmado, con su registro en el historial) y HU26 (el aviso al
 // Director de los documentos y lotes pendientes de su revisión) y HU27 (los avisos de resultado al
-// Área encargada, con el motivo), con
+// Área encargada, con el motivo) y HU28 (los avisos de entrega y de rechazo a Mesa de Partes), con
 // documentos firmados, anulados en la blockchain, rechazados, reemitidos y en trámite.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
@@ -727,6 +727,57 @@ const paso = async (nombre, fn) => {
     assert.ok(rosa.url().endsWith('#/mis-documentos/lote/2026-001'), rosa.url())
     // El área de Administración no recibe los avisos de Capacitación.
     assert.equal(Number(psql("SELECT count(*) FROM aviso a JOIN usuario u ON u.id = a.destinatario_id WHERE u.nombre_usuario = 'pmorales' AND a.enlace LIKE '%lote/2026-001'")), 0)
+  })
+
+  // ------------------------------------------------------ HU28: avisos a Mesa de Partes
+  await paso('HU28 · Mesa de Partes recibe "Listo para entregar" por cada firmado y el rechazo con expediente y motivo', async () => {
+    await reingresar(luz, 'lflores')
+    await campanaDe(luz).waitFor()
+    // Firmados Lucía, Kevin y la reemisión de Lucía; rechazada Martha. Ni las observaciones ni las
+    // anulaciones se avisan a Mesa de Partes.
+    await esperarHasta('la campana de Mesa de Partes muestra 4 sin leer', async () => (await sinLeerDe(luz)) === 4, 10_000)
+    await campanaDe(luz).click()
+    const textos = (await panelDe(luz).getByRole('link').allTextContents()).map((x) => x.replace(/(hace .*|ayer|\d{2}\/\d{2}\/\d{4})$/, ''))
+    assert.deepEqual([...textos].sort(), [
+      'Listo para entregar: Certificado de Trabajo – Kevin Ramos Ccanto (expediente EXP-2026-005392)',
+      'Listo para entregar: Certificado de Trabajo – Lucía Paredes Quintana (expediente EXP-2026-005391)',
+      'Listo para entregar: Certificado de Trabajo – Lucía Paredes Quinto (expediente EXP-2026-005391)',
+      'Rechazado: Certificado de Trabajo – Martha Rojas Inga (expediente EXP-2026-005401). Motivo: La persona no laboró en la agencia en las fechas indicadas.',
+    ])
+    await foto(luz, 'hu28_01_avisos_de_mesa_de_partes')
+    // El aviso de la reemisión abre su ficha, lista para imprimir.
+    await panelDe(luz).getByRole('link', { name: /Listo para entregar: Certificado de Trabajo – Lucía Paredes Quintana/ }).click()
+    await luz.getByRole('heading', { name: nuevaLucia }).waitFor()
+    assert.ok(luz.url().endsWith('#/buscar/' + nuevaLucia), luz.url())
+    await entrega().getByRole('button', { name: /Imprimir/ }).waitFor()
+    await esperarHasta('queda leído', async () => (await sinLeerDe(luz)) === 3, 10_000)
+    await foto(luz, 'hu28_02_aviso_abre_la_ficha')
+    // Solo Mesa de Partes: el área y el Director no reciben estos avisos.
+    assert.equal(Number(psql("SELECT count(*) FROM aviso a JOIN usuario u ON u.id = a.destinatario_id WHERE u.nombre_usuario IN ('pmorales', 'rquispe', 'cmendoza') AND a.tipo = 'LISTO_PARA_ENTREGAR'")), 0)
+  })
+  await paso('HU28 · La firma de certificados de un lote es un solo aviso, que abre la búsqueda del lote', async () => {
+    await reingresar(carlos, 'cmendoza')
+    // El tercer certificado del lote sigue pendiente (los otros dos se observaron en HU27).
+    const tercero = psql("SELECT d.codigo FROM documento d JOIN lote l ON l.id = d.lote_id WHERE l.numero = '2026-001' AND d.estado = 'PENDIENTE'")
+    assert.equal((await enviar(carlos, '/api/revision/lotes/2026-001', {})).estado, 200)
+    await carlos.goto(URL + '#/por-revisar/lote/2026-001')
+    await carlos.reload()
+    await carlos.getByRole('heading', { name: 'Revisión de lote – Lote 2026-001' }).waitFor()
+    await carlos.getByRole('button', { name: 'Firmar lote' }).click()
+    const firma = carlos.getByRole('dialog')
+    await firma.getByText('Firmar 1 certificado').waitFor()
+    await firma.getByRole('button', { name: 'Confirmar' }).click()
+    await firma.getByText(/Se firmó 1 certificado/).waitFor({ timeout: 60_000 })
+    assert.equal(estadoDe(tercero), 'FIRMADO')
+    await luz.getByRole('link', { name: 'Buscar documentos' }).click()
+    await esperarHasta('llega el aviso del lote', async () => (await sinLeerDe(luz)) === 4, 10_000)
+    await campanaDe(luz).click()
+    const aviso = panelDe(luz).getByRole('link').first()
+    assert.ok((await aviso.textContent()).startsWith('Listo para entregar: Lote 2026-001 – Manejo integrado de plagas en café: 1 certificado firmado'))
+    await foto(luz, 'hu28_03_aviso_de_lote')
+    await aviso.click()
+    await esperarHasta('se busca el lote', async () => (await buscador().inputValue()) === '2026-001', 10_000)
+    await fila('Lote 2026-001').waitFor()
   })
 
   await b.close()
