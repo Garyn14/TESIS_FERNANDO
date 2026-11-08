@@ -1,0 +1,92 @@
+# QA – Apagar (DRA-52): detiene el servidor de QA y CONSERVA todos los datos (disco, base de datos,
+# documentos en IPFS y la cadena de Besu). Con QA apagado solo se cobra el disco y unos centavos de
+# S3. Corre solo todos los días a las 00:00 de Lima, por si quedó encendido, y también a mano.
+name: QA – Apagar
+
+on:
+  schedule:
+    - cron: '0 5 * * *' # 00:00 en Lima (UTC-5 todo el año)
+  workflow_dispatch:
+
+concurrency:
+  group: ambiente-qa
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AMBIENTE: qa
+  TF_IN_AUTOMATION: 'true'
+
+jobs:
+  apagar:
+    name: Apagar QA
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: plataforma
+    steps:
+      - name: Configuración de la cuenta
+        id: cuenta
+        env:
+          ROL: ${{ vars.AWS_ROL_QA }}
+        run: |
+          # Sin la cuenta configurada no hay nada que apagar (el horario corre igual cada noche).
+          if [ -z "$ROL" ]; then
+            echo "QA no está configurado en AWS (falta AWS_ROL_QA): no hay nada que apagar." >> "$GITHUB_STEP_SUMMARY"
+            echo "configurada=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "configurada=si" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.cuenta.outputs.configurada == 'si'
+      - uses: aws-actions/configure-aws-credentials@v5
+        if: steps.cuenta.outputs.configurada == 'si'
+        with:
+          role-to-assume: ${{ vars.AWS_ROL_QA }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Detener el servidor
+        id: servidor
+        if: steps.cuenta.outputs.configurada == 'si'
+        run: |
+          read -r id tipo estado <<< "$(infra/aws/acciones/instancia.sh "$AMBIENTE")" || true
+          if [ -z "${id:-}" ]; then
+            echo "QA no existe (nunca se encendió o se destruyó): no hay nada que apagar." >> "$GITHUB_STEP_SUMMARY"
+            echo "existe=no" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$estado" = "stopped" ]; then
+            echo "El servidor $id ya estaba apagado." >> "$GITHUB_STEP_SUMMARY"
+          else
+            [ "$estado" = "pending" ] && aws ec2 wait instance-running --instance-ids "$id"
+            aws ec2 stop-instances --instance-ids "$id" >/dev/null
+            aws ec2 wait instance-stopped --instance-ids "$id"
+            echo "Servidor $id apagado. Los datos se conservan." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "existe=si" >> "$GITHUB_OUTPUT"
+          echo "TIPO=$tipo" >> "$GITHUB_ENV"
+
+      # Apagado, el servidor pierde su nombre DNS público y AWS puede dar su IP a otro cliente: el
+      # origen de CloudFront pasa a servidor-apagado.invalid, para que el encabezado secreto no
+      # viaje a un servidor ajeno (DRA-54). Solo se tocan las distribuciones.
+      - uses: hashicorp/setup-terraform@v3
+        if: steps.servidor.outputs.existe == 'si'
+        with:
+          terraform_version: 1.13.4
+          terraform_wrapper: false
+      - name: Desconectar CloudFront del servidor
+        if: steps.servidor.outputs.existe == 'si'
+        working-directory: plataforma/infra/aws/qa
+        env:
+          BUCKET: ${{ vars.TF_ESTADO_BUCKET }}
+        run: |
+          terraform init -input=false -backend-config="bucket=$BUCKET"
+          terraform apply -input=false -auto-approve -var "tipo_instancia=$TIPO" \
+            -target='module.ambiente.aws_cloudfront_distribution.sitio'
+          echo "CloudFront muestra el aviso de QA apagado." >> "$GITHUB_STEP_SUMMARY"

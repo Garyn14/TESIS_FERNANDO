@@ -1,0 +1,165 @@
+# QA – Encender (DRA-52): levanta absolutamente todo el ambiente de QA en AWS con la última versión
+# de main. Si QA no existe lo crea; si está apagado lo enciende; si ya está encendido solo actualiza
+# lo que cambió. Se ejecuta a mano: pestaña Actions → "QA – Encender" → Run workflow.
+# Requisitos de la cuenta (una sola vez): docs/arquitectura/despliegue-aws.md (DRA-53).
+name: QA – Encender
+
+on:
+  workflow_dispatch:
+    inputs:
+      tipo_instancia:
+        description: Tamaño del servidor (vacío = el que ya tiene; t4g.medium la primera vez). Solo tipos t4g.
+        required: false
+        default: ''
+
+# Encender, Apagar y Destruir nunca corren a la vez.
+concurrency:
+  group: ambiente-qa
+  cancel-in-progress: false
+
+permissions:
+  id-token: write # rol de AWS con OIDC: no hay claves guardadas
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AMBIENTE: qa
+  TF_IN_AUTOMATION: 'true'
+
+jobs:
+  encender:
+    name: Encender QA
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: plataforma
+    steps:
+      - name: Solo desde main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::QA se enciende con la última versión de main. Elija la rama main al ejecutar."
+          exit 1
+      - name: Configuración de la cuenta
+        env:
+          ROL: ${{ vars.AWS_ROL_QA }}
+          BUCKET: ${{ vars.TF_ESTADO_BUCKET }}
+        run: |
+          if [ -z "$ROL" ] || [ -z "$BUCKET" ]; then
+            echo "::error::Faltan las variables AWS_ROL_QA o TF_ESTADO_BUCKET del ambiente qa en GitHub. Ver docs/arquitectura/despliegue-aws.md."
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_ROL_QA }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.4
+          terraform_wrapper: false
+
+      - name: Construir el backend
+        run: cd backend && ./mvnw -B -q package -DskipTests
+      - name: Construir el frontend y el portal
+        run: |
+          (cd frontend && npm ci --silent && npm run -s build)
+          (cd portal && npm ci --silent && npm run -s build)
+
+      - name: Encender el servidor si ya existe
+        env:
+          TIPO_PEDIDO: ${{ inputs.tipo_instancia }}
+        run: |
+          read -r id tipo estado <<< "$(infra/aws/acciones/instancia.sh "$AMBIENTE")" || true
+          if [ -n "${id:-}" ] && [ "$estado" != "running" ]; then
+            [ "$estado" = "stopping" ] && aws ec2 wait instance-stopped --instance-ids "$id"
+            aws ec2 start-instances --instance-ids "$id" >/dev/null
+            aws ec2 wait instance-running --instance-ids "$id"
+            echo "Servidor $id encendido."
+          fi
+          echo "TIPO=${TIPO_PEDIDO:-${tipo:-t4g.medium}}" >> "$GITHUB_ENV"
+
+      - name: Infraestructura (Terraform)
+        working-directory: plataforma/infra/aws/qa
+        env:
+          BUCKET: ${{ vars.TF_ESTADO_BUCKET }}
+        run: |
+          terraform init -input=false -backend-config="bucket=$BUCKET"
+          terraform apply -input=false -auto-approve -var "tipo_instancia=$TIPO"
+          terraform output -json ambiente > "$RUNNER_TEMP/ambiente.json"
+          jq -r '
+            "SERVIDOR=\(.servidor_id)",
+            "BUCKET_ARTEFACTOS=\(.bucket_artefactos)",
+            "BUCKET_FRONTEND=\(.bucket_frontend)",
+            "BUCKET_PORTAL=\(.bucket_portal)",
+            "DISTRIBUCION_PLATAFORMA=\(.distribuciones.plataforma)",
+            "DISTRIBUCION_PORTAL=\(.distribuciones.portal)",
+            "PLATAFORMA_URL=\(.plataforma_url)",
+            "PORTAL_URL=\(.portal_url)"' "$RUNNER_TEMP/ambiente.json" >> "$GITHUB_ENV"
+
+      - name: Desplegar en el servidor
+        run: |
+          infra/aws/servidor/empaquetar.sh backend/target/plataforma-backend-*.jar "$RUNNER_TEMP/paquete.tar.gz"
+          aws s3 cp --only-show-errors "$RUNNER_TEMP/paquete.tar.gz" "s3://$BUCKET_ARTEFACTOS/paquete.tar.gz"
+          infra/aws/acciones/ssm-ejecutar.sh "$SERVIDOR" /usr/local/bin/plataforma-desplegar 1200
+
+      - name: Publicar el frontend y el portal
+        run: |
+          infra/aws/acciones/publicar-sitio.sh frontend/dist "$BUCKET_FRONTEND" "$DISTRIBUCION_PLATAFORMA"
+          infra/aws/acciones/publicar-sitio.sh portal/dist "$BUCKET_PORTAL" "$DISTRIBUCION_PORTAL"
+
+      - name: Contrato RegistroDocumentos (solo la primera vez)
+        run: |
+          (cd contracts && npm ci --silent)
+          (cd e2e && npm ci --silent)
+          resultado=$(infra/aws/acciones/desplegar-contrato.sh "$AMBIENTE" "$PLATAFORMA_URL/rpc")
+          echo "Contrato: $resultado"
+          # El backend necesita la dirección del contrato: se vuelve a desplegar con ella.
+          if [ "$resultado" = "nuevo" ]; then
+            infra/aws/acciones/ssm-ejecutar.sh "$SERVIDOR" /usr/local/bin/plataforma-desplegar 600
+          fi
+
+      - name: Comprobar a través de CloudFront
+        run: |
+          for _ in $(seq 30); do
+            curl -sf "$PLATAFORMA_URL/api/salud" >/dev/null && break
+            sleep 10
+          done
+          curl -sf "$PLATAFORMA_URL/api/salud"; echo
+          curl -sf -o /dev/null "$PLATAFORMA_URL/"
+          curl -sf -o /dev/null "$PORTAL_URL/verificar/prueba"
+          # HU19: el worker del visor del PDF debe llegar como JavaScript.
+          for worker in portal/dist/assets/*.mjs; do
+            tipo=$(curl -sfI "$PORTAL_URL/assets/$(basename "$worker")" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}')
+            echo "$(basename "$worker"): $tipo"
+            [[ "$tipo" == text/javascript* ]] || { echo "::error::El worker del visor del PDF no llega como JavaScript."; exit 1; }
+          done
+
+      - name: Resumen
+        if: always()
+        run: |
+          {
+            echo "## QA – Encender"
+            if [ -n "${PLATAFORMA_URL:-}" ]; then
+              echo "| | |"
+              echo "|---|---|"
+              echo "| Plataforma interna | $PLATAFORMA_URL |"
+              echo "| Portal de verificación (QR) | $PORTAL_URL |"
+              echo "| RPC para MetaMask | $PLATAFORMA_URL/rpc · chainId 20260 |"
+              echo "| Servidor | $SERVIDOR ($TIPO) |"
+              echo
+              echo "Usuario inicial: **admin**. Su contraseña está en Parameter Store, en /dra-satipo/qa/PLATAFORMA_ADMIN_CONTRASENA, y se cambia al entrar."
+              echo "Las billeteras de prueba están en /dra-satipo/qa-billeteras/."
+            fi
+            echo
+            echo "QA se apaga solo a las 00:00 (hora de Lima). Para apagarlo antes: **QA – Apagar**."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -105,7 +105,7 @@ jobs:
         run: docker compose --profile besu up -d besu-nodo1 besu-nodo2 besu-nodo3 besu-nodo4
       - name: Esperar bloques
         run: |
-          for i in $(seq 1 60); do
+          for _ in $(seq 1 60); do
             n=$(curl -s -X POST -H 'Content-Type: application/json' \
               --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' \
               http://localhost:8545 | jq -r '.result // "0x0"')
@@ -181,7 +181,12 @@ jobs:
       - name: Función de CloudFront del portal (rutas /verificar/{token})
         run: node --test modulos/ambiente/tests/rutas-del-portal.test.cjs
       - name: Revisar los scripts del servidor
-        run: shellcheck servidor/*.sh pruebas/*.sh
+        run: shellcheck servidor/*.sh pruebas/*.sh acciones/*.sh
+      - name: Scripts de los disparadores con un aws simulado
+        run: ./acciones/probar-acciones.sh
+      - name: Revisar los disparadores de QA (actionlint)
+        working-directory: .
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.8 -color
       - uses: actions/setup-java@v6
         with:
           distribution: temurin

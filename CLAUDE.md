@@ -71,9 +71,12 @@ Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuen
 - **Sin IP elástica, balanceador ni RDS.** Secretos en Parameter Store (SecureString). Estado de Terraform en S3.
 - **Disparadores** (GitHub Actions, a mano):
   - **QA – Encender:** levanta todo y publica la última versión de `main`.
-  - **QA – Apagar:** detiene el EC2 y **conserva los datos**.
+  - **QA – Apagar:** detiene el EC2 y **conserva los datos**. Después deja CloudFront apuntando a un origen que no responde, para que el encabezado secreto no viaje a una IP reasignada.
   - **QA – Destruir:** borra todo y pide escribir `DESTRUIR-QA`.
   - **Apagado automático** a las 00:00 de Lima. GitHub desactiva los flujos programados tras 60 días sin actividad en el repositorio.
+- **Archivos:** los flujos están en `.github/workflows/qa-*.yml` y sus scripts en `plataforma/infra/aws/acciones/`, que se prueban con un `aws` simulado (`probar-acciones.sh`).
+  - El contrato de QA se despliega por `/rpc` la primera vez.
+  - Sus billeteras de prueba quedan en `/dra-satipo/qa-billeteras/`, fuera del alcance del servidor.
 - **Acceso:** GitHub entra con un rol OIDC. **Nunca se guardan claves de AWS** en el repositorio ni en secretos de GitHub.
 - **Costo:** AWS Budgets avisa a $10, $25 y $50. Estimado: unos $11–14 al mes con QA encendido 10 h × 22 días y unos $2–3 al mes apagado. Hay $100 de crédito, que vence el próximo año.
 - **PROD:** alcance por definir. Sale de la misma plantilla, con el dominio de la DRA y un certificado de ACM en las mismas distribuciones.
