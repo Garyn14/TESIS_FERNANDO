@@ -122,10 +122,10 @@ class ReemisionDeDocumentosTest {
 
   private static String corregido(String apellidos, String cargo, String motivo) {
     return """
-        {"nombres": "Lucía", "apellidos": "%s", "dni": "45829364",
-         "datos": {"cargo": "%s", "fechaInicio": "2025-01-02", "fechaFin": "2026-09-30"},
-         "motivo": %s}
-        """
+    {"nombres": "Lucía", "apellidos": "%s", "dni": "45829364",
+     "datos": {"cargo": "%s", "fechaInicio": "2025-01-02", "fechaFin": "2026-09-30"},
+     "motivo": %s}
+    """
         .formatted(apellidos, cargo, motivo == null ? "null" : '"' + motivo + '"');
   }
 

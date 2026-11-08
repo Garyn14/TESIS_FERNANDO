@@ -71,10 +71,9 @@ public class GestionContrasenas {
     Usuario cuenta =
         usuarios
             .findConRolById(idCuenta)
-            .orElseThrow(
-                () ->
-                    new ReglaDeNegocioException(
-                        HttpStatus.NOT_FOUND, null, GestionUsuarios.CUENTA_INEXISTENTE));
+            .orElseThrow(() ->
+                new ReglaDeNegocioException(
+                    HttpStatus.NOT_FOUND, null, GestionUsuarios.CUENTA_INEXISTENTE));
     Usuario actor = usuarios.findByNombreUsuarioIgnoreCase(nombreUsuarioActor).orElseThrow();
     if (cuenta.getId().equals(actor.getId())) {
       throw new ReglaDeNegocioException(HttpStatus.CONFLICT, null, RESTABLECER_PROPIA);

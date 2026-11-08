@@ -86,11 +86,10 @@ public class AnulacionDeDocumentos {
     // HU30: con una reemisión en curso, el original se anula al firmarla.
     documentos
         .reemisionVigente(documento.getId())
-        .ifPresent(
-            r -> {
-              throw new ReglaDeNegocioException(
-                  HttpStatus.CONFLICT, null, CON_REEMISION.formatted(r.getCodigo()));
-            });
+        .ifPresent(r -> {
+          throw new ReglaDeNegocioException(
+              HttpStatus.CONFLICT, null, CON_REEMISION.formatted(r.getCodigo()));
+        });
     documentos.solicitarAnulacion(documento.getId(), texto, java.time.OffsetDateTime.now());
     return DocumentoFirmado.de(documento);
   }
@@ -112,9 +111,8 @@ public class AnulacionDeDocumentos {
         anulaciones.stream()
             .filter(a -> a.codigo().equals(codigo))
             .findFirst()
-            .orElseThrow(
-                () ->
-                    new ReglaDeNegocioException(HttpStatus.CONFLICT, "transaccion", SIN_ANULACION));
+            .orElseThrow(() ->
+                new ReglaDeNegocioException(HttpStatus.CONFLICT, "transaccion", SIN_ANULACION));
     if (!anulacion.firmante().equalsIgnoreCase(String.valueOf(director.getBilletera()))) {
       throw new ReglaDeNegocioException(
           HttpStatus.CONFLICT, "transaccion", FirmaDeDocumentos.OTRA_BILLETERA);
@@ -165,10 +163,9 @@ public class AnulacionDeDocumentos {
     Documento reemplazo =
         documentos
             .reemisionVigente(documento.getId())
-            .filter(
-                r ->
-                    r.getEstado() == EstadoDocumento.PROCESANDO_FIRMA
-                        || r.getEstado() == EstadoDocumento.FIRMADO)
+            .filter(r ->
+                r.getEstado() == EstadoDocumento.PROCESANDO_FIRMA
+                    || r.getEstado() == EstadoDocumento.FIRMADO)
             .orElse(null);
     String porDefecto =
         reemplazo == null

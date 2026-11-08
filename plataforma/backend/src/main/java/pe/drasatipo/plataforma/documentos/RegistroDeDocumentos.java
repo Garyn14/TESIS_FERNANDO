@@ -284,11 +284,10 @@ public class RegistroDeDocumentos {
     }
     documentos
         .reemisionVigente(original.getId())
-        .ifPresent(
-            r -> {
-              throw new ReglaDeNegocioException(
-                  HttpStatus.CONFLICT, null, REEMISION_EN_CURSO.formatted(r.getCodigo()));
-            });
+        .ifPresent(r -> {
+          throw new ReglaDeNegocioException(
+              HttpStatus.CONFLICT, null, REEMISION_EN_CURSO.formatted(r.getCodigo()));
+        });
     return original;
   }
 

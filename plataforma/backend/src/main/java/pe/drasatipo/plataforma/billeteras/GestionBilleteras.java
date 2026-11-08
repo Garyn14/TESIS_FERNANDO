@@ -88,17 +88,16 @@ public class GestionBilleteras {
     }
     if (aviso != null) {
       // Si falló a mitad de la lista, ningún estado se muestra como cierto.
-      cuentas.replaceAll(
-          c ->
-              new CuentaConBilletera(
-                  c.id(),
-                  c.nombreUsuario(),
-                  c.nombreCompleto(),
-                  c.rol(),
-                  c.rolNombre(),
-                  c.activo(),
-                  c.billetera(),
-                  null));
+      cuentas.replaceAll(c ->
+          new CuentaConBilletera(
+              c.id(),
+              c.nombreUsuario(),
+              c.nombreCompleto(),
+              c.rol(),
+              c.rolNombre(),
+              c.activo(),
+              c.billetera(),
+              null));
     }
     return new BilleterasRespuesta(aviso == null, aviso, cuentas);
   }
@@ -164,10 +163,9 @@ public class GestionBilleteras {
       cambio =
           contrato
               .cambioDeRolEn(transaccion)
-              .orElseThrow(
-                  () ->
-                      new ReglaDeNegocioException(
-                          HttpStatus.CONFLICT, "transaccion", TRANSACCION_INVALIDA));
+              .orElseThrow(() ->
+                  new ReglaDeNegocioException(
+                      HttpStatus.CONFLICT, "transaccion", TRANSACCION_INVALIDA));
       firmante = contrato.esFirmante(cuenta.getBilletera());
     } catch (BlockchainNoDisponibleException e) {
       throw new ReglaDeNegocioException(HttpStatus.SERVICE_UNAVAILABLE, null, e.getMessage());

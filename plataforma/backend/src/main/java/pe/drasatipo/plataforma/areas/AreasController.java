@@ -57,12 +57,9 @@ public class AreasController {
     return alcance
         .tipoPermitido(cuenta(sesion), codigo)
         .map(TipoDocumentoRespuesta::de)
-        .orElseThrow(
-            () ->
-                new ReglaDeNegocioException(
-                    HttpStatus.FORBIDDEN,
-                    null,
-                    "Este tipo de documento no está asignado a su área."));
+        .orElseThrow(() ->
+            new ReglaDeNegocioException(
+                HttpStatus.FORBIDDEN, null, "Este tipo de documento no está asignado a su área."));
   }
 
   private Usuario cuenta(Authentication sesion) {

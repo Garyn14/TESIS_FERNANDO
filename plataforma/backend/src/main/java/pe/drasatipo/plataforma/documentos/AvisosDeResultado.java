@@ -130,26 +130,24 @@ class AvisosDeResultado {
     }
     porLote
         .values()
-        .forEach(
-            delLote -> {
-              Documento d = delLote.getFirst();
-              avisos.aArea(
-                  d.getArea().getId(),
-                  tipo,
-                  "%s: %s. Motivo: %s"
-                      .formatted(lote(d.getLote()), certificados(delLote.size(), palabra), motivo),
-                  enlace(d),
-                  null);
-              if (!observar) {
-                avisos.aConsultaInterna(
-                    tipo,
-                    "Rechazado: %s: %s. Motivo: %s"
-                        .formatted(
-                            lote(d.getLote()), certificados(delLote.size(), palabra), motivo),
-                    enlaceDeConsulta(d, "RECHAZADOS"),
-                    null);
-              }
-            });
+        .forEach(delLote -> {
+          Documento d = delLote.getFirst();
+          avisos.aArea(
+              d.getArea().getId(),
+              tipo,
+              "%s: %s. Motivo: %s"
+                  .formatted(lote(d.getLote()), certificados(delLote.size(), palabra), motivo),
+              enlace(d),
+              null);
+          if (!observar) {
+            avisos.aConsultaInterna(
+                tipo,
+                "Rechazado: %s: %s. Motivo: %s"
+                    .formatted(lote(d.getLote()), certificados(delLote.size(), palabra), motivo),
+                enlaceDeConsulta(d, "RECHAZADOS"),
+                null);
+          }
+        });
   }
 
   /** Un documento quedó Anulado en la blockchain, con su motivo. */

@@ -41,11 +41,10 @@ class VerificacionPorCodigoTest {
     // Un URI ya codificado: get(String) volvería a codificar los %20 de los espacios.
     return mvc.perform(
         get(java.net.URI.create(ruta))
-            .with(
-                pedido -> {
-                  pedido.setRemoteAddr(ip);
-                  return pedido;
-                }));
+            .with(pedido -> {
+              pedido.setRemoteAddr(ip);
+              return pedido;
+            }));
   }
 
   /** Una IP nueva en cada consulta, para no tocar el límite. */

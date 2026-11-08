@@ -135,13 +135,12 @@ class AvisosAlAreaTest {
     for (MockHttpSession persona : List.of(area, companera)) {
       assertThat(avisosDe(persona, enlace))
           .singleElement()
-          .satisfies(
-              a -> {
-                assertThat(a.get("tipo")).isEqualTo("FIRMADO");
-                assertThat(a.get("texto"))
-                    .isEqualTo("Firmado: Certificado de Trabajo – Lucía Paredes Quinto");
-                assertThat(a.get("leido")).isEqualTo(false);
-              });
+          .satisfies(a -> {
+            assertThat(a.get("tipo")).isEqualTo("FIRMADO");
+            assertThat(a.get("texto"))
+                .isEqualTo("Firmado: Certificado de Trabajo – Lucía Paredes Quinto");
+            assertThat(a.get("leido")).isEqualTo(false);
+          });
     }
     for (MockHttpSession nadie : List.of(otraArea, mesaDePartes, director.sesion())) {
       assertThat(
@@ -234,11 +233,10 @@ class AvisosAlAreaTest {
 
     assertThat(avisosDe(area, enlace))
         .singleElement()
-        .satisfies(
-            a -> {
-              assertThat(a.get("texto")).isEqualTo("Lote X: 3 certificados firmados");
-              assertThat(a.get("leido")).isEqualTo(false);
-            });
+        .satisfies(a -> {
+          assertThat(a.get("texto")).isEqualTo("Lote X: 3 certificados firmados");
+          assertThat(a.get("leido")).isEqualTo(false);
+        });
   }
 
   @Test

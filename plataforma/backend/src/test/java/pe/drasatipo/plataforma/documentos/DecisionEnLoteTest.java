@@ -58,10 +58,9 @@ class DecisionEnLoteTest {
   private LoteRevisado lote(MockHttpSession director, int cantidad) throws Exception {
     String filas =
         IntStream.range(0, cantidad)
-            .mapToObj(
-                i ->
-                    "{\"nombres\": \"Juan\", \"apellidos\": \"Pari\", \"dni\": \"%d\"}"
-                        .formatted(++dni))
+            .mapToObj(i ->
+                "{\"nombres\": \"Juan\", \"apellidos\": \"Pari\", \"dni\": \"%d\"}"
+                    .formatted(++dni))
             .collect(Collectors.joining(","));
     String numero =
         JsonPath.read(

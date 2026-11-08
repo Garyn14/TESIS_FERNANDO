@@ -27,9 +27,8 @@ final class CambiosDeDatos {
     anotar(cambios, "Nombres", antes.getNombres(), beneficiario.nombres());
     anotar(cambios, "Apellidos", antes.getApellidos(), beneficiario.apellidos());
     anotar(cambios, "DNI", antes.getDni(), beneficiario.dni());
-    etiquetas.forEach(
-        (clave, etiqueta) ->
-            anotar(cambios, etiqueta, antes.getDatos().get(clave), datos.get(clave)));
+    etiquetas.forEach((clave, etiqueta) ->
+        anotar(cambios, etiqueta, antes.getDatos().get(clave), datos.get(clave)));
     return cambios;
   }
 

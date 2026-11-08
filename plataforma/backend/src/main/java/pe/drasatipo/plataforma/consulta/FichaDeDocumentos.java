@@ -29,10 +29,9 @@ public class FichaDeDocumentos {
     Documento documento =
         documentos
             .findByCodigo(codigo)
-            .orElseThrow(
-                () ->
-                    new ReglaDeNegocioException(
-                        HttpStatus.NOT_FOUND, null, NO_ENCONTRADO.formatted(codigo)));
+            .orElseThrow(() ->
+                new ReglaDeNegocioException(
+                    HttpStatus.NOT_FOUND, null, NO_ENCONTRADO.formatted(codigo)));
     // HU30: la reemisión vigente (no rechazada) está en revisión o ya lo reemplazó.
     Documento reemision = documentos.reemisionVigente(documento.getId()).orElse(null);
     boolean reemplazado =

@@ -113,10 +113,9 @@ public class FirmaDeDocumentos {
       firma =
           contrato
               .registroDeFirmaEn(transaccion)
-              .orElseThrow(
-                  () ->
-                      new ReglaDeNegocioException(
-                          HttpStatus.CONFLICT, "transaccion", TRANSACCION_INVALIDA));
+              .orElseThrow(() ->
+                  new ReglaDeNegocioException(
+                      HttpStatus.CONFLICT, "transaccion", TRANSACCION_INVALIDA));
     } catch (BlockchainNoDisponibleException e) {
       throw new ReglaDeNegocioException(HttpStatus.SERVICE_UNAVAILABLE, null, e.getMessage());
     }

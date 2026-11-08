@@ -58,11 +58,11 @@ final class RegistroSolicitudDePartePrueba {
   /** Certificado de Trabajo válido, del Área de Administración. */
   static String trabajo(String expediente) {
     return """
-        {"tipo": "CERTIFICADO_TRABAJO", "numeroExpediente": "%s", "nombres": "  Lucía ",
-         "apellidos": "Paredes   Quinto", "dni": "45829364",
-         "datos": {"cargo": "asistente administrativa", "fechaInicio": "2025-01-02",
-                   "fechaFin": "2026-09-30"}}
-        """
+    {"tipo": "CERTIFICADO_TRABAJO", "numeroExpediente": "%s", "nombres": "  Lucía ",
+     "apellidos": "Paredes   Quinto", "dni": "45829364",
+     "datos": {"cargo": "asistente administrativa", "fechaInicio": "2025-01-02",
+               "fechaFin": "2026-09-30"}}
+    """
         .formatted(expediente);
   }
 
