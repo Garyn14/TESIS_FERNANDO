@@ -16,6 +16,10 @@ updates:
     directory: /plataforma/frontend
     schedule: { interval: weekly, day: monday, timezone: America/Lima }
     open-pull-requests-limit: 3
+    ignore:
+      # La plataforma corre en Node 22 (CI y levantar.sh): los tipos de Node siguen esa versión.
+      - dependency-name: "@types/node"
+        versions: [">=23"]
     groups:
       menores: { update-types: [minor, patch] }
 
@@ -23,6 +27,10 @@ updates:
     directory: /plataforma/portal
     schedule: { interval: weekly, day: monday, timezone: America/Lima }
     open-pull-requests-limit: 3
+    ignore:
+      # La plataforma corre en Node 22 (CI y levantar.sh): los tipos de Node siguen esa versión.
+      - dependency-name: "@types/node"
+        versions: [">=23"]
     groups:
       menores: { update-types: [minor, patch] }
 
@@ -30,6 +38,10 @@ updates:
     directory: /plataforma/contracts
     schedule: { interval: weekly, day: monday, timezone: America/Lima }
     open-pull-requests-limit: 3
+    ignore:
+      # La plataforma corre en Node 22 (CI y levantar.sh): los tipos de Node siguen esa versión.
+      - dependency-name: "@types/node"
+        versions: [">=23"]
     groups:
       menores: { update-types: [minor, patch] }
 
@@ -37,6 +49,10 @@ updates:
     directory: /plataforma/e2e
     schedule: { interval: weekly, day: monday, timezone: America/Lima }
     open-pull-requests-limit: 2
+    ignore:
+      # La plataforma corre en Node 22 (CI y levantar.sh): los tipos de Node siguen esa versión.
+      - dependency-name: "@types/node"
+        versions: [">=23"]
     groups:
       menores: { update-types: [minor, patch] }
 

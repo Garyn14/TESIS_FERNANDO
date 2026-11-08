@@ -169,21 +169,20 @@ public class RegistroDeLotes {
         .forEach(d -> reemisiones.put(d.getReemplazaA().getId(), d));
     List<LoteRespuesta.DocumentoDelLote> delLote =
         certificados.stream()
-            .map(
-                d -> {
-                  DocumentoRespuesta vinculos =
-                      DocumentoRespuesta.de(d, null, reemisiones.get(d.getId()));
-                  return new LoteRespuesta.DocumentoDelLote(
-                      d.getCodigo(),
-                      d.getNombres(),
-                      d.getApellidos(),
-                      d.getDni(),
-                      d.getEstado(),
-                      vinculos.motivo(),
-                      vinculos.reemision(),
-                      vinculos.reemisionEnCurso(),
-                      vinculos.reemplazadoPor());
-                })
+            .map(d -> {
+              DocumentoRespuesta vinculos =
+                  DocumentoRespuesta.de(d, null, reemisiones.get(d.getId()));
+              return new LoteRespuesta.DocumentoDelLote(
+                  d.getCodigo(),
+                  d.getNombres(),
+                  d.getApellidos(),
+                  d.getDni(),
+                  d.getEstado(),
+                  vinculos.motivo(),
+                  vinculos.reemision(),
+                  vinculos.reemisionEnCurso(),
+                  vinculos.reemplazadoPor());
+            })
             .toList();
     LoteRespuesta.DocumentoDelLote primero = delLote.getFirst();
     return new LoteRespuesta(
@@ -226,10 +225,9 @@ public class RegistroDeLotes {
     TipoDocumento tipo =
         alcance
             .tipoPermitido(cuenta, codigo)
-            .orElseThrow(
-                () ->
-                    new ReglaDeNegocioException(
-                        HttpStatus.FORBIDDEN, null, RegistroDeDocumentos.TIPO_NO_ASIGNADO));
+            .orElseThrow(() ->
+                new ReglaDeNegocioException(
+                    HttpStatus.FORBIDDEN, null, RegistroDeDocumentos.TIPO_NO_ASIGNADO));
     if (!"OFICIO".equals(tipo.getOrigen())) {
       throw new ReglaDeNegocioException(
           HttpStatus.BAD_REQUEST,

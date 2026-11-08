@@ -136,14 +136,13 @@ class AvisosAMesaDePartesTest {
     for (MockHttpSession persona : List.of(mesa, otraMesa)) {
       assertThat(avisosDe(persona, "buscar/" + codigo))
           .singleElement()
-          .satisfies(
-              a -> {
-                assertThat(a.get("tipo")).isEqualTo("LISTO_PARA_ENTREGAR");
-                assertThat(a.get("texto"))
-                    .isEqualTo(
-                        "Listo para entregar: Certificado de Trabajo – Lucía Paredes Quinto"
-                            + " (expediente %s)".formatted(expediente(codigo)));
-              });
+          .satisfies(a -> {
+            assertThat(a.get("tipo")).isEqualTo("LISTO_PARA_ENTREGAR");
+            assertThat(a.get("texto"))
+                .isEqualTo(
+                    "Listo para entregar: Certificado de Trabajo – Lucía Paredes Quinto"
+                        + " (expediente %s)".formatted(expediente(codigo)));
+          });
     }
     // Ni al área ni al Director.
     for (MockHttpSession nadie : List.of(area, director.sesion())) {
@@ -171,16 +170,15 @@ class AvisosAMesaDePartesTest {
 
     assertThat(avisosDe(mesa, "buscar/" + rechazado))
         .singleElement()
-        .satisfies(
-            a -> {
-              assertThat(a.get("tipo")).isEqualTo("RECHAZADO");
-              assertThat(a.get("texto"))
-                  .isEqualTo(
-                      "Rechazado: Certificado de Trabajo – Lucía Paredes Quinto (expediente %s)."
-                              .formatted(expediente(rechazado))
-                          + " Motivo: "
-                          + MOTIVO);
-            });
+        .satisfies(a -> {
+          assertThat(a.get("tipo")).isEqualTo("RECHAZADO");
+          assertThat(a.get("texto"))
+              .isEqualTo(
+                  "Rechazado: Certificado de Trabajo – Lucía Paredes Quinto (expediente %s)."
+                          .formatted(expediente(rechazado))
+                      + " Motivo: "
+                      + MOTIVO);
+        });
     assertThat(avisosDe(mesa, "buscar/" + observado)).isEmpty();
   }
 

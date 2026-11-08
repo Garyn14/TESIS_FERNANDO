@@ -254,10 +254,9 @@ class PreparacionDeFirmaTest {
     MockHttpSession director = sesion("DIRECTOR", null);
     String filas =
         IntStream.range(0, 3)
-            .mapToObj(
-                i ->
-                    "{\"nombres\": \"Rosa\", \"apellidos\": \"Inga\", \"dni\": \"%d\"}"
-                        .formatted(++dni))
+            .mapToObj(i ->
+                "{\"nombres\": \"Rosa\", \"apellidos\": \"Inga\", \"dni\": \"%d\"}"
+                    .formatted(++dni))
             .collect(Collectors.joining(","));
     String numero =
         JsonPath.read(
@@ -325,12 +324,11 @@ class PreparacionDeFirmaTest {
     List<java.util.concurrent.Future<Integer>> envios = new java.util.ArrayList<>();
     for (int i = 0; i < 4; i++) {
       envios.add(
-          hilos.submit(
-              () -> {
-                salida.await();
-                String respuesta = cuerpo(preparar(director, codigo).andExpect(status().isOk()));
-                return JsonPath.<Integer>read(respuesta, "$.preparados.length()");
-              }));
+          hilos.submit(() -> {
+            salida.await();
+            String respuesta = cuerpo(preparar(director, codigo).andExpect(status().isOk()));
+            return JsonPath.<Integer>read(respuesta, "$.preparados.length()");
+          }));
     }
     salida.countDown();
     int preparados = 0;
@@ -368,10 +366,9 @@ class PreparacionDeFirmaTest {
     MockHttpSession director = sesion("DIRECTOR", null);
     String filas =
         IntStream.range(0, 2)
-            .mapToObj(
-                i ->
-                    "{\"nombres\": \"Ana\", \"apellidos\": \"Rojas\", \"dni\": \"%d\"}"
-                        .formatted(++dni))
+            .mapToObj(i ->
+                "{\"nombres\": \"Ana\", \"apellidos\": \"Rojas\", \"dni\": \"%d\"}"
+                    .formatted(++dni))
             .collect(Collectors.joining(","));
     String numero =
         JsonPath.read(

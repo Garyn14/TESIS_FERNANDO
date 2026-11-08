@@ -77,19 +77,18 @@ public class RevisionDelDirector {
       }
     }
     return orden.stream()
-        .map(
-            elemento -> {
-              if (elemento instanceof Documento documento) {
-                return ElementoPorRevisar.de(documento);
-              }
-              List<Documento> delLote = porLote.get((Long) elemento);
-              return ElementoPorRevisar.deLote(
-                  delLote.getFirst(),
-                  delLote.size(),
-                  delLote.stream().allMatch(Documento::isRevisado),
-                  delLote.stream().anyMatch(Documento::isCorregido),
-                  delLote.stream().anyMatch(Documento::isReemision));
-            })
+        .map(elemento -> {
+          if (elemento instanceof Documento documento) {
+            return ElementoPorRevisar.de(documento);
+          }
+          List<Documento> delLote = porLote.get((Long) elemento);
+          return ElementoPorRevisar.deLote(
+              delLote.getFirst(),
+              delLote.size(),
+              delLote.stream().allMatch(Documento::isRevisado),
+              delLote.stream().anyMatch(Documento::isCorregido),
+              delLote.stream().anyMatch(Documento::isReemision));
+        })
         .toList();
   }
 

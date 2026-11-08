@@ -111,22 +111,19 @@ public class PreparacionDeFirma {
           .forEach(seleccion::add);
     }
     if (numerosDeLote != null) {
-      transaccion.executeWithoutResult(
-          estado -> {
-            for (String numero : numerosDeLote) {
-              Lote lote =
-                  lotes
-                      .findByNumero(numero == null ? "" : numero.trim())
-                      .orElseThrow(
-                          () ->
-                              new ReglaDeNegocioException(
-                                  HttpStatus.NOT_FOUND, "lotes", LOTE_NO_EXISTE));
-              documentos.findByLoteIdOrderById(lote.getId()).stream()
-                  .filter(d -> d.getEstado() == EstadoDocumento.PENDIENTE)
-                  .map(Documento::getCodigo)
-                  .forEach(seleccion::add);
-            }
-          });
+      transaccion.executeWithoutResult(estado -> {
+        for (String numero : numerosDeLote) {
+          Lote lote =
+              lotes
+                  .findByNumero(numero == null ? "" : numero.trim())
+                  .orElseThrow(() ->
+                      new ReglaDeNegocioException(HttpStatus.NOT_FOUND, "lotes", LOTE_NO_EXISTE));
+          documentos.findByLoteIdOrderById(lote.getId()).stream()
+              .filter(d -> d.getEstado() == EstadoDocumento.PENDIENTE)
+              .map(Documento::getCodigo)
+              .forEach(seleccion::add);
+        }
+      });
     }
     if (seleccion.isEmpty()) {
       throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "codigos", SIN_CODIGOS);
@@ -162,30 +159,28 @@ public class PreparacionDeFirma {
         cid = almacen.guardar(codigo + ".pdf", iniciado.pdf().contenido());
       } catch (RuntimeException e) {
         LOG.error("No se pudo guardar en IPFS el PDF del documento {}", codigo, e);
-        transaccion.executeWithoutResult(
-            estado -> {
-              documentos.devolverAPendiente(iniciado.id());
-              historial.save(
-                  new HistorialDocumento(
-                      iniciado.id(),
-                      EventoDocumento.ERROR_ALMACENAMIENTO,
-                      "No se pudo guardar el PDF en el almacenamiento. Volvió a Pendiente.",
-                      director.getId()));
-            });
+        transaccion.executeWithoutResult(estado -> {
+          documentos.devolverAPendiente(iniciado.id());
+          historial.save(
+              new HistorialDocumento(
+                  iniciado.id(),
+                  EventoDocumento.ERROR_ALMACENAMIENTO,
+                  "No se pudo guardar el PDF en el almacenamiento. Volvió a Pendiente.",
+                  director.getId()));
+        });
         noPreparados.add(new NoPreparado(codigo, FALLO_ALMACENAMIENTO));
         continue;
       }
-      transaccion.executeWithoutResult(
-          estado -> {
-            documentos.guardarPdf(
-                iniciado.id(), iniciado.pdf().sha256(), cid, fechaEmision, OffsetDateTime.now());
-            historial.save(
-                new HistorialDocumento(
-                    iniciado.id(),
-                    EventoDocumento.PREPARADO,
-                    "Firma iniciada por " + director.getNombreCompleto(),
-                    director.getId()));
-          });
+      transaccion.executeWithoutResult(estado -> {
+        documentos.guardarPdf(
+            iniciado.id(), iniciado.pdf().sha256(), cid, fechaEmision, OffsetDateTime.now());
+        historial.save(
+            new HistorialDocumento(
+                iniciado.id(),
+                EventoDocumento.PREPARADO,
+                "Firma iniciada por " + director.getNombreCompleto(),
+                director.getId()));
+      });
       LOG.info("PDF del documento {} guardado en IPFS: {}", codigo, cid);
       preparados.add(
           new Preparado(

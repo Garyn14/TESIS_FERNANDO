@@ -49,17 +49,16 @@ public class SeguridadConfig {
       CsrfTokenRepository tokensCsrf,
       SeguridadDeSesion seguridadDeSesion)
       throws Exception {
-    http.authorizeHttpRequests(
-            auth ->
-                auth.requestMatchers("/api/salud", "/actuator/health")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/sesion")
-                    .permitAll()
-                    // HU19–HU21 (RF37): el portal de verificación es público, sin sesión.
-                    .requestMatchers(HttpMethod.GET, "/api/verificacion/**")
-                    .permitAll()
-                    .anyRequest()
-                    .authenticated())
+    http.authorizeHttpRequests(auth ->
+            auth.requestMatchers("/api/salud", "/actuator/health")
+                .permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/sesion")
+                .permitAll()
+                // HU19–HU21 (RF37): el portal de verificación es público, sin sesión.
+                .requestMatchers(HttpMethod.GET, "/api/verificacion/**")
+                .permitAll()
+                .anyRequest()
+                .authenticated())
         .securityContext(c -> c.securityContextRepository(contextos))
         .csrf(c -> c.spa().csrfTokenRepository(tokensCsrf))
         // HU19: el portal muestra el PDF verificado en un marco de su propio origen.

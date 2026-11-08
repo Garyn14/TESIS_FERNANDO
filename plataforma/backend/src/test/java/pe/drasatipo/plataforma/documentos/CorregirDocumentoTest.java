@@ -83,9 +83,9 @@ class CorregirDocumentoTest {
 
   private static String correccion(String expediente, String apellidos, String dni, String cargo) {
     return """
-        {"numeroExpediente": "%s", "nombres": "Lucía", "apellidos": "%s", "dni": "%s",
-         "datos": {"cargo": "%s", "fechaInicio": "2025-01-02", "fechaFin": "2026-09-30"}}
-        """
+    {"numeroExpediente": "%s", "nombres": "Lucía", "apellidos": "%s", "dni": "%s",
+     "datos": {"cargo": "%s", "fechaInicio": "2025-01-02", "fechaFin": "2026-09-30"}}
+    """
         .formatted(expediente, apellidos, dni, cargo);
   }
 

@@ -22,9 +22,8 @@ public class SeguridadDeSesion {
   public void aplicar(HttpSecurity http) throws Exception {
     http.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
         .addFilterBefore(new CuentaEnSesionFilter(usuarios, roles), AuthorizationFilter.class)
-        .exceptionHandling(
-            e ->
-                e.authenticationEntryPoint(RespuestasDeSeguridad.sinSesion())
-                    .accessDeniedHandler(RespuestasDeSeguridad.sinPermiso()));
+        .exceptionHandling(e ->
+            e.authenticationEntryPoint(RespuestasDeSeguridad.sinSesion())
+                .accessDeniedHandler(RespuestasDeSeguridad.sinPermiso()));
   }
 }

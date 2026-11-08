@@ -125,25 +125,24 @@ public class SincronizacionConBlockchain {
       List<RegistroDeFirma> registros = contrato.registrosEntre(desde, hasta);
       List<AnulacionRegistrada> anulaciones = contrato.anulacionesEntre(desde, hasta);
       Integer aplicados =
-          transaccion.execute(
-              estado -> {
-                int cuenta = 0;
-                for (RegistroDeFirma registro : registros) {
-                  for (DocumentoRegistrado documento : registro.documentos()) {
-                    if (aplicarSiFalta(registro, documento)) {
-                      cuenta++;
-                    }
-                  }
+          transaccion.execute(estado -> {
+            int cuenta = 0;
+            for (RegistroDeFirma registro : registros) {
+              for (DocumentoRegistrado documento : registro.documentos()) {
+                if (aplicarSiFalta(registro, documento)) {
+                  cuenta++;
                 }
-                // HU29: las anulaciones se aplican después de las firmas del mismo tramo.
-                for (AnulacionRegistrada anulacion : anulaciones) {
-                  if (anulacionDeDocumentos.aplicar(anulacion, null)) {
-                    anulados.incrementAndGet();
-                  }
-                }
-                guardarUltimoBloque(direccion, hasta);
-                return cuenta;
-              });
+              }
+            }
+            // HU29: las anulaciones se aplican después de las firmas del mismo tramo.
+            for (AnulacionRegistrada anulacion : anulaciones) {
+              if (anulacionDeDocumentos.aplicar(anulacion, null)) {
+                anulados.incrementAndGet();
+              }
+            }
+            guardarUltimoBloque(direccion, hasta);
+            return cuenta;
+          });
       firmados += aplicados == null ? 0 : aplicados;
       ultimo = hasta;
     }
@@ -158,21 +157,20 @@ public class SincronizacionConBlockchain {
         continue;
       }
       Boolean devuelto =
-          transaccion.execute(
-              estado -> {
-                if (documentos.devolverAPendiente(detenido.getId()) == 0) {
-                  return false;
-                }
-                historial.save(
-                    new HistorialDocumento(
-                        detenido.getId(),
-                        EventoDocumento.FIRMA_CANCELADA,
-                        "La firma no se completó en el plazo de %d minutos y no quedó registrada en"
-                                .formatted(plazo.toMinutes())
-                            + " la blockchain (sincronización). Volvió a Pendiente.",
-                        null));
-                return true;
-              });
+          transaccion.execute(estado -> {
+            if (documentos.devolverAPendiente(detenido.getId()) == 0) {
+              return false;
+            }
+            historial.save(
+                new HistorialDocumento(
+                    detenido.getId(),
+                    EventoDocumento.FIRMA_CANCELADA,
+                    "La firma no se completó en el plazo de %d minutos y no quedó registrada en"
+                            .formatted(plazo.toMinutes())
+                        + " la blockchain (sincronización). Volvió a Pendiente.",
+                    null));
+            return true;
+          });
       if (Boolean.TRUE.equals(devuelto)) {
         LOG.warn(
             "{} volvió a Pendiente: su firma no se completó en el plazo", detenido.getCodigo());

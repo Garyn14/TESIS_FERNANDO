@@ -146,13 +146,12 @@ class CrearCuentaTest {
 
   @Test
   void laBaseDeDatosImpideDuplicadosConOtrasMayusculas() {
-    org.assertj.core.api.Assertions.assertThatThrownBy(
-            () ->
-                jdbc.update(
-                    """
-                    INSERT INTO usuario (nombre_usuario, nombre_completo, contrasena_hash, rol_id)
-                    SELECT 'ADMIN.PRUEBA', 'Duplicado', 'x', id FROM rol WHERE codigo = 'DIRECTOR'
-                    """))
+    org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+            jdbc.update(
+                """
+                INSERT INTO usuario (nombre_usuario, nombre_completo, contrasena_hash, rol_id)
+                SELECT 'ADMIN.PRUEBA', 'Duplicado', 'x', id FROM rol WHERE codigo = 'DIRECTOR'
+                """))
         .hasMessageContaining("usuario_nombre_usuario_minusculas_uk");
   }
 

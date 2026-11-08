@@ -173,15 +173,14 @@ class BandejaPorRevisarTest {
     List<java.util.concurrent.Future<Integer>> envios = new java.util.ArrayList<>();
     for (int i = 0; i < 4; i++) {
       envios.add(
-          hilos.submit(
-              () -> {
-                salida.await();
-                return mvc.perform(
-                        post("/api/revision/documentos/" + codigo).with(csrf()).session(director))
-                    .andReturn()
-                    .getResponse()
-                    .getStatus();
-              }));
+          hilos.submit(() -> {
+            salida.await();
+            return mvc.perform(
+                    post("/api/revision/documentos/" + codigo).with(csrf()).session(director))
+                .andReturn()
+                .getResponse()
+                .getStatus();
+          }));
     }
     salida.countDown();
     for (java.util.concurrent.Future<Integer> envio : envios) {

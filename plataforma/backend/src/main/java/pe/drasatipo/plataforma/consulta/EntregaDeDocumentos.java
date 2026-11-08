@@ -80,10 +80,9 @@ public class EntregaDeDocumentos {
   private Documento documento(String codigo) {
     return documentos
         .findByCodigo(codigo)
-        .orElseThrow(
-            () ->
-                new ReglaDeNegocioException(
-                    HttpStatus.NOT_FOUND, null, FichaDeDocumentos.NO_ENCONTRADO.formatted(codigo)));
+        .orElseThrow(() ->
+            new ReglaDeNegocioException(
+                HttpStatus.NOT_FOUND, null, FichaDeDocumentos.NO_ENCONTRADO.formatted(codigo)));
   }
 
   /** El PDF de IPFS, solo si su hash es el registrado en el contrato y no está anulado. */

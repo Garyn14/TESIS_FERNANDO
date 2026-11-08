@@ -216,10 +216,9 @@ public class GestionUsuarios {
   private Rol rolValido(String codigo) {
     return roles
         .findByCodigo(codigo)
-        .orElseThrow(
-            () ->
-                new ReglaDeNegocioException(
-                    HttpStatus.BAD_REQUEST, "rol", "Seleccione un rol válido."));
+        .orElseThrow(() ->
+            new ReglaDeNegocioException(
+                HttpStatus.BAD_REQUEST, "rol", "Seleccione un rol válido."));
   }
 
   private Usuario cuenta(Long id) {

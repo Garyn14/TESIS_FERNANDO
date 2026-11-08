@@ -264,12 +264,11 @@ class InicioSesionTest {
   void avisaQueLaSesionExpiro() throws Exception {
     mvc.perform(
             get("/api/sesion")
-                .with(
-                    s -> {
-                      s.setRequestedSessionId("sesion-vencida");
-                      s.setRequestedSessionIdValid(false);
-                      return s;
-                    }))
+                .with(s -> {
+                  s.setRequestedSessionId("sesion-vencida");
+                  s.setRequestedSessionIdValid(false);
+                  return s;
+                }))
         .andExpect(status().isUnauthorized())
         .andExpect(
             jsonPath("$.mensaje")

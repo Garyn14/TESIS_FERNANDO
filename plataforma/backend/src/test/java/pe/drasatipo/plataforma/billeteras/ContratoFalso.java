@@ -201,14 +201,12 @@ public class ContratoFalso implements ContratoRegistro {
   public Optional<pe.drasatipo.plataforma.blockchain.RegistroEnContrato> registroDe(String codigo) {
     revisar();
     return firmas.values().stream()
-        .flatMap(
-            f ->
-                f.documentos().stream()
-                    .filter(d -> d.codigo().equals(codigo))
-                    .map(
-                        d ->
-                            new pe.drasatipo.plataforma.blockchain.RegistroEnContrato(
-                                d.hashPdf(), d.dniHmac(), d.firmante(), f.fecha())))
+        .flatMap(f ->
+            f.documentos().stream()
+                .filter(d -> d.codigo().equals(codigo))
+                .map(d ->
+                    new pe.drasatipo.plataforma.blockchain.RegistroEnContrato(
+                        d.hashPdf(), d.dniHmac(), d.firmante(), f.fecha())))
         .findFirst();
   }
 

@@ -62,8 +62,8 @@ class EmisionPorListaTest {
 
   private static String lote(String evento, String... filas) {
     return """
-        {"tipo": "CERTIFICADO_CAPACITACION", "datos": %s, "beneficiarios": [%s]}
-        """
+    {"tipo": "CERTIFICADO_CAPACITACION", "datos": %s, "beneficiarios": [%s]}
+    """
         .formatted(evento, String.join(",", filas));
   }
 

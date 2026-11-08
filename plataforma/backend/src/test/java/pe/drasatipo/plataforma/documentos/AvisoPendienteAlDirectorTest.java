@@ -98,15 +98,14 @@ class AvisoPendienteAlDirectorTest {
     for (MockHttpSession d : List.of(director, otroDirector)) {
       assertThat(con(avisos(d), "por-revisar/" + codigo))
           .singleElement()
-          .satisfies(
-              a -> {
-                assertThat(a.get("tipo")).isEqualTo("PENDIENTE_REVISION");
-                assertThat(a.get("texto"))
-                    .isEqualTo(
-                        "Nuevo documento pendiente: Certificado de Trabajo – Lucía Paredes Quinto");
-                assertThat(a.get("leido")).isEqualTo(false);
-                assertThat(a.get("creadoEn")).isNotNull();
-              });
+          .satisfies(a -> {
+            assertThat(a.get("tipo")).isEqualTo("PENDIENTE_REVISION");
+            assertThat(a.get("texto"))
+                .isEqualTo(
+                    "Nuevo documento pendiente: Certificado de Trabajo – Lucía Paredes Quinto");
+            assertThat(a.get("leido")).isEqualTo(false);
+            assertThat(a.get("creadoEn")).isNotNull();
+          });
     }
     assertThat(sinLeer(director)).isEqualTo(antes + 1);
     // Ni al director inactivo ni al área que lo envió.

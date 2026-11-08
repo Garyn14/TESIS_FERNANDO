@@ -61,11 +61,10 @@ class VerificacionDeAutenticidadTest {
     int n = visitantes.incrementAndGet();
     return mvc.perform(
         get("/api/verificacion/" + token)
-            .with(
-                pedido -> {
-                  pedido.setRemoteAddr("10.21.%d.%d".formatted(n / 250, n % 250 + 1));
-                  return pedido;
-                }));
+            .with(pedido -> {
+              pedido.setRemoteAddr("10.21.%d.%d".formatted(n / 250, n % 250 + 1));
+              return pedido;
+            }));
   }
 
   private static String cuerpo(ResultActions r) throws Exception {

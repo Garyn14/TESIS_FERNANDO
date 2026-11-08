@@ -95,10 +95,8 @@ class BuscarDocumentosTest {
         String.join(
             ",",
             dnisDelLote.stream()
-                .map(
-                    d ->
-                        "{\"nombres\": \"Ana\", \"apellidos\": \"Soto\", \"dni\": \"%s\"}"
-                            .formatted(d))
+                .map(d ->
+                    "{\"nombres\": \"Ana\", \"apellidos\": \"Soto\", \"dni\": \"%s\"}".formatted(d))
                 .toList());
     String numero =
         JsonPath.read(
