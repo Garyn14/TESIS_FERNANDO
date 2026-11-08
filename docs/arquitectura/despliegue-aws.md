@@ -18,13 +18,16 @@ Nada de esta guía necesita instalar programas ni guardar claves de AWS: todo se
 
 ## 1. Proteger la cuenta y revisar los créditos
 
-1. **MFA en la cuenta raíz** (la del correo con el que se creó la cuenta):
-   1. Entre a la consola con la cuenta raíz.
-   2. Vaya al menú del nombre de la cuenta (arriba a la derecha) → **Security credentials**.
-   3. En **Multi-factor authentication (MFA)**, elija **Assign MFA device**, con una aplicación como Google Authenticator o Microsoft Authenticator, o con una llave física.
-   4. Siga los pasos: escanear el código QR e ingresar dos códigos seguidos.
-2. **Créditos:** en **Billing and Cost Management → Credits** se ven el saldo restante, a qué servicios se aplica y la **fecha de vencimiento**. Hoy son $100, que vencen el próximo año.
-3. **Región:** arriba a la derecha, elija **US East (N. Virginia) us-east-1**. Todo QA vive ahí.
+1. **MFA en la cuenta raíz** (la del correo con el que se creó la cuenta). Las cuentas del plan gratuito no muestran **Security credentials** en el menú del nombre: se llega por IAM.
+   1. En el buscador de arriba, escriba **IAM** y abra el servicio. Si aparece la recomendación **Add MFA for root user**, pulse **Add MFA**. Si no aparece, abra directamente https://console.aws.amazon.com/iam/home#/security_credentials
+   2. En **Multi-factor authentication (MFA)**, pulse **Assign MFA device**.
+   3. Póngale un nombre (por ejemplo `celular-garyn`), elija **Authenticator app** y pulse **Next**. Sirven Google Authenticator, Microsoft Authenticator o una llave física.
+   4. Pulse **Show QR code** y escanéelo con la aplicación.
+   5. Escriba dos códigos seguidos de la aplicación y pulse **Add MFA**.
+2. **Créditos:** se ven en el menú del nombre de la cuenta (**Free plan status**) o en **Billing and Cost Management → Credits**. Hoy son $100 y el plan gratuito termina el **29/04/2027**.
+   - Con el **plan gratuito**, AWS cierra el acceso a los servicios cuando se acaba el crédito o vence el plazo, lo que ocurra primero.
+   - Si QA debe seguir después de esa fecha, hay que pasar la cuenta a pago (**Upgrade plan**) antes. El crédito que quede se sigue usando.
+3. **Región:** arriba a la derecha, elija **US East (N. Virginia) us-east-1**. Todo QA vive ahí, y la consola puede abrir en otra región, por ejemplo Ohio (us-east-2). Compruébelo antes del paso 2: la dirección del navegador debe decir `us-east-1`.
 
 ## 2. Crear la pila de la cuenta (CloudFormation)
 
