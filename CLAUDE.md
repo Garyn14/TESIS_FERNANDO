@@ -65,7 +65,7 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuenta), DRA-54 (CloudFront y HTTPS), DRA-55 (región us-east-2) y DRA-56 (acceso con usuario de IAM).
 
 - **Diseño:** escenario A de `docs/arquitectura/estimacion-costos-aws.md`, en **us-east-2 (Ohio)**.
-  - La cuenta es de la **experiencia nueva de AWS** (plan gratuito, AWS Builder ID, sin usuario raíz). La región la fija AWS por el país: no se puede elegir otra sin activar las funciones avanzadas (DRA-55).
+  - La cuenta es de la **experiencia nueva de AWS** (AWS Builder ID, sin usuario raíz), **en el plan de pago** desde el 08/11/2026: el plan gratuito no permite el t4g.medium (DRA-56). La región la fija AWS por el país: no se puede elegir otra sin activar las funciones avanzadas (DRA-55).
   - Un solo EC2 t4g.medium (tamaño en una variable) con el mismo `docker compose` de local, detrás de nginx en el puerto 80.
   - Frontend y portal en S3, detrás de **dos distribuciones de CloudFront** con direcciones `*.cloudfront.net` fijas y HTTPS.
     - **Plataforma:** `/*` va a S3; `/api/*` y `/rpc` (Besu, para MetaMask) van al EC2.
