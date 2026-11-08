@@ -34,6 +34,8 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
 9. **Jira:** comentario detallado en primera persona (qué construí, cómo lo probé, decisiones a validar, lo que queda fuera, ajustes) y transición a **En revisión** (31).
 10. **Informar** al usuario en español y preguntar "¿Ok para continuar con la HUxx?".
 
+**El repositorio es público** desde el 08/11/2026: los minutos de GitHub Actions son gratuitos. Antes era privado y se agotaron los 2 000 minutos del mes. **Nunca subir claves, contraseñas reales ni datos personales reales.**
+
 Commits con las líneas de coautoría que indique la sesión. Mantener el costo mínimo en AWS: QA se enciende solo cuando se usa.
 
 **Tickets para cambios:** cada cambio va en un ticket.
