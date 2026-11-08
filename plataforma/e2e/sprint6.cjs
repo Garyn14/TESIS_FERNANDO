@@ -619,6 +619,7 @@ const paso = async (nombre, fn) => {
   fs.writeFileSync(`${out}/resultado.txt`, resultados.join('\n') + '\n')
   console.log(`\n${resultados.length} pasos correctos`)
 })().catch((e) => {
-  console.error('✗ FALLÓ:', e.message)
+  console.error('✗ FALLÓ:', e.message || String(e))
+  console.error(e.stack)
   process.exit(1)
 })
