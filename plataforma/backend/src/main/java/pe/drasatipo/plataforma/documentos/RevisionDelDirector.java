@@ -34,6 +34,8 @@ public class RevisionDelDirector {
   private final GeneradorDePdf generadorDePdf;
   private final jakarta.persistence.EntityManager entidades;
 
+  private final AvisosDeResultado avisosDeResultado;
+
   public RevisionDelDirector(
       DocumentoRepository documentos,
       LoteRepository lotes,
@@ -41,7 +43,8 @@ public class RevisionDelDirector {
       RegistroDeDocumentos registro,
       RegistroDeLotes registroDeLotes,
       GeneradorDePdf generadorDePdf,
-      jakarta.persistence.EntityManager entidades) {
+      jakarta.persistence.EntityManager entidades,
+      AvisosDeResultado avisosDeResultado) {
     this.documentos = documentos;
     this.lotes = lotes;
     this.historial = historial;
@@ -49,6 +52,7 @@ public class RevisionDelDirector {
     this.registroDeLotes = registroDeLotes;
     this.generadorDePdf = generadorDePdf;
     this.entidades = entidades;
+    this.avisosDeResultado = avisosDeResultado;
   }
 
   @Transactional(readOnly = true)
@@ -169,9 +173,14 @@ public class RevisionDelDirector {
       Set<String> pedidos = Set.copyOf(codigos);
       elegidos = pendientes.stream().filter(d -> pedidos.contains(d.getCodigo())).toList();
     }
+    List<Documento> decididos = new java.util.ArrayList<>();
     for (Documento documento : elegidos) {
-      registrarDecision(documento, decision, texto, director);
+      if (registrarDecision(documento, decision, texto, director)) {
+        decididos.add(documento);
+      }
     }
+    // HU27: un solo aviso al área por la decisión sobre el lote.
+    avisosDeResultado.decision(decididos, decision, texto);
     // Las sentencias de actualización no pasan por las entidades ya cargadas.
     entidades.clear();
     return registroDeLotes.respuesta(lotes.findByNumero(numero).orElseThrow());
@@ -196,6 +205,7 @@ public class RevisionDelDirector {
       // Cambió de estado entre la lectura y la decisión (por ejemplo, empezó a firmarse).
       throw new ReglaDeNegocioException(HttpStatus.NOT_FOUND, null, NO_PENDIENTE);
     }
+    avisosDeResultado.decision(List.of(documento), decision, texto);
     entidades.clear();
     return DocumentoRespuesta.de(
         documentos.findByCodigo(codigo).orElseThrow(), registro.firmante());

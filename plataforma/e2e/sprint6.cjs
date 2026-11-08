@@ -4,7 +4,8 @@
 // filtros por estado), HU23 (la ficha de un documento con su estado explicado y sus datos) y HU24
 // (el historial y el detalle técnico de auditoría, comprobado contra IPFS y la red Besu) y HU25
 // (descargar o imprimir un documento firmado, con su registro en el historial) y HU26 (el aviso al
-// Director de los documentos y lotes pendientes de su revisión), con
+// Director de los documentos y lotes pendientes de su revisión) y HU27 (los avisos de resultado al
+// Área encargada, con el motivo), con
 // documentos firmados, anulados en la blockchain, rechazados, reemitidos y en trámite.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
@@ -677,6 +678,55 @@ const paso = async (nombre, fn) => {
     // Otra persona no puede marcar un aviso del Director.
     const id = psql("SELECT a.id FROM aviso a JOIN usuario u ON u.id = a.destinatario_id WHERE u.nombre_usuario = 'cmendoza' LIMIT 1")
     assert.equal((await enviar(luz, `/api/avisos/${id}/lectura`, {})).estado, 404)
+  })
+
+  // ------------------------------------------------------ HU27: avisos al Área encargada
+  await paso('HU27 · El área recibe un aviso por cada firmado, rechazado y anulado, con el motivo', async () => {
+    await reingresar(pedro, 'pmorales')
+    await campanaDe(pedro).waitFor()
+    // Firmados Lucía y Kevin; rechazada Martha; Kevin anulado en la blockchain; la reemisión de
+    // Lucía firmada (HU23), que anuló al original.
+    await esperarHasta('la campana del área muestra 6 sin leer', async () => (await sinLeerDe(pedro)) === 6, 10_000)
+    await campanaDe(pedro).click()
+    const textos = (await panelDe(pedro).getByRole('link').allTextContents()).map((x) => x.replace(/(hace .*|ayer|\d{2}\/\d{2}\/\d{4})$/, ''))
+    assert.deepEqual([...textos].sort(), [
+      `Anulado: Certificado de Trabajo – Kevin Ramos Ccanto. Motivo: Anulado en la blockchain; el motivo no llegó a registrarse en la plataforma.`,
+      `Anulado: Certificado de Trabajo – Lucía Paredes Quinto. Motivo: Reemplazado por ${nuevaLucia}. Motivo de la reemisión: El apellido estaba mal escrito`,
+      'Firmado: Certificado de Trabajo – Kevin Ramos Ccanto',
+      'Firmado: Certificado de Trabajo – Lucía Paredes Quintana',
+      'Firmado: Certificado de Trabajo – Lucía Paredes Quinto',
+      'Rechazado: Certificado de Trabajo – Martha Rojas Inga. Motivo: La persona no laboró en la agencia en las fechas indicadas.',
+    ])
+    await foto(pedro, 'hu27_01_avisos_del_area')
+    await panelDe(pedro).getByRole('link', { name: /Rechazado: Certificado de Trabajo – Martha Rojas Inga/ }).click()
+    await pedro.getByRole('heading', { name: 'Certificado de Trabajo' }).waitFor()
+    assert.ok(pedro.url().endsWith('#/mis-documentos/' + martha), pedro.url())
+    await pedro.getByText('La persona no laboró en la agencia en las fechas indicadas.').waitFor()
+    await esperarHasta('queda leído', async () => (await sinLeerDe(pedro)) === 5, 10_000)
+    await foto(pedro, 'hu27_02_aviso_abre_el_documento')
+    // Solo el área: el Director y Mesa de Partes no reciben avisos de resultado.
+    assert.equal(Number(psql("SELECT count(*) FROM aviso a JOIN usuario u ON u.id = a.destinatario_id WHERE u.nombre_usuario IN ('cmendoza', 'lflores', 'rquispe') AND a.tipo <> 'PENDIENTE_REVISION'")), 0)
+  })
+  await paso('HU27 · Una observación de certificados de un lote es un solo aviso, que abre el lote', async () => {
+    await reingresar(carlos, 'cmendoza')
+    const certificados = psql("SELECT d.codigo FROM documento d JOIN lote l ON l.id = d.lote_id WHERE l.numero = '2026-001' ORDER BY d.id").split('\n')
+    const r = await enviar(carlos, '/api/revision/lotes/2026-001/observacion', {
+      codigos: certificados.slice(0, 2),
+      motivo: 'Falta el segundo apellido.',
+    })
+    assert.equal(r.estado, 200)
+    await reingresar(rosa, 'rquispe')
+    await esperarHasta('la campana de Capacitación muestra 1 sin leer', async () => (await sinLeerDe(rosa)) === 1, 10_000)
+    await campanaDe(rosa).click()
+    const aviso = panelDe(rosa).getByRole('link')
+    assert.equal(await aviso.count(), 1)
+    assert.ok((await aviso.textContent()).startsWith('Lote 2026-001 – Manejo integrado de plagas en café: 2 certificados observados. Motivo: Falta el segundo apellido.'))
+    await foto(rosa, 'hu27_03_aviso_de_lote')
+    await aviso.click()
+    await rosa.getByRole('heading', { name: 'Lote 2026-001' }).waitFor()
+    assert.ok(rosa.url().endsWith('#/mis-documentos/lote/2026-001'), rosa.url())
+    // El área de Administración no recibe los avisos de Capacitación.
+    assert.equal(Number(psql("SELECT count(*) FROM aviso a JOIN usuario u ON u.id = a.destinatario_id WHERE u.nombre_usuario = 'pmorales' AND a.enlace LIKE '%lote/2026-001'")), 0)
   })
 
   await b.close()

@@ -49,17 +49,21 @@ public class FirmaDeDocumentos {
   private final ContratoRegistro contrato;
   private final AnulacionDeDocumentos anulacionDeDocumentos;
 
+  private final AvisosDeResultado avisosDeResultado;
+
   public FirmaDeDocumentos(
       DocumentoRepository documentos,
       HistorialDocumentoRepository historial,
       RegistroDeDocumentos registro,
       ContratoRegistro contrato,
-      AnulacionDeDocumentos anulacionDeDocumentos) {
+      AnulacionDeDocumentos anulacionDeDocumentos,
+      AvisosDeResultado avisosDeResultado) {
     this.documentos = documentos;
     this.historial = historial;
     this.registro = registro;
     this.contrato = contrato;
     this.anulacionDeDocumentos = anulacionDeDocumentos;
+    this.avisosDeResultado = avisosDeResultado;
   }
 
   /**
@@ -213,6 +217,7 @@ public class FirmaDeDocumentos {
                     : "Firmado por %s %s; transacción %s; bloque %d")
                 .formatted(quien, registrado.firmante(), firma.transaccion(), firma.bloque()),
             firmante == null ? null : firmante.getId()));
+    avisosDeResultado.firmado(documento, firma.transaccion());
     return null;
   }
 

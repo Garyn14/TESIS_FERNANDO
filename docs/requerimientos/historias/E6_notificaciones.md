@@ -67,8 +67,43 @@ El primero es el de la Tabla 22 de la tesis. Los demás detallan cómo se cumple
 
 **Como** Área encargada, **quiero** recibir un aviso cuando un documento es firmado, observado, rechazado o anulado, **para** actuar en consecuencia.
 
+**Contexto**
+
+Con HU26 la plataforma ya tiene avisos y una campana en el encabezado. Esta historia avisa al **Área encargada** del resultado de lo que envió. El aviso llega a cada persona activa del área del documento (rol Área encargada), y no solo a quien lo registró, porque cualquiera del área puede corregirlo o reemitirlo.
+
+| Cuándo | Aviso | Abre |
+|---|---|---|
+| Se firma un documento (HU11) | "Firmado: Certificado de Trabajo – Lucía Paredes Quinto" | El documento en Mis documentos |
+| El Director lo observa (HU13) | "Observado: Certificado de Trabajo – Lucía Paredes Quinto. Motivo: {motivo}" | El documento, para corregirlo |
+| El Director lo rechaza (HU14) | "Rechazado: Certificado de Trabajo – Lucía Paredes Quinto. Motivo: {motivo}" | El documento |
+| Se anula en la blockchain (HU29), o al firmarse su reemisión (HU30) | "Anulado: Certificado de Trabajo – Lucía Paredes Quinto. Motivo: {motivo}" | El documento |
+
 **Criterios de aceptación**
+
+El primero es el de la Tabla 22 de la tesis. Los demás detallan cómo se cumple.
+
 - [ ] El aviso incluye el motivo cuando corresponde y abre el documento.
+  - La observación, el rechazo y la anulación llevan su motivo. Un motivo largo se corta en el aviso y se lee completo en el documento.
+  - Al pulsarlo se marca como leído y se abre el documento en Mis documentos (`#/mis-documentos/{código}`). En un lote, se abre el lote (`#/mis-documentos/lote/{número}`).
+- [ ] **Un lote genera un solo aviso** por firma o por decisión, con la cantidad de certificados:
+  - "Lote 2026-001 – Manejo integrado de plagas en café: 3 certificados firmados";
+  - "Lote 2026-001 – …: 2 certificados observados. Motivo: …".
+  - Si la firma de un lote se confirma en partes (por ejemplo, la confirmación y la sincronización con la blockchain), el aviso de esa transacción se actualiza con la cantidad final y vuelve a quedar sin leer, en vez de repetirse.
+- [ ] El aviso llega a cada persona activa del área del documento con el rol Área encargada. No llega a otras áreas, al Director ni a Mesa de Partes.
+- [ ] El aviso se guarda en la misma transacción que el cambio de estado: si el cambio no se guarda, no hay aviso. Repetir una confirmación que ya se aplicó no genera otro aviso.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Avisos a Mesa de Partes (listo para entregar, rechazado) | HU28 |
+| Avisar a una persona que ya no está en el área cuando se envió el documento | Pregunta abierta al PO: hoy se avisa a quienes están en el área en el momento del resultado |
+
+**Notas técnicas**
+
+- `TipoDeAviso`: FIRMADO, OBSERVADO, RECHAZADO y ANULADO.
+- Migración V23: columna `clave` en `aviso`, única por destinatario. Un aviso con la misma clave se actualiza en lugar de repetirse. Las claves son la transacción para la firma de un lote y el cambio de estado para lo demás.
+- Los avisos se crean donde ya se aplica cada cambio: la confirmación de la firma y la sincronización (`FirmaDeDocumentos.aplicar`), la anulación (`AnulacionDeDocumentos.aplicar`) y la revisión del Director (`RevisionDelDirector`).
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
