@@ -37,8 +37,44 @@ En la consola de AWS (región **Ohio, us-east-2**), vaya a **Systems Manager →
 
 ### MetaMask (en la computadora)
 
-1. En MetaMask, use **Importar cuenta** dos veces, una con cada clave privada. Llámelas "Administrador (QA)" y "Director (QA)".
-2. La red de QA la propone la propia plataforma la primera vez que se conecta la billetera (paso 1.17). Acéptela. No cobra: el costo de cada operación es cero.
+MetaMask es la billetera digital del navegador. En la plataforma, el **Administrador del contrato** la usa para darle al Director el permiso de firmar, y el **Director** la usa para firmar y anular documentos. En QA se usan dos billeteras de prueba, ya creadas, cuyas claves están en Parameter Store.
+
+**A. Instalar MetaMask** (si no la tiene)
+
+1. En Chrome, Edge, Brave o Firefox, instale la extensión desde https://metamask.io/download.
+2. Al abrirla, elija **Crear una billetera nueva**, defina una contraseña y guarde la frase de recuperación que le muestra. Esa billetera propia **no se usa** en las pruebas: solo sirve para abrir MetaMask.
+
+**B. Importar las dos billeteras de prueba** (una vez cada una)
+
+1. Abra MetaMask y pulse el **nombre de la cuenta**, arriba al centro.
+2. Pulse **Agregar cuenta o billetera de hardware** → **Importar cuenta**.
+3. Pegue la clave privada de `ADMINISTRADOR_CLAVE` (empieza con `0x`) y pulse **Importar**.
+4. Para ponerle nombre: en el menú de la cuenta (⋮), elija **Detalles de la cuenta**, pulse el lápiz junto al nombre y escriba `Administrador (QA)`.
+5. Repita los pasos 1 a 4 con `DIRECTOR_CLAVE` y el nombre `Director (QA)`.
+6. Compruebe: la dirección de `Director (QA)` (se ve al pulsar el nombre de la cuenta) debe coincidir con `DIRECTOR_DIRECCION` de Parameter Store.
+
+Los nombres de las opciones pueden variar un poco según la versión de MetaMask.
+
+**C. La red de QA**
+
+MetaMask tiene que estar conectada a la blockchain de QA, no a Ethereum. La propia plataforma la propone la primera vez que conecta la billetera (pasos 1.18–1.19): MetaMask muestra **"¿Permitir que este sitio agregue una red?"** con el nombre **Plataforma DRA Satipo**. Pulse **Aprobar** y luego **Cambiar de red**.
+
+Si prefiere agregarla antes, a mano:
+
+1. En MetaMask, abra el selector de redes (arriba a la izquierda) → **Agregar una red personalizada** (o Configuración → Redes → Agregar red → Agregar una red manualmente).
+2. Complete los datos y pulse **Guardar**:
+
+   | Campo | Valor |
+   |---|---|
+   | Nombre de la red | `Plataforma DRA Satipo (QA)` |
+   | URL de RPC | `https://d1px0ea1324c4y.cloudfront.net/rpc` |
+   | ID de cadena (chainId) | `20260` |
+   | Símbolo de la moneda | `DRA` |
+   | URL del explorador de bloques | (vacío) |
+
+3. Seleccione esa red.
+
+La red no cobra: el saldo de las billeteras es 0 DRA y el costo de cada operación es cero. Si MetaMask muestra un aviso de saldo insuficiente o de red desconocida, se puede confirmar igual.
 
 ### Otros materiales
 
