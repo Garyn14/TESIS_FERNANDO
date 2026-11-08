@@ -1,7 +1,8 @@
 // Prueba de punta a punta real del Sprint 6: navegador + frontend + backend + PostgreSQL + IPFS +
 // red Besu local, sin simulaciones. Requiere el entorno de levantar.sh. Recorre HU22 (Mesa de
 // Partes busca documentos de todas las áreas por nombre, DNI, código, expediente o lote, con
-// filtros por estado), con documentos firmados, anulados en la blockchain, rechazados y en trámite.
+// filtros por estado) y HU23 (la ficha de un documento con su estado explicado y sus datos), con
+// documentos firmados, anulados en la blockchain, rechazados, reemitidos y en trámite.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
@@ -339,6 +340,111 @@ const paso = async (nombre, fn) => {
     assert.equal(await api(sinSesion, '/api/consulta/documentos?texto=quispe'), 401)
     // El servidor también rechaza un texto de un carácter.
     assert.equal(await api(luz, '/api/consulta/documentos?texto=a'), 400)
+  })
+
+  // ------------------------------------------------------ HU23: ver el estado de un documento
+  /** La sesión de prueba expira tras 1 minuto sin uso: si expiró, se vuelve a ingresar. */
+  const reingresar = async (p, usuario) => {
+    await p.goto(URL + '#/inicio')
+    await p.reload()
+    const menuPrincipal = p.getByRole('navigation', { name: 'Menú principal' })
+    const boton = p.getByRole('button', { name: 'Ingresar' })
+    await menuPrincipal.or(boton).first().waitFor()
+    if (await boton.isVisible()) {
+      await ingresar(p, usuario, PROPIA)
+      await menuPrincipal.waitFor()
+    }
+  }
+  const ficha = (nombre) => luz.getByText(nombre, { exact: true }).locator('xpath=following-sibling::dd[1]')
+  const explicacion = (texto) => luz.getByRole('region', { name: 'Estado del trámite' }).getByText(texto)
+  await paso('HU23 · Desde un resultado se abre la ficha: el estado explicado y los datos básicos', async () => {
+    await luz.getByRole('link', { name: 'Buscar documentos' }).click()
+    await buscar('45829364', [lucia])
+    await tabla().getByRole('link', { name: lucia }).click()
+    await luz.getByRole('heading', { name: lucia }).waitFor()
+    assert.equal(new URL(luz.url()).hash, `#/buscar/${lucia}?texto=45829364`)
+    await explicacion('Firmado y registrado en la blockchain. Se puede entregar al ciudadano.').waitFor()
+    assert.match(await ficha('Firmado el').textContent(), /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/)
+    for (const [etiqueta, valor] of [
+      ['Beneficiario', 'Lucía Paredes Quinto'],
+      ['DNI', '45829364'],
+      ['Tipo', 'Certificado de Trabajo'],
+      ['Origen', 'A solicitud de parte'],
+      ['N.° de expediente', 'EXP-2026-005391'],
+      ['Área', 'Área de Administración'],
+    ])
+      assert.equal(await ficha(etiqueta).textContent(), valor, etiqueta)
+    // Sin datos técnicos: ni el HMAC del DNI, ni el CID, ni la transacción (HU24).
+    const pagina = await luz.locator('main').textContent()
+    for (const columna of ['dni_hmac', 'cid', 'transaccion'])
+      assert.ok(!pagina.includes(psql(`SELECT ${columna} FROM documento WHERE codigo = '${lucia}'`)), columna)
+    await foto(luz, 'hu23_01_firmado')
+    await luz.getByRole('link', { name: '← Volver a Buscar documentos' }).click()
+    await esperarHasta('vuelve con la misma búsqueda', async () =>
+      (await buscador().inputValue()) === '45829364' && JSON.stringify(await primeraColumna()) === JSON.stringify([lucia]), 10_000)
+  })
+  await paso('HU23 · Rechazado, anulado y pendiente: cada estado con su explicación, sus fechas y su motivo', async () => {
+    await luz.goto(URL + '#/buscar/' + martha)
+    await explicacion('El Director rechazó el documento. Es definitivo: si corresponde, el ciudadano debe iniciar un nuevo trámite.').waitFor()
+    await luz.getByText('Motivo del rechazo:').waitFor()
+    await luz.getByText('La persona no laboró en la agencia en las fechas indicadas.').waitFor()
+    await foto(luz, 'hu23_02_rechazado')
+    await luz.goto(URL + '#/buscar/' + kevin)
+    await explicacion('Fue anulado y ya no es válido.').waitFor()
+    assert.match(await ficha('Anulado el').textContent(), /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/)
+    await luz.getByText('Motivo de la anulación:').waitFor()
+    await foto(luz, 'hu23_03_anulado')
+    await luz.goto(URL + '#/buscar/' + nilo)
+    await explicacion('Está en revisión del Director. Todavía no se puede entregar.').waitFor()
+    assert.equal(await luz.getByText('Firmado el').count(), 0)
+  })
+  await paso('HU23 · Un certificado de lote muestra el lote, el evento y el origen de oficio', async () => {
+    const edwin = psql("SELECT codigo FROM documento WHERE dni = '46001234'")
+    await luz.goto(URL + '#/buscar/' + edwin)
+    await luz.getByRole('heading', { name: edwin }).waitFor()
+    assert.equal(await ficha('Lote').textContent(), `Lote ${lote}`)
+    assert.equal(await ficha('Evento').textContent(), 'Manejo integrado de plagas en café')
+    assert.equal(await ficha('Origen').textContent(), 'De oficio')
+    assert.equal(await luz.getByText('N.° de expediente').count(), 0)
+    await foto(luz, 'hu23_04_certificado_de_lote')
+  })
+  await paso('HU23 · Reemisión: el original y su reemisión se enlazan entre sí', async () => {
+    await reingresar(pedro, 'pmorales')
+    await reingresar(carlos, 'cmendoza')
+    const r = await enviar(pedro, `/api/documentos/${lucia}/reemision`, {
+      nombres: 'Lucía', apellidos: 'Paredes Quintana', dni: '45829364',
+      datos: { cargo: 'secretaria', fechaInicio: '2025-01-02', fechaFin: '2026-09-30' },
+      motivo: 'El apellido estaba mal escrito',
+    })
+    assert.equal(r.estado, 201)
+    const nueva = r.cuerpo.codigo
+    await luz.goto(URL + '#/buscar/' + lucia)
+    await luz.getByText('Tiene una reemisión en revisión:').waitFor()
+    await foto(luz, 'hu23_05_reemision_en_revision')
+    await luz.getByRole('link', { name: nueva }).click()
+    await luz.getByRole('heading', { name: nueva }).waitFor()
+    await luz.getByText('Reemplaza al documento').waitFor()
+    // El Director la firma con su billetera: el original queda Anulado y reemplazado.
+    await carlos.goto(URL + '#/por-revisar/' + nueva)
+    await carlos.getByRole('button', { name: 'Firmar' }).click()
+    const firma = carlos.getByRole('dialog', { name: 'Firmar con su billetera' })
+    await firma.getByRole('button', { name: 'Confirmar' }).click()
+    await firma.getByText('Se firmó 1 documento.').waitFor({ timeout: 60_000 })
+    await esperarHasta('el original pasa a Anulado', () => estadoDe(lucia) === 'ANULADO')
+    await luz.goto(URL + '#/buscar/' + lucia)
+    await explicacion('Fue anulado y ya no es válido.').waitFor()
+    await luz.getByText('Fue reemplazado por el documento').waitFor()
+    assert.equal(await luz.getByRole('link', { name: nueva }).getAttribute('href'), `#/buscar/${nueva}`)
+    await foto(luz, 'hu23_06_reemplazado')
+  })
+  await paso('HU23 · Un código inexistente se informa; solo Consulta interna ve la ficha', async () => {
+    await luz.goto(URL + '#/buscar/DRA-2026-NOEXST')
+    await luz.getByRole('alert').getByText('No se encontró el documento DRA-2026-NOEXST.').waitFor()
+    await luz.getByRole('link', { name: '← Volver a Buscar documentos' }).waitFor()
+    await reingresar(pedro, 'pmorales')
+    await reingresar(carlos, 'cmendoza')
+    for (const p of [pedro, carlos]) assert.equal(await api(p, '/api/consulta/documentos/' + nilo), 403)
+    assert.equal(await api(luz, '/api/consulta/documentos/' + nilo), 200)
   })
 
   await b.close()

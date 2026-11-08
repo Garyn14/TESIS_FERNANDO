@@ -42,3 +42,48 @@ export const buscarDocumentos = (texto: string, estado: FiltroDeEstado) =>
   solicitar<ResultadoDeBusqueda>(
     `/api/consulta/documentos?${new URLSearchParams({ texto, estado })}`,
   )
+
+/** HU23: estado y datos básicos de un documento, para informar al ciudadano. */
+export interface FichaDelDocumento {
+  codigo: string
+  tipoNombre: string
+  origen: 'SOLICITUD_PARTE' | 'OFICIO'
+  estado: EstadoDocumento
+  beneficiario: string
+  dni: string
+  numeroExpediente: string | null
+  areaNombre: string
+  lote: string | null
+  evento: string | null
+  registradoEn: string
+  motivo: string | null
+  firmadoEn: string | null
+  anuladoEn: string | null
+  reemplazaA: string | null
+  reemisionEnCurso: string | null
+  reemplazadoPor: string | null
+}
+
+export const fichaDelDocumento = (codigo: string) =>
+  solicitar<FichaDelDocumento>(`/api/consulta/documentos/${encodeURIComponent(codigo)}`)
+
+const FECHA_Y_HORA = new Intl.DateTimeFormat('es-PE', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+  timeZone: 'America/Lima',
+})
+
+/** Fecha y hora en hora de Lima: 08/11/2026 09:15. */
+export const fechaYHora = (iso: string) => FECHA_Y_HORA.format(new Date(iso)).replace(',', '')
+
+/** La búsqueda como parámetros de la dirección: texto=…&estado=…, sin los valores por defecto. */
+export function consultaDe(texto: string, filtro: FiltroDeEstado) {
+  const p = new URLSearchParams()
+  if (texto) p.set('texto', texto)
+  if (filtro !== 'TODOS') p.set('estado', filtro)
+  return p.toString()
+}

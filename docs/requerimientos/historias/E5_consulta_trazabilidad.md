@@ -70,8 +70,53 @@ Los tres primeros son los de la Tabla 21 de la tesis. Los demás detallan cómo 
 
 **Como** personal de Mesa de Partes, **quiero** ver el estado y los datos de un documento, **para** informar al ciudadano sobre su trámite.
 
+**Contexto**
+
+Con HU22, Mesa de Partes ubica el documento en Buscar documentos. Esta historia agrega su **ficha**: al pulsar el código de un resultado se abre una página con el estado y los datos básicos del documento. El estado viene acompañado de una explicación en lenguaje claro, para que Mesa de Partes sepa qué decirle al ciudadano.
+
+| Paso | Qué hace la persona |
+|---|---|
+| 1 | Busca el documento (HU22) y pulsa su código, también dentro de un lote |
+| 2 | Ve el estado, lo que significa y sus fechas, y los datos del documento |
+| 3 | Vuelve a Buscar documentos con la misma búsqueda y el mismo filtro |
+
 **Criterios de aceptación**
+
+El primero es el de la Tabla 21 de la tesis. Los demás detallan cómo se cumple.
+
 - [ ] Se muestra uno de los seis estados posibles junto con los datos básicos del documento.
+- [ ] El estado se muestra con su color (los de Mis documentos) y con una explicación para el ciudadano:
+
+  | Estado | Explicación | Fechas y datos |
+  |---|---|---|
+  | Pendiente | "Está en revisión del Director. Todavía no se puede entregar." | Fecha de envío |
+  | Procesando firma | "El Director está firmando el documento. Estará listo en unos minutos." | Fecha de envío |
+  | Observado | "El Director pidió corregir el documento. El {área} lo corregirá y lo volverá a enviar." | Motivo de la observación |
+  | Rechazado | "El Director rechazó el documento. Es definitivo: si corresponde, el ciudadano debe iniciar un nuevo trámite." | Motivo del rechazo |
+  | Firmado | "Firmado y registrado en la blockchain. Se puede entregar al ciudadano." | Fecha y hora de la firma |
+  | Anulado | "Fue anulado y ya no es válido." | Fecha de la anulación y motivo |
+- [ ] Los datos básicos son: código de verificación, tipo, beneficiario, DNI, origen (a solicitud de parte o de oficio), N.° de expediente, área, fecha de envío y, en un certificado de lote, el número de lote y el nombre del evento.
+- [ ] Reemisiones (HU30):
+  - en un anulado que fue reemplazado: "Fue reemplazado por el documento {código}", con un enlace a su ficha;
+  - en un documento con una reemisión en revisión: "Tiene una reemisión en revisión: {código}", con un enlace;
+  - en una reemisión: "Reemplaza al documento {código}", con un enlace.
+- [ ] En Buscar documentos, el código de cada resultado (también dentro de un lote) es un enlace a su ficha (`#/buscar/{código}`). El enlace "← Volver a Buscar documentos" regresa con el mismo texto y el mismo filtro.
+- [ ] Un código que no existe muestra "No se encontró el documento {código}." y el enlace para volver.
+- [ ] Solo Consulta interna (permiso `DOCUMENTO_BUSCAR`) ve la ficha. Sin sesión se responde 401 y con otro rol, 403.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Historial de eventos y detalle técnico de auditoría (hash, CID, transacción) | HU24 |
+| Ver, descargar e imprimir el documento, y el estado de entrega | HU25 |
+| Avisar a Mesa de Partes cuando un documento se firma | HU28 |
+
+**Notas técnicas**
+
+- API: `GET /api/consulta/documentos/{codigo}`. No incluye el HMAC del DNI, el token del QR, el CID ni la transacción (HU24 los muestra en el detalle técnico).
+- Un código inexistente responde 404 con el mensaje.
+- La búsqueda de HU22 guarda su texto y su filtro en la dirección (`#/buscar?texto=…&estado=…`) para volver a ella desde la ficha.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
