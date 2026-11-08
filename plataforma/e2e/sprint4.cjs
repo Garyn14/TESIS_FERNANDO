@@ -7,6 +7,9 @@
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
+// Contenedores del entorno de prueba: los de levantar.sh, o los del servidor de AWS en Docker
+// (infra/aws/pruebas/de-punta-a-punta.sh).
+const CONTENEDOR_PG = process.env.E2E_CONTENEDOR_PG ?? 'e2e-pg'
 const fs = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
@@ -85,7 +88,7 @@ const paso = async (nombre, fn) => {
       [ruta, cuerpo],
     )
   const psql = (sql) =>
-    execFileSync('docker', ['exec', 'e2e-pg', 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c', sql])
+    execFileSync('docker', ['exec', CONTENEDOR_PG, 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c', sql])
       .toString()
       .trim()
   const foto = (p, nombre) => p.screenshot({ path: `${out}/${nombre}.png`, fullPage: true })

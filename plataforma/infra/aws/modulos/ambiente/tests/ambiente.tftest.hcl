@@ -128,3 +128,67 @@ run "tipo_de_servidor_ajustable_pero_arm" {
 
   expect_failures = [var.tipo_instancia]
 }
+
+run "cloudfront_rutas_y_cache" {
+  command = plan
+
+  assert {
+    condition     = [for b in aws_cloudfront_distribution.sitio["plataforma"].ordered_cache_behavior : b.path_pattern] == ["/api/*", "/rpc"]
+    error_message = "La plataforma envía /api/* y /rpc al servidor."
+  }
+  assert {
+    condition     = [for b in aws_cloudfront_distribution.sitio["portal"].ordered_cache_behavior : b.path_pattern] == ["/api/verificacion/*"]
+    error_message = "El portal solo envía /api/verificacion/* al servidor: el resto de la API no se publica."
+  }
+  assert {
+    condition = alltrue(flatten([
+      for d in aws_cloudfront_distribution.sitio : [
+        for b in d.ordered_cache_behavior :
+        b.cache_policy_id == "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" && b.target_origin_id == "servidor" && b.viewer_protocol_policy == "https-only"
+      ]
+    ]))
+    error_message = "La API y el RPC van al servidor, solo por HTTPS y sin caché."
+  }
+  assert {
+    condition     = alltrue([for d in aws_cloudfront_distribution.sitio : d.default_cache_behavior[0].viewer_protocol_policy == "redirect-to-https"])
+    error_message = "Las pantallas pasan siempre a HTTPS."
+  }
+  assert {
+    condition     = length(aws_cloudfront_distribution.sitio["portal"].default_cache_behavior[0].function_association) == 1 && length(aws_cloudfront_distribution.sitio["plataforma"].default_cache_behavior[0].function_association) == 0
+    error_message = "Solo el portal reescribe sus rutas (/verificar/{token}); la plataforma usa rutas con #."
+  }
+}
+
+run "cloudfront_llega_al_servidor_con_el_secreto" {
+  command = plan
+
+  assert {
+    condition = alltrue([
+      for d in aws_cloudfront_distribution.sitio : anytrue([
+        for o in d.origin : o.origin_id == "servidor" && one(o.custom_header).name == "X-Origen-Secreto"
+      ])
+    ])
+    error_message = "CloudFront debe agregar el encabezado secreto que exige nginx."
+  }
+  assert {
+    condition     = alltrue([for d in aws_cloudfront_distribution.sitio : length(d.custom_error_response) == 2 && alltrue([for e in d.custom_error_response : e.response_page_path == "/_estado/apagado.json" && e.response_code == 503])])
+    error_message = "Con el servidor apagado (502/504) se entrega el aviso en JSON."
+  }
+  assert {
+    condition     = strcontains(aws_s3_object.aviso_de_apagado["portal"].content, "El ambiente de QA está apagado")
+    error_message = "El aviso dice que el ambiente está apagado, con el formato de error del backend."
+  }
+}
+
+run "direcciones_para_el_backend" {
+  command = plan
+
+  assert {
+    condition     = aws_ssm_parameter.direcciones["PLATAFORMA_PORTAL_URL"].name == "/dra-satipo/qa/PLATAFORMA_PORTAL_URL"
+    error_message = "El backend recibe la dirección del portal para el QR."
+  }
+  assert {
+    condition     = aws_ssm_parameter.direcciones["BESU_RPC_PUBLICA"].name == "/dra-satipo/qa/BESU_RPC_PUBLICA"
+    error_message = "El backend recibe la dirección del RPC para MetaMask."
+  }
+}
