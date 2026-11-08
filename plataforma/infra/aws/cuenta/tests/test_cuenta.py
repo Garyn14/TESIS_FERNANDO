@@ -17,21 +17,23 @@ def declaraciones(politica):
 
 class Acceso(unittest.TestCase):
     def setUp(self):
-        self.rol = RECURSOS["RolGitHub"]["Properties"]
-        self.confianza = self.rol["AssumeRolePolicyDocument"]["Statement"]
+        self.usuario = RECURSOS["UsuarioGitHub"]
+        self.rol = self.usuario["Properties"]
 
-    def test_solo_el_ambiente_qa_de_este_repositorio(self):
-        (declaracion,) = self.confianza
-        condicion = declaracion["Condition"]["StringEquals"]
-        self.assertEqual(condicion["token.actions.githubusercontent.com:aud"], "sts.amazonaws.com")
-        sub = condicion["token.actions.githubusercontent.com:sub"]
-        self.assertEqual(sub, {"Fn::Sub": "repo:${Repositorio}:environment:${AmbienteGitHub}"})
-        self.assertNotIn("StringLike", declaracion["Condition"], "sin comodines en el sujeto")
-        self.assertEqual(PLANTILLA["Parameters"]["Repositorio"]["Default"], "Garyn14/TESIS_FERNANDO")
-        self.assertEqual(PLANTILLA["Parameters"]["AmbienteGitHub"]["Default"], "qa")
+    def test_usuario_solo_programatico_sin_oidc(self):
+        # DRA-56: la cuenta prohíbe iam:*Provider*, así que no hay proveedor OIDC ni rol.
+        self.assertEqual(self.usuario["Type"], "AWS::IAM::User")
+        self.assertNotIn("LoginProfile", self.rol, "sin contraseña de consola")
+        tipos = {r["Type"] for r in RECURSOS.values()}
+        self.assertNotIn("AWS::IAM::OIDCProvider", tipos)
+        self.assertNotIn("AWS::IAM::Role", tipos)
 
-    def test_sesiones_cortas_y_sin_administrador(self):
-        self.assertEqual(self.rol["MaxSessionDuration"], 3600)
+    def test_la_clave_no_queda_en_la_pila(self):
+        # Una AWS::IAM::AccessKey dejaría el secreto a la vista en los resultados de la pila.
+        tipos = {r["Type"] for r in RECURSOS.values()}
+        self.assertNotIn("AWS::IAM::AccessKey", tipos)
+
+    def test_sin_administrador(self):
         administradas = [p["Fn::Sub"] for p in self.rol["ManagedPolicyArns"]]
         self.assertEqual(administradas, ["arn:${AWS::Partition}:iam::aws:policy/PowerUserAccess"])
 
@@ -97,7 +99,7 @@ class Presupuesto(unittest.TestCase):
 
 class Salidas(unittest.TestCase):
     def test_entrega_lo_que_se_copia_en_github(self):
-        self.assertEqual(set(PLANTILLA["Outputs"]), {"RolGitHub", "BucketEstado"})
+        self.assertEqual(set(PLANTILLA["Outputs"]), {"UsuarioGitHub", "BucketEstado"})
 
 
 if __name__ == "__main__":

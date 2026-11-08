@@ -1,76 +1,37 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  DRA Satipo (DRA-53) - Preparacion de la cuenta, una sola vez: acceso de GitHub Actions sin
-  claves (OIDC), bucket del estado de Terraform y presupuesto con alertas por correo.
+  DRA Satipo (DRA-53, DRA-56) - Preparacion de la cuenta, una sola vez: usuario de IAM para los
+  disparadores de GitHub Actions, bucket del estado de Terraform y presupuesto con alertas.
 
-# Se crea desde la consola de AWS (CloudFormation -> Crear pila -> Cargar un archivo de plantilla),
-# en la región us-east-2 (Ohio), la que AWS asigna a la cuenta. Guía: docs/arquitectura/despliegue-aws.md
+# Se crea en la región us-east-2 (Ohio), la que AWS asigna a la cuenta: desde la consola
+# (CloudFormation -> Crear pila) o con el CLI. Guía: docs/arquitectura/despliegue-aws.md
 #
 # Lo que esta pila NO crea: el ambiente de QA en sí (lo crea el disparador "QA – Encender").
 # Borrar esta pila no borra QA; el bucket del estado se conserva a propósito (DeletionPolicy).
+#
+# DRA-56: la cuenta es de la experiencia nueva de AWS, cuya política de organización prohíbe
+# crear proveedores de identidad (iam:*Provider*), así que GitHub no puede entrar con OIDC. Entra
+# con este usuario de IAM y una clave de acceso que se crea APARTE (no en la plantilla, porque
+# quedaría a la vista en los resultados de la pila) y se guarda solo como secreto del ambiente
+# "qa" de GitHub. La clave se cambia cada 90 días (guía, sección 8).
 
 Parameters:
-  Repositorio:
-    Type: String
-    Default: Garyn14/TESIS_FERNANDO
-    Description: Repositorio de GitHub (propietario/nombre) cuyos flujos pueden entrar a AWS.
-    AllowedPattern: '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'
   AmbienteGitHub:
     Type: String
     Default: qa
-    Description: >-
-      Ambiente de GitHub (Settings -> Environments) desde el que se permite entrar. Solo los
-      flujos que declaran "environment: qa" pueden asumir el rol.
+    Description: Ambiente de GitHub (Settings -> Environments) que guarda la clave como secreto.
     AllowedPattern: '^[a-z0-9-]+$'
   CorreoAlertas:
     Type: String
     Description: Correo que recibe las alertas de gasto del presupuesto.
     AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
-  CrearProveedorOidc:
-    Type: String
-    Default: 'si'
-    AllowedValues: ['si', 'no']
-    Description: >-
-      "si" crea el proveedor OIDC de GitHub. Elija "no" solo si la cuenta ya tiene uno para
-      token.actions.githubusercontent.com (AWS permite uno solo).
-
-Conditions:
-  CrearProveedor: !Equals [!Ref CrearProveedorOidc, 'si']
 
 Resources:
-  # Identidad de GitHub Actions: AWS confía en los tokens que firma GitHub para cada ejecución.
-  ProveedorGitHub:
-    Type: AWS::IAM::OIDCProvider
-    Condition: CrearProveedor
+  # Usuario de los disparadores de QA: solo acceso programático (sin contraseña de consola).
+  UsuarioGitHub:
+    Type: AWS::IAM::User
     Properties:
-      Url: https://token.actions.githubusercontent.com
-      ClientIdList: [sts.amazonaws.com]
-
-  # Rol que asumen los disparadores de QA. Solo lo puede usar un flujo de ESTE repositorio que
-  # corra en el ambiente "qa" de GitHub: ni otra rama sin ambiente, ni otro repositorio, ni una
-  # persona. Dura como máximo 1 hora y no existe ninguna clave que se pueda filtrar.
-  RolGitHub:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub 'dra-satipo-github-${AmbienteGitHub}'
-      Description: Disparadores de QA en GitHub Actions (DRA-52), sin claves guardadas
-      MaxSessionDuration: 3600
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Federated: !If
-                - CrearProveedor
-                - !Ref ProveedorGitHub
-                - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com'
-            Action: sts:AssumeRoleWithWebIdentity
-            Condition:
-              StringEquals:
-                'token.actions.githubusercontent.com:aud': sts.amazonaws.com
-                'token.actions.githubusercontent.com:sub': !Sub 'repo:${Repositorio}:environment:${AmbienteGitHub}'
-      # Terraform crea red, servidor, buckets, CloudFront y parámetros. PowerUserAccess cubre todo
-      # eso y excluye IAM y la administración de la cuenta.
+      UserName: !Sub 'dra-satipo-github-${AmbienteGitHub}'
       ManagedPolicyArns:
         - !Sub 'arn:${AWS::Partition}:iam::aws:policy/PowerUserAccess'
       Policies:
@@ -236,9 +197,9 @@ Resources:
               Address: !Ref CorreoAlertas
 
 Outputs:
-  RolGitHub:
-    Description: 'Copiar en GitHub: Settings -> Environments -> qa -> variable AWS_ROL_QA'
-    Value: !GetAtt RolGitHub.Arn
+  UsuarioGitHub:
+    Description: 'Usuario al que se le crea la clave que va en los secretos del ambiente qa de GitHub'
+    Value: !Ref UsuarioGitHub
   BucketEstado:
     Description: 'Copiar en GitHub: Settings -> Environments -> qa -> variable TF_ESTADO_BUCKET'
     Value: !Ref BucketEstado

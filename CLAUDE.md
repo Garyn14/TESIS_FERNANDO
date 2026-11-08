@@ -62,7 +62,7 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 
 ## Ambiente QA en AWS (DRA-44, en curso desde el 08/11/2026)
 
-Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuenta) y DRA-54 (CloudFront y HTTPS).
+Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuenta), DRA-54 (CloudFront y HTTPS), DRA-55 (región us-east-2) y DRA-56 (acceso con usuario de IAM).
 
 - **Diseño:** escenario A de `docs/arquitectura/estimacion-costos-aws.md`, en **us-east-2 (Ohio)**.
   - La cuenta es de la **experiencia nueva de AWS** (plan gratuito, AWS Builder ID, sin usuario raíz). La región la fija AWS por el país: no se puede elegir otra sin activar las funciones avanzadas (DRA-55).
@@ -80,8 +80,8 @@ Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuen
 - **Archivos:** los flujos están en `.github/workflows/qa-*.yml` y sus scripts en `plataforma/infra/aws/acciones/`, que se prueban con un `aws` simulado (`probar-acciones.sh`).
   - El contrato de QA se despliega por `/rpc` la primera vez.
   - Sus billeteras de prueba quedan en `/dra-satipo/qa-billeteras/`, fuera del alcance del servidor.
-- **Acceso:** GitHub entra con un rol OIDC. **Nunca se guardan claves de AWS** en el repositorio ni en secretos de GitHub.
-- **Cuenta:** se prepara una sola vez con `plataforma/infra/aws/cuenta/cuenta.yml` (CloudFormation): rol OIDC, bucket del estado y presupuesto. Guía para el dueño de la cuenta: `docs/arquitectura/despliegue-aws.md`. GitHub necesita el ambiente `qa`, sin revisores obligatorios, con las variables `AWS_ROL_QA` y `TF_ESTADO_BUCKET`.
+- **Acceso (DRA-56):** la política de AWS de esta cuenta prohíbe el proveedor OIDC (`iam:*Provider*`). GitHub entra con el usuario de IAM `dra-satipo-github-qa`, cuya clave está **solo** en los secretos del ambiente `qa` de GitHub (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) y se cambia cada 90 días (guía, sección 8). **Nunca va en el repositorio.**
+- **Cuenta:** se prepara una sola vez con `plataforma/infra/aws/cuenta/cuenta.yml` (CloudFormation): usuario de IAM para GitHub, bucket del estado y presupuesto. Guía para el dueño de la cuenta: `docs/arquitectura/despliegue-aws.md`. GitHub necesita el ambiente `qa`, sin revisores obligatorios y limitado a `main`, con los secretos de la clave y la variable `TF_ESTADO_BUCKET`.
 - **Costo:** AWS Budgets avisa a $10, $25 y $50 (créditos sin descontar). Estimado: unos $11–14 al mes con QA encendido 10 h × 22 días y unos $2–3 al mes apagado. Hay $100 de crédito, que vence el próximo año.
 - **PROD:** alcance por definir. Sale de la misma plantilla, con el dominio de la DRA y un certificado de ACM en las mismas distribuciones.
 

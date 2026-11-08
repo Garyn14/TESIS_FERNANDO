@@ -7,7 +7,7 @@ Ambientes de la plataforma en AWS, descritos con Terraform. Por ahora solo **QA*
 | Carpeta | Qué tiene |
 |---|---|
 | `modulos/ambiente/` | La plantilla de un ambiente completo: red, servidor, buckets y parámetros. Sus pruebas están en `tests/` (`terraform test`, sin cuenta de AWS). |
-| `cuenta/` | Plantilla de CloudFormation que prepara la cuenta una sola vez (DRA-53): acceso de GitHub sin claves (OIDC), bucket del estado de Terraform y presupuesto con alertas. Pasos en [despliegue-aws.md](../../../docs/arquitectura/despliegue-aws.md). |
+| `cuenta/` | Plantilla de CloudFormation que prepara la cuenta una sola vez (DRA-53, DRA-56): usuario de IAM para los disparadores de GitHub, bucket del estado de Terraform y presupuesto con alertas. Pasos en [despliegue-aws.md](../../../docs/arquitectura/despliegue-aws.md). |
 | `qa/` | El ambiente QA: usa la plantilla con los valores de QA. El estado de Terraform se guarda en un bucket S3, no en el repositorio. |
 | `servidor/` | Lo que corre en el servidor: el `docker compose` de AWS, nginx y los scripts para empaquetar, desplegar y probar. |
 | `acciones/` | Scripts de los disparadores de GitHub Actions (DRA-52): ubicar el servidor, ejecutar comandos con SSM, publicar el build en S3 y desplegar el contrato. `probar-acciones.sh` los prueba con un `aws` simulado. |
