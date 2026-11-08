@@ -32,11 +32,12 @@ Pasos:
    5. AWS recomienda registrar **dos** dispositivos: por ejemplo, la aplicación y una llave de seguridad o el lector de huella de la computadora. Si se pierden todos, no se puede recuperar la cuenta.
 
    Si entra a AWS con **Google, GitHub, Apple o Amazon**, active también la verificación en dos pasos de esa cuenta: es la puerta de entrada.
-2. **Créditos:** se ven en el menú del nombre (**Free plan status**) o en **Billing and Cost Management**. Hoy son $100 y el plan gratuito termina el **29/04/2027**.
-   - Cuando se acaba el crédito o vence el plazo, lo que ocurra primero, hay que pasar la cuenta al **plan de pago** para seguir usando AWS. Se hace en https://settings.aws.com → **Billing** → **Upgrade**.
-   - El cambio no se puede deshacer.
-   - En el plan de pago se puede fijar un **límite de gasto mensual** (*spend limit*) por proyecto.
-3. **Región:** compruebe que la dirección del navegador diga `us-east-2` al crear la pila del paso 2.
+2. **Plan de pago (obligatorio para QA, DRA-56):** el plan gratuito solo deja crear servidores "elegibles para la capa gratuita", y el `t4g.medium` de QA (4 GB, ARM) no lo es. Las alternativas gratuitas son `c7i-flex.large`, que cuesta 2,5 veces más, y `t4g.small`, cuyos 2 GB no alcanzan para la plataforma.
+   - Pase la cuenta a pago en https://settings.aws.com → **Billing** → **Upgrade** → **Get started**: agregue la tarjeta y pulse **Upgrade account**.
+   - Al terminar, fije un **límite de gasto mensual** (*Set spend limits*), por ejemplo **$20**, además de las alertas del presupuesto.
+   - El cambio no se puede deshacer. El crédito restante se sigue usando y solo se cobra lo que lo supere.
+3. **Créditos:** se ven en el menú del nombre o en **Billing and Cost Management**. Hoy son $100 de crédito inicial.
+4. **Región:** compruebe que la dirección del navegador diga `us-east-2` al crear la pila del paso 2.
 
 ## 2. Crear la pila de la cuenta (CloudFormation)
 
