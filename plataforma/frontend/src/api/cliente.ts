@@ -38,12 +38,14 @@ function tokenCsrf(): string | undefined {
 interface Opciones extends RequestInit {
   /** No avisar a los oyentes de sesión ante un 401 (inicio de sesión y consulta de la sesión). */
   sinAvisoDeSesion?: boolean
+  /** HU25: la respuesta es un archivo (un PDF), no JSON. Los errores siguen llegando en JSON. */
+  comoArchivo?: boolean
 }
 
 export async function solicitar<T>(ruta: string, opciones: Opciones = {}): Promise<T> {
-  const { sinAvisoDeSesion, ...init } = opciones
+  const { sinAvisoDeSesion, comoArchivo, ...init } = opciones
   const cabeceras = new Headers(init.headers)
-  cabeceras.set('Accept', 'application/json')
+  cabeceras.set('Accept', comoArchivo ? 'application/pdf, application/json' : 'application/json')
   // Un FormData (archivo) lleva su propio tipo, con el separador de partes.
   if (typeof init.body === 'string') cabeceras.set('Content-Type', 'application/json')
   const csrf = tokenCsrf()
@@ -67,5 +69,6 @@ export async function solicitar<T>(ruta: string, opciones: Opciones = {}): Promi
     throw error
   }
   if (respuesta.status === 204) return undefined as T
+  if (comoArchivo) return (await respuesta.blob()) as T
   return (await respuesta.json()) as T
 }

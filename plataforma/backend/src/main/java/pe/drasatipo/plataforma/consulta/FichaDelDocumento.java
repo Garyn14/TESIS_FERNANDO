@@ -15,6 +15,8 @@ import pe.drasatipo.plataforma.documentos.EstadoDocumento;
  * @param reemplazaA si es una reemisión, el código del documento que reemplaza
  * @param reemisionEnCurso el código de su reemisión mientras está en revisión
  * @param reemplazadoPor el código de la reemisión que lo reemplazó, ya firmada
+ * @param impresiones cuántas veces Mesa de Partes lo imprimió (HU25)
+ * @param descargas cuántas veces Mesa de Partes descargó su PDF (HU25)
  */
 public record FichaDelDocumento(
     String codigo,
@@ -33,4 +35,6 @@ public record FichaDelDocumento(
     OffsetDateTime anuladoEn,
     String reemplazaA,
     String reemisionEnCurso,
-    String reemplazadoPor) {}
+    String reemplazadoPor,
+    long impresiones,
+    long descargas) {}

@@ -2,7 +2,8 @@ import { solicitar } from '../api/cliente'
 import type { EstadoDocumento } from '../documentos/api'
 
 /** Filtros por estado de Buscar documentos (HU22). */
-export type FiltroDeEstado = 'TODOS' | 'EN_TRAMITE' | 'FIRMADOS' | 'ANULADOS' | 'RECHAZADOS'
+export type FiltroDeEstado =
+  'TODOS' | 'EN_TRAMITE' | 'FIRMADOS' | 'ANULADOS' | 'RECHAZADOS' | 'LISTOS_PARA_ENTREGAR'
 
 export const FILTROS: { valor: FiltroDeEstado; titulo: string }[] = [
   { valor: 'TODOS', titulo: 'Todos' },
@@ -10,6 +11,8 @@ export const FILTROS: { valor: FiltroDeEstado; titulo: string }[] = [
   { valor: 'FIRMADOS', titulo: 'Firmados' },
   { valor: 'ANULADOS', titulo: 'Anulados' },
   { valor: 'RECHAZADOS', titulo: 'Rechazados' },
+  // HU25: firmados que todavía no se imprimieron ni descargaron.
+  { valor: 'LISTOS_PARA_ENTREGAR', titulo: 'Listos para entregar' },
 ]
 
 /** Un documento, o un lote con los certificados que coinciden con la búsqueda. */
@@ -62,6 +65,9 @@ export interface FichaDelDocumento {
   reemplazaA: string | null
   reemisionEnCurso: string | null
   reemplazadoPor: string | null
+  /** HU25: cuántas veces Mesa de Partes lo imprimió y descargó. */
+  impresiones: number
+  descargas: number
 }
 
 export const fichaDelDocumento = (codigo: string) =>
@@ -101,6 +107,8 @@ export type EventoDocumento =
   | 'CORREGIDO'
   | 'ANULADO'
   | 'REEMISION_SOLICITADA'
+  | 'IMPRESO'
+  | 'DESCARGADO'
 
 export interface EventoDelHistorial {
   evento: EventoDocumento
@@ -133,3 +141,23 @@ export const auditoriaDelDocumento = (codigo: string) =>
   solicitar<AuditoriaDelDocumento>(
     `/api/consulta/documentos/${encodeURIComponent(codigo)}/auditoria`,
   )
+
+/** HU25: "Ver documento" abre esta dirección en otra pestaña; no se registra. */
+export const direccionDelPdf = (codigo: string) =>
+  `/api/consulta/documentos/${encodeURIComponent(codigo)}/pdf`
+
+/** HU25: descarga o impresión del PDF comprobado; queda en el historial. */
+export const entregar = (codigo: string, forma: 'IMPRESION' | 'DESCARGA') =>
+  solicitar<Blob>(`/api/consulta/documentos/${encodeURIComponent(codigo)}/entregas`, {
+    method: 'POST',
+    body: JSON.stringify({ forma }),
+    comoArchivo: true,
+  })
+
+const veces = (n: number) => (n === 1 ? '1 vez' : `${n} veces`)
+
+/** Estado de entrega de un documento firmado (HU25). */
+export function estadoDeEntrega(ficha: FichaDelDocumento) {
+  if (ficha.impresiones === 0 && ficha.descargas === 0) return 'Listo para entregar'
+  return `Entregado: impreso ${veces(ficha.impresiones)}, descargado ${veces(ficha.descargas)}`
+}

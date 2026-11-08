@@ -25,5 +25,9 @@ public enum EventoDocumento {
   /** La anulación se leyó en la blockchain (HU29); el detalle lleva el motivo. */
   ANULADO,
   /** HU30: el Área encargada pidió reemitir el documento; lleva el código nuevo y el motivo. */
-  REEMISION_SOLICITADA
+  REEMISION_SOLICITADA,
+  /** HU25: Mesa de Partes lo imprimió; desde la segunda vez, como duplicado. */
+  IMPRESO,
+  /** HU25: Mesa de Partes descargó su PDF. */
+  DESCARGADO
 }

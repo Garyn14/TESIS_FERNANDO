@@ -182,9 +182,58 @@ Los dos primeros son los de la Tabla 21 de la tesis. Los demás detallan cómo s
 
 **Como** personal de Mesa de Partes, **quiero** descargar o imprimir un documento firmado, **para** entregarlo o emitir un duplicado sin reiniciar el trámite.
 
+**Contexto**
+
+El PDF final de cada documento firmado está en el IPFS privado (HU17), y su hash, en la blockchain (HU11). Mesa de Partes lo entrega al ciudadano impreso o en PDF. Si el ciudadano lo pierde, se imprime un **duplicado**: es el mismo PDF, con el mismo código y el mismo QR, así que no se vuelve a firmar ni a registrar.
+
+Antes de entregarlo, el servidor hace la misma comprobación que el portal público (HU21). Recupera el PDF de IPFS, recalcula su hash y lo compara con el registrado en el contrato. Solo entrega un documento **Válido**. Así, Mesa de Partes nunca imprime un documento alterado o anulado.
+
+| Paso | Qué hace la persona |
+|---|---|
+| 1 | Busca el documento (HU22) y abre su ficha (HU23). Ve si está "Listo para entregar" o cuántas veces se entregó |
+| 2 | Pulsa **Ver documento**, **Descargar PDF** o **Imprimir** |
+| 3 | El historial (HU24) registra la descarga o la impresión. Desde la segunda impresión, como duplicado |
+
 **Criterios de aceptación**
+
+Los dos primeros son los de la Tabla 21 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] No se requiere una nueva firma.
+  - Se entrega el PDF final guardado en IPFS, el mismo que se firmó: sin transacciones nuevas ni billetera.
+  - Antes de entregarlo, el servidor comprueba que su hash es el registrado en el contrato y que no está anulado.
 - [ ] Cada impresión queda registrada en el historial del documento.
+  - La primera: "Impreso por {nombre} (Consulta interna)".
+  - Las siguientes: "Duplicado impreso por {nombre} (Consulta interna). Impresión n.° {n}".
+  - Cada descarga del PDF también se registra: "PDF descargado por {nombre} (Consulta interna)".
+  - "Ver documento" solo muestra el PDF y no se registra.
+- [ ] La ficha de un documento firmado tiene los botones **Ver documento**, **Descargar PDF** e **Imprimir**.
+  - Muestra su estado de entrega: "Listo para entregar" si nunca se imprimió ni descargó; si no, "Entregado: impreso {n} veces, descargado {m} veces".
+  - "Imprimir" abre el diálogo de impresión del navegador con el PDF.
+  - "Descargar PDF" guarda el archivo con el código como nombre: `DRA-2026-F8R2MA.pdf`.
+- [ ] Un documento que no está firmado (pendiente, observado, rechazado o anulado) no tiene esos botones. La API responde 409:
+  - "Solo se entrega un documento firmado.";
+  - si está anulado: "El documento está anulado: no se puede entregar.".
+- [ ] Si el PDF no coincide con el registrado en la blockchain, no se entrega: 409 "El documento no coincide con su registro en la blockchain. No se puede entregar. Comuníquese con el Administrador." No se registra la entrega.
+- [ ] Si IPFS o la blockchain no responden, se informa: 503 "No se pudo verificar el documento en este momento. Intente nuevamente en unos minutos."
+- [ ] En Buscar documentos (HU22) se agrega el filtro **Listos para entregar**: firmados que nunca se imprimieron ni descargaron.
+- [ ] Solo Consulta interna (permiso `DOCUMENTO_IMPRIMIR`) puede ver, descargar o imprimir. Sin sesión se responde 401 y con otro rol, 403.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Imprimir todo un lote de una vez ("Imprimir lote" del prototipo) | Pregunta abierta al PO: hoy se imprime certificado por certificado |
+| Aviso a Mesa de Partes cuando hay documentos listos para entregar | HU28 |
+| Indicadores "Impresos esta semana" y "Duplicados emitidos" del prototipo | Pregunta abierta al PO |
+
+**Notas técnicas**
+
+- API:
+  - `GET /api/consulta/documentos/{codigo}/pdf`: ver el documento (inline, sin registrar);
+  - `POST /api/consulta/documentos/{codigo}/entregas` con `{"forma": "IMPRESION" | "DESCARGA"}`: registra el evento y responde el PDF.
+  - Ninguno se guarda en caché (`no-store`).
+- Migración V21: los eventos `IMPRESO` y `DESCARGADO` en el historial.
+- La comprobación reutiliza la del portal (`VerificacionDeAutenticidad`).
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
