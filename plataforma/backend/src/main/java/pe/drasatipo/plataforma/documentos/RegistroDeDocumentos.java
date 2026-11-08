@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.drasatipo.plataforma.areas.AlcanceDeArea;
 import pe.drasatipo.plataforma.areas.TipoDocumento;
+import pe.drasatipo.plataforma.avisos.Avisos;
+import pe.drasatipo.plataforma.avisos.TipoDeAviso;
 import pe.drasatipo.plataforma.comun.DatosInvalidosException;
 import pe.drasatipo.plataforma.comun.ReglaDeNegocioException;
 import pe.drasatipo.plataforma.usuarios.Rol;
@@ -39,6 +41,7 @@ public class RegistroDeDocumentos {
   private final UsuarioRepository usuarios;
   private final ProteccionDni proteccionDni;
   private final GeneradorDeCodigos generador;
+  private final Avisos avisos;
 
   public RegistroDeDocumentos(
       AlcanceDeArea alcance,
@@ -46,13 +49,27 @@ public class RegistroDeDocumentos {
       HistorialDocumentoRepository historial,
       UsuarioRepository usuarios,
       ProteccionDni proteccionDni,
-      GeneradorDeCodigos generador) {
+      GeneradorDeCodigos generador,
+      Avisos avisos) {
     this.alcance = alcance;
     this.documentos = documentos;
     this.historial = historial;
     this.usuarios = usuarios;
     this.proteccionDni = proteccionDni;
     this.generador = generador;
+    this.avisos = avisos;
+  }
+
+  /** HU26: avisa a los directores que el documento quedó pendiente de su revisión. */
+  private void avisarPendiente(String comoEmpieza, Documento documento, String alFinal) {
+    avisos.aDirectores(
+        TipoDeAviso.PENDIENTE_REVISION,
+        "%s: %s – %s%s"
+            .formatted(
+                comoEmpieza, documento.getTipo().getNombre(), documento.getBeneficiario(), alFinal),
+        documento.getLote() == null
+            ? "por-revisar/" + documento.getCodigo()
+            : "por-revisar/lote/" + documento.getLote().getNumero());
   }
 
   /** Valida la solicitud y arma el texto, sin guardar nada (RF12, RF18). */
@@ -106,6 +123,7 @@ public class RegistroDeDocumentos {
             "Registrado y enviado a revisión por %s (%s)"
                 .formatted(cuenta.getNombreCompleto(), cuenta.getArea().getNombre()),
             cuenta.getId()));
+    avisarPendiente("Nuevo documento pendiente", documento, "");
     return DocumentoRespuesta.de(documento, firmante());
   }
 
@@ -246,6 +264,8 @@ public class RegistroDeDocumentos {
             CambiosDeDatos.limitar(
                 "Reemisión solicitada por %s: %s. Motivo: %s".formatted(quien, nuevo, textoMotivo)),
             cuenta.getId()));
+    avisarPendiente(
+        "Reemisión pendiente", reemision, " (reemplaza a %s)".formatted(original.getCodigo()));
     return DocumentoRespuesta.de(reemision, firmante(), null);
   }
 
@@ -431,6 +451,7 @@ public class RegistroDeDocumentos {
                         ? "Sin cambios en los datos."
                         : "Cambios: " + String.join("; ", cambios) + "."),
             cuenta.getId()));
+    avisarPendiente("Documento corregido, pendiente de revisión", documento, "");
     return DocumentoRespuesta.de(documento, firmante());
   }
 

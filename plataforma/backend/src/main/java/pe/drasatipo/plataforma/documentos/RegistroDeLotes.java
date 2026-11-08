@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.drasatipo.plataforma.areas.AlcanceDeArea;
 import pe.drasatipo.plataforma.areas.TipoDocumento;
+import pe.drasatipo.plataforma.avisos.Avisos;
+import pe.drasatipo.plataforma.avisos.TipoDeAviso;
 import pe.drasatipo.plataforma.comun.ReglaDeNegocioException;
 import pe.drasatipo.plataforma.usuarios.Usuario;
 
@@ -39,6 +41,7 @@ public class RegistroDeLotes {
   private final GeneradorDeCodigos generador;
   private final ExcelDeBeneficiarios excel;
   private final JdbcTemplate jdbc;
+  private final Avisos avisos;
 
   public RegistroDeLotes(
       RegistroDeDocumentos registro,
@@ -49,7 +52,8 @@ public class RegistroDeLotes {
       ProteccionDni proteccionDni,
       GeneradorDeCodigos generador,
       ExcelDeBeneficiarios excel,
-      JdbcTemplate jdbc) {
+      JdbcTemplate jdbc,
+      Avisos avisos) {
     this.registro = registro;
     this.alcance = alcance;
     this.lotes = lotes;
@@ -59,6 +63,7 @@ public class RegistroDeLotes {
     this.generador = generador;
     this.excel = excel;
     this.jdbc = jdbc;
+    this.avisos = avisos;
   }
 
   /** Plantilla Excel, solo para un tipo de oficio del área de la persona (RF14). */
@@ -131,6 +136,16 @@ public class RegistroDeLotes {
               cuenta.getId()));
     }
     documentos.flush();
+    // HU26: un solo aviso por lote, no uno por certificado.
+    int cantidad = validado.beneficiarios().size();
+    avisos.aDirectores(
+        TipoDeAviso.PENDIENTE_REVISION,
+        "Nuevo lote pendiente: Lote %s – %s (%s)"
+            .formatted(
+                numero,
+                lote.getDatos().getOrDefault("nombreEvento", lote.getTipo().getNombre()),
+                cantidad == 1 ? "1 certificado" : cantidad + " certificados"),
+        "por-revisar/lote/" + numero);
     return respuesta(lote);
   }
 
