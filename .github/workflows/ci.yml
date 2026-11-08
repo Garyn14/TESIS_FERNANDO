@@ -15,8 +15,8 @@ jobs:
       run:
         working-directory: plataforma/backend
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
@@ -33,8 +33,8 @@ jobs:
       run:
         working-directory: plataforma/frontend
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -54,8 +54,8 @@ jobs:
       run:
         working-directory: plataforma/portal
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -75,8 +75,8 @@ jobs:
       run:
         working-directory: plataforma/contracts
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -92,8 +92,8 @@ jobs:
     # Sin límite, un paso colgado consume hasta 6 horas de minutos de CI.
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -143,7 +143,7 @@ jobs:
       run:
         working-directory: plataforma/infra
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Generar la clave de enjambre
         run: ./ipfs/generar-clave.sh
       - name: Levantar el nodo IPFS
