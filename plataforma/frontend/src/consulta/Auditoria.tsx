@@ -70,7 +70,12 @@ export default function Auditoria({ codigo }: { codigo: string }) {
                 className={`mt-1.5 h-3 w-3 shrink-0 rounded-full ${COLOR[e.evento] ?? 'bg-institutional'}`}
               />
               <div className="min-w-0">
-                <p className="font-medium">{TITULOS[e.evento]}</p>
+                <p className="font-medium">
+                  {/* HU25: desde la segunda impresión, el detalle dice que es un duplicado. */}
+                  {e.evento === 'IMPRESO' && e.detalle?.startsWith('Duplicado')
+                    ? 'Duplicado impreso'
+                    : TITULOS[e.evento]}
+                </p>
                 <p className="text-sm text-muted">
                   {fechaYHora(e.realizadoEn)} ·{' '}
                   {e.responsable ? `${e.responsable} (${e.rol})` : SISTEMA}
