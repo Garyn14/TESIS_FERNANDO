@@ -50,6 +50,7 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 
 **Pendientes conocidos:**
 - DRA-44 (AWS), con el dominio del portal todavía por definir;
+- **Dependabot** (DRA-49) propone actualizaciones cada lunes: se revisan con la CI y, si tocan el PDF, el QR o el portal, con las pruebas de punta a punta. Su `package-lock.json` a veces viene desincronizado: se regenera con `npm install`. Pospuestas hasta después de la validación del PO (DRA-50): **OpenPDF 3** (cambia el nombre de los paquetes, `com.lowagie` → hay que migrar `GeneradorDePdf`), **Apache POI 6** y **TypeScript 7** en los contratos;
 - preguntas abiertas al PO, listadas en cada `revision.md`.
 
 ## Entorno de pruebas (lo que hay que saber)
