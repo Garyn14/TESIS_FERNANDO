@@ -36,15 +36,15 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
 
 Commits con las líneas de coautoría que indique la sesión. Mantener el costo mínimo: AWS (DRA-44) sigue diferido a propósito.
 
-## Estado al 07/11/2026
+## Estado al 08/11/2026
 
 | Sprint | Estado |
 |---|---|
 | 0–2 | Cerrados y aprobados por el PO (47 puntos) |
 | 3 (HU10–12, HU16–18), 4 (HU13–15, HU29–30) y 5 (HU19–21) | Cerrados **sin la validación del PO**, por decisión del equipo: el 3 y el 4 el 05/11 (74 puntos), el 5 el 07/11 (16 puntos) |
-| 6 (HU22–28) | Siguiente (en Jira, del 12/11 al 19/11): búsqueda, estado, historial y auditoría, descarga e impresión, avisos. Ya contiene DRA-48 (la validación final del PO) y DRA-44 (AWS, diferida) |
+| 6 (HU22–28) | **En curso** (en Jira, del 08/11 al 15/11): búsqueda, estado, historial y auditoría, descarga e impresión, avisos. Contiene también DRA-48 (la validación final del PO) y DRA-44 (AWS, diferida). **HU22 (DRA-35) en revisión** el 08/11 |
 
-**Lo siguiente:** iniciar el Sprint 6 en Jira y construir sus historias con el flujo de siempre.
+**Lo siguiente:** HU23 (DRA-36), ver el estado de un documento desde un resultado de Buscar documentos (`plataforma/frontend/src/consulta`, `GET /api/consulta/documentos`). Luego HU24 a HU28 con el flujo de siempre. La prueba de punta a punta del sprint es `plataforma/e2e/sprint6.cjs`.
 
 **Validación del PO:** se hace **al final del proyecto** (DRA-48), con los guiones de los Sprints 3 a 6. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
 
@@ -66,7 +66,8 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 - **Problemas vistos en la nube:**
   - Docker se cae cuando la máquina se reinicia: `rm -f /var/run/docker.pid; dockerd &`. Los contenedores de Besu vuelven solos.
   - Maven puede necesitar un *mirror* de Maven Central si falla la descarga: `-s settings.xml` con `https://maven-central.storage-download.googleapis.com/maven2`.
-  - Hardhat necesita `SOLC_RUTA` (el `soljson.js` de un paquete `solc` local) si no puede descargar el compilador.
+  - Hardhat necesita `SOLC_RUTA` (el `soljson.js` de un paquete `solc` local) si no puede descargar el compilador: `npm i solc@0.8.30` en una carpeta aparte.
+  - El clon de la sesión solo sigue `main`: para enlazar una rama nueva, `git config --add remote.origin.fetch '+refs/heads/RAMA:refs/remotes/origin/RAMA'`.
   - Node resuelve `localhost` a IPv6: en los scripts, usar `127.0.0.1` para IPFS.
 - **Billeteras:** el servidor nunca firma. La billetera del Director firma en el navegador; en las pruebas lo hace `e2e/billetera-de-prueba.cjs`, con transacciones reales.
 
