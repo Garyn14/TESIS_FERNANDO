@@ -548,14 +548,21 @@ const paso = async (nombre, fn) => {
       luz.context().waitForEvent('page'),
       entrega().getByRole('link', { name: 'Ver documento' }).click(),
     ])
-    await pestana.waitForLoadState('domcontentloaded').catch(() => {})
-    assert.ok(pestana.url().endsWith(`/api/consulta/documentos/${nuevaLucia}/pdf`), pestana.url())
+    // Se abre en otra pestaña. El Chromium sin interfaz de la prueba no muestra PDF (lo descarga),
+    // así que lo que muestra se comprueba con la misma dirección: un PDF para ver (inline).
+    assert.ok(pestana)
     const visto = await luz.evaluate(async (c) => {
       const r = await fetch(`/api/consulta/documentos/${c}/pdf`)
-      return { estado: r.status, tipo: r.headers.get('content-type'), bytes: Array.from(new Uint8Array(await r.arrayBuffer())) }
+      return {
+        estado: r.status,
+        tipo: r.headers.get('content-type'),
+        disposicion: r.headers.get('content-disposition'),
+        bytes: Array.from(new Uint8Array(await r.arrayBuffer())),
+      }
     }, nuevaLucia)
     assert.equal(visto.estado, 200)
     assert.equal(visto.tipo, 'application/pdf')
+    assert.equal(visto.disposicion, `inline; filename="${nuevaLucia}.pdf"`)
     const [, registrado] = await registro.consultar(nuevaLucia)
     assert.equal('0x' + sha256(Buffer.from(visto.bytes)), registrado.hashPdf)
     await pestana.close()
