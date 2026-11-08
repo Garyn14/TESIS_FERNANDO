@@ -97,11 +97,15 @@ describe('App (HU03)', () => {
     expect(screen.queryByText('Nueva cuenta')).not.toBeInTheDocument()
   })
 
-  it('las pantallas aún no construidas avisan en qué sprint se habilitan', async () => {
-    backend(CONSULTA)
+  it('Mesa de Partes entra a Buscar documentos desde el menú (HU22)', async () => {
+    backend(CONSULTA, {
+      'GET /api/consulta/documentos?texto=&estado=TODOS': () =>
+        respuesta(200, { filas: [], hayMas: false }),
+    })
     render(<App />)
     fireEvent.click(await screen.findByRole('link', { name: 'Buscar documentos' }))
-    expect(await screen.findByText(/Se habilita en el Sprint 6/)).toBeInTheDocument()
+    expect(await screen.findByRole('searchbox')).toBeInTheDocument()
+    expect(screen.queryByText(/Se habilita en el Sprint/)).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Buscar documentos' })).toHaveAttribute(
       'aria-current',
       'page',

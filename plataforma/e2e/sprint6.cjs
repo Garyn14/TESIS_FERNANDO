@@ -1,0 +1,346 @@
+// Prueba de punta a punta real del Sprint 6: navegador + frontend + backend + PostgreSQL + IPFS +
+// red Besu local, sin simulaciones. Requiere el entorno de levantar.sh. Recorre HU22 (Mesa de
+// Partes busca documentos de todas las áreas por nombre, DNI, código, expediente o lote, con
+// filtros por estado), con documentos firmados, anulados en la blockchain, rechazados y en trámite.
+const { chromium } = require('playwright')
+const assert = require('node:assert/strict')
+const { execFileSync } = require('node:child_process')
+const fs = require('node:fs')
+const path = require('node:path')
+const os = require('node:os')
+const { Contract, JsonRpcProvider, Wallet, getAddress } = require('ethers')
+const { instalarBilletera } = require('./billetera-de-prueba.cjs')
+
+const [out, URL = 'http://localhost:5173/', ADMIN_TEMPORAL = 'Admin2026!'] = process.argv.slice(2)
+const ADMIN_CLAVE = 'AdminPropia26'
+const TEMPORAL = 'Demo2026'
+const PROPIA = 'Propia2026'
+const BESU = process.env.BESU_RPC_URL ?? 'http://localhost:8545'
+const DESPLIEGUE = JSON.parse(fs.readFileSync(process.env.E2E_DESPLIEGUE ?? `${__dirname}/.despliegue.json`, 'utf8'))
+const B = DESPLIEGUE.billeteras
+const resultados = []
+const paso = async (nombre, fn) => {
+  await fn()
+  resultados.push('✓ ' + nombre)
+  console.log('✓ ' + nombre)
+}
+
+;(async () => {
+  const b = await chromium.launch()
+  const billeteras = new Map()
+  const nueva = async () => {
+    const c = await b.newContext({ viewport: { width: 1280, height: 800 } })
+    const p = await c.newPage()
+    billeteras.set(p, await instalarBilletera(c, BESU))
+    await p.goto(URL)
+    return p
+  }
+  // Lectura independiente del contrato, directo en la red Besu (no pasa por el backend).
+  const nodo = new JsonRpcProvider(BESU, undefined, { staticNetwork: true })
+  const registro = new Contract(
+    DESPLIEGUE.contrato,
+    [
+      'function consultar(string codigo) view returns (bool, (bytes32 hashPdf, bytes32 dniHmac, address firmante, uint64 registradoEn))',
+      'function anulacion(string codigo) view returns (bool, uint64)',
+      'function reemplazadoPor(string codigo) view returns (string)',
+    ],
+    nodo,
+  )
+  const campo = (p, etiqueta) => p.getByLabel(etiqueta, { exact: true })
+  const ingresar = async (p, u, c) => {
+    await campo(p, 'Usuario').fill(u)
+    await campo(p, 'Contraseña').fill(c)
+    await p.getByRole('button', { name: 'Ingresar' }).click()
+  }
+  /** Primer ingreso con contraseña temporal: obliga a cambiarla (HU04). */
+  const primerIngreso = async (p, u, temporal, propia) => {
+    await ingresar(p, u, temporal)
+    await p.getByRole('heading', { name: 'Cambie su contraseña' }).waitFor()
+    await campo(p, 'Contraseña temporal').fill(temporal)
+    await campo(p, 'Contraseña nueva').fill(propia)
+    await campo(p, 'Repita la contraseña nueva').fill(propia)
+    await p.getByRole('button', { name: 'Cambiar contraseña' }).last().click()
+    await p.getByRole('navigation', { name: 'Menú principal' }).waitFor()
+  }
+  const menu = async (p) =>
+    p.getByRole('navigation', { name: 'Menú principal' }).getByRole('link').allTextContents()
+  const api = (p, ruta) => p.evaluate((r) => fetch(r).then((x) => x.status), ruta)
+  /** POST a la API con la sesión y el token CSRF del navegador. */
+  const enviar = (p, ruta, cuerpo) =>
+    p.evaluate(
+      async ([r, c]) => {
+        const cookie = document.cookie.split('; ').find((x) => x.startsWith('XSRF-TOKEN='))
+        const respuesta = await fetch(r, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-XSRF-TOKEN': decodeURIComponent(cookie?.split('=')[1] ?? ''),
+          },
+          body: JSON.stringify(c),
+        })
+        return { estado: respuesta.status, cuerpo: await respuesta.json() }
+      },
+      [ruta, cuerpo],
+    )
+  const psql = (sql) =>
+    execFileSync('docker', ['exec', 'e2e-pg', 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c', sql])
+      .toString()
+      .trim()
+  const foto = (p, nombre) => p.screenshot({ path: `${out}/${nombre}.png`, fullPage: true })
+  const trabajo = (expediente, nombres, apellidos, dni) => ({
+    tipo: 'CERTIFICADO_TRABAJO',
+    numeroExpediente: expediente,
+    nombres,
+    apellidos,
+    dni,
+    datos: { cargo: 'asistente administrativa', fechaInicio: '2025-01-02', fechaFin: '2026-09-30' },
+  })
+
+  // ------------------------------------------------------------- Preparación: cuentas reales
+  const admin = await nueva()
+  await paso('Preparación · El Administrador crea las cuentas desde la pantalla Usuarios', async () => {
+    await primerIngreso(admin, 'admin', ADMIN_TEMPORAL, ADMIN_CLAVE)
+    await admin.getByRole('link', { name: 'Usuarios' }).click()
+    for (const [u, n, rol, area] of [
+      ['pmorales', 'Pedro Morales Ccanto', 'AREA_ENCARGADA', 'ADMINISTRACION'],
+      ['rquispe', 'Rosa Quispe Huamán', 'AREA_ENCARGADA', 'CAPACITACION'],
+      ['cmendoza', 'Ing. Carlos Mendoza Rivera', 'DIRECTOR', null],
+      ['lflores', 'Luz Flores Ticona', 'CONSULTA_INTERNA', null],
+    ]) {
+      await admin.getByRole('button', { name: 'Nueva cuenta' }).click()
+      await campo(admin, 'Nombre de usuario').fill(u)
+      await campo(admin, 'Nombre completo').fill(n)
+      await campo(admin, 'Rol').selectOption(rol)
+      if (area) await campo(admin, 'Área').selectOption(area)
+      await campo(admin, 'Contraseña temporal').fill(TEMPORAL)
+      await admin.getByRole('button', { name: 'Crear cuenta' }).click()
+      await admin.getByRole('status').getByText(`Se creó la cuenta "${u}"`).waitFor()
+    }
+  })
+  await paso('Preparación · El Administrador registra la billetera del Director y le otorga el rol de firmante', async () => {
+    // Como en sprint5.cjs: deja al Director listo para firmar y anular (HU29).
+    await admin.getByRole('link', { name: 'Billetera del director' }).click()
+    await admin.getByRole('button', { name: 'Registrar la billetera de cmendoza' }).click()
+    const ventana = admin.getByRole('dialog', { name: 'Billetera del director' })
+    await campo(ventana, 'Dirección de la billetera').fill(B.director.direccion)
+    await ventana.getByRole('button', { name: 'Guardar billetera' }).click()
+    const fila = admin.locator('tr', { hasText: 'cmendoza' })
+    await fila.getByText(getAddress(B.director.direccion)).waitFor()
+    billeteras.get(admin).usar(B.administrador.clave)
+    await admin.getByRole('button', { name: 'Otorgar el rol de firmante a cmendoza' }).click()
+    const otorgar = admin.getByRole('dialog', { name: 'Otorgar rol de firmante' })
+    await otorgar.getByRole('button', { name: 'Conectar billetera y continuar' }).click()
+    await otorgar.getByRole('button', { name: 'Confirmar en la billetera' }).click()
+    await otorgar.getByText('Rol de firmante otorgado', { exact: false }).waitFor({ timeout: 60_000 })
+    await otorgar.getByRole('button', { name: 'Listo' }).click()
+    await fila.getByText('✓ Firmante activo').waitFor()
+    await admin.context().close()
+  })
+
+  const pedro = await nueva()
+  const rosa = await nueva()
+  const carlos = await nueva()
+  billeteras.get(carlos).usar(B.director.clave)
+  await primerIngreso(pedro, 'pmorales', TEMPORAL, PROPIA)
+  await primerIngreso(rosa, 'rquispe', TEMPORAL, PROPIA)
+  await primerIngreso(carlos, 'cmendoza', TEMPORAL, PROPIA)
+  const esperarHasta = async (descripcion, condicion, maximo = 120_000) => {
+    const limite = Date.now() + maximo
+    while (Date.now() < limite) {
+      if (await condicion()) return
+      await new Promise((listo) => setTimeout(listo, 1000))
+    }
+    throw new Error('No se cumplió a tiempo: ' + descripcion)
+  }
+  const contratoDirector = new Contract(
+    DESPLIEGUE.contrato,
+    ['function anularDocumento(string codigo)'],
+    new Wallet(B.director.clave, nodo),
+  )
+  const sinCosto = { gasPrice: 0n, type: 0 }
+  const estadoDe = (codigo) => psql(`SELECT estado FROM documento WHERE codigo = '${codigo}'`)
+
+  let lucia, kevin, martha, nilo, lote
+  await paso('Preparación · Dos áreas envían documentos y un lote; el Director firma, rechaza y anula', async () => {
+    const codigos = []
+    for (const [exp, n, a, dni] of [
+      ['EXP-2026-005391', 'Lucía', 'Paredes Quinto', '45829364'],
+      ['EXP-2026-005392', 'Kevin', 'Ramos Ccanto', '46385127'],
+      ['EXP-2026-005401', 'Martha', 'Rojas Inga', '44200001'],
+      ['EXP-2026-005402', 'Nilo', 'Huamán Soto', '44200002'],
+    ]) {
+      const r = await enviar(pedro, '/api/documentos', trabajo(exp, n, a, dni))
+      assert.equal(r.estado, 201)
+      codigos.push(r.cuerpo.codigo)
+    }
+    ;[lucia, kevin, martha, nilo] = codigos
+    const l = await enviar(rosa, '/api/lotes', {
+      tipo: 'CERTIFICADO_CAPACITACION',
+      datos: {
+        nombreEvento: 'Manejo integrado de plagas en café',
+        fechaInicio: '2026-09-14',
+        fechaFin: '2026-09-16',
+        duracionHoras: '24',
+        lugar: 'Local comunal de Río Negro, Satipo',
+        areaOrganizadora: 'Área de Capacitación',
+      },
+      beneficiarios: [
+        { nombres: 'Juan', apellidos: 'Ccori Pari', dni: '45218736' },
+        { nombres: 'María Elena', apellidos: 'Rojas Soto', dni: '47390125' },
+        { nombres: 'Edwin', apellidos: 'Quispe Huamán', dni: '46001234' },
+      ],
+    })
+    assert.equal(l.estado, 201)
+    lote = l.cuerpo.numero
+    for (const codigo of [lucia, kevin, martha])
+      assert.equal((await enviar(carlos, '/api/revision/documentos/' + codigo, {})).estado, 200)
+    const rechazo = await enviar(carlos, `/api/revision/documentos/${martha}/rechazo`, {
+      motivo: 'La persona no laboró en la agencia en las fechas indicadas.',
+    })
+    assert.equal(rechazo.estado, 200)
+    await carlos.goto(URL + '#/por-revisar')
+    await carlos.reload()
+    for (const nombre of ['Lucía Paredes Quinto', 'Kevin Ramos Ccanto'])
+      await carlos.getByRole('checkbox', { name: new RegExp('Seleccionar ' + nombre) }).check()
+    await carlos.getByRole('region', { name: 'Selección para firmar' }).getByRole('button', { name: 'Firmar seleccionados' }).click()
+    const firma = carlos.getByRole('dialog', { name: 'Firmar con su billetera' })
+    await firma.getByRole('button', { name: 'Confirmar' }).click()
+    await firma.getByText('Se firmaron 2 documentos.').waitFor({ timeout: 60_000 })
+    await firma.getByRole('button', { name: 'Volver a Por revisar' }).click()
+    // Anulado directo en el contrato: la sincronización lo pasa a Anulado en la base (HU18).
+    await (await contratoDirector.anularDocumento(kevin, sinCosto)).wait()
+    await esperarHasta('Kevin pasa a Anulado', () => estadoDe(kevin) === 'ANULADO')
+    assert.deepEqual(
+      [lucia, kevin, martha, nilo].map(estadoDe),
+      ['FIRMADO', 'ANULADO', 'RECHAZADO', 'PENDIENTE'],
+    )
+  })
+
+  // ---------------------------------------------------------------- HU22: buscar documentos
+  const luz = await nueva()
+  await primerIngreso(luz, 'lflores', TEMPORAL, PROPIA)
+  const buscador = () => luz.getByRole('searchbox')
+  const tabla = () => luz.getByRole('table')
+  /** Textos de la primera columna de cada fila: códigos y "Lote …". */
+  const primeraColumna = async () =>
+    (await tabla().locator('tbody tr td:first-child').allTextContents()).map((t) => t.replace(/[▸▾]\s*/, '').trim())
+  const buscar = async (texto, esperado) => {
+    await buscador().fill(texto)
+    await esperarHasta(`la búsqueda de «${texto}» muestra ${esperado}`, async () => {
+      if (!(await tabla().isVisible())) return false
+      return JSON.stringify(await primeraColumna()) === JSON.stringify(esperado)
+    }, 10_000)
+  }
+  const fila = (texto) => tabla().locator('tbody tr', { hasText: texto })
+
+  await paso('HU22 · Mesa de Partes abre Buscar documentos y ve los más recientes de todas las áreas', async () => {
+    assert.deepEqual(await menu(luz), ['Inicio', 'Buscar documentos'])
+    await luz.getByRole('link', { name: 'Buscar documentos' }).click()
+    assert.equal(await luz.getByText('Se habilita en el Sprint 6').count(), 0)
+    // El lote es lo último que se envió; los certificados del lote van dentro de su fila.
+    await esperarHasta('se cargan los resultados', async () => (await tabla().isVisible()))
+    assert.deepEqual(await primeraColumna(), [`Lote ${lote}`, nilo, martha, kevin, lucia])
+    await fila(lucia).getByText('Firmado').waitFor()
+    await fila(kevin).getByText('Anulado').waitFor()
+    await fila(martha).getByText('Rechazado').waitFor()
+    await fila(nilo).getByText('Pendiente').waitFor()
+    const loteFila = fila(`Lote ${lote}`)
+    for (const dato of ['Certificado de Capacitación', '3 certificados', 'Área de Capacitación'])
+      await loteFila.getByText(dato).waitFor()
+    for (const dato of ['Certificado de Trabajo', 'Lucía Paredes Quinto', '45829364', 'EXP-2026-005391', 'Área de Administración'])
+      await fila(lucia).getByText(dato).waitFor()
+    await foto(luz, 'hu22_01_mas_recientes')
+  })
+  await paso('HU22 · Por nombre: coincidencias parciales, sin tildes y en cualquier orden', async () => {
+    // "huaman" encuentra a Nilo Huamán Soto y, dentro de su lote, a Edwin Quispe Huamán.
+    await buscador().fill('huaman')
+    await esperarHasta('«huaman» muestra el lote desplegado y a Nilo', async () =>
+      (await primeraColumna()).length === 3 && (await luz.getByText('Edwin Quispe Huamán').isVisible()))
+    const columnas = await primeraColumna()
+    assert.equal(columnas[0], `Lote ${lote}`)
+    assert.match(columnas[1], /^DRA-\d{4}-[A-Z2-9]{6}$/)
+    assert.equal(columnas[2], nilo)
+    await fila(`Lote ${lote}`).getByText('1 de 3 coinciden con la búsqueda').waitFor()
+    assert.equal(await luz.getByRole('button', { name: `Lote ${lote}` }).getAttribute('aria-expanded'), 'true')
+    assert.equal(await luz.getByText('Juan Ccori Pari').count(), 0)
+    await foto(luz, 'hu22_02_nombre_parcial')
+    await buscar('SOTO nilo', [nilo])
+    await buscar('quint', [lucia])
+  })
+  await paso('HU22 · Por DNI, código de verificación y número de expediente, completos o parciales', async () => {
+    await buscar('45829364', [lucia])
+    await buscar(kevin.toLowerCase().replace(/-/g, ' '), [kevin])
+    await buscar(kevin.slice(-6).toLowerCase(), [kevin])
+    await fila(kevin).getByText('Anulado').waitFor()
+    await buscar('005402', [nilo])
+    await buscar('exp-2026-005401', [martha])
+    await foto(luz, 'hu22_03_por_expediente')
+  })
+  await paso('HU22 · El número de lote muestra el lote plegado, que se despliega en sus certificados', async () => {
+    await buscar(lote, [`Lote ${lote}`])
+    const boton = luz.getByRole('button', { name: `Lote ${lote}` })
+    assert.equal(await boton.getAttribute('aria-expanded'), 'false')
+    assert.equal(await luz.getByText('Juan Ccori Pari').count(), 0)
+    await foto(luz, 'hu22_04_lote_plegado')
+    await boton.click()
+    for (const nombre of ['Juan Ccori Pari', 'María Elena Rojas Soto', 'Edwin Quispe Huamán'])
+      await luz.getByText(nombre).waitFor()
+    assert.equal((await primeraColumna()).length, 4)
+    await foto(luz, 'hu22_05_lote_desplegado')
+    // Un DNI de un certificado del lote: el lote aparece desplegado, solo con ese certificado.
+    await buscar('47390125', [`Lote ${lote}`, (await fila('María Elena Rojas Soto').locator('td').first().textContent()).trim()])
+    await fila(`Lote ${lote}`).getByText('1 de 3 coinciden con la búsqueda').waitFor()
+  })
+  await paso('HU22 · Los filtros por estado se combinan con el texto', async () => {
+    await buscador().fill('')
+    const filtrar = async (nombre, esperado) => {
+      await luz.getByRole('tab', { name: nombre }).click()
+      await esperarHasta(`el filtro ${nombre} muestra ${esperado}`, async () =>
+        (await tabla().isVisible()) && JSON.stringify(await primeraColumna()) === JSON.stringify(esperado), 10_000)
+      assert.equal(await luz.getByRole('tab', { name: nombre }).getAttribute('aria-selected'), 'true')
+    }
+    await filtrar('Firmados', [lucia])
+    await filtrar('Anulados', [kevin])
+    await filtrar('Rechazados', [martha])
+    await filtrar('En trámite', [`Lote ${lote}`, nilo])
+    await foto(luz, 'hu22_06_en_tramite')
+    await buscador().fill('rojas')
+    await esperarHasta('«rojas» en trámite solo muestra el lote', async () =>
+      JSON.stringify((await primeraColumna()).slice(0, 1)) === JSON.stringify([`Lote ${lote}`]) &&
+      (await luz.getByText('María Elena Rojas Soto').isVisible()) &&
+      (await luz.getByText('Martha Rojas Inga').count()) === 0, 10_000)
+    await luz.getByRole('tab', { name: 'Todos' }).click()
+    await esperarHasta('«rojas» en Todos suma a Martha', async () =>
+      (await luz.getByText('Martha Rojas Inga').isVisible()) &&
+      (await luz.getByText('María Elena Rojas Soto').isVisible()), 10_000)
+    assert.deepEqual(await primeraColumna(), [`Lote ${lote}`, (await primeraColumna())[1], martha])
+  })
+  await paso('HU22 · Sin resultados se informa con un mensaje; con un carácter pide al menos dos', async () => {
+    await buscador().fill('Nadie Conestenombre')
+    await luz.getByRole('status').getByText('No se encontraron documentos con «Nadie Conestenombre». Revise lo que escribió o busque por otro dato.').waitFor()
+    assert.equal(await tabla().count(), 0)
+    await foto(luz, 'hu22_07_sin_resultados')
+    await buscador().fill('a')
+    await luz.getByRole('alert').getByText('Escriba al menos 2 caracteres.').waitFor()
+    await foto(luz, 'hu22_08_un_caracter')
+  })
+  await paso('HU22 · Solo Consulta interna puede buscar: las otras cuentas no ven la opción y reciben 403', async () => {
+    for (const p of [pedro, carlos]) {
+      assert.ok(!(await menu(p)).includes('Buscar documentos'))
+      assert.equal(await api(p, '/api/consulta/documentos?texto=quispe'), 403)
+    }
+    assert.equal(await api(luz, '/api/consulta/documentos?texto=quispe'), 200)
+    const sinSesion = await (await b.newContext()).newPage()
+    await sinSesion.goto(URL)
+    assert.equal(await api(sinSesion, '/api/consulta/documentos?texto=quispe'), 401)
+    // El servidor también rechaza un texto de un carácter.
+    assert.equal(await api(luz, '/api/consulta/documentos?texto=a'), 400)
+  })
+
+  await b.close()
+  fs.writeFileSync(`${out}/resultado.txt`, resultados.join('\n') + '\n')
+  console.log(`\n${resultados.length} pasos correctos`)
+})().catch((e) => {
+  console.error('✗ FALLÓ:', e.message)
+  process.exit(1)
+})
