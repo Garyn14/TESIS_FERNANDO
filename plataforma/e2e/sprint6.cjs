@@ -770,7 +770,7 @@ const paso = async (nombre, fn) => {
     await firma.getByRole('button', { name: 'Confirmar' }).click()
     await firma.getByText(/Se firmó 1 certificado/).waitFor({ timeout: 60_000 })
     assert.equal(estadoDe(tercero), 'FIRMADO')
-    await luz.getByRole('link', { name: 'Buscar documentos' }).click()
+    await luz.getByRole('navigation', { name: 'Menú principal' }).getByRole('link', { name: 'Buscar documentos' }).click()
     await esperarHasta('llega el aviso del lote', async () => (await sinLeerDe(luz)) === 4, 10_000)
     await campanaDe(luz).click()
     const aviso = panelDe(luz).getByRole('link').first()
