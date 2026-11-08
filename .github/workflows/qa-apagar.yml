@@ -30,6 +30,8 @@ jobs:
       run:
         working-directory: plataforma
     steps:
+      # Primero el código: los pasos corren en plataforma/, que no existe antes de descargarlo.
+      - uses: actions/checkout@v7
       - name: Configuración de la cuenta
         id: cuenta
         env:
@@ -42,8 +44,6 @@ jobs:
           else
             echo "configurada=si" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/checkout@v7
-        if: steps.cuenta.outputs.configurada == 'si'
       - uses: aws-actions/configure-aws-credentials@v5
         if: steps.cuenta.outputs.configurada == 'si'
         with:
