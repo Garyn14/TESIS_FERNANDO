@@ -160,4 +160,38 @@ describe('Historial y auditoría (HU24)', () => {
       'No tiene permiso para realizar esta acción.',
     )
   })
+
+  it('una impresión después de la primera se titula como duplicado (HU25)', async () => {
+    abrir({
+      eventos: [
+        {
+          evento: 'IMPRESO',
+          realizadoEn: '2026-11-06T14:00:00Z',
+          responsable: 'Luz Flores Ticona',
+          rol: 'Consulta interna',
+          detalle: 'Impreso por Luz Flores Ticona (Consulta interna)',
+        },
+        {
+          evento: 'IMPRESO',
+          realizadoEn: '2026-11-06T15:00:00Z',
+          responsable: 'Luz Flores Ticona',
+          rol: 'Consulta interna',
+          detalle: 'Duplicado impreso por Luz Flores Ticona (Consulta interna). Impresión n.° 2',
+        },
+        {
+          evento: 'DESCARGADO',
+          realizadoEn: '2026-11-06T16:00:00Z',
+          responsable: 'Luz Flores Ticona',
+          rol: 'Consulta interna',
+          detalle: 'PDF descargado por Luz Flores Ticona (Consulta interna)',
+        },
+      ],
+      tecnico: SIN_REGISTRO,
+    })
+    const historial = await screen.findByRole('region', { name: 'Historial' })
+    const titulos = within(historial)
+      .getAllByRole('listitem')
+      .map((e) => e.querySelector('p')?.textContent)
+    expect(titulos).toEqual(['Impreso', 'Duplicado impreso', 'PDF descargado'])
+  })
 })
