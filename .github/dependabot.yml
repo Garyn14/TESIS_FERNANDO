@@ -1,0 +1,54 @@
+# DRA-49: revisión semanal de las dependencias. Las alertas de seguridad no dependen de este
+# archivo: se activan en Settings > Code security (Dependabot alerts y security updates). Las
+# actualizaciones menores y de parche se agrupan en una sola solicitud
+# por proyecto; las mayores llegan por separado, porque pueden romper la compatibilidad. Cada
+# solicitud se revisa e integra por separado, con la CI en verde.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /plataforma/backend
+    schedule: { interval: weekly, day: monday, timezone: America/Lima }
+    open-pull-requests-limit: 3
+    groups:
+      menores: { update-types: [minor, patch] }
+
+  - package-ecosystem: npm
+    directory: /plataforma/frontend
+    schedule: { interval: weekly, day: monday, timezone: America/Lima }
+    open-pull-requests-limit: 3
+    groups:
+      menores: { update-types: [minor, patch] }
+
+  - package-ecosystem: npm
+    directory: /plataforma/portal
+    schedule: { interval: weekly, day: monday, timezone: America/Lima }
+    open-pull-requests-limit: 3
+    groups:
+      menores: { update-types: [minor, patch] }
+
+  - package-ecosystem: npm
+    directory: /plataforma/contracts
+    schedule: { interval: weekly, day: monday, timezone: America/Lima }
+    open-pull-requests-limit: 3
+    groups:
+      menores: { update-types: [minor, patch] }
+
+  - package-ecosystem: npm
+    directory: /plataforma/e2e
+    schedule: { interval: weekly, day: monday, timezone: America/Lima }
+    open-pull-requests-limit: 2
+    groups:
+      menores: { update-types: [minor, patch] }
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday, timezone: America/Lima }
+    open-pull-requests-limit: 2
+    groups:
+      acciones: { patterns: ["*"] }
+
+  # Besu, PostgreSQL e IPFS de plataforma/infra/docker-compose.yml.
+  - package-ecosystem: docker-compose
+    directory: /plataforma/infra
+    schedule: { interval: weekly, day: monday, timezone: America/Lima }
+    open-pull-requests-limit: 2

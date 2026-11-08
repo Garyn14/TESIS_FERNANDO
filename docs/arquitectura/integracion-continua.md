@@ -170,5 +170,9 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 ## 9. Pendientes
 
 - ~~Instalar **GitHub for Jira**~~: instalado el 29/10/2026 (DRA-43).
-- Pruebas de integración del backend contra Besu e IPFS: las de IPFS se agregaron con HU17 (nodo Kubo real en Testcontainers, dentro del job Backend). Las de Besu llegan con la firma (HU11).
-- Agregar análisis de dependencias vulnerables (Dependabot) en un sprint posterior.
+- Pruebas de integración del backend contra Besu e IPFS:
+  - **IPFS:** cubierto desde HU17, con un nodo Kubo real en Testcontainers, dentro del job Backend.
+  - **Besu:** en la CI, el backend usa un contrato simulado (`ContratoFalso`). `ContratoRegistroWeb3jTest` lee recibos de transacción sin red, y el job "Red Besu (QBFT, 4 validadores)" solo comprueba que la red levanta y produce bloques.
+  - La integración real con Besu (firmas, anulaciones, reemisiones y verificación, con transacciones de la billetera del Director) se prueba en las **pruebas de punta a punta** de los Sprints 3 a 6, que corren localmente con `./e2e/regresion.sh N` y no en la CI.
+  - **Pendiente:** llevar a la CI una prueba de punta a punta contra la red Besu. Es costosa (unos 5 minutos por ejecución) y por ahora se registra en la evidencia de cada historia.
+- ~~Agregar análisis de dependencias vulnerables (Dependabot)~~: agregado el 08/11/2026 (DRA-49) en `.github/dependabot.yml`. Cada lunes revisa las dependencias del backend (Maven), del frontend, el portal, los contratos y las pruebas de punta a punta (npm), las acciones de la CI y las imágenes de Docker de `plataforma/infra`. Las **alertas de seguridad** (dependencias vulnerables) no dependen de este archivo: se activan en GitHub, en *Settings → Code security → Dependabot alerts* y *Dependabot security updates*. Esa activación la hace el dueño del repositorio. Cada actualización que propone se revisa e integra por separado, con la CI en verde.
