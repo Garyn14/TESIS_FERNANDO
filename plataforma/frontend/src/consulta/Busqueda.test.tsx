@@ -206,4 +206,27 @@ describe('Buscar documentos (HU22)', () => {
       'No tiene permiso para realizar esta acción.',
     )
   })
+
+  it('el código abre la ficha, y la búsqueda queda en la dirección para volver (HU23)', async () => {
+    backend(() => respuesta(200, { filas: [DOCUMENTO, LOTE_COMPLETO], hayMas: false }))
+    render(<PaginaBuscarDocumentos consulta="texto=quispe&estado=FIRMADOS" />)
+
+    expect(await screen.findByRole('link', { name: 'DRA-2026-F8R2MA' })).toHaveAttribute(
+      'href',
+      '#/buscar/DRA-2026-F8R2MA?texto=quispe&estado=FIRMADOS',
+    )
+    expect(screen.getByRole('searchbox')).toHaveValue('quispe')
+    expect(screen.getByRole('tab', { name: 'Firmados' })).toHaveAttribute('aria-selected', 'true')
+    expect(parametros(consultas[0])).toEqual({ texto: 'quispe', estado: 'FIRMADOS' })
+    // También los certificados de un lote.
+    fireEvent.click(screen.getByRole('button', { name: /Lote 2026-001/ }))
+    expect(screen.getByRole('link', { name: 'DRA-2026-AAAAAA' })).toHaveAttribute(
+      'href',
+      '#/buscar/DRA-2026-AAAAAA?texto=quispe&estado=FIRMADOS',
+    )
+
+    escribir('paredes')
+    fireEvent.click(screen.getByRole('tab', { name: 'Todos' }))
+    await vi.waitFor(() => expect(window.location.hash).toBe('#/buscar?texto=paredes'))
+  })
 })

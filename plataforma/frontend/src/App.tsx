@@ -21,6 +21,7 @@ import PaginaRevisionLote from './documentos/PaginaRevisionLote'
 import PaginaNuevoDocumento from './documentos/PaginaNuevoDocumento'
 import PaginaUsuarios from './usuarios/PaginaUsuarios'
 import PaginaBuscarDocumentos from './consulta/PaginaBuscarDocumentos'
+import PaginaFichaDocumento from './consulta/PaginaFichaDocumento'
 
 const SIN_SESION = 'Inicie sesión para continuar.'
 
@@ -111,7 +112,9 @@ export default function App() {
     )
 
   // Las rutas con detalle (#/nuevo-documento/CODIGO) pertenecen a la opción de su primer tramo.
-  const [base, detalle, numero] = ruta.split('/')
+  // HU23: Buscar documentos lleva su búsqueda en la dirección (#/buscar?texto=…&estado=…).
+  const [camino, consulta = ''] = ruta.split('?')
+  const [base, detalle, numero] = camino.split('/')
   const opcion = MENU.find((o) => o.ruta === base) ?? MENU[0]
   const permitida = sesion.permisos.includes(opcion.permiso)
 
@@ -140,7 +143,12 @@ export default function App() {
       )
   // HU08: la clave vuelve a consultar en cada visita, por si cambió el área (HU05).
   // HU22: la clave vuelve a buscar en cada visita, con los documentos al día.
-  else if (opcion.ruta === 'buscar') contenido = <PaginaBuscarDocumentos key={visita} />
+  else if (opcion.ruta === 'buscar')
+    contenido = detalle ? (
+      <PaginaFichaDocumento key={`${detalle}-${visita}`} codigo={detalle} consulta={consulta} />
+    ) : (
+      <PaginaBuscarDocumentos key={visita} consulta={consulta} />
+    )
   else if (opcion.ruta === 'firmados')
     contenido = <PaginaFirmados key={visita} director={sesion.nombreCompleto} />
   else if (opcion.ruta === 'mis-documentos')

@@ -11,6 +11,7 @@ import {
   type FilaDeBusqueda,
   type FiltroDeEstado,
   type ResultadoDeBusqueda,
+  consultaDe,
 } from './api'
 
 /** Espera después de la última tecla, para no consultar en cada una. */
@@ -25,31 +26,41 @@ const certificados = (n: number) => (n === 1 ? '1 certificado' : `${n} certifica
  * verificación, número de expediente o número de lote. Los certificados de un lote van dentro de
  * la fila del lote.
  */
-export default function PaginaBuscarDocumentos() {
-  const [texto, setTexto] = useState('')
-  const [filtro, setFiltro] = useState<FiltroDeEstado>('TODOS')
+export default function PaginaBuscarDocumentos({ consulta = '' }: { consulta?: string }) {
+  // HU23: la búsqueda vive en la dirección (#/buscar?texto=…&estado=…) para volver desde la ficha.
+  const [texto, setTexto] = useState(() => new URLSearchParams(consulta).get('texto') ?? '')
+  const [filtro, setFiltro] = useState<FiltroDeEstado>(() => {
+    const estado = new URLSearchParams(consulta).get('estado')
+    return FILTROS.some((f) => f.valor === estado) ? (estado as FiltroDeEstado) : 'TODOS'
+  })
   const [resultado, setResultado] = useState<ResultadoDeBusqueda | null>(null)
   const [buscado, setBuscado] = useState('')
   const [error, setError] = useState('')
-  const consulta = useRef(0)
+  const ultima = useRef(0)
 
   const limpio = texto.trim().replace(/\s+/g, ' ')
   const muyCorto = limpio !== '' && limpio.replace(/ /g, '').length < MINIMO_DE_CARACTERES
 
+  const enDireccion = consultaDe(limpio, filtro)
+  useEffect(() => {
+    // Sin agregar una entrada al historial por cada tecla.
+    window.history.replaceState(null, '', `#/buscar${enDireccion ? `?${enDireccion}` : ''}`)
+  }, [enDireccion])
+
   useEffect(() => {
     if (muyCorto) return
-    const numero = ++consulta.current
+    const numero = ++ultima.current
     const espera = setTimeout(() => {
       buscarDocumentos(limpio, filtro)
         .then((r) => {
           // Solo se muestra la respuesta de la última búsqueda.
-          if (numero !== consulta.current) return
+          if (numero !== ultima.current) return
           setResultado(r)
           setBuscado(limpio)
           setError('')
         })
         .catch((e) => {
-          if (numero !== consulta.current) return
+          if (numero !== ultima.current) return
           setError(e instanceof ErrorApi ? e.message : 'No se pudo buscar. Intente nuevamente.')
         })
     }, ESPERA_MS)
@@ -118,14 +129,18 @@ export default function PaginaBuscarDocumentos() {
               precisar la búsqueda.
             </p>
           )}
-          <Resultados key={`${buscado}|${filtro}`} filas={resultado.filas} />
+          <Resultados
+            key={`${buscado}|${filtro}`}
+            filas={resultado.filas}
+            consulta={consultaDe(buscado, filtro)}
+          />
         </>
       )}
     </section>
   )
 }
 
-function Resultados({ filas }: { filas: FilaDeBusqueda[] }) {
+function Resultados({ filas, consulta }: { filas: FilaDeBusqueda[]; consulta: string }) {
   return (
     <div className="mt-4 overflow-x-auto rounded-xl border border-line bg-card shadow-sm">
       <table className="w-full text-left text-sm">
@@ -143,9 +158,9 @@ function Resultados({ filas }: { filas: FilaDeBusqueda[] }) {
         <tbody>
           {filas.map((f) =>
             f.lote && f.certificados ? (
-              <FilaLote key={`lote-${f.lote}`} fila={f} />
+              <FilaLote key={`lote-${f.lote}`} fila={f} consulta={consulta} />
             ) : (
-              <FilaDocumento key={f.codigo} fila={f} />
+              <FilaDocumento key={f.codigo} fila={f} consulta={consulta} />
             ),
           )}
         </tbody>
@@ -154,11 +169,25 @@ function Resultados({ filas }: { filas: FilaDeBusqueda[] }) {
   )
 }
 
-function FilaDocumento({ fila, enLote = false }: { fila: FilaDeBusqueda; enLote?: boolean }) {
+function FilaDocumento({
+  fila,
+  consulta,
+  enLote = false,
+}: {
+  fila: FilaDeBusqueda
+  consulta: string
+  enLote?: boolean
+}) {
   return (
     <tr className={`border-b border-line last:border-0 ${enLote ? 'bg-cream' : ''}`}>
       <td className={`${CELDA} font-mono whitespace-nowrap ${enLote ? 'pl-7' : ''}`}>
-        {fila.codigo}
+        {/* HU23: el código abre la ficha del documento. */}
+        <a
+          href={`#/buscar/${fila.codigo}${consulta ? `?${consulta}` : ''}`}
+          className="text-institutional hover:underline"
+        >
+          {fila.codigo}
+        </a>
       </td>
       <td className={CELDA}>{fila.tipoNombre}</td>
       <td className={CELDA}>
@@ -174,7 +203,7 @@ function FilaDocumento({ fila, enLote = false }: { fila: FilaDeBusqueda; enLote?
 }
 
 /** Un lote en una fila, que se despliega en sus certificados. */
-function FilaLote({ fila }: { fila: FilaDeBusqueda }) {
+function FilaLote({ fila, consulta }: { fila: FilaDeBusqueda; consulta: string }) {
   const lista = fila.certificados ?? []
   // Si la búsqueda coincide solo con algunos certificados, el lote aparece desplegado.
   const [abierto, setAbierto] = useState(!fila.completo)
@@ -214,7 +243,8 @@ function FilaLote({ fila }: { fila: FilaDeBusqueda }) {
           </span>
         </td>
       </tr>
-      {abierto && lista.map((c) => <FilaDocumento key={c.codigo} fila={c} enLote />)}
+      {abierto &&
+        lista.map((c) => <FilaDocumento key={c.codigo} fila={c} consulta={consulta} enLote />)}
     </Fragment>
   )
 }
