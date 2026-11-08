@@ -42,9 +42,9 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 |---|---|
 | 0–2 | Cerrados y aprobados por el PO (47 puntos) |
 | 3 (HU10–12, HU16–18), 4 (HU13–15, HU29–30) y 5 (HU19–21) | Cerrados **sin la validación del PO**, por decisión del equipo: el 3 y el 4 el 05/11 (74 puntos), el 5 el 07/11 (16 puntos) |
-| 6 (HU22–28) | **En curso** (en Jira, del 08/11 al 15/11): búsqueda, estado, historial y auditoría, descarga e impresión, avisos. Contiene también DRA-48 (la validación final del PO) y DRA-44 (AWS, diferida). **HU22 (DRA-35) y HU23 (DRA-36) en revisión** el 08/11 |
+| 6 (HU22–28) | **En curso** (en Jira, del 08/11 al 15/11): búsqueda, estado, historial y auditoría, descarga e impresión, avisos. Contiene también DRA-48 (la validación final del PO) y DRA-44 (AWS, diferida). **HU22 a HU24 (DRA-35 a DRA-37) en revisión** el 08/11 |
 
-**Lo siguiente:** HU24 (DRA-37), historial y detalle técnico de auditoría, en la ficha de HU23 (`plataforma/frontend/src/consulta/PaginaFichaDocumento.tsx`, `GET /api/consulta/documentos/{codigo}`). Luego HU25 a HU28 con el flujo de siempre. La prueba de punta a punta del sprint es `plataforma/e2e/sprint6.cjs`.
+**Lo siguiente:** HU25 (DRA-38), descargar o imprimir un documento firmado desde su ficha (`plataforma/frontend/src/consulta/PaginaFichaDocumento.tsx`; el PDF final está en IPFS). Luego HU26 a HU28 (avisos) con el flujo de siempre. La prueba de punta a punta del sprint es `plataforma/e2e/sprint6.cjs`.
 
 **Validación del PO:** se hace **al final del proyecto** (DRA-48), con los guiones de los Sprints 3 a 6. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
 
