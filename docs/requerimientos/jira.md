@@ -6,7 +6,7 @@ Cargado el 28/10/2026 a partir de [historias_de_usuario.md](historias_de_usuario
 
 ## Calendario de sprints (reprogramado)
 
-Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario se reprogramó conservando la duración relativa: sprints de 1 semana y el Sprint 3 de dos semanas. El 29/10/2026, al cerrar el Sprint 0 antes de lo previsto, se **adelantó todo el calendario** y el Sprint 1 se inició ese mismo día. El 01/11/2026, tras cerrar el Sprint 1 el 31/10 (4 días antes de lo previsto), se **volvió a adelantar el calendario**: el Sprint 2 empieza el 01/11 y los siguientes se corren 4 días, con la misma duración. El 03/11/2026, al cerrar el Sprint 2 cuatro días antes, se **adelantó una vez más**: el Sprint 3 empieza el 03/11 y el Sprint 6 termina el 07/12. El 05/11/2026 se cerraron los Sprints 3 y 4 y se **adelantó otra vez**: el Sprint 5 va del 05/11 al 12/11 y el Sprint 6, del 12/11 al 19/11.
+Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario se reprogramó conservando la duración relativa: sprints de 1 semana y el Sprint 3 de dos semanas. El 29/10/2026, al cerrar el Sprint 0 antes de lo previsto, se **adelantó todo el calendario** y el Sprint 1 se inició ese mismo día. El 01/11/2026, tras cerrar el Sprint 1 el 31/10 (4 días antes de lo previsto), se **volvió a adelantar el calendario**: el Sprint 2 empieza el 01/11 y los siguientes se corren 4 días, con la misma duración. El 03/11/2026, al cerrar el Sprint 2 cuatro días antes, se **adelantó una vez más**: el Sprint 3 empieza el 03/11 y el Sprint 6 termina el 07/12. El 05/11/2026 se cerraron los Sprints 3 y 4 y se **adelantó otra vez**: el Sprint 5 va del 05/11 al 12/11 y el Sprint 6, del 12/11 al 19/11. El 08/11/2026, tras cerrar el Sprint 5 el 07/11, el **Sprint 6 se inició ese día**: va del 08/11 al 15/11.
 
 | Sprint | Fechas | Estado | Objetivo | Historias | Puntos |
 |---|---|---|---|---|---|
@@ -16,12 +16,17 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 | 3 | 03/11 – 05/11 | Cerrado (47 de 47 puntos; validación del PO en el Sprint 5) | Revisión y firma con registro en la blockchain | HU10–HU12, HU16–HU18 | 47 |
 | 4 | 04/11 – 05/11 | Cerrado (27 de 27 puntos; validación del PO en el Sprint 5) | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
 | 5 | 05/11 – 07/11 | Cerrado (16 de 16 puntos; validación del PO al final, en DRA-48) | Verificación pública de autenticidad | HU19–HU21 | 16 |
-| 6 | 12/11 – 19/11 | Futuro | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
+| 6 | 08/11 – 15/11 | En curso | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
 | | | | | **Total** | **156** |
 
 **Avance:** 137 de 156 puntos cerrados (88 %). De ellos, 47 (Sprints 1 y 2) están aprobados por el PO; los 90 de los Sprints 3, 4 y 5 esperan la validación final del PO (DRA-48). Velocidad: 24 puntos en el Sprint 1, 23 en el Sprint 2, 47 en el Sprint 3, 27 en el Sprint 4 y 16 en el Sprint 5.
 
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
+
+### Avance del Sprint 6 (08/11/2026)
+
+- **Iniciado en Jira** el 08/11, con fin el 15/11 y el objetivo "Implementar la consulta interna, la auditoría y las notificaciones".
+- **HU22 (DRA-35), Buscar documentos:** en curso, en la rama `DRA-35-buscar-documentos`.
 
 ### Cierre del Sprint 5 (07/11/2026)
 
