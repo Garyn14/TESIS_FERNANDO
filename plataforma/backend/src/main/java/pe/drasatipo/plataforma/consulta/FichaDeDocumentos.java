@@ -7,6 +7,8 @@ import pe.drasatipo.plataforma.comun.ReglaDeNegocioException;
 import pe.drasatipo.plataforma.documentos.Documento;
 import pe.drasatipo.plataforma.documentos.DocumentoRepository;
 import pe.drasatipo.plataforma.documentos.EstadoDocumento;
+import pe.drasatipo.plataforma.documentos.EventoDocumento;
+import pe.drasatipo.plataforma.documentos.HistorialDocumentoRepository;
 
 /** Ficha de un documento de cualquier área para Mesa de Partes (HU23, RF43). */
 @Service
@@ -15,9 +17,11 @@ public class FichaDeDocumentos {
   static final String NO_ENCONTRADO = "No se encontró el documento %s.";
 
   private final DocumentoRepository documentos;
+  private final HistorialDocumentoRepository historial;
 
-  public FichaDeDocumentos(DocumentoRepository documentos) {
+  public FichaDeDocumentos(DocumentoRepository documentos, HistorialDocumentoRepository historial) {
     this.documentos = documentos;
+    this.historial = historial;
   }
 
   @Transactional(readOnly = true)
@@ -59,6 +63,8 @@ public class FichaDeDocumentos {
         documento.getAnuladoEn(),
         documento.isReemision() ? documento.getReemplazaA().getCodigo() : null,
         reemision == null || reemplazado ? null : reemision.getCodigo(),
-        reemplazado ? reemision.getCodigo() : null);
+        reemplazado ? reemision.getCodigo() : null,
+        historial.countByDocumentoIdAndEvento(documento.getId(), EventoDocumento.IMPRESO),
+        historial.countByDocumentoIdAndEvento(documento.getId(), EventoDocumento.DESCARGADO));
   }
 }

@@ -12,12 +12,25 @@ public enum FiltroDeEstado {
           EstadoDocumento.PENDIENTE, EstadoDocumento.PROCESANDO_FIRMA, EstadoDocumento.OBSERVADO)),
   FIRMADOS(List.of(EstadoDocumento.FIRMADO)),
   ANULADOS(List.of(EstadoDocumento.ANULADO)),
-  RECHAZADOS(List.of(EstadoDocumento.RECHAZADO));
+  RECHAZADOS(List.of(EstadoDocumento.RECHAZADO)),
+  /** HU25: firmados que Mesa de Partes todavía no imprimió ni descargó. */
+  LISTOS_PARA_ENTREGAR(List.of(EstadoDocumento.FIRMADO), true);
 
   private final List<EstadoDocumento> estados;
+  private final boolean sinEntregar;
 
   FiltroDeEstado(List<EstadoDocumento> estados) {
+    this(estados, false);
+  }
+
+  FiltroDeEstado(List<EstadoDocumento> estados, boolean sinEntregar) {
     this.estados = estados;
+    this.sinEntregar = sinEntregar;
+  }
+
+  /** Si solo incluye los documentos que nunca se imprimieron ni se descargaron. */
+  public boolean sinEntregar() {
+    return sinEntregar;
   }
 
   public List<String> nombres() {

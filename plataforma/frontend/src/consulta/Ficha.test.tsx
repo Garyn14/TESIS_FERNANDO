@@ -25,6 +25,8 @@ const PENDIENTE: FichaDelDocumento = {
   reemplazaA: null,
   reemisionEnCurso: null,
   reemplazadoPor: null,
+  impresiones: 0,
+  descargas: 0,
 }
 
 function abrir(ficha: Partial<FichaDelDocumento> | null, consulta = '') {

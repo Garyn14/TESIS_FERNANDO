@@ -6,4 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface HistorialDocumentoRepository extends JpaRepository<HistorialDocumento, Long> {
 
   List<HistorialDocumento> findByDocumentoIdOrderByRealizadoEn(Long documentoId);
+
+  /** HU25: cuántas veces se imprimió o se descargó un documento. */
+  long countByDocumentoIdAndEvento(Long documentoId, EventoDocumento evento);
 }

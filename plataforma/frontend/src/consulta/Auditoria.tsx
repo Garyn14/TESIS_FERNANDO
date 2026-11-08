@@ -21,6 +21,8 @@ const TITULOS: Record<EventoDocumento, string> = {
   CORREGIDO: 'Corregido y reenviado a revisión',
   ANULADO: 'Anulado',
   REEMISION_SOLICITADA: 'Reemisión solicitada',
+  IMPRESO: 'Impreso',
+  DESCARGADO: 'PDF descargado',
 }
 
 /** Los que requieren atención: rojo lo definitivo, naranja lo que se corrige o se reintenta. */

@@ -139,6 +139,7 @@ describe('Buscar documentos (HU22)', () => {
       'Firmados',
       'Anulados',
       'Rechazados',
+      'Listos para entregar',
     ])
     expect(screen.getByRole('tab', { name: 'Todos' })).toHaveAttribute('aria-selected', 'true')
 

@@ -2,7 +2,8 @@
 // red Besu local, sin simulaciones. Requiere el entorno de levantar.sh. Recorre HU22 (Mesa de
 // Partes busca documentos de todas las áreas por nombre, DNI, código, expediente o lote, con
 // filtros por estado), HU23 (la ficha de un documento con su estado explicado y sus datos) y HU24
-// (el historial y el detalle técnico de auditoría, comprobado contra IPFS y la red Besu), con
+// (el historial y el detalle técnico de auditoría, comprobado contra IPFS y la red Besu) y HU25
+// (descargar o imprimir un documento firmado, con su registro en el historial), con
 // documentos firmados, anulados en la blockchain, rechazados, reemitidos y en trámite.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
@@ -410,6 +411,7 @@ const paso = async (nombre, fn) => {
     assert.equal(await luz.getByText('N.° de expediente').count(), 0)
     await foto(luz, 'hu23_04_certificado_de_lote')
   })
+  let nuevaLucia
   await paso('HU23 · Reemisión: el original y su reemisión se enlazan entre sí', async () => {
     await reingresar(pedro, 'pmorales')
     await reingresar(carlos, 'cmendoza')
@@ -420,6 +422,7 @@ const paso = async (nombre, fn) => {
     })
     assert.equal(r.estado, 201)
     const nueva = r.cuerpo.codigo
+    nuevaLucia = nueva
     await luz.goto(URL + '#/buscar/' + lucia)
     await explicacion('Tiene una reemisión en revisión:').waitFor()
     await foto(luz, 'hu23_05_reemision_en_revision')
@@ -517,6 +520,99 @@ const paso = async (nombre, fn) => {
     await reingresar(carlos, 'cmendoza')
     for (const p of [pedro, carlos]) assert.equal(await api(p, `/api/consulta/documentos/${nilo}/auditoria`), 403)
     assert.equal(await api(luz, `/api/consulta/documentos/${nilo}/auditoria`), 200)
+  })
+
+  // ------------------------------------------------------ HU25: descargar o imprimir
+  const entrega = () => luz.getByRole('region', { name: 'Entrega del documento' })
+  const sha256 = (contenido) => require('node:crypto').createHash('sha256').update(contenido).digest('hex')
+  const entregasDe = (codigo) =>
+    Number(psql(`SELECT count(*) FROM documento_historial h JOIN documento d ON d.id = h.documento_id WHERE d.codigo = '${codigo}' AND h.evento IN ('IMPRESO', 'DESCARGADO')`))
+  let transaccionesDelDirector
+  await paso('HU25 · El filtro Listos para entregar y la ficha muestran lo que falta entregar', async () => {
+    transaccionesDelDirector = await nodo.getTransactionCount(B.director.direccion)
+    await luz.goto(URL + '#/buscar')
+    await luz.reload()
+    await luz.getByRole('tab', { name: 'Listos para entregar' }).click()
+    // El único firmado que queda es la reemisión de Lucía: el original y Kevin están anulados.
+    await esperarHasta('el filtro muestra la reemisión', async () =>
+      (await tabla().isVisible()) && JSON.stringify(await primeraColumna()) === JSON.stringify([nuevaLucia]), 10_000)
+    await foto(luz, 'hu25_01_listos_para_entregar')
+    await tabla().getByRole('link', { name: nuevaLucia }).click()
+    await entrega().getByText('Listo para entregar').waitFor()
+    for (const nombre of ['Descargar PDF', 'Imprimir']) await entrega().getByRole('button', { name: nombre }).waitFor()
+    assert.equal(await entrega().getByRole('link', { name: 'Ver documento' }).getAttribute('href'), `/api/consulta/documentos/${nuevaLucia}/pdf`)
+    await foto(luz, 'hu25_02_listo_para_entregar')
+  })
+  await paso('HU25 · Ver documento muestra el PDF registrado en la blockchain, sin anotarlo', async () => {
+    const [pestana] = await Promise.all([
+      luz.context().waitForEvent('page'),
+      entrega().getByRole('link', { name: 'Ver documento' }).click(),
+    ])
+    await pestana.waitForLoadState('domcontentloaded').catch(() => {})
+    assert.ok(pestana.url().endsWith(`/api/consulta/documentos/${nuevaLucia}/pdf`), pestana.url())
+    const visto = await luz.evaluate(async (c) => {
+      const r = await fetch(`/api/consulta/documentos/${c}/pdf`)
+      return { estado: r.status, tipo: r.headers.get('content-type'), bytes: Array.from(new Uint8Array(await r.arrayBuffer())) }
+    }, nuevaLucia)
+    assert.equal(visto.estado, 200)
+    assert.equal(visto.tipo, 'application/pdf')
+    const [, registrado] = await registro.consultar(nuevaLucia)
+    assert.equal('0x' + sha256(Buffer.from(visto.bytes)), registrado.hashPdf)
+    await pestana.close()
+    assert.equal(entregasDe(nuevaLucia), 0)
+  })
+  await paso('HU25 · Descargar guarda el PDF firmado con su código y queda en el historial', async () => {
+    const [descarga] = await Promise.all([
+      luz.waitForEvent('download'),
+      entrega().getByRole('button', { name: 'Descargar PDF' }).click(),
+    ])
+    assert.equal(descarga.suggestedFilename(), `${nuevaLucia}.pdf`)
+    const archivo = `${out}/hu25_descargado.pdf`
+    await descarga.saveAs(archivo)
+    const [, registrado] = await registro.consultar(nuevaLucia)
+    assert.equal('0x' + sha256(fs.readFileSync(archivo)), registrado.hashPdf)
+    fs.rmSync(archivo)
+    await entrega().getByText('Entregado: impreso 0 veces, descargado 1 vez').waitFor()
+    await luz.getByRole('region', { name: 'Historial' }).getByText('PDF descargado por Luz Flores Ticona (Consulta interna)').waitFor()
+  })
+  await paso('HU25 · Imprimir y reimprimir: la segunda impresión queda como duplicado, sin una nueva firma', async () => {
+    await entrega().getByRole('button', { name: 'Imprimir', exact: true }).click()
+    await entrega().getByText('Entregado: impreso 1 vez, descargado 1 vez').waitFor()
+    // El PDF se carga en un marco oculto para el diálogo de impresión del navegador.
+    await luz.locator('iframe[title="Documento para imprimir"]').first().waitFor({ state: 'attached' })
+    await entrega().getByRole('button', { name: 'Imprimir duplicado' }).click()
+    await entrega().getByText('Entregado: impreso 2 veces, descargado 1 vez').waitFor()
+    const historialDeLuz = luz.getByRole('region', { name: 'Historial' })
+    await historialDeLuz.getByText('Impreso por Luz Flores Ticona (Consulta interna)', { exact: true }).waitFor()
+    await historialDeLuz.getByText('Duplicado impreso por Luz Flores Ticona (Consulta interna). Impresión n.° 2').waitFor()
+    assert.deepEqual(
+      psql(`SELECT h.evento FROM documento_historial h JOIN documento d ON d.id = h.documento_id WHERE d.codigo = '${nuevaLucia}' AND h.evento IN ('IMPRESO', 'DESCARGADO') ORDER BY h.id`).split('\n'),
+      ['DESCARGADO', 'IMPRESO', 'IMPRESO'],
+    )
+    // Ninguna transacción nueva del Director: no se volvió a firmar.
+    assert.equal(await nodo.getTransactionCount(B.director.direccion), transaccionesDelDirector)
+    assert.equal(estadoDe(nuevaLucia), 'FIRMADO')
+    await foto(luz, 'hu25_03_impreso_y_duplicado')
+    // Ya no está entre los listos para entregar.
+    await luz.getByRole('link', { name: '← Volver a Buscar documentos' }).click()
+    await luz.getByRole('tab', { name: 'Listos para entregar' }).click()
+    await luz.getByRole('status').getByText('No hay documentos con este estado.').waitFor()
+  })
+  await paso('HU25 · Un anulado no se entrega; solo Consulta interna descarga o imprime', async () => {
+    await luz.goto(URL + '#/buscar/' + kevin)
+    await explicacion('Fue anulado y ya no es válido.').waitFor()
+    assert.equal(await luz.getByRole('region', { name: 'Entrega del documento' }).count(), 0)
+    const r = await enviar(luz, `/api/consulta/documentos/${kevin}/entregas`, { forma: 'IMPRESION' })
+    assert.equal(r.estado, 409)
+    assert.equal(r.cuerpo.mensaje, 'El documento está anulado: no se puede entregar.')
+    assert.equal(entregasDe(kevin), 0)
+    await reingresar(pedro, 'pmorales')
+    await reingresar(carlos, 'cmendoza')
+    for (const p of [pedro, carlos]) {
+      assert.equal(await api(p, `/api/consulta/documentos/${nuevaLucia}/pdf`), 403)
+      assert.equal((await enviar(p, `/api/consulta/documentos/${nuevaLucia}/entregas`, { forma: 'DESCARGA' })).estado, 403)
+    }
+    assert.equal(entregasDe(nuevaLucia), 3)
   })
 
   await b.close()

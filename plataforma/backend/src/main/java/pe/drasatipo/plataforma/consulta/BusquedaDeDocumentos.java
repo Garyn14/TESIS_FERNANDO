@@ -68,6 +68,11 @@ public class BusquedaDeDocumentos {
             .addValue("estados", filtro.nombres())
             .addValue("limite", MAXIMO_DE_DOCUMENTOS + 1);
     String condicion = limpio.isEmpty() ? "" : "AND (" + condicion(limpio, parametros) + ")";
+    if (filtro.sinEntregar()) {
+      condicion +=
+          " AND NOT EXISTS (SELECT 1 FROM documento_historial h WHERE h.documento_id = d.id"
+              + " AND h.evento IN ('IMPRESO', 'DESCARGADO'))";
+    }
     List<Encontrado> encontrados =
         jdbc.query(CONSULTA.formatted(condicion), parametros, BusquedaDeDocumentos::encontrado);
     boolean truncado = encontrados.size() > MAXIMO_DE_DOCUMENTOS;

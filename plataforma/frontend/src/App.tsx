@@ -150,6 +150,7 @@ export default function App() {
         codigo={detalle}
         consulta={consulta}
         conAuditoria={sesion.permisos.includes('AUDITORIA_VER')}
+        conEntrega={sesion.permisos.includes('DOCUMENTO_IMPRIMIR')}
       />
     ) : (
       <PaginaBuscarDocumentos key={visita} consulta={consulta} />
