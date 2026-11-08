@@ -37,8 +37,8 @@ run "servidor_barato_y_sin_sorpresas" {
     error_message = "QA usa un t4g.medium por defecto."
   }
   assert {
-    condition     = aws_instance.servidor.credit_specification[0].cpu_credits == "standard"
-    error_message = "Los créditos de CPU deben ser standard: unlimited puede cobrar de más."
+    condition     = aws_instance.servidor.credit_specification[0].cpu_credits == "unlimited"
+    error_message = "Créditos unlimited: con standard el servidor arranca sin créditos y Besu no alcanza a levantar (DRA-56)."
   }
   assert {
     condition     = aws_instance.servidor.root_block_device[0].volume_type == "gp3" && aws_instance.servidor.root_block_device[0].encrypted

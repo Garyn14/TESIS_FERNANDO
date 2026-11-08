@@ -21,6 +21,22 @@ services:
       - --config-file=/red/nodo1/config.toml
       - --rpc-http-api=ETH,NET,WEB3
     ports: !reset []
+    # El primer arranque de Besu en un t4g (ARM) tarda varios minutos: más margen que en local
+    # antes de darlo por fallido (DRA-56).
+    healthcheck:
+      start_period: 300s
+      interval: 10s
+      retries: 30
+
+  besu-nodo2: &besu-paciente
+    healthcheck:
+      start_period: 300s
+      interval: 10s
+      retries: 30
+
+  besu-nodo3: *besu-paciente
+
+  besu-nodo4: *besu-paciente
 
   ipfs:
     ports: !reset []
