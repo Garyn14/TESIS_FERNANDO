@@ -66,10 +66,11 @@ Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuen
 
 - **Diseño:** escenario A de `docs/arquitectura/estimacion-costos-aws.md`, en **us-east-2 (Ohio)**.
   - La cuenta es de la **experiencia nueva de AWS** (AWS Builder ID, sin usuario raíz), **en el plan de pago** desde el 08/11/2026: el plan gratuito no permite el t4g.medium (DRA-56). La región la fija AWS por el país: no se puede elegir otra sin activar las funciones avanzadas (DRA-55).
-  - Un solo EC2 t4g.medium (tamaño en una variable) con el mismo `docker compose` de local, detrás de nginx en el puerto 80.
+  - Un solo EC2 t4g.medium (tamaño en una variable, créditos de CPU `unlimited`) con el mismo `docker compose` de local, detrás de nginx en el puerto 80.
   - Frontend y portal en S3, detrás de **dos distribuciones de CloudFront** con direcciones `*.cloudfront.net` fijas y HTTPS.
     - **Plataforma:** `/*` va a S3; `/api/*` y `/rpc` (Besu, para MetaMask) van al EC2.
     - **Portal:** `/*` va a S3; `/api/verificacion/*` va al EC2.
+  - **QA encendido desde el 08/11/2026:** plataforma https://d1px0ea1324c4y.cloudfront.net, portal https://d3u5jxvc0sbgm7.cloudfront.net (las direcciones cambian solo si se ejecuta QA – Destruir).
   - **Sin dominio propio en QA**, a propósito: no se sabe cuál querrá la DRA. Las direcciones fijas evitan que los QR de QA se rompan.
 - **Sin IP elástica, balanceador ni RDS.** Secretos en Parameter Store (SecureString). Estado de Terraform en S3.
 - **Disparadores** (GitHub Actions, a mano):
