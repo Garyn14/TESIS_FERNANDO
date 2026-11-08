@@ -704,8 +704,9 @@ const paso = async (nombre, fn) => {
     await pedro.getByText('La persona no laboró en la agencia en las fechas indicadas.').waitFor()
     await esperarHasta('queda leído', async () => (await sinLeerDe(pedro)) === 5, 10_000)
     await foto(pedro, 'hu27_02_aviso_abre_el_documento')
-    // Solo el área: el Director y Mesa de Partes no reciben avisos de resultado.
-    assert.equal(Number(psql("SELECT count(*) FROM aviso a JOIN usuario u ON u.id = a.destinatario_id WHERE u.nombre_usuario IN ('cmendoza', 'lflores', 'rquispe') AND a.tipo <> 'PENDIENTE_REVISION'")), 0)
+    // Los avisos del área (abren Mis documentos) no llegan al Director, a Mesa de Partes ni a la otra
+    // área. Mesa de Partes recibe los suyos (HU28), que abren Buscar documentos.
+    assert.equal(Number(psql("SELECT count(*) FROM aviso a JOIN usuario u ON u.id = a.destinatario_id WHERE u.nombre_usuario IN ('cmendoza', 'lflores', 'rquispe') AND a.enlace LIKE 'mis-documentos/%'")), 0)
   })
   await paso('HU27 · Una observación de certificados de un lote es un solo aviso, que abre el lote', async () => {
     await reingresar(carlos, 'cmendoza')
