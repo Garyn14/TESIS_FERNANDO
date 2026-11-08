@@ -87,6 +87,15 @@ FIN
   echo "${resumen[-1]}"
 done
 
+# Con el último servidor todavía encendido: rutas de CloudFront y aviso de servidor apagado.
+if [ -f "$VARIABLES" ]; then
+  echo "== CloudFront: rutas y aviso de servidor apagado"
+  mkdir -p "$CAPTURAS/cloudfront"
+  NODE_PATH=$(npm root -g) node infra/aws/pruebas/cloudfront.cjs "$CAPTURAS/cloudfront" "$PROYECTO-nginx-1" \
+    > "$CAPTURAS/cloudfront/salida.log" 2>&1
+  resumen+=("CloudFront: $(grep -E 'FALL|pasos correctos' "$CAPTURAS/cloudfront/salida.log" | tail -1)")
+fi
+
 echo
 echo "== Resumen (capturas y registros en $CAPTURAS)"
 printf '%s\n' "${resumen[@]}"
