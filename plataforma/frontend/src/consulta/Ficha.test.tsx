@@ -151,4 +151,33 @@ describe('Ficha del documento (HU23)', () => {
       '#/buscar?texto=lucia&estado=FIRMADOS',
     )
   })
+
+  it('con el permiso de auditoría muestra el historial y el detalle técnico (HU24)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((ruta) =>
+      String(ruta).endsWith('/auditoria')
+        ? respuesta(200, {
+            eventos: [
+              {
+                evento: 'REGISTRADO',
+                realizadoEn: '2026-11-04T15:05:00Z',
+                responsable: 'Pedro Morales Ccanto',
+                rol: 'Área encargada',
+                detalle: null,
+              },
+            ],
+            tecnico: { transaccion: null },
+          })
+        : respuesta(200, PENDIENTE),
+    )
+    render(<PaginaFichaDocumento codigo={PENDIENTE.codigo} consulta="" conAuditoria />)
+    expect(await screen.findByRole('region', { name: 'Historial' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Detalle técnico de auditoría/ })).toBeInTheDocument()
+  })
+
+  it('sin el permiso de auditoría no consulta el historial', async () => {
+    const pedidos = abrir({})
+    await screen.findByRole('heading', { name: 'DRA-2026-F8R2MA' })
+    expect(pedidos).toEqual(['/api/consulta/documentos/DRA-2026-F8R2MA'])
+    expect(screen.queryByRole('region', { name: 'Historial' })).not.toBeInTheDocument()
+  })
 })

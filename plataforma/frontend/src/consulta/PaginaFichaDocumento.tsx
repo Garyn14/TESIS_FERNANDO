@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { fechaCorta } from '../documentos/api'
 import Estado from '../documentos/Estado'
+import Auditoria from './Auditoria'
 import { fechaYHora, fichaDelDocumento, type FichaDelDocumento } from './api'
 
 /** Qué significa cada estado, para explicárselo al ciudadano (HU23). */
@@ -37,9 +38,12 @@ const MOTIVO: Partial<Record<FichaDelDocumento['estado'], string>> = {
 export default function PaginaFichaDocumento({
   codigo,
   consulta,
+  conAuditoria = false,
 }: {
   codigo: string
   consulta: string
+  /** HU24: con el permiso AUDITORIA_VER se muestran el historial y el detalle técnico. */
+  conAuditoria?: boolean
 }) {
   const [ficha, setFicha] = useState<FichaDelDocumento | null>(null)
   const [error, setError] = useState('')
@@ -133,6 +137,7 @@ export default function PaginaFichaDocumento({
               </div>
             ))}
           </dl>
+          {conAuditoria && <Auditoria codigo={ficha.codigo} />}
         </>
       )}
     </section>

@@ -145,7 +145,12 @@ export default function App() {
   // HU22: la clave vuelve a buscar en cada visita, con los documentos al día.
   else if (opcion.ruta === 'buscar')
     contenido = detalle ? (
-      <PaginaFichaDocumento key={`${detalle}-${visita}`} codigo={detalle} consulta={consulta} />
+      <PaginaFichaDocumento
+        key={`${detalle}-${visita}`}
+        codigo={detalle}
+        consulta={consulta}
+        conAuditoria={sesion.permisos.includes('AUDITORIA_VER')}
+      />
     ) : (
       <PaginaBuscarDocumentos key={visita} consulta={consulta} />
     )

@@ -1,7 +1,8 @@
 // Prueba de punta a punta real del Sprint 6: navegador + frontend + backend + PostgreSQL + IPFS +
 // red Besu local, sin simulaciones. Requiere el entorno de levantar.sh. Recorre HU22 (Mesa de
 // Partes busca documentos de todas las áreas por nombre, DNI, código, expediente o lote, con
-// filtros por estado) y HU23 (la ficha de un documento con su estado explicado y sus datos), con
+// filtros por estado), HU23 (la ficha de un documento con su estado explicado y sus datos) y HU24
+// (el historial y el detalle técnico de auditoría, comprobado contra IPFS y la red Besu), con
 // documentos firmados, anulados en la blockchain, rechazados, reemitidos y en trámite.
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
@@ -445,6 +446,76 @@ const paso = async (nombre, fn) => {
     await reingresar(carlos, 'cmendoza')
     for (const p of [pedro, carlos]) assert.equal(await api(p, '/api/consulta/documentos/' + nilo), 403)
     assert.equal(await api(luz, '/api/consulta/documentos/' + nilo), 200)
+  })
+
+  // ------------------------------------------------------ HU24: historial y auditoría
+  const historial = () => luz.getByRole('region', { name: 'Historial' }).getByRole('listitem')
+  const tecnico = (etiqueta) => luz.getByText(etiqueta, { exact: true }).locator('xpath=following-sibling::dd[1]')
+  const FECHA_Y_RESPONSABLE = /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2} · .+/
+  await paso('HU24 · El historial muestra cada evento con su fecha, hora y responsable', async () => {
+    await luz.goto(URL + '#/buscar/' + kevin)
+    await luz.getByRole('region', { name: 'Historial' }).waitFor()
+    const eventos = await historial().all()
+    const titulos = []
+    for (const e of eventos) {
+      titulos.push(await e.locator('p').first().textContent())
+      assert.match(await e.locator('p').nth(1).textContent(), FECHA_Y_RESPONSABLE)
+    }
+    assert.deepEqual(titulos, [
+      'Registrado y enviado a revisión',
+      'Revisado por el Director',
+      'Firma iniciada: PDF final guardado en IPFS',
+      'Firmado y registrado en la blockchain',
+      'Anulado',
+    ])
+    assert.match(await eventos[0].textContent(), /Pedro Morales Ccanto \(Área encargada\)/)
+    assert.match(await eventos[1].textContent(), /Ing\. Carlos Mendoza Rivera \(Director\)/)
+    // Lo que dice la base, evento por evento.
+    assert.equal(Number(psql(`SELECT count(*) FROM documento_historial h JOIN documento d ON d.id = h.documento_id WHERE d.codigo = '${kevin}'`)), eventos.length)
+    await foto(luz, 'hu24_01_historial')
+    // Un rechazo lleva su motivo en el historial.
+    await luz.goto(URL + '#/buscar/' + martha)
+    await luz.getByRole('region', { name: 'Historial' }).getByText('Rechazado por el Director').waitFor()
+    await luz.getByRole('region', { name: 'Historial' }).getByText('La persona no laboró en la agencia en las fechas indicadas.', { exact: false }).waitFor()
+  })
+  await paso('HU24 · El detalle técnico está plegado y coincide con IPFS y con la red Besu', async () => {
+    await luz.goto(URL + '#/buscar/' + kevin)
+    const boton = luz.getByRole('button', { name: /Detalle técnico de auditoría/ })
+    await boton.waitFor()
+    assert.equal(await boton.getAttribute('aria-expanded'), 'false')
+    assert.equal(await luz.getByText('Huella digital del PDF (SHA-256)').count(), 0)
+    await boton.click()
+    const hash = await tecnico('Huella digital del PDF (SHA-256)').textContent()
+    const cid = await tecnico('Identificador en IPFS (CID)').textContent()
+    const transaccion = await tecnico('Transacción de la firma').textContent()
+    const anulacion = await tecnico('Transacción de la anulación').textContent()
+    // El PDF guardado en IPFS tiene ese hash, y es el registrado en el contrato.
+    const pdf = Buffer.from(await (await fetch(`http://127.0.0.1:8082/ipfs/${cid}`)).arrayBuffer())
+    assert.equal(require('node:crypto').createHash('sha256').update(pdf).digest('hex'), hash.replace(/^0x/, ''))
+    const [, registrado] = await registro.consultar(kevin)
+    assert.equal(registrado.hashPdf.replace(/^0x/, ''), hash.replace(/^0x/, ''))
+    // Las transacciones existen en la red, en los bloques indicados.
+    const recibo = await nodo.getTransactionReceipt(transaccion)
+    assert.equal(recibo.status, 1)
+    assert.equal(String(recibo.blockNumber), await tecnico('Bloque de la firma').textContent())
+    assert.equal(getAddress(recibo.from), getAddress(await tecnico('Billetera firmante').textContent()))
+    const reciboAnulacion = await nodo.getTransactionReceipt(anulacion)
+    assert.equal(String(reciboAnulacion.blockNumber), await tecnico('Bloque de la anulación').textContent())
+    assert.equal(getAddress(await tecnico('Contrato RegistroDocumentos').textContent()), getAddress(DESPLIEGUE.contrato))
+    await luz.getByRole('button', { name: 'Copiar Transacción de la firma' }).waitFor()
+    await foto(luz, 'hu24_02_detalle_tecnico')
+    await boton.click()
+    assert.equal(await luz.getByText('Huella digital del PDF (SHA-256)').count(), 0)
+  })
+  await paso('HU24 · Un pendiente todavía no tiene registro en la blockchain; solo Consulta interna ve la auditoría', async () => {
+    await luz.goto(URL + '#/buscar/' + nilo)
+    await luz.getByRole('button', { name: /Detalle técnico de auditoría/ }).click()
+    await luz.getByText('Todavía no tiene registro en la blockchain.').waitFor()
+    await foto(luz, 'hu24_03_sin_registro')
+    await reingresar(pedro, 'pmorales')
+    await reingresar(carlos, 'cmendoza')
+    for (const p of [pedro, carlos]) assert.equal(await api(p, `/api/consulta/documentos/${nilo}/auditoria`), 403)
+    assert.equal(await api(luz, `/api/consulta/documentos/${nilo}/auditoria`), 200)
   })
 
   await b.close()

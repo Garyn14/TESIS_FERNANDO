@@ -87,3 +87,49 @@ export function consultaDe(texto: string, filtro: FiltroDeEstado) {
   if (filtro !== 'TODOS') p.set('estado', filtro)
   return p.toString()
 }
+
+/** HU24: tipos de evento del historial de un documento. */
+export type EventoDocumento =
+  | 'REGISTRADO'
+  | 'REVISADO'
+  | 'PREPARADO'
+  | 'ERROR_ALMACENAMIENTO'
+  | 'FIRMADO'
+  | 'FIRMA_CANCELADA'
+  | 'OBSERVADO'
+  | 'RECHAZADO'
+  | 'CORREGIDO'
+  | 'ANULADO'
+  | 'REEMISION_SOLICITADA'
+
+export interface EventoDelHistorial {
+  evento: EventoDocumento
+  realizadoEn: string
+  /** Nulo si lo registró el sistema (la sincronización con la blockchain). */
+  responsable: string | null
+  rol: string | null
+  detalle: string | null
+}
+
+export interface DetalleTecnico {
+  hashPdf: string | null
+  cid: string | null
+  transaccion: string | null
+  bloque: number | null
+  billeteraFirmante: string | null
+  registradoEn: string | null
+  transaccionAnulacion: string | null
+  bloqueAnulacion: number | null
+  anuladoEn: string | null
+  contrato: string | null
+}
+
+export interface AuditoriaDelDocumento {
+  eventos: EventoDelHistorial[]
+  tecnico: DetalleTecnico
+}
+
+export const auditoriaDelDocumento = (codigo: string) =>
+  solicitar<AuditoriaDelDocumento>(
+    `/api/consulta/documentos/${encodeURIComponent(codigo)}/auditoria`,
+  )

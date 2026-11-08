@@ -53,7 +53,7 @@ Los tres primeros son los de la Tabla 21 de la tesis. Los demás detallan cómo 
 | Abrir un resultado para ver su estado y sus datos | HU23 |
 | Historial y detalle técnico de auditoría | HU24 |
 | Descargar, imprimir y el filtro "Listos para entregar" del prototipo, que depende de lo impreso | HU25 |
-| Registrar cada búsqueda en la auditoría | HU24 |
+| Registrar cada búsqueda en la auditoría | Pregunta abierta al PO (ver HU24) |
 
 **Notas técnicas**
 
@@ -126,9 +126,53 @@ El primero es el de la Tabla 21 de la tesis. Los demás detallan cómo se cumple
 
 **Como** personal de Mesa de Partes, **quiero** consultar el historial y el detalle técnico de auditoría de un documento, **para** demostrar su trazabilidad.
 
+**Contexto**
+
+Cada paso del trámite ya queda en el historial del documento (`documento_historial`): el registro, la revisión, la firma, las observaciones, los rechazos, las correcciones, las anulaciones y las reemisiones. Ese historial no se modifica ni se elimina. La firma y la anulación también están en la blockchain (HU11, HU29), y el PDF final, en el IPFS privado (HU17). Esta historia los muestra en la ficha del documento (HU23), en dos secciones:
+
+| Sección | Qué muestra | Para qué |
+|---|---|---|
+| **Historial** | Cada evento con su fecha, hora y responsable, del más antiguo al más reciente | Explicar qué pasó con el trámite |
+| **Detalle técnico de auditoría** (plegado) | El hash del PDF, el CID en IPFS, la transacción y el bloque de la firma, la billetera firmante, la transacción y el bloque de la anulación y el contrato | Demostrar que el documento es el registrado en la blockchain |
+
 **Criterios de aceptación**
+
+Los dos primeros son los de la Tabla 21 de la tesis. Los demás detallan cómo se cumplen.
+
 - [ ] Cada evento muestra fecha, hora y responsable.
+  - La fecha y la hora van en hora de Lima: 07/11/2026 21:35.
+  - El responsable es el nombre de la persona y su rol: "Rosa Quispe Huamán (Área encargada)".
+  - Si el evento lo registró el sistema (la sincronización con la blockchain, HU18), el responsable es "Sistema (sincronización con la blockchain)".
+  - Cada evento tiene un título claro (por ejemplo, "Registrado y enviado a revisión", "Firmado y registrado en la blockchain") y su detalle tal como se guardó: motivos, cambios, transacción.
+  - Los eventos que requieren atención se distinguen por su color: rechazo y anulación en rojo; observación, firma no completada y error de almacenamiento en naranja.
 - [ ] El detalle técnico aparece plegado por defecto.
+  - El botón "Detalle técnico de auditoría" lo despliega y lo vuelve a plegar.
+  - Muestra, cuando existen:
+    - huella digital del PDF (SHA-256);
+    - identificador en IPFS (CID);
+    - transacción y bloque de la firma;
+    - billetera firmante;
+    - fecha y hora del registro en la blockchain;
+    - transacción y bloque de la anulación;
+    - dirección del contrato RegistroDocumentos.
+  - Cada valor tiene un botón "Copiar".
+  - Un documento que todavía no se firmó dice "Todavía no tiene registro en la blockchain."
+- [ ] El historial y el detalle técnico se ven en la ficha del documento (HU23), debajo de los datos.
+- [ ] Solo quien tiene el permiso `AUDITORIA_VER` (Consulta interna) los consulta. Sin sesión se responde 401 y con otro rol, 403.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Ver el PDF y comprobar su hash desde la pantalla | HU25 (descargar o imprimir) y el portal público (HU19–HU21) |
+| Registrar las impresiones y los duplicados en el historial | HU25 |
+| Registrar quién busca o consulta cada documento | Pregunta abierta al PO: hoy no se registra |
+
+**Notas técnicas**
+
+- API: `GET /api/consulta/documentos/{codigo}/auditoria`, con el permiso `AUDITORIA_VER`. Responde `{ eventos, tecnico }`.
+- Los eventos se leen de `documento_historial`, con el nombre y el rol de quien los registró (un `LEFT JOIN`, porque el sistema no tiene cuenta).
+- El HMAC del DNI y el token del QR no se muestran.
 
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
