@@ -16,7 +16,7 @@ import {
 /** Espera después de la última tecla, para no consultar en cada una. */
 export const ESPERA_MS = 300
 
-const CELDA = 'px-4 py-3'
+const CELDA = 'px-3 py-3'
 
 const certificados = (n: number) => (n === 1 ? '1 certificado' : `${n} certificados`)
 
@@ -128,7 +128,7 @@ export default function PaginaBuscarDocumentos() {
 function Resultados({ filas }: { filas: FilaDeBusqueda[] }) {
   return (
     <div className="mt-4 overflow-x-auto rounded-xl border border-line bg-card shadow-sm">
-      <table className="w-full text-left">
+      <table className="w-full text-left text-sm">
         <thead className="border-b border-line text-sm text-muted">
           <tr>
             <th className={`${CELDA} font-medium`}>Código o lote</th>
@@ -157,7 +157,7 @@ function Resultados({ filas }: { filas: FilaDeBusqueda[] }) {
 function FilaDocumento({ fila, enLote = false }: { fila: FilaDeBusqueda; enLote?: boolean }) {
   return (
     <tr className={`border-b border-line last:border-0 ${enLote ? 'bg-cream' : ''}`}>
-      <td className={`${CELDA} font-mono whitespace-nowrap ${enLote ? 'pl-12' : ''}`}>
+      <td className={`${CELDA} font-mono whitespace-nowrap ${enLote ? 'pl-7' : ''}`}>
         {fila.codigo}
       </td>
       <td className={CELDA}>{fila.tipoNombre}</td>
