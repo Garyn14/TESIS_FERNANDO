@@ -32,3 +32,18 @@ output "ruta_parametros" {
   description = "Ruta de Parameter Store con las variables del backend."
   value       = local.ruta_parametros
 }
+
+output "plataforma_url" {
+  description = "Dirección fija de la plataforma interna (CloudFront)."
+  value       = "https://${aws_cloudfront_distribution.sitio["plataforma"].domain_name}"
+}
+
+output "portal_url" {
+  description = "Dirección fija del portal público de verificación (CloudFront). Va en el QR."
+  value       = "https://${aws_cloudfront_distribution.sitio["portal"].domain_name}"
+}
+
+output "distribuciones" {
+  description = "Identificadores de las distribuciones de CloudFront, para invalidar index.html al publicar."
+  value       = { for nombre, d in aws_cloudfront_distribution.sitio : nombre => d.id }
+}

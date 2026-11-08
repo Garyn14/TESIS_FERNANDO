@@ -8,6 +8,10 @@
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
+// Contenedores del entorno de prueba: los de levantar.sh, o los del servidor de AWS en Docker
+// (infra/aws/pruebas/de-punta-a-punta.sh).
+const CONTENEDOR_PG = process.env.E2E_CONTENEDOR_PG ?? 'e2e-pg'
+const CONTENEDOR_IPFS = process.env.E2E_CONTENEDOR_IPFS ?? 'e2e-ipfs'
 const fs = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
@@ -82,7 +86,7 @@ const paso = async (nombre, fn) => {
       [ruta, cuerpo],
     )
   const psql = (sql) =>
-    execFileSync('docker', ['exec', 'e2e-pg', 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c', sql])
+    execFileSync('docker', ['exec', CONTENEDOR_PG, 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c', sql])
       .toString()
       .trim()
   const foto = (p, nombre) => p.screenshot({ path: `${out}/${nombre}.png`, fullPage: true })
@@ -351,12 +355,12 @@ const paso = async (nombre, fn) => {
   })
   await paso('HU17 · Si IPFS no responde, el documento vuelve a Pendiente con el error en su historial', async () => {
     const [juan] = delLote()
-    execFileSync('docker', ['stop', 'e2e-ipfs'])
+    execFileSync('docker', ['stop', CONTENEDOR_IPFS])
     let r
     try {
       r = await enviar(carlos, '/api/firma/preparacion', { codigos: [juan, ultimo] })
     } finally {
-      execFileSync('docker', ['start', 'e2e-ipfs'])
+      execFileSync('docker', ['start', CONTENEDOR_IPFS])
     }
     assert.equal(r.estado, 200)
     assert.equal(r.cuerpo.preparados.length, 0)

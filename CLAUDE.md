@@ -88,6 +88,7 @@ Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuen
 - Para el celular del PO: `PLATAFORMA_PORTAL_URL=http://<IP>:5174 ./e2e/levantar.sh demo`.
 - `./e2e/ver-registro.sh [código]` muestra los documentos firmados y anulados, su CID y su transacción, o el historial de un documento.
 - `./e2e/regresion.sh N` corre la prueba del Sprint N en un entorno limpio.
+- `infra/aws/pruebas/de-punta-a-punta.sh "1 2 3"` corre esas mismas pruebas contra el **servidor de AWS en Docker**, detrás de un CloudFront simulado (DRA-54). Antes hay que detener la red Besu de desarrollo, que usa la misma subred.
 - **Requisitos:** Docker con la red Besu (`plataforma/infra`), Java 21 y Node 22. Playwright se resuelve con `NODE_PATH=$(npm root -g)`.
 - **Problemas vistos en la nube:**
   - Docker se cae cuando la máquina se reinicia: `rm -f /var/run/docker.pid; dockerd &`. Los contenedores de Besu vuelven solos.

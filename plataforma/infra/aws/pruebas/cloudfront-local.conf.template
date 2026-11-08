@@ -1,0 +1,56 @@
+# CloudFront simulado (DRA-54), solo para las pruebas locales: reproduce las rutas de las dos
+# distribuciones de modulos/ambiente/cloudfront.tf para correr las pruebas de punta a punta contra
+# el servidor de AWS en Docker. No reproduce HTTPS ni la caché.
+#
+#   plataforma (5173): /api/* y /rpc al servidor; lo demás, archivos del build.
+#   portal     (5174): /api/verificacion/* al servidor; las rutas sin extensión, index.html
+#                      (como la función rutas-del-portal.js); lo demás, archivos del build.
+
+resolver 127.0.0.11 valid=5s ipv6=off;
+
+server {
+    listen 5173;
+    root /sitios/plataforma;
+
+    location = / {
+        try_files /index.html =404;
+    }
+    # S3 con Origin Access Control responde 403 a un archivo que no existe.
+    location / {
+        try_files $uri =403;
+    }
+    location ^~ /api/ {
+        include /etc/nginx/conf.d/origen.inc;
+    }
+    location = /rpc {
+        include /etc/nginx/conf.d/origen.inc;
+    }
+
+    error_page 502 504 =503 /_estado/apagado.json;
+    location = /_estado/apagado.json {
+        root /sitios/estado;
+        default_type application/json;
+    }
+}
+
+server {
+    listen 5174;
+    root /sitios/portal;
+
+    # rutas-del-portal.js: el último tramo sin extensión se sirve con index.html.
+    location ~ /[^/.]*$ {
+        try_files /index.html =404;
+    }
+    location / {
+        try_files $uri =403;
+    }
+    location ^~ /api/verificacion/ {
+        include /etc/nginx/conf.d/origen.inc;
+    }
+
+    error_page 502 504 =503 /_estado/apagado.json;
+    location = /_estado/apagado.json {
+        root /sitios/estado;
+        default_type application/json;
+    }
+}

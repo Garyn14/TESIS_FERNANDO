@@ -4,6 +4,9 @@
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
+// Contenedores del entorno de prueba: los de levantar.sh, o los del servidor de AWS en Docker
+// (infra/aws/pruebas/de-punta-a-punta.sh).
+const CONTENEDOR_PG = process.env.E2E_CONTENEDOR_PG ?? 'e2e-pg'
 
 const [out, URL = 'http://localhost:5173/', ADMIN_TEMPORAL = 'Admin2026!'] = process.argv.slice(2)
 const ADMIN_CLAVE = 'AdminPropia26'
@@ -223,7 +226,7 @@ const paso = async (nombre, fn) => {
   })
   await paso('HU08 · En la base quedan el token del QR y el HMAC del DNI, nunca el DNI en su lugar', async () => {
     const fila = execFileSync('docker', [
-      'exec', 'e2e-pg', 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c',
+      'exec', CONTENEDOR_PG, 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c',
       `SELECT estado, numero_expediente, length(token_qr), dni_hmac, (SELECT evento FROM documento_historial h WHERE h.documento_id = d.id) FROM documento d WHERE codigo = '${codigo}'`,
     ]).toString().trim().split('|')
     assert.equal(fila[0], 'PENDIENTE')
@@ -283,7 +286,7 @@ const paso = async (nombre, fn) => {
   // ------------------------------------------------------------- HU09: emisión por lista
   const luz = await nueva()
   const psql = (sql) =>
-    execFileSync('docker', ['exec', 'e2e-pg', 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c', sql])
+    execFileSync('docker', ['exec', CONTENEDOR_PG, 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c', sql])
       .toString()
       .trim()
   const celda = (p, columna, fila) => p.getByLabel(`${columna} de la fila ${fila}`, { exact: true })

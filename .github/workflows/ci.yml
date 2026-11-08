@@ -178,8 +178,10 @@ jobs:
       - name: Pruebas de la plantilla (proveedores simulados, sin cuenta de AWS)
         working-directory: plataforma/infra/aws/modulos/ambiente
         run: terraform init -input=false && terraform test
+      - name: Función de CloudFront del portal (rutas /verificar/{token})
+        run: node --test modulos/ambiente/tests/rutas-del-portal.test.cjs
       - name: Revisar los scripts del servidor
-        run: shellcheck servidor/*.sh
+        run: shellcheck servidor/*.sh pruebas/*.sh
       - uses: actions/setup-java@v6
         with:
           distribution: temurin

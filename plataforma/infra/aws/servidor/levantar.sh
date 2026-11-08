@@ -15,9 +15,13 @@ cd "$APP"
 [ -d infra/besu/red ] || infra/besu/generar-red.sh
 [ -f infra/ipfs/red/swarm.key ] || infra/ipfs/generar-clave.sh
 
+# COMPOSE_ADICIONAL: solo en las pruebas locales (infra/aws/pruebas), para sumar el CloudFront simulado.
+adicional=()
+[ -n "${COMPOSE_ADICIONAL:-}" ] && adicional=(-f "$COMPOSE_ADICIONAL")
 compose() {
   docker compose --project-name "${PROYECTO:-plataforma}" --project-directory infra -f infra/docker-compose.yml \
-    -f infra/aws/servidor/docker-compose.qa.yml --env-file "$VARIABLES" --profile besu --profile ipfs "$@"
+    -f infra/aws/servidor/docker-compose.qa.yml "${adicional[@]}" --env-file "$VARIABLES" \
+    --profile besu --profile ipfs "$@"
 }
 compose up -d --remove-orphans
 

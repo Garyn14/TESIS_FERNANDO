@@ -1,0 +1,23 @@
+# Se suma al servidor de AWS solo en las pruebas locales (de-punta-a-punta.sh, DRA-54): agrega el
+# CloudFront simulado en los puertos 5173 (plataforma) y 5174 (portal), los mismos del entorno de
+# desarrollo, y publica IPFS en 127.0.0.1 (5002 y 8082) porque las pruebas leen y apagan el nodo.
+services:
+  ipfs:
+    ports:
+      - "127.0.0.1:5002:5001"
+      - "127.0.0.1:8082:8080"
+
+  cloudfront:
+    image: nginx:${NGINX_VERSION:-1.29-alpine}
+    environment:
+      ORIGEN_SECRETO: ${ORIGEN_SECRETO:?Falta ORIGEN_SECRETO}
+    ports:
+      - "5173:5173"
+      - "5174:5174"
+    volumes:
+      - ${PRUEBAS_DIR:?Falta PRUEBAS_DIR}/cloudfront-local.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ${PRUEBAS_DIR}/origen.inc.template:/etc/nginx/templates/origen.inc.template:ro
+      - ${SITIO_PLATAFORMA:?Falta SITIO_PLATAFORMA}:/sitios/plataforma:ro
+      - ${SITIO_PORTAL:?Falta SITIO_PORTAL}:/sitios/portal:ro
+      - ${SITIO_ESTADO:?Falta SITIO_ESTADO}:/sitios/estado/_estado:ro
+    networks: [plataforma]

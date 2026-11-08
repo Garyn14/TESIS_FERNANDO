@@ -6,6 +6,10 @@
 const { chromium, devices } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
+// Contenedores del entorno de prueba: los de levantar.sh, o los del servidor de AWS en Docker
+// (infra/aws/pruebas/de-punta-a-punta.sh).
+const CONTENEDOR_PG = process.env.E2E_CONTENEDOR_PG ?? 'e2e-pg'
+const CONTENEDOR_IPFS = process.env.E2E_CONTENEDOR_IPFS ?? 'e2e-ipfs'
 const fs = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
@@ -84,7 +88,7 @@ const paso = async (nombre, fn) => {
       [ruta, cuerpo],
     )
   const psql = (sql) =>
-    execFileSync('docker', ['exec', 'e2e-pg', 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c', sql])
+    execFileSync('docker', ['exec', CONTENEDOR_PG, 'psql', '-U', 'plataforma', '-d', 'plataforma', '-At', '-F', '|', '-c', sql])
       .toString()
       .trim()
   const foto = (p, nombre) => p.screenshot({ path: `${out}/${nombre}.png`, fullPage: true })
@@ -296,7 +300,7 @@ const paso = async (nombre, fn) => {
     assert.equal(nueva.cuerpo.titular, 'Lucía Paredes Quintana')
   })
   await paso('HU21 · Si IPFS no responde, no se informa No válido: "No se pudo verificar…" (503)', async () => {
-    execFileSync('docker', ['stop', 'e2e-ipfs'])
+    execFileSync('docker', ['stop', CONTENEDOR_IPFS])
     try {
       const r = await verificar(tokenDe(kevin))
       guardar('hu21_06_no_disponible', r.cuerpo)
@@ -304,7 +308,7 @@ const paso = async (nombre, fn) => {
       assert.equal(r.cuerpo.mensaje, 'No se pudo verificar el documento en este momento. Intente nuevamente en unos minutos.')
       assert.equal(r.cuerpo.resultado, undefined)
     } finally {
-      execFileSync('docker', ['start', 'e2e-ipfs'])
+      execFileSync('docker', ['start', CONTENEDOR_IPFS])
     }
     await esperarHasta('IPFS de vuelta', async () => (await verificar(tokenDe(kevin))).estado === 200, 60_000)
   })
@@ -396,13 +400,13 @@ const paso = async (nombre, fn) => {
     await celular.getByRole('heading', { name: 'Documento no válido', level: 1 }).waitFor()
   })
   await paso('HU19 · Si la verificación no está disponible, se puede intentar nuevamente', async () => {
-    execFileSync('docker', ['stop', 'e2e-ipfs'])
+    execFileSync('docker', ['stop', CONTENEDOR_IPFS])
     try {
       await celular.goto(`${PORTAL}/verificar/${tokenDe(kevin)}`)
       await celular.getByRole('alert').getByText('No se pudo verificar el documento en este momento.', { exact: false }).waitFor()
       await fotoCelular('hu19_06_no_disponible_celular')
     } finally {
-      execFileSync('docker', ['start', 'e2e-ipfs'])
+      execFileSync('docker', ['start', CONTENEDOR_IPFS])
     }
     await esperarHasta('IPFS de vuelta', async () => (await verificar(tokenDe(kevin))).estado === 200, 60_000)
     await celular.getByRole('button', { name: 'Intentar nuevamente' }).click()

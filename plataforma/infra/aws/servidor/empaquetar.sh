@@ -13,7 +13,8 @@ TEMPORAL=$(mktemp -d)
 trap 'rm -rf "$TEMPORAL"' EXIT
 tar -C "$PLATAFORMA" --exclude='infra/besu/red' --exclude='infra/besu/tmp' \
   --exclude='infra/ipfs/red' --exclude='infra/.env' \
-  --exclude='infra/aws/modulos' --exclude='infra/aws/qa' --exclude='infra/aws/cuenta' -cf - infra | tar -C "$TEMPORAL" -xf -
+  --exclude='infra/aws/modulos' --exclude='infra/aws/qa' --exclude='infra/aws/cuenta' \
+  --exclude='infra/aws/pruebas' -cf - infra | tar -C "$TEMPORAL" -xf -
 cp "$JAR" "$TEMPORAL/backend.jar"
 tar -C "$TEMPORAL" -czf "$SALIDA" infra backend.jar
 echo "Paquete listo: $SALIDA ($(du -h "$SALIDA" | cut -f1))"
