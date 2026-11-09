@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <path id="arcoSup" d="M 82.6 317.4 A 166 166 0 1 1 317.4 317.4"/>
+      </defs>
+  <circle cx="200" cy="200" r="196" fill="#e8b500"/>
+  <circle cx="200" cy="200" r="182" fill="#1b5e20"/>
+  <circle cx="200" cy="200" r="146" fill="none" stroke="#e8b500" stroke-width="3"/>
+  <text font-family="Inter" font-weight="800" font-size="22" letter-spacing="2.4" dominant-baseline="central" fill="#e8b500">
+    <textPath href="#arcoSup" startOffset="50%" text-anchor="middle">DIRECCIÓN REGIONAL DE AGRICULTURA</textPath>
+  </text>
+  <text font-family="Inter" font-weight="800" font-size="22" letter-spacing="5" fill="#e8b500" text-anchor="middle" x="200" y="375">JUNÍN</text>
+  <g fill="#e8b500" transform="translate(200 128)">
+    <rect x="-3" y="-8" width="6" height="56" rx="3"/>
+    <g id="g1"><ellipse cx="-13" cy="0" rx="8" ry="15" transform="rotate(-25 -13 0)"/><ellipse cx="13" cy="0" rx="8" ry="15" transform="rotate(25 13 0)"/></g>
+    <use href="#g1" y="-20"/><use href="#g1" y="20"/>
+    <ellipse cx="0" cy="-38" rx="7" ry="14"/>
+  </g>
+  <text x="200" y="262" font-family="Inter Display" font-weight="900" font-size="96" fill="#e8b500" text-anchor="middle" letter-spacing="4">DRA</text>
+  <path d="M128 312 L168 278 L190 296 L222 262 L272 312" fill="none" stroke="#4c9a52" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

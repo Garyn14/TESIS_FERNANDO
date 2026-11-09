@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Plataforma DRA Satipo – video</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<div id="escenario">
+  <!-- HOY -->
+  <div class="escena hoy" id="hoy-rosa"><svg viewBox="0 0 1920 1080" id="svg-hoy-rosa"></svg></div>
+  <div class="escena hoy" id="hoy-carlos"><svg viewBox="0 0 1920 1080" id="svg-hoy-carlos"></svg></div>
+  <div class="escena hoy" id="hoy-lucia"><svg viewBox="0 0 1920 1080" id="svg-hoy-lucia"></svg></div>
+
+  <!-- GANCHO -->
+  <div class="escena" id="gancho">
+    <div class="columna" id="g1"><div class="marco"><svg viewBox="-200 -460 400 400" id="g1-svg"></svg></div><p>Mismo taller.</p></div>
+    <div class="columna" id="g2"><div class="marco"><svg viewBox="-200 -460 400 400" id="g2-svg"></svg></div><p>Mismo Director.</p></div>
+    <div class="columna" id="g3"><div class="marco"><svg viewBox="0 0 400 400" id="g3-svg"></svg></div><p>Mismo certificado.</p></div>
+  </div>
+
+  <!-- GOLPE -->
+  <div class="escena" id="golpe">
+    <div id="estallido"></div>
+    <div id="onda"></div>
+  </div>
+
+  <!-- AHORA -->
+  <div class="escena ahora" id="ahora-rosa">
+    <svg viewBox="0 0 1920 1080" id="svg-ahora-rosa"></svg>
+    <div class="pantalla" id="pantalla-rosa">
+      <div class="barra"><img src="logo.svg" alt=""><span>Agencia Agraria Satipo</span><em>Área de Capacitación</em></div>
+      <div class="cuerpo">
+        <h2 id="pr-titulo">Registrar certificados desde una lista</h2>
+        <div id="pr-zona">Arrastre aquí la lista de participantes</div>
+        <div id="pr-progreso"><div><i id="pr-barra"></i></div><span id="pr-progreso-texto">Cargando la lista…</span></div>
+        <table id="pr-tabla">
+          <tr><th>Participante</th><th>Taller</th><th>Datos</th></tr>
+          <tr><td>Ana Torres Rojas</td><td>Manejo del café</td><td>✓ Correctos</td></tr>
+          <tr><td>Luis Huamán Pérez</td><td>Manejo del café</td><td>✓ Correctos</td></tr>
+          <tr><td>María Ccanto Inga</td><td>Manejo del café</td><td>✓ Correctos</td></tr>
+          <tr><td>José Rivera Soto</td><td>Manejo del café</td><td>✓ Correctos</td></tr>
+          <tr><td>Elena Quinto Ramos</td><td>Manejo del café</td><td>✓ Correctos</td></tr>
+        </table>
+        <div id="pr-revision">Revisando <b id="pr-cuenta">0</b> de 40 participantes</div>
+        <div id="pr-rejilla"></div>
+        <div id="pr-listo"><b id="pr-listos">0</b> certificados listos para la firma del Director</div>
+      </div>
+    </div>
+    <div id="archivo"><div class="icono">XLSX</div><div><b>lista-taller.xlsx</b><span>40 participantes</span></div></div>
+  </div>
+
+  <!-- Capas comunes -->
+  <div id="vineta"></div>
+  <div id="rebobinado"><div id="rb-lineas"></div><div id="rb-banda"></div><div id="rb-icono">◀◀</div></div>
+  <div id="destello"></div>
+  <img id="logo" src="logo.svg" alt="">
+</div>
+<script src="personajes.js"></script>
+<script src="animacion.js"></script>
+</body>
+</html>
