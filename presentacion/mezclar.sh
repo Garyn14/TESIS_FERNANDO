@@ -7,12 +7,25 @@ cd "$(dirname "$0")/audio"
 
 # Efectos: archivo, segundo en la pista final, volumen.
 EFECTOS=(
+  # Hoy: Rosa, Carlos y Lucía.
+  "pop 0.45 0.30" "pop 2.60 0.35" "tic 8.48 0.45" "tic 8.88 0.45" "tic 9.12 0.45"
+  "pop 10.35 0.30" "whoosh 12.90 0.30" "whoosh 15.50 0.40"
+  "pop 20.90 0.30" "whoosh 22.40 0.30" "pop 25.70 0.40"
   "telefono 28.50 0.22"
+  # Gancho y logo.
   "pop 33.64 0.45" "pop 35.22 0.45" "pop 36.78 0.45"
   "brillo 38.95 0.55"
+  # Ahora: Rosa.
   "whoosh 40.30 0.60" "soltar 41.12 1.60"
   "tic 42.72 0.55" "tic 42.96 0.55" "tic 43.20 0.55" "tic 43.44 0.55" "tic 43.68 0.55"
   "ding 45.90 0.55"
+  # Ahora: Carlos firma y la blockchain registra.
+  "whoosh 46.60 0.45" "soltar 47.85 1.40" "pop 48.15 0.35" "soltar 49.98 1.40" "ding 50.35 0.40"
+  "whoosh 52.30 0.35" "tic 52.60 0.50" "tic 52.92 0.50" "tic 53.24 0.50" "tic 53.56 0.50" "tic 53.88 0.50"
+  # Ahora: Lucía, el QR y el resultado.
+  "whoosh 56.15 0.45" "brillo 59.20 0.25" "whoosh 60.55 0.30" "ding 61.35 0.55" "pop 63.05 0.30"
+  # Cierre.
+  "whoosh 64.85 0.45" "brillo 64.95 0.45" "pop 67.87 0.45" "pop 68.83 0.45" "pop 69.39 0.45" "whoosh 73.60 0.30"
 )
 
 entradas=(-i narracion-oscar.mp3 -i gancho.mp3 -i musica-ahora.mp3 -stream_loop -1 -i reloj.mp3 -i rebobinar.mp3)

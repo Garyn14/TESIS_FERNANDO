@@ -9,6 +9,7 @@
 <svg width="0" height="0" style="position:absolute"><defs>
   <filter id="sombra" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#1f2a22" flood-opacity=".18"/></filter>
   <linearGradient id="bajo-borde" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".22"/><stop offset=".12" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".12"/></linearGradient>
+  <radialGradient id="sol"><stop offset="0" stop-color="#fff3c4" stop-opacity=".9"/><stop offset="1" stop-color="#fff3c4" stop-opacity="0"/></radialGradient>
   <linearGradient id="rayo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3d1" stop-opacity=".9"/><stop offset=".7" stop-color="#fff3d1" stop-opacity="0"/></linearGradient>
 </defs></svg>
 <div id="escenario">
@@ -56,12 +57,72 @@
     <div id="archivo"><div class="icono">XLSX</div><div><b>lista-taller.xlsx</b><span>40 participantes</span></div></div>
   </div>
 
+  <!-- AHORA: Carlos -->
+  <div class="escena ahora" id="ahora-carlos">
+    <svg viewBox="0 0 1920 1080" id="svg-ahora-carlos"></svg>
+    <div class="movil" id="movil-carlos">
+      <div class="m-pantalla">
+        <div class="m-barra"><img src="logo.svg" alt="">Agencia Agraria Satipo</div>
+        <div class="m-cuerpo">
+          <div id="mc-lista">
+            <h3>Por revisar</h3>
+            <div class="m-tarjeta"><b>Certificados de participación</b><span>Taller: Manejo del café</span><span class="m-cuenta">40 documentos · Pendientes</span></div>
+            <div class="m-boton" id="mc-boton">Firmar 40 documentos</div>
+          </div>
+          <div id="mc-listo"><div class="m-check">✓</div><b>¡Listo!</b><span>Se firmaron 40 documentos.</span></div>
+        </div>
+        <div id="mc-modal"><div id="mc-tarjeta">
+          <div class="m-billetera"><div class="m-icono-billetera"></div><b>Billetera digital</b></div>
+          <p>Firmar <b>40 documentos</b></p>
+          <p class="m-red">Red: blockchain de la agencia</p>
+          <div class="m-botones"><span>Rechazar</span><span id="mc-confirmar">Confirmar</span></div>
+        </div></div>
+        <div id="mc-toque"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AHORA: Lucía -->
+  <div class="escena ahora" id="ahora-lucia">
+    <svg viewBox="0 0 1920 1080" id="svg-ahora-lucia"></svg>
+    <div class="movil grande" id="movil-lucia">
+      <div class="m-pantalla">
+        <div class="m-barra portal">Agencia Agraria Satipo – DRA Junín<small>Verificación de documentos</small></div>
+        <div class="m-cuerpo">
+          <div id="ml-cargando"><div class="m-girador"></div>Verificando el documento…</div>
+          <div id="ml-resultado">
+            <div class="m-valido"><div class="m-check">✓</div><div><b>Documento válido</b><span>El documento es auténtico: coincide con su registro en la blockchain.</span></div></div>
+            <dl><dt>Tipo</dt><dd>Certificado de Trabajo</dd><dt>Titular</dt><dd>Lucía Paredes Quinto</dd><dt>Estado</dt><dd class="vigente">Vigente</dd></dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CIERRE -->
+  <div class="escena" id="cierre">
+    <div id="c-contenido">
+      <h1 id="c-titulo"><span>Plataforma</span> <span>de</span> <span>Certificados</span> <span>y</span> <span>Constancias</span></h1>
+      <div id="c-iconos">
+        <div id="c-i0"><div class="c-circulo"><svg viewBox="0 0 64 64"><rect x="14" y="8" width="36" height="48" rx="4" fill="none" stroke="currentColor" stroke-width="5"/><path d="M22 22h20M22 32h20M22 42h12" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>Emitir</div>
+        <div id="c-i1"><div class="c-circulo"><svg viewBox="0 0 64 64"><path d="M12 50 L16 38 L44 10 L54 20 L26 48Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M10 56h44" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>Firmar</div>
+        <div id="c-i2"><div class="c-circulo"><svg viewBox="0 0 64 64"><path d="M8 20V8h12M44 8h12v12M56 44v12H44M20 56H8V44" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M20 33l8 8 16-17" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>Verificar</div>
+      </div>
+      <p id="c-lema">Con un registro que nadie puede alterar sin que se note.</p>
+      <p id="c-pie">Agencia Agraria Satipo · Dirección Regional de Agricultura Junín</p>
+    </div>
+    <div id="c-veamos">Veamos cómo funciona <span id="c-flecha">→</span></div>
+  </div>
+
   <!-- Capas comunes -->
   <div id="vineta"></div>
   <div id="rebobinado"><div id="rb-lineas"></div><div id="rb-banda"></div><div id="rb-icono">◀◀</div></div>
+  <div id="cortina"></div>
+  <div id="etiqueta"><b id="et-nombre"></b><span id="et-rol"></span></div>
   <div id="destello"></div>
   <div id="grano"></div>
   <img id="logo" src="logo.svg" alt="">
+  <div id="negro"></div>
 </div>
 <script src="personajes.js"></script>
 <script src="animacion.js"></script>
