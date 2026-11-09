@@ -1,15 +1,68 @@
 {
-  "audio": "narracion-oscar.mp3",
-  "duracion": 67.71,
-  "voz": "Oscar (ElevenLabs v4, Creative Claw)",
+  "audio": "pista-final.mp3",
+  "duracion": 78.96,
+  "voz": "Oscar (ElevenLabs v4)",
+  "gancho": "Mismo taller. Mismo Director. Mismo certificado.",
   "escenas": [
-    {"id": "hoy-rosa",     "inicio": 0.00,  "fin": 9.36,  "texto": "Ella es Rosa… cuarenta certificados, uno por uno."},
-    {"id": "hoy-carlos",   "inicio": 10.24, "fin": 20.11, "texto": "Él es el ingeniero Carlos… esperan días sobre su escritorio."},
-    {"id": "hoy-lucia",    "inicio": 20.84, "fin": 30.88, "texto": "Y ella es Lucía… salvo llamar a la agencia y esperar."},
-    {"id": "ahora-rosa",   "inicio": 31.44, "fin": 38.56, "texto": "Ahora, Rosa carga la lista una sola vez…"},
-    {"id": "ahora-carlos", "inicio": 38.96, "fin": 47.84, "texto": "Carlos los revisa y los firma… blockchain de la agencia."},
-    {"id": "ahora-lucia",  "inicio": 48.55, "fin": 56.72, "texto": "Y quien recibe el certificado de Lucía… sin llamar a nadie."},
-    {"id": "cierre",       "inicio": 57.27, "fin": 65.52, "texto": "Plataforma de Certificados y Constancias…"},
-    {"id": "transicion",   "inicio": 66.24, "fin": 67.76, "texto": "Veamos cómo funciona."}
+    {
+      "id": "hoy-rosa",
+      "inicio": 0.0,
+      "fin": 9.36
+    },
+    {
+      "id": "hoy-carlos",
+      "inicio": 10.24,
+      "fin": 20.11
+    },
+    {
+      "id": "hoy-lucia",
+      "inicio": 20.84,
+      "fin": 31.0
+    },
+    {
+      "id": "congelado-silencio",
+      "inicio": 31.0,
+      "fin": 32.0
+    },
+    {
+      "id": "rebobinado",
+      "inicio": 32.0,
+      "fin": 33.8
+    },
+    {
+      "id": "gancho",
+      "inicio": 33.6,
+      "fin": 38.16
+    },
+    {
+      "id": "golpe-logo",
+      "inicio": 38.9,
+      "fin": 39.9
+    },
+    {
+      "id": "ahora-rosa",
+      "inicio": 39.95,
+      "fin": 46.43
+    },
+    {
+      "id": "ahora-carlos",
+      "inicio": 46.83,
+      "fin": 55.71
+    },
+    {
+      "id": "ahora-lucia",
+      "inicio": 56.42,
+      "fin": 64.59
+    },
+    {
+      "id": "cierre",
+      "inicio": 65.14,
+      "fin": 73.39
+    },
+    {
+      "id": "transicion",
+      "inicio": 74.11,
+      "fin": 75.63
+    }
   ]
 }
