@@ -14,7 +14,7 @@ const azar = (n) => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - M
 // ---------- Escenas en SVG ----------
 
 function escritorio(y, ancho = 1920, x = 0, tapa = '#8d6e63', frente = '#6d4c41') {
-  return `<rect x="${x}" y="${y}" width="${ancho}" height="28" fill="${tapa}"/><rect x="${x}" y="${y + 28}" width="${ancho}" height="${1080 - y}" fill="${frente}"/>`;
+  return `<rect x="${x}" y="${y}" width="${ancho}" height="28" fill="${tapa}"/><rect x="${x}" y="${y}" width="${ancho}" height="5" fill="#fff" opacity=".18"/><rect x="${x}" y="${y + 28}" width="${ancho}" height="${1080 - y}" fill="${frente}"/><rect x="${x}" y="${y + 28}" width="${ancho}" height="${1052 - y}" fill="url(#bajo-borde)"/>`;
 }
 
 $('svg-hoy-rosa').innerHTML = `
@@ -22,7 +22,7 @@ $('svg-hoy-rosa').innerHTML = `
   <rect x="120" y="140" width="300" height="380" rx="8" fill="#cfdde3" stroke="#bfae94" stroke-width="14"/>
   <path d="M270 140 V520 M120 330 H420" stroke="#bfae94" stroke-width="10"/>
   ${reloj('hr-reloj', 1720, 170, 78)}
-  <g id="hr-rosa" transform="translate(620 830) scale(1.25)">${PERSONAJES.rosa('preocupada')}</g>
+  <g id="hr-rosa" transform="translate(620 830) scale(1.25)">${PERSONAJES.rosa('preocupada', { mirar: 7 })}</g>
   ${escritorio(800)}
   <g id="hr-pilas">
     ${[0, 1, 2, 3].map((i) => `<g id="hr-pila${i}" transform="translate(${960 + i * 225} 800)">
@@ -64,7 +64,7 @@ $('svg-hoy-lucia').innerHTML = `
   <rect x="250" y="130" width="240" height="180" rx="6" fill="#fff" stroke="#9aa7ad" stroke-width="10"/>
   <path d="M290 270 L340 210 L380 250 L410 220 L450 270Z" fill="#b6c4ca"/>
   ${reloj('hl-reloj', 1700, 200, 86)}
-  <g id="hl-emp" transform="translate(1060 830) scale(1.15)">${PERSONAJES.empleador('preocupada')}</g>
+  <g id="hl-emp" transform="translate(1060 830) scale(1.15)">${PERSONAJES.empleador('preocupada', { mirar: -3 })}</g>
   <g id="hl-cert">${certificado(-105, -80, 210, 160)}
     <circle cx="-108" cy="40" r="22" fill="${PIEL.empleador}"/><circle cx="108" cy="40" r="22" fill="${PIEL.empleador}"/></g>
   ${escritorio(800, 1500, 500, '#90a4ae', '#78909c')}
@@ -86,7 +86,7 @@ $('svg-hoy-lucia').innerHTML = `
     <circle r="78" fill="#fff" stroke="#b0bec5" stroke-width="4"/><circle cx="-62" cy="88" r="16" fill="#fff" stroke="#b0bec5" stroke-width="3"/>
     <text y="40" text-anchor="middle" font-family="Inter Display" font-weight="900" font-size="120" fill="#c0392b">?</text>
   </g>
-  <g id="hl-lucia" transform="translate(380 1090) scale(1.32)">${PERSONAJES.lucia('preocupada')}</g>
+  <g id="hl-lucia" transform="translate(380 1090) scale(1.32)">${PERSONAJES.lucia('preocupada', { mirar: 7 })}</g>
 `;
 
 $('g1-svg').innerHTML = `<rect x="-200" y="-460" width="400" height="400" fill="#e8f1e6"/><g transform="translate(0 -20)">${PERSONAJES.rosa('neutral')}</g>`;
@@ -102,9 +102,10 @@ $('svg-ahora-rosa').innerHTML = `
   <g transform="translate(1760 740)"><rect x="-56" y="-90" width="112" height="90" rx="12" fill="#c28119"/>
     <path d="M0 -90 Q-90 -200 -60 -300 Q-10 -220 0 -90 Q20 -240 80 -310 Q90 -190 0 -90Z" fill="#2e7d32"/>
     <path d="M0 -90 Q-120 -150 -130 -230 Q-50 -190 0 -90Z" fill="#43a047"/></g>
-  <g id="ar-rosa" transform="translate(420 800) scale(1.1)">${PERSONAJES.rosa('feliz')}</g>
+  <g id="ar-luz" style="mix-blend-mode:screen"><polygon points="400,120 80,540 760,1080 1500,1080" fill="url(#rayo)"/></g>
+  <g id="ar-rosa" transform="translate(420 800) scale(1.1)"><g id="ar-rosa-n">${PERSONAJES.rosa('neutral', { mirar: 8 })}</g><g id="ar-rosa-f" opacity="0">${PERSONAJES.rosa('feliz', { mirar: 8 })}</g></g>
   ${escritorio(760, 1920, 0, '#bcaaa4', '#a1887f')}
-  <rect x="712" y="176" width="896" height="548" rx="22" fill="#1f2a22"/>
+  <ellipse cx="1160" cy="772" rx="470" ry="18" fill="#000" opacity=".12"/><rect x="712" y="176" width="896" height="548" rx="22" fill="#1f2a22" filter="url(#sombra)"/>
   <rect x="1110" y="724" width="100" height="30" fill="#2f3b33"/><ellipse cx="1160" cy="760" rx="120" ry="12" fill="#2f3b33"/>
   <g transform="translate(655 760) scale(.8)"><rect x="-40" y="-70" width="80" height="70" rx="10" fill="#fff" stroke="#e5e1d8" stroke-width="4"/><path d="M40 -56 Q70 -50 62 -26 Q56 -12 40 -16" fill="none" stroke="#e5e1d8" stroke-width="8"/><rect x="-26" y="-50" width="52" height="10" rx="5" fill="#1b5e20"/></g>
 `;
@@ -155,6 +156,36 @@ function hoyLucia(lt) {
 }
 
 const HOY = { 'hoy-rosa': hoyRosa, 'hoy-carlos': hoyCarlos, 'hoy-lucia': hoyLucia };
+
+// ---------- Vida: parpadeo, cabeza, mirada y grano ----------
+function vida(t) {
+  document.querySelectorAll('.persona').forEach((g, i) => {
+    const semilla = i * 1.37;
+    const fase = (t + semilla * 2.3) % (2.8 + (i % 3) * 0.6);
+    const cierre = fase < 0.16 ? Math.sin((fase / 0.16) * Math.PI) : 0;
+    const mirar = Number(g.dataset.mirar || 0);
+    g.querySelectorAll('.ojos').forEach((o) => o.setAttribute('transform',
+      `translate(${mirar} -286) scale(1 ${1 - 0.9 * cierre}) translate(0 286)`));
+    const giro = Math.sin(t * 0.9 + semilla) * 2.2 + Math.sin(t * 2.3 + semilla) * 0.6;
+    const r = `rotate(${giro} 0 -205)`;
+    g.querySelector('.cabeza').setAttribute('transform', r);
+    g.querySelector('.cabeza-atras').setAttribute('transform', r);
+  });
+  const c = Math.floor(t * 10); // el grano cambia 10 veces por segundo
+  pon('grano', { backgroundPosition: `${Math.floor(azar(c) * 256)}px ${Math.floor(azar(c + 3) * 256)}px` });
+}
+
+(function () {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+  const cx = cv.getContext('2d'); const img = cx.createImageData(256, 256);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = Math.floor(azar(i * 0.731 + 11) * 255);
+    img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255;
+  }
+  cx.putImageData(img, 0, 0);
+  $('grano').style.backgroundImage = `url(${cv.toDataURL()})`;
+})();
+
 
 function seek(t) {
   const cuadro = Math.round(t * 30);
@@ -232,7 +263,11 @@ function seek(t) {
   if (t >= 39.55) {
     const escala = lerp(1.07, 1, eo(p(t, 39.55, 41))) + 0.025 * p(t, 41, 47);
     pon('ahora-rosa', { opacity: 1, transform: `scale(${escala})` });
-    $('ar-rosa').setAttribute('transform', `translate(420 ${800 + Math.sin(t * 2) * 4}) scale(1.1)`);
+    const salto = Math.sin(p(t, 45.9, 46.35) * Math.PI) * 16;
+    $('ar-rosa').setAttribute('transform', `translate(420 ${800 + Math.sin(t * 2) * 4 - salto}) scale(1.1)`);
+    const feliz = p(t, 45.88, 45.98);
+    $('ar-rosa-n').setAttribute('opacity', 1 - feliz); $('ar-rosa-f').setAttribute('opacity', feliz);
+    $('ar-luz').style.opacity = 0.55 * eo(p(t, 39.7, 41.2)) + 0.08 * Math.sin(t * 0.8);
     pon('pantalla-rosa', { opacity: p(t, 39.85, 40.15) });
 
     // El archivo vuela de Rosa a la zona de carga.
@@ -286,6 +321,7 @@ function seek(t) {
   } else {
     pon('archivo', { opacity: 0 });
   }
+  vida(t);
 }
 
 window.seek = seek;

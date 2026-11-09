@@ -19,7 +19,7 @@ function cabello(peinado, color, canas) {
 }
 
 function cara(expresion) {
-  const ojos = `<ellipse cx="-28" cy="-286" rx="7" ry="9" fill="#2a1c15"/><ellipse cx="28" cy="-286" rx="7" ry="9" fill="#2a1c15"/>`;
+  const ojos = `<g class="ojos"><ellipse cx="-28" cy="-286" rx="7" ry="9" fill="#2a1c15"/><ellipse cx="28" cy="-286" rx="7" ry="9" fill="#2a1c15"/><circle cx="-25" cy="-290" r="2.4" fill="#fff"/><circle cx="31" cy="-290" r="2.4" fill="#fff"/></g>`;
   const cejas = {
     neutral: `<path d="M-44 -314 L-14 -316 M14 -316 L44 -314" stroke="#2a1c15" stroke-width="6" stroke-linecap="round"/>`,
     preocupada: `<path d="M-44 -310 L-14 -322 M14 -322 L44 -310" stroke="#2a1c15" stroke-width="6" stroke-linecap="round"/>`,
@@ -38,18 +38,19 @@ function persona(o) {
   const {
     piel, pelo = '#2b1d16', ropa = '#2e7d32', peinado = 'corto', lentes = false,
     expresion = 'neutral', cuello = '#ffffff', corbata = null, canas = false, sombrero = false,
-    chaleco = null,
+    chaleco = null, mirar = 0,
   } = o;
   const c = cabello(peinado, pelo, canas);
   const sombra = 'rgba(0,0,0,.12)';
-  return `
-    ${c.atras}
+  return `<g class="persona" data-mirar="${mirar}" filter="url(#sombra)">
+    <g class="cabeza-atras">${c.atras}</g>
     <path d="M-172 0 Q-176 -150 -64 -172 L64 -172 Q176 -150 172 0Z" fill="${ropa}"/>
     ${chaleco ? `<path d="M-150 0 Q-150 -120 -70 -160 L-30 -60 L-30 0Z M150 0 Q150 -120 70 -160 L30 -60 L30 0Z" fill="${chaleco}"/>` : ''}
     <rect x="-28" y="-212" width="56" height="54" rx="10" fill="${piel}"/>
     <rect x="-28" y="-212" width="56" height="20" fill="${sombra}"/>
     <path d="M-50 -170 L0 -120 L50 -170 L28 -176 L0 -150 L-28 -176Z" fill="${cuello}"/>
     ${corbata ? `<path d="M-10 -150 L10 -150 L16 -60 L0 -40 L-16 -60Z" fill="${corbata}"/>` : ''}
+    <g class="cabeza">
     <ellipse cx="-78" cy="-280" rx="14" ry="20" fill="${piel}"/>
     <ellipse cx="78" cy="-280" rx="14" ry="20" fill="${piel}"/>
     <ellipse cx="0" cy="-286" rx="78" ry="92" fill="${piel}"/>
@@ -57,14 +58,14 @@ function persona(o) {
     ${cara(expresion)}
     ${lentes ? `<g fill="none" stroke="#2a1c15" stroke-width="5"><rect x="-54" y="-304" width="44" height="34" rx="10"/><rect x="10" y="-304" width="44" height="34" rx="10"/><path d="M-10 -290 L10 -290"/></g>` : ''}
     ${sombrero ? `<ellipse cx="0" cy="-352" rx="130" ry="22" fill="#a1764a"/><path d="M-70 -352 Q-66 -430 0 -432 Q66 -430 70 -352Z" fill="#b8885a"/><rect x="-70" y="-370" width="140" height="16" fill="#5d4027"/>` : ''}
-  `;
+    </g></g>`;
 }
 
 const PERSONAJES = {
-  rosa: (expresion) => persona({ piel: PIEL.rosa, pelo: '#2b1d16', ropa: '#2e7d32', peinado: 'moño', expresion }),
+  rosa: (expresion, extra = {}) => persona({ piel: PIEL.rosa, pelo: '#2b1d16', ropa: '#2e7d32', peinado: 'moño', expresion, ...extra }),
   carlos: (expresion, extra = {}) => persona({ piel: PIEL.carlos, pelo: '#3a2a20', canas: true, ropa: '#eceff1', chaleco: '#455a64', peinado: 'corto', lentes: true, expresion, cuello: '#ffffff', ...extra }),
-  lucia: (expresion) => persona({ piel: PIEL.lucia, pelo: '#3b2418', ropa: '#c28119', peinado: 'largo', expresion }),
-  empleador: (expresion) => persona({ piel: PIEL.empleador, pelo: '#1d1410', ropa: '#37474f', corbata: '#8e2b2b', peinado: 'corto', expresion }),
+  lucia: (expresion, extra = {}) => persona({ piel: PIEL.lucia, pelo: '#3b2418', ropa: '#c28119', peinado: 'largo', expresion, ...extra }),
+  empleador: (expresion, extra = {}) => persona({ piel: PIEL.empleador, pelo: '#1d1410', ropa: '#37474f', corbata: '#8e2b2b', peinado: 'corto', expresion, ...extra }),
 };
 
 // Certificado en miniatura: rectángulo con sello dorado y líneas de texto.
