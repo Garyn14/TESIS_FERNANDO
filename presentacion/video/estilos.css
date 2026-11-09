@@ -65,3 +65,7 @@ body { font-family: 'Inter', sans-serif; color: var(--tinta); }
 #rb-banda { position: absolute; left: 0; right: 0; height: 90px; background: linear-gradient(180deg, transparent, rgba(255,255,255,.35) 40%, rgba(255,255,255,.12) 60%, transparent); }
 #rb-icono { position: absolute; right: 90px; bottom: 50px; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 72px; color: #fff; text-shadow: 0 0 18px rgba(255,255,255,.6); letter-spacing: -8px; }
 #destello { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+
+#grano { position: absolute; inset: 0; pointer-events: none; opacity: .04; mix-blend-mode: overlay; background-repeat: repeat; }
+.calidez { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 14% 26%, rgba(255, 210, 130, .28), transparent 62%); mix-blend-mode: soft-light; }
+.hoy::after { content: ''; position: absolute; inset: 0; background: rgba(120, 150, 175, .10); mix-blend-mode: multiply; pointer-events: none; }

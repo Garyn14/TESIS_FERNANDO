@@ -8,7 +8,7 @@ const path = require('path');
   const a = Number(inicio), b = Number(fin), f = Number(fps);
   const ff = spawn('ffmpeg', ['-v', 'error', '-y', '-f', 'image2pipe', '-framerate', fps, '-i', '-',
     '-ss', inicio, '-t', String(b - a), '-i', path.join(__dirname, '..', 'pista-final.mp3'),
-    '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p',
+    '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-preset', 'medium', '-crf', '20', '-pix_fmt', 'yuv420p',
     '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', salida], { stdio: ['pipe', 'inherit', 'inherit'] });
   const nav = await chromium.launch();
   const pg = await nav.newPage({ viewport: { width: 1920, height: 1080 } });
