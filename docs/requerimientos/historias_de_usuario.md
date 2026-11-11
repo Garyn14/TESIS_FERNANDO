@@ -12,6 +12,9 @@ Fuente: sección 3.2.3 de la tesis (Tablas 17 a 23), con los puntos y el sprint 
 | E5 Consulta y trazabilidad interna | HU22–HU25 | 6 | 13 |
 | E6 Notificaciones | HU26–HU28 | 6 | 6 |
 | E7 Anulación y reemisión | HU29–HU30 | 4 | 16 |
+| Sprint 7: propuestas del equipo (fuera del backlog original) | DRA-58 a DRA-62 | 7 | 16 |
+
+> **Nombres de los roles desde el Sprint 7 (DRA-59).** Las historias HU01–HU30 conservan los nombres de la tesis. En la plataforma, **"Área encargada"** se llama **"Administrador de área"** y **"Consulta interna"** se llama **"Mesa de Partes"**. Los códigos internos (`AREA_ENCARGADA`, `CONSULTA_INTERNA`) no cambian.
 
 ---
 
@@ -1678,3 +1681,64 @@ Los cuatro primeros son los de la Tabla 23 de la tesis. Los demás detallan cóm
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
 | Media | 8 | 4 | RF50, RF51 |
+
+---
+
+# Sprint 7: propuestas del equipo
+
+Historias propuestas por el equipo al revisar los flujos con el negocio (`docs/negocio/flujos-del-sistema.md`), aprobadas por el responsable del proyecto el 11/11/2026. No forman parte de las 30 historias de la tesis.
+
+### DRA-59: Renombrar los roles
+
+**Sprint 7 · propuesta del equipo, fuera del backlog original de la tesis.**
+
+**Como** usuario de la plataforma, **quiero** que cada rol tenga un nombre que describa lo que hace, **para** entender sin explicaciones quién es quién.
+
+**Contexto**
+
+Al revisar los flujos para la reunión con el negocio (`docs/negocio/flujos-del-sistema.md`), noté que dos nombres de la tesis no describen bien lo que hace cada rol:
+- **"Área encargada"** suena a una oficina, no a una persona;
+- **"Consulta interna"** oculta que ese rol también **entrega** documentos: es Mesa de Partes.
+
+**Nombres nuevos**
+
+| Código interno (no cambia) | Nombre actual (tesis) | Nombre nuevo | Qué hace |
+|---|---|---|---|
+| `AREA_ENCARGADA` | Área encargada | **Administrador de área** | Registra, corrige y reemite los documentos de su área |
+| `CONSULTA_INTERNA` | Consulta interna | **Mesa de Partes** | Busca todos los documentos, informa su estado y los entrega |
+| `ADMINISTRADOR` | Administrador | Administrador (sin cambio) | Gestiona cuentas, áreas y la billetera del Director |
+| `DIRECTOR` | Director | Director (sin cambio) | Revisa, observa, rechaza, firma y anula |
+
+**Criterios de aceptación**
+
+- [ ] Los nombres nuevos se ven en todas las pantallas: el formulario y la lista de **Usuarios**, **Billetera del director**, el **encabezado** (por ejemplo, "Administrador de área – Área de Capacitación"), la bienvenida de **Inicio** y el **Historial** de la ficha de un documento (el rol de quien hizo cada evento).
+- [ ] Solo cambia el **nombre visible**. Los códigos internos (`AREA_ENCARGADA`, `CONSULTA_INTERNA`), los permisos, la regla de área (RF05) y el comportamiento de cada rol no cambian.
+- [ ] Las cuentas existentes conservan su rol: nadie gana ni pierde permisos.
+- [ ] **El historial no se reescribe:** los eventos de cuenta ya registrados conservan el texto con el que se guardaron (por ejemplo, "Rol: Director → Consulta interna"). Los nuevos usan los nombres nuevos.
+- [ ] La descripción del rol Mesa de Partes deja de repetir su nombre: "Busca, consulta el historial, imprime y entrega documentos".
+- [ ] Las pruebas del backend, del frontend y de punta a punta que buscan los nombres anteriores se actualizan y pasan.
+- [ ] Se actualiza la documentación que describe las pantallas: los guiones de prueba de los Sprints 1 a 6 y de QA, el documento de flujos para el negocio, los README y el `CLAUDE.md`.
+
+**Fuera del alcance**
+
+| Tema | Por qué |
+|---|---|
+| El texto de las historias HU01–HU30 y de la tesis | Conservan los nombres originales (Tablas 17 a 23). Se agrega una tabla de equivalencias al inicio de este archivo |
+| Los comentarios del código | Nombran los roles por su código interno y por las historias de la tesis; no se ven en pantalla |
+| El rol "Mesa de Partes de área" | DRA-58, que se construye después con el nombre nuevo |
+
+**Notas técnicas**
+
+- Los nombres visibles salen de la columna `rol.nombre`. Migración **V24**: `UPDATE rol SET nombre = …` por código, y la descripción de Mesa de Partes.
+- El frontend no tiene los nombres fijos: usa `rolNombre` de la sesión y de las cuentas, y el código `AREA_ENCARGADA` para mostrar el campo Área.
+- El historial de cuentas guarda el texto del cambio en `usuario_historial.detalle` al momento del evento, por eso los eventos anteriores no cambian.
+
+**Decisiones a validar**
+
+1. **"Administrador de área" puede confundirse con "Administrador".** Lo eligió el equipo; alternativas si el negocio lo prefiere: "Emisor de área" o "Responsable de emisión".
+2. Las historias y la tesis conservan los nombres originales, con una tabla de equivalencias.
+3. Los guiones de prueba **sí** se actualizan, porque describen lo que se ve en pantalla y se usarán en la validación del PO (DRA-48).
+
+| Prioridad | Puntos | Sprint | Ticket |
+|---|---|---|---|
+| Media | 2 | 7 | DRA-59 |
