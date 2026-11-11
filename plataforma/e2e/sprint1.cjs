@@ -91,7 +91,7 @@ const paso = async (nombre, fn) => {
   await paso('HU04+HU03 · Tras cambiarla, entra con el menú del Administrador', async () => {
     await cambiarContrasena(admin, ADMIN_TEMPORAL, ADMIN_CLAVE, 'Contraseña temporal')
     await admin.getByRole('navigation', { name: 'Menú principal' }).waitFor()
-    assert.deepEqual(await menu(admin), ['Inicio', 'Usuarios', 'Billetera del director'])
+    assert.deepEqual(await menu(admin), ['Inicio', 'Usuarios', 'Billetera del director', 'Áreas y documentos'])
     await foto(admin, 'hu03_03_inicio_administrador')
   })
 

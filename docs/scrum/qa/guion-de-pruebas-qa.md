@@ -111,7 +111,7 @@ Historias: HU01, HU05, HU03, HU04, HU02 y HU06 (Sprint 1).
 | Paso | Qué hacer | Qué se espera | Resultado |
 |---|---|---|---|
 | 1.1 | Abra la plataforma de QA. Ingrese con `admin` y la contraseña de Parameter Store. | Aparece "Cambie su contraseña". Es obligatorio cambiarla. | ☐ OK ☐ NO OK ☐ Obs. |
-| 1.2 | Escriba la temporal, luego `AdminPropia26` dos veces, y pulse "Cambiar contraseña". | Entra. El menú muestra Inicio, Usuarios y Billetera del director. | ☐ OK ☐ NO OK ☐ Obs. |
+| 1.2 | Escriba la temporal, luego `AdminPropia26` dos veces, y pulse "Cambiar contraseña". | Entra. El menú muestra Inicio, Usuarios, Billetera del director y Áreas y documentos. | ☐ OK ☐ NO OK ☐ Obs. |
 | 1.3 | En **Usuarios**, pulse "Nueva cuenta". Escriba `ab` como usuario, deje vacío el nombre y pulse "Crear cuenta". | No se crea. Se indica que el usuario debe tener de 4 a 30 caracteres y que el nombre completo es obligatorio. | ☐ OK ☐ NO OK ☐ Obs. |
 | 1.4 | Elija el rol **Emisor de área** sin elegir área y pulse "Crear cuenta". | No se guarda: "Seleccione el área de la persona". | ☐ OK ☐ NO OK ☐ Obs. |
 | 1.5 | Elija el área **Área de Capacitación**. | Debajo se muestra "Certificado de Capacitación, Certificado de Reconocimiento". | ☐ OK ☐ NO OK ☐ Obs. |

@@ -66,7 +66,7 @@ Al final están las **preguntas que el negocio todavía debe responder** y las *
 
 | Rol | Quién es en la agencia | Qué puede hacer | Menú que ve |
 |---|---|---|---|
-| **Administrador** | Responsable de sistemas | Crea, edita, desactiva y reactiva cuentas; restablece contraseñas; registra la billetera del Director y le otorga o revoca el permiso de firmar | Inicio, Usuarios, Billetera del director |
+| **Administrador** | Responsable de sistemas | Crea, edita, desactiva y reactiva cuentas; restablece contraseñas; registra la billetera del Director y le otorga o revoca el permiso de firmar; configura qué tipos de documento emite cada área | Inicio, Usuarios, Billetera del director, Áreas y documentos |
 | **Emisor de área** | Personal de cada área (Capacitación, Desarrollo Agrario, Administración) | Registra documentos de **su área**, emite por lista, corrige los observados y reemite los firmados con error | Inicio, Mis documentos, Nuevo documento |
 | **Director** | El director de la agencia | Revisa, observa, rechaza, firma y anula documentos | Inicio, Por revisar, Documentos firmados |
 | **Mesa de Partes** | Personal de Mesa de Partes | Busca cualquier documento, informa su estado al ciudadano, ve su historial e imprime o descarga los firmados (incluidos duplicados) | Inicio, Buscar documentos |
@@ -334,7 +334,7 @@ Conviene decirlo en la reunión para alinear expectativas:
 - **No corrige los datos del evento de un lote ya firmado** (taller, fechas, lugar), porque son comunes a todos sus certificados. Requeriría una historia nueva.
 - **No imprime un lote completo de una vez:** se imprime certificado por certificado (ver la pregunta 11 de la sección 7).
 - **No tiene todavía un dominio propio ni un ambiente de producción.** Hoy funciona en el ambiente de QA, con direcciones `cloudfront.net`.
-- **Las áreas y los tipos de documento no se crean desde una pantalla:** los agrega el equipo de desarrollo.
+- **Los tipos de documento nuevos no se crean desde una pantalla:** cada uno tiene su formulario y su plantilla del PDF, así que los agrega el equipo de desarrollo. Desde el Sprint 7, el Administrador sí elige en **Áreas y documentos** qué tipos emite cada área (DRA-60).
 
 ---
 
