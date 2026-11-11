@@ -454,3 +454,80 @@ La relación es de muchos a muchos: un mismo tipo puede pertenecer a más de un 
 | Prioridad | Puntos | Sprint | Ticket |
 |---|---|---|---|
 | Media | 3 | 7 | DRA-60 |
+
+---
+
+## DRA-61: Crear, renombrar, deshabilitar y reactivar áreas
+
+**Sprint 7 · propuesta del equipo, fuera del backlog original de la tesis.**
+
+**Como** Administrador, **quiero** crear áreas, cambiarles el nombre y deshabilitarlas, **para** mantener la plataforma alineada con la organización sin depender del equipo de desarrollo.
+
+**Contexto**
+
+Hoy las áreas son un catálogo que solo cambia el equipo de desarrollo con una migración (HU05). Esta historia agrega su gestión a la pantalla **"Áreas y documentos"** de DRA-60, con el mismo historial de cambios.
+
+**Las áreas no se eliminan**, igual que las cuentas y los documentos: un área tiene documentos emitidos y personas asignadas, y su historial debe seguir mostrando a qué área pertenecían. En lugar de eliminarla, se deshabilita.
+
+Lo que revisé en el código:
+- El **área organizadora** de un lote (HU09) es un texto que se guarda con el lote: renombrar un área no lo cambia.
+- El **PDF no imprime el nombre del área**: renombrarla no afecta a ningún documento emitido.
+- La regla de área (`AlcanceDeArea`) ya no deja registrar documentos en un área inactiva, y el formulario de cuentas solo ofrece áreas activas.
+
+**Criterios de aceptación**
+
+**Crear**
+- [ ] El botón **"Nueva área"** pide el nombre: obligatorio, de 3 a 100 caracteres y único sin distinguir mayúsculas ni tildes ("Área de Capacitación" y "area de capacitacion" son la misma). Si ya existe, activa o no: "Ya existe un área con ese nombre."
+- [ ] El área nace **activa y sin tipos de documento**, con la advertencia de DRA-60. Los tipos se le asignan en la misma pantalla.
+- [ ] Desde ese momento aparece al crear o editar cuentas (HU05).
+
+**Cambiar el nombre**
+- [ ] "Cambiar nombre" en cada área activa, con las mismas reglas del nombre.
+- [ ] El nombre nuevo se ve en toda la plataforma: el encabezado, Usuarios, Mis documentos, Buscar documentos, las fichas y los avisos nuevos.
+- [ ] No cambia lo ya guardado como texto: los PDF firmados, el área organizadora de los lotes ni el historial anterior.
+
+**Deshabilitar**
+- [ ] Pide confirmación.
+- [ ] **Si el área tiene personas activas asignadas, no se deshabilita:** "No se puede deshabilitar: el área tiene 2 personas activas. Muévalas a otra área desde Usuarios."
+- [ ] Un área deshabilitada **no aparece al crear o editar cuentas** y **no permite registrar documentos nuevos**.
+- [ ] Sus **documentos en trámite** siguen su flujo (revisión, firma, observación) y sus **documentos firmados siguen siendo válidos**: se verifican en el portal, se consultan, se imprimen, se anulan y se reemiten.
+- [ ] La pantalla la muestra en una sección **"Áreas deshabilitadas"**.
+
+**Reactivar**
+- [ ] Una área deshabilitada se reactiva con confirmación y **vuelve con sus tipos de documento**, que se conservan mientras está deshabilitada.
+
+**Todas las acciones**
+- [ ] **No existe la opción de eliminar** un área, ni en la pantalla ni en la API.
+- [ ] Cada creación, cambio de nombre, deshabilitación y reactivación queda en el historial de cambios (por ejemplo, "Nombre: Área de Capacitación → Área de Capacitación y Extensión").
+- [ ] Solo el Administrador puede hacerlo, con el permiso `CATALOGO_GESTIONAR` de DRA-60. Sin sesión se responde 401 y con otro rol, 403 (RF04).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Asignar o quitar tipos de documento a un área | DRA-60 |
+| Mover en bloque a las personas de un área a otra | Cuenta por cuenta desde Usuarios (HU05) |
+| Mover documentos ya registrados a otra área | Los documentos pertenecen al área que los emitió |
+| Eliminar áreas | No se permite, por trazabilidad |
+
+**Notas técnicas**
+
+- API, con permiso `CATALOGO_GESTIONAR`:
+  - `POST /api/catalogo/areas` (crear);
+  - `PUT /api/catalogo/areas/{area}` (cambiar el nombre);
+  - `POST /api/catalogo/areas/{area}/deshabilitar` y `POST /api/catalogo/areas/{area}/reactivar`.
+- `GET /api/catalogo` suma las áreas deshabilitadas, con sus tipos.
+- **Código interno:** se genera a partir del nombre al crear el área (mayúsculas, sin tildes, con guiones bajos; por ejemplo, `CAPACITACION_Y_EXTENSION`) y **no cambia al renombrarla**, porque identifica al área en la API y en el historial.
+- Migración **V26**: un índice único del nombre sin mayúsculas ni tildes.
+- Deshabilitar es una sola sentencia condicionada a que el área no tenga personas activas: `UPDATE area SET activa = false WHERE … AND NOT EXISTS (…)`.
+
+**Decisiones a validar**
+
+1. El código interno del área se genera del nombre y no cambia al renombrarla.
+2. Deshabilitar se bloquea si hay **personas activas** con esa área; las cuentas inactivas no lo bloquean.
+3. Los tipos asignados se conservan mientras el área está deshabilitada, y vuelven al reactivarla.
+4. Renombrar no cambia lo ya guardado como texto (historial anterior y área organizadora de los lotes).
+
+| Prioridad | Puntos | Sprint | Ticket |
+|---|---|---|---|
+| Media | 3 | 7 | DRA-61 |
