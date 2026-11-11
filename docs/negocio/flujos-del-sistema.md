@@ -103,6 +103,7 @@ stateDiagram-v2
 | **Procesando firma** | El Director está firmando el documento. Estará listo en unos minutos. |
 | **Firmado** | Firmado y registrado en la blockchain. Se puede entregar al ciudadano. |
 | **Anulado** | Fue anulado y ya no es válido. |
+| **Vencido** (desde el Sprint 7, DRA-62) | Solo en los tipos con vigencia: está firmado, pero su fecha "Válido hasta" ya pasó. No se entrega; si corresponde, se reemite. No es un estado guardado: se calcula con la fecha. |
 
 **Una regla de oro:** un documento enviado **no se modifica**. Si hay que cambiar algo, se observa y se corrige (antes de firmar) o se reemite (después de firmar). Todo queda en su historial.
 
@@ -238,6 +239,7 @@ Ninguna firma se pierde ni queda a medias.
 |---|---|---|
 | **Documento válido** | Tipo, titular, fecha de emisión, estado "Vigente" y **el documento completo**, que puede abrir o descargar | Lo mismo, **sin el documento**: "Para ver el documento completo, escanee su código QR." |
 | **Documento anulado** | "Este documento fue anulado y ya no es válido", con la **fecha de anulación**. **No muestra el documento.** Si hubo reemisión: "Existe una versión corregida de este documento. Solicítela a la Agencia Agraria Satipo." | Igual |
+| **Documento vencido** (DRA-62) | Solo si el tipo tiene vigencia: "Este documento venció el … y ya no está vigente", con el tipo, el titular, la fecha de emisión y la de vencimiento. **No muestra el documento.** Mientras está vigente, el resultado es "Documento válido" con **"Vigente hasta …"** | Igual |
 | **Documento no válido** | "No encontramos un documento válido con estos datos", sin ningún dato | Igual |
 | **Falla técnica** | "No se pudo verificar el documento en este momento. Intente nuevamente en unos minutos." **Nunca** dice "No válido" por una falla. | Igual |
 
@@ -336,6 +338,7 @@ Conviene decirlo en la reunión para alinear expectativas:
 - **No imprime un lote completo de una vez:** se imprime certificado por certificado (ver la pregunta 11 de la sección 7).
 - **No tiene todavía un dominio propio ni un ambiente de producción.** Hoy funciona en el ambiente de QA, con direcciones `cloudfront.net`.
 - **Los tipos de documento nuevos no se crean desde una pantalla:** cada uno tiene su formulario y su plantilla del PDF, así que los agrega el equipo de desarrollo. Desde el Sprint 7, el Administrador sí elige en **Áreas y documentos** qué tipos emite cada área (DRA-60), y crea, renombra, deshabilita y reactiva áreas (DRA-61).
+- **Ningún documento vence, salvo que se configure:** desde el Sprint 7 (DRA-62), el Administrador puede darle a un tipo de documento una vigencia de 1 a 120 meses en **Áreas y documentos**. El PDF imprime "Válido hasta …" y el portal informa cuando venció. Por defecto, ningún tipo vence.
 - **Las áreas no se eliminan:** tienen documentos e historial. Un área que ya no se usa se deshabilita, y solo si no tiene personas activas (DRA-61).
 
 ---

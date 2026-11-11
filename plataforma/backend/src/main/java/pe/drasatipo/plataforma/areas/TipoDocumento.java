@@ -17,7 +17,22 @@ public class TipoDocumento {
   private String origen;
   private boolean activo;
 
+  /** DRA-62: meses de vigencia de los documentos que se firmen, o null si no vencen. */
+  private Short vigenciaMeses;
+
   protected TipoDocumento() {}
+
+  public Short getVigenciaMeses() {
+    return vigenciaMeses;
+  }
+
+  /**
+   * DRA-62: la fecha hasta la que es válido (inclusive) un documento de este tipo emitido en {@code
+   * fechaEmision}, o null si no vence.
+   */
+  public java.time.LocalDate venceEn(java.time.LocalDate fechaEmision) {
+    return vigenciaMeses == null ? null : fechaEmision.plusMonths(vigenciaMeses);
+  }
 
   public Short getId() {
     return id;

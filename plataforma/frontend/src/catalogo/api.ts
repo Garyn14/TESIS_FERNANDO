@@ -4,6 +4,8 @@ export interface TipoDeDocumento {
   codigo: string
   nombre: string
   origen: 'SOLICITUD_PARTE' | 'OFICIO'
+  /** DRA-62: meses de vigencia de los documentos que se firmen, o null si no vencen. */
+  vigenciaMeses?: number | null
 }
 
 export interface AreaConfigurada {
@@ -17,7 +19,8 @@ export interface AreaConfigurada {
 }
 
 export interface Cambio {
-  area: string
+  /** Null en un cambio de vigencia, que es de un tipo y no de un área (DRA-62). */
+  area: string | null
   evento:
     | 'TIPO_ASIGNADO'
     | 'TIPO_QUITADO'
@@ -25,6 +28,7 @@ export interface Cambio {
     | 'AREA_RENOMBRADA'
     | 'AREA_DESHABILITADA'
     | 'AREA_REACTIVADA'
+    | 'VIGENCIA_CAMBIADA'
   detalle: string
   realizadoPor: string
   realizadoEn: string
@@ -61,3 +65,10 @@ export const deshabilitarArea = (area: string) =>
 
 export const reactivarArea = (area: string) =>
   solicitar<Catalogo>(`/api/catalogo/areas/${area}/reactivar`, { method: 'POST' })
+
+/** DRA-62: la vigencia de un tipo, en meses; null para "Sin vencimiento". */
+export const cambiarVigencia = (tipo: string, meses: number | null) =>
+  solicitar<Catalogo>(`/api/catalogo/tipos-documento/${tipo}/vigencia`, {
+    method: 'PUT',
+    body: JSON.stringify({ meses }),
+  })

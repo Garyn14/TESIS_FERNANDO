@@ -158,4 +158,39 @@ describe('Descargar o imprimir (HU25)', () => {
     )
     expect(screen.queryByRole('region', { name: 'Entrega del documento' })).not.toBeInTheDocument()
   })
+
+  it('un documento vencido muestra la fecha, la etiqueta y no ofrece entregarlo (DRA-62)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ ...FIRMADO, venceEn: '2026-12-05', vencido: true }), {
+          status: 200,
+        }),
+      ),
+    )
+    render(<PaginaFichaDocumento codigo={FIRMADO.codigo} consulta="" conEntrega />)
+    expect(await screen.findByText('Vencido')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Firmado, pero su vigencia terminó el 5 de diciembre de 2026. Ya no se puede entregar; si corresponde, se reemite.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Válido hasta').nextElementSibling?.textContent).toBe(
+      '5 de diciembre de 2026',
+    )
+    expect(screen.queryByRole('region', { name: 'Entrega del documento' })).not.toBeInTheDocument()
+  })
+
+  it('un documento vigente con vencimiento muestra hasta cuándo es válido y se entrega', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ ...FIRMADO, venceEn: '2027-11-05', vencido: false }), {
+          status: 200,
+        }),
+      ),
+    )
+    render(<PaginaFichaDocumento codigo={FIRMADO.codigo} consulta="" conEntrega />)
+    expect(await screen.findByText('5 de noviembre de 2027')).toBeInTheDocument()
+    expect(screen.queryByText('Vencido')).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Entrega del documento' })).toBeInTheDocument()
+  })
 })

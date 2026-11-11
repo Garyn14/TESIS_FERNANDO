@@ -1,5 +1,7 @@
 package pe.drasatipo.plataforma.consulta;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +20,13 @@ public class FichaDeDocumentos {
 
   private final DocumentoRepository documentos;
   private final HistorialDocumentoRepository historial;
+  private final Clock reloj;
 
-  public FichaDeDocumentos(DocumentoRepository documentos, HistorialDocumentoRepository historial) {
+  public FichaDeDocumentos(
+      DocumentoRepository documentos, HistorialDocumentoRepository historial, Clock reloj) {
     this.documentos = documentos;
     this.historial = historial;
+    this.reloj = reloj;
   }
 
   @Transactional(readOnly = true)
@@ -64,6 +69,8 @@ public class FichaDeDocumentos {
         reemision == null || reemplazado ? null : reemision.getCodigo(),
         reemplazado ? reemision.getCodigo() : null,
         historial.countByDocumentoIdAndEvento(documento.getId(), EventoDocumento.IMPRESO),
-        historial.countByDocumentoIdAndEvento(documento.getId(), EventoDocumento.DESCARGADO));
+        historial.countByDocumentoIdAndEvento(documento.getId(), EventoDocumento.DESCARGADO),
+        documento.getVenceEn(),
+        estado == EstadoDocumento.FIRMADO && documento.estaVencido(LocalDate.now(reloj)));
   }
 }

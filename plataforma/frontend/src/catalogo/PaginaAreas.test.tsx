@@ -361,3 +361,64 @@ describe('Gestionar áreas (DRA-61)', () => {
     )
   })
 })
+
+describe('Vigencia de los documentos (DRA-62)', () => {
+  it('muestra la vigencia de cada tipo y la guarda en meses o sin vencimiento', async () => {
+    const fetch = backend({
+      'PUT /api/catalogo/tipos-documento/CONSTANCIA_PRODUCTOR_ACTIVO/vigencia': () =>
+        respuesta(200, {
+          ...inicial,
+          tipos: inicial.tipos.map((t) =>
+            t.codigo === 'CONSTANCIA_PRODUCTOR_ACTIVO' ? { ...t, vigenciaMeses: 12 } : t,
+          ),
+        }),
+    })
+    render(<PaginaAreas />)
+    const seccion = await screen.findByRole('region', { name: 'Vigencia de los documentos' })
+    expect(within(seccion).getAllByText('Ahora: Sin vencimiento')).toHaveLength(4)
+    const guardar = within(seccion).getByRole('button', {
+      name: 'Guardar la vigencia de Constancia de Productor Activo',
+    })
+    expect(guardar).toBeDisabled()
+
+    fireEvent.change(
+      within(seccion).getByLabelText('Meses de vigencia de Constancia de Productor Activo'),
+      { target: { value: '12' } },
+    )
+    fireEvent.click(guardar)
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Constancia de Productor Activo: vigencia de 12 meses. Rige para los documentos que se firmen desde ahora.',
+    )
+    expect(within(seccion).getByText('Ahora: 12 meses')).toBeInTheDocument()
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/catalogo/tipos-documento/CONSTANCIA_PRODUCTOR_ACTIVO/vigencia',
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify({ meses: 12 }) }),
+    )
+  })
+
+  it('muestra el error del servidor si la vigencia no es válida', async () => {
+    backend({
+      'PUT /api/catalogo/tipos-documento/CERTIFICADO_TRABAJO/vigencia': () =>
+        respuesta(400, {
+          mensaje: 'La vigencia debe ser de 1 a 120 meses, o sin vencimiento.',
+          campos: {},
+        }),
+    })
+    render(<PaginaAreas />)
+    const seccion = await screen.findByRole('region', { name: 'Vigencia de los documentos' })
+    fireEvent.change(
+      within(seccion).getByLabelText('Meses de vigencia de Certificado de Trabajo'),
+      {
+        target: { value: '200' },
+      },
+    )
+    fireEvent.click(
+      within(seccion).getByRole('button', {
+        name: 'Guardar la vigencia de Certificado de Trabajo',
+      }),
+    )
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'La vigencia debe ser de 1 a 120 meses, o sin vencimiento.',
+    )
+  })
+})

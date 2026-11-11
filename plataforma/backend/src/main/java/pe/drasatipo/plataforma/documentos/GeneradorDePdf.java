@@ -147,19 +147,35 @@ public class GeneradorDePdf {
     return tabla;
   }
 
-  /** Fecha de emisión, código QR con el código de verificación y firma del Director. */
+  /** DRA-62: el texto que imprime el PDF y que la verificación busca en él. */
+  public static String validoHasta(LocalDate venceEn) {
+    return "Válido hasta el " + enLetras(venceEn);
+  }
+
+  /** La fecha con el mes en letras, como en el PDF: "11 de noviembre de 2027". */
+  public static String enLetras(LocalDate fecha) {
+    return PlantillasDeDocumento.enLetras(fecha);
+  }
+
+  /**
+   * Fecha de emisión (y, si el tipo vence, "Válido hasta …", DRA-62), código QR con el código de
+   * verificación y firma del Director.
+   */
   private PdfPTable pie(Documento documento, String firmante, LocalDate fechaEmision)
       throws IOException, DocumentException {
     PdfPTable tabla = new PdfPTable(new float[] {1, 1, 1});
     tabla.setWidthPercentage(100);
     tabla.setSpacingBefore(30);
 
-    PdfPCell fecha =
-        celda(
-            new Paragraph(
-                "Fecha de emisión: " + PlantillasDeDocumento.enLetras(fechaEmision),
-                fuente(normal, 11, TINTA)));
-    tabla.addCell(fecha);
+    Paragraph fechas =
+        new Paragraph(
+            "Fecha de emisión: " + PlantillasDeDocumento.enLetras(fechaEmision),
+            fuente(normal, 11, TINTA));
+    LocalDate venceEn = documento.getTipo().venceEn(fechaEmision);
+    if (venceEn != null) {
+      fechas.add(new Chunk("\n" + validoHasta(venceEn), fuente(negrita, 11, INSTITUCIONAL)));
+    }
+    tabla.addCell(celda(fechas));
 
     Image qr =
         Image.getInstance(

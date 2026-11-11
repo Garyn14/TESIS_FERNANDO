@@ -1,6 +1,8 @@
 import logo from '../assets/logo-dra.png'
 import type { VistaPrevia } from './api'
 
+const meses = (n: number) => (n === 1 ? '1 mes' : `${n} meses`)
+
 /**
  * Documento con la plantilla de su tipo (RF18), como en el prototipo. Mientras no está firmado
  * lleva la marca de agua "VISTA PREVIA": la fecha de emisión y el QR se asignan al firmar.
@@ -29,7 +31,14 @@ export default function Certificado({ documento }: { documento: VistaPrevia }) {
         </p>
         <p className="mt-4 max-w-2xl">{documento.texto}</p>
         <div className="mt-auto grid w-full grid-cols-3 items-end gap-4 pt-10 text-sm">
-          <p>Fecha de emisión: se asignará al firmar</p>
+          <p>
+            Fecha de emisión: se asignará al firmar
+            {documento.vigenciaMeses != null && (
+              <span className="mt-1 block font-semibold text-institutional">
+                Vigencia: {meses(documento.vigenciaMeses)} desde la fecha de emisión
+              </span>
+            )}
+          </p>
           <p className="rounded border border-line bg-neutral-pale p-3 text-muted">
             Código QR: se generará al firmar
           </p>

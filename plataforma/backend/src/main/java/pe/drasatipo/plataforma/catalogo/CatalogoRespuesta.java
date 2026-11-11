@@ -24,7 +24,12 @@ public record CatalogoRespuesta(
   /** DRA-61: el nombre de un área nueva o el nombre nuevo de un área. */
   public record SolicitudArea(String nombre) {}
 
-  public record TipoDeDocumento(String codigo, String nombre, String origen) {}
+  /** {@code vigenciaMeses}: DRA-62, null si sus documentos no vencen. */
+  public record TipoDeDocumento(
+      String codigo, String nombre, String origen, Integer vigenciaMeses) {}
+
+  /** DRA-62: la vigencia nueva de un tipo, en meses, o null para "Sin vencimiento". */
+  public record SolicitudVigencia(Integer meses) {}
 
   public record Cambio(
       String area,

@@ -1,11 +1,14 @@
 // Prueba de punta a punta real del Sprint 7: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). Crea sus propias cuentas desde la
 // pantalla Usuarios y recorre las historias del Sprint 7: DRA-60 (qué tipos de documento emite cada
-// área), DRA-61 (crear, renombrar, deshabilitar y reactivar áreas) y DRA-58 (Mesa de Partes de
-// área).
+// área), DRA-61 (crear, renombrar, deshabilitar y reactivar áreas), DRA-58 (Mesa de Partes de
+// área) y DRA-62 (vigencia de los documentos, con la firma real en la red Besu y el portal).
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
+const fs = require('node:fs')
+const { getAddress } = require('ethers')
+const { instalarBilletera } = require('./billetera-de-prueba.cjs')
 // Contenedores del entorno de prueba: los de levantar.sh, o los del servidor de AWS en Docker
 // (infra/aws/pruebas/de-punta-a-punta.sh).
 const CONTENEDOR_PG = process.env.E2E_CONTENEDOR_PG ?? 'e2e-pg'
@@ -14,6 +17,10 @@ const [out, URL = 'http://localhost:5173/', ADMIN_TEMPORAL = 'Admin2026!'] = pro
 const ADMIN_CLAVE = 'AdminPropia26'
 const TEMPORAL = 'Demo2026'
 const PROPIA = 'Propia2026'
+const BESU = process.env.BESU_RPC_URL ?? 'http://localhost:8545'
+const PORTAL = process.env.E2E_PORTAL ?? 'http://localhost:5174'
+const DESPLIEGUE = JSON.parse(fs.readFileSync(process.env.E2E_DESPLIEGUE ?? `${__dirname}/.despliegue.json`, 'utf8'))
+const B = DESPLIEGUE.billeteras
 const resultados = []
 const paso = async (nombre, fn) => {
   await fn()
@@ -427,6 +434,125 @@ const paso = async (nombre, fn) => {
     assert.equal(await api(ana, '/api/tipos-documento'), 403)
     assert.equal(await api(ana, '/api/avisos'), 403)
     assert.equal((await enviar(ana, '/api/documentos', trabajo('EXP-2026-007201'))).estado, 403)
+  })
+
+  // ------------------------------------------- DRA-62: vigencia de los documentos
+  const conBilletera = async (clave) => {
+    const c = await b.newContext({ viewport: { width: 1280, height: 800 } })
+    const billetera = await instalarBilletera(c, BESU)
+    billetera.usar(clave)
+    const p = await c.newPage()
+    await p.goto(URL)
+    return p
+  }
+  const tokenDe = (codigo) => psql(`SELECT token_qr FROM documento WHERE codigo = '${codigo}'`)
+  let visitante = 0
+  const verificarPorApi = (p, token) =>
+    p.evaluate(async ([t, ip]) => {
+      const r = await fetch('/api/verificacion/' + t, { headers: { 'X-Forwarded-For': ip } })
+      return r.json()
+    }, [token, `198.51.100.${(++visitante % 250) + 1}`])
+  const ROSA = { nombres: 'Rosa', apellidos: 'Vílchez Pari', dni: '47112233' }
+  let vigente
+  await paso('DRA-62 · El Administrador fija 12 meses de vigencia al Certificado de Trabajo', async () => {
+    await admin.getByRole('link', { name: 'Áreas y documentos' }).click()
+    const seccion = admin.getByRole('region', { name: 'Vigencia de los documentos' })
+    await seccion.getByText('Ahora: Sin vencimiento').first().waitFor()
+    assert.equal(await seccion.getByText('Ahora: Sin vencimiento').count(), 5)
+    await seccion.getByLabel('Meses de vigencia de Certificado de Trabajo').fill('12')
+    await seccion.getByRole('button', { name: 'Guardar la vigencia de Certificado de Trabajo' }).click()
+    await admin.getByRole('status').getByText('Certificado de Trabajo: vigencia de 12 meses. Rige para los documentos que se firmen desde ahora.').waitFor()
+    await seccion.getByText('Ahora: 12 meses').waitFor()
+    await admin.getByRole('region', { name: 'Historial de cambios' }).getByText('Certificado de Trabajo: vigencia de 12 meses').waitFor()
+    assert.equal(psql("SELECT vigencia_meses FROM tipo_documento WHERE codigo = 'CERTIFICADO_TRABAJO'"), '12')
+    await foto(admin, 'dra62_01_vigencia_configurada')
+  })
+  await paso('Preparación · El Administrador registra la billetera del Director y le otorga el rol de firmante', async () => {
+    const adminB = await conBilletera(B.administrador.clave)
+    await ingresar(adminB, 'admin', ADMIN_CLAVE)
+    await adminB.getByRole('link', { name: 'Billetera del director' }).click()
+    await adminB.getByRole('button', { name: 'Registrar la billetera de cmendoza' }).click()
+    const ventana = adminB.getByRole('dialog', { name: 'Billetera del director' })
+    await campo(ventana, 'Dirección de la billetera').fill(B.director.direccion)
+    await ventana.getByRole('button', { name: 'Guardar billetera' }).click()
+    const fila = adminB.locator('tr', { hasText: 'cmendoza' })
+    await fila.getByText(getAddress(B.director.direccion)).waitFor()
+    await adminB.getByRole('button', { name: 'Otorgar el rol de firmante a cmendoza' }).click()
+    const otorgar = adminB.getByRole('dialog', { name: 'Otorgar rol de firmante' })
+    await otorgar.getByRole('button', { name: 'Conectar billetera y continuar' }).click()
+    await otorgar.getByRole('button', { name: 'Confirmar en la billetera' }).click()
+    await otorgar.getByText('Rol de firmante otorgado', { exact: false }).waitFor({ timeout: 60_000 })
+    await otorgar.getByRole('button', { name: 'Listo' }).click()
+    await fila.getByText('✓ Firmante activo').waitFor()
+    await adminB.context().close()
+  })
+  await paso('DRA-62 · La vista previa del registro informa la vigencia del tipo', async () => {
+    const luis2 = await nueva()
+    await ingresar(luis2, 'lvargas', PROPIA)
+    await luis2.getByRole('link', { name: 'Nuevo documento' }).click()
+    await luis2.getByRole('link', { name: /Certificado de Trabajo/ }).click()
+    await luis2.getByLabel(/^N\.° de expediente/).fill('EXP-2026-007301')
+    await campo(luis2, 'DNI').fill(ROSA.dni)
+    await campo(luis2, 'Nombres').fill(ROSA.nombres)
+    await campo(luis2, 'Apellidos').fill(ROSA.apellidos)
+    await luis2.getByLabel(/^Cargo/).fill('técnica de campo')
+    await campo(luis2, 'Fecha de inicio').fill('02/01/2025')
+    await campo(luis2, 'Fecha de fin').fill('30/09/2026')
+    await luis2.getByRole('button', { name: 'Continuar a vista previa' }).click()
+    const certificado = luis2.getByRole('figure', { name: 'Vista previa: Certificado de Trabajo' })
+    await certificado.getByText('Vigencia: 12 meses desde la fecha de emisión').waitFor()
+    await foto(luis2, 'dra62_02_vista_previa_con_vigencia')
+    await luis2.getByRole('button', { name: 'Enviar a revisión' }).click()
+    await luis2.getByRole('dialog', { name: '¿Enviar a revisión?' }).getByRole('button', { name: 'Enviar' }).click()
+    const aviso = luis2.getByRole('status')
+    await aviso.getByText('Documento enviado a revisión').waitFor()
+    vigente = await aviso.locator('strong').textContent()
+  })
+  await paso('DRA-62 · Al firmar, la fecha queda fija: emisión más 12 meses', async () => {
+    const director = await conBilletera(B.director.clave)
+    await ingresar(director, 'cmendoza', PROPIA)
+    await director.getByRole('navigation', { name: 'Menú principal' }).waitFor()
+    assert.equal((await enviar(director, '/api/revision/documentos/' + vigente, {})).estado, 200)
+    await director.goto(URL + '#/por-revisar')
+    await director.reload()
+    await director.getByRole('checkbox', { name: new RegExp('Seleccionar ' + ROSA.nombres + ' ' + ROSA.apellidos) }).check()
+    await director.getByRole('region', { name: 'Selección para firmar' }).getByRole('button', { name: 'Firmar seleccionados' }).click()
+    const firma = director.getByRole('dialog', { name: 'Firmar con su billetera' })
+    await firma.getByRole('button', { name: 'Confirmar' }).click()
+    await firma.getByText('Se firmó 1 documento.').waitFor({ timeout: 60_000 })
+    const [estado, emision, vence] = psql(`SELECT estado, fecha_emision, vence_en FROM documento WHERE codigo = '${vigente}'`).split('|')
+    assert.equal(estado, 'FIRMADO')
+    const esperado = new Date(emision + 'T12:00:00Z')
+    esperado.setUTCMonth(esperado.getUTCMonth() + 12)
+    assert.equal(vence, esperado.toISOString().slice(0, 10))
+  })
+  await paso('DRA-62 · El portal muestra "Vigente hasta" y el PDF imprime "Válido hasta"', async () => {
+    const r = await verificarPorApi(ana, tokenDe(vigente))
+    assert.equal(r.resultado, 'VALIDO')
+    assert.equal(r.venceEn, psql(`SELECT vence_en FROM documento WHERE codigo = '${vigente}'`))
+    const celular = await b.newPage({ viewport: { width: 1280, height: 900 } })
+    await celular.goto(`${PORTAL}/verificar/${tokenDe(vigente)}`)
+    const resultado = celular.getByRole('region', { name: 'Documento válido' })
+    await resultado.getByText('Vigente hasta').waitFor({ timeout: 60_000 })
+    const [anio, mes, dia] = r.venceEn.split('-').map(Number)
+    const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre']
+    await resultado.getByText(`${dia} de ${MESES[mes - 1]} de ${anio}`).waitFor()
+    await celular.getByRole('region', { name: 'Documento completo' }).waitFor({ timeout: 60_000 })
+    await celular.waitForTimeout(2000)
+    await celular.screenshot({ path: `${out}/dra62_03_portal_vigente_hasta.png`, fullPage: true })
+    await celular.close()
+  })
+  await paso('DRA-62 · Si alguien cambia la fecha en la base, el portal lo detecta: No válido', async () => {
+    const original = psql(`SELECT vence_en FROM documento WHERE codigo = '${vigente}'`)
+    psql(`UPDATE documento SET vence_en = vence_en + INTERVAL '5 years' WHERE codigo = '${vigente}'`)
+    assert.equal((await verificarPorApi(ana, tokenDe(vigente))).resultado, 'NO_VALIDO')
+    const celular = await b.newPage({ viewport: { width: 1280, height: 900 } })
+    await celular.goto(`${PORTAL}/verificar/${tokenDe(vigente)}`)
+    await celular.getByRole('region', { name: 'Documento no válido' }).waitFor({ timeout: 60_000 })
+    await celular.screenshot({ path: `${out}/dra62_04_fecha_alterada_no_valido.png`, fullPage: true })
+    await celular.close()
+    psql(`UPDATE documento SET vence_en = '${original}' WHERE codigo = '${vigente}'`)
+    assert.equal((await verificarPorApi(ana, tokenDe(vigente))).resultado, 'VALIDO')
   })
 
   await b.close()

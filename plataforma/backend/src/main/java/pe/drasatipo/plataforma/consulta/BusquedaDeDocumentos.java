@@ -3,6 +3,8 @@ package pe.drasatipo.plataforma.consulta;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.Normalizer;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,7 +43,8 @@ public class BusquedaDeDocumentos {
       """
       SELECT d.codigo, d.nombres, d.apellidos, d.dni, d.numero_expediente, d.registrado_en,
              d.estado, d.lote_id, l.numero AS lote, l.registrado_en AS lote_registrado_en,
-             t.nombre AS tipo, a.nombre AS area
+             t.nombre AS tipo, a.nombre AS area,
+             (d.estado = 'FIRMADO' AND d.vence_en < :hoy) IS TRUE AS vencido
       FROM documento d
       JOIN tipo_documento t ON t.id = d.tipo_documento_id
       JOIN area a ON a.id = d.area_id
@@ -52,9 +55,11 @@ public class BusquedaDeDocumentos {
       """;
 
   private final NamedParameterJdbcTemplate jdbc;
+  private final Clock reloj;
 
-  public BusquedaDeDocumentos(NamedParameterJdbcTemplate jdbc) {
+  public BusquedaDeDocumentos(NamedParameterJdbcTemplate jdbc, Clock reloj) {
     this.jdbc = jdbc;
+    this.reloj = reloj;
   }
 
   @Transactional(readOnly = true)
@@ -72,7 +77,8 @@ public class BusquedaDeDocumentos {
     MapSqlParameterSource parametros =
         new MapSqlParameterSource()
             .addValue("estados", filtro.nombres())
-            .addValue("limite", MAXIMO_DE_DOCUMENTOS + 1);
+            .addValue("limite", MAXIMO_DE_DOCUMENTOS + 1)
+            .addValue("hoy", LocalDate.now(reloj));
     String condicion = limpio.isEmpty() ? "" : "AND (" + condicion(limpio, parametros) + ")";
     if (area != null) {
       condicion += " AND d.area_id = :area";
@@ -81,7 +87,11 @@ public class BusquedaDeDocumentos {
     if (filtro.sinEntregar()) {
       condicion +=
           " AND NOT EXISTS (SELECT 1 FROM documento_historial h WHERE h.documento_id = d.id"
-              + " AND h.evento IN ('IMPRESO', 'DESCARGADO'))";
+              + " AND h.evento IN ('IMPRESO', 'DESCARGADO'))"
+              + " AND (d.vence_en IS NULL OR d.vence_en >= :hoy)";
+    }
+    if (filtro == FiltroDeEstado.VENCIDOS) {
+      condicion += " AND d.vence_en < :hoy";
     }
     List<Encontrado> encontrados =
         jdbc.query(CONSULTA.formatted(condicion), parametros, BusquedaDeDocumentos::encontrado);
@@ -138,11 +148,21 @@ public class BusquedaDeDocumentos {
       String lote,
       OffsetDateTime loteRegistradoEn,
       String tipo,
-      String area) {
+      String area,
+      boolean vencido) {
 
     FilaDeBusqueda fila() {
       return FilaDeBusqueda.documento(
-          codigo, lote, tipo, beneficiario, dni, numeroExpediente, area, registradoEn, estado);
+          codigo,
+          lote,
+          tipo,
+          beneficiario,
+          dni,
+          numeroExpediente,
+          area,
+          registradoEn,
+          estado,
+          vencido);
     }
   }
 
@@ -159,7 +179,8 @@ public class BusquedaDeDocumentos {
         fila.getString("lote"),
         fila.getObject("lote_registrado_en", OffsetDateTime.class),
         fila.getString("tipo"),
-        fila.getString("area"));
+        fila.getString("area"),
+        fila.getBoolean("vencido"));
   }
 
   /** Agrupa los certificados de cada lote en su fila y corta en {@link #MAXIMO_DE_FILAS}. */

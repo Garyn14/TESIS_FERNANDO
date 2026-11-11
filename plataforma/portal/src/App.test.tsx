@@ -90,6 +90,31 @@ describe('Portal de verificación (HU19)', () => {
     expect(screen.queryByRole('region', { name: 'Documento completo' })).not.toBeInTheDocument()
   })
 
+  it('un vencido muestra hasta cuándo valía, pero no el documento (DRA-62)', async () => {
+    servidor(200, {
+      ...VALIDO,
+      resultado: 'VENCIDO',
+      mensaje: 'Este documento venció el 4 de diciembre de 2026 y ya no está vigente.',
+      venceEn: '2026-12-04',
+    })
+    render(<App ruta={`/verificar/${TOKEN}`} />)
+    const resultado = await screen.findByRole('region', { name: 'Documento vencido' })
+    expect(resultado).toHaveTextContent(
+      'Este documento venció el 4 de diciembre de 2026 y ya no está vigente.',
+    )
+    expect(resultado).toHaveTextContent('Estado' + 'Vencido')
+    expect(resultado).toHaveTextContent('Venció el' + '4 de diciembre de 2026')
+    expect(resultado).toHaveTextContent('Titular')
+    expect(screen.queryByRole('region', { name: 'Documento completo' })).not.toBeInTheDocument()
+  })
+
+  it('un válido con vencimiento muestra hasta cuándo está vigente (DRA-62)', async () => {
+    servidor(200, { ...VALIDO, venceEn: '2027-09-04' })
+    render(<App ruta={`/verificar/${TOKEN}`} />)
+    const resultado = await screen.findByRole('region', { name: 'Documento válido' })
+    expect(resultado).toHaveTextContent('Vigente hasta' + '4 de setiembre de 2027')
+  })
+
   it('un no válido no muestra datos ni documento', async () => {
     servidor(200, {
       resultado: 'NO_VALIDO',

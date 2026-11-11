@@ -98,6 +98,7 @@ Cada servicio exige un permiso con `@PreAuthorize` (RF04). Sin sesión responde 
 | `PUT /api/catalogo/areas/{area}` | `CATALOGO_GESTIONAR` | Cambia el nombre de un área activa; lo ya guardado como texto conserva el nombre anterior | DRA-61 |
 | `POST /api/catalogo/areas/{area}/deshabilitar` | `CATALOGO_GESTIONAR` | Deshabilita un área sin personas activas (si tiene, 409 con la cantidad). No registra documentos nuevos; lo registrado sigue su trámite. No existe la operación de eliminar | DRA-61 |
 | `POST /api/catalogo/areas/{area}/reactivar` | `CATALOGO_GESTIONAR` | Reactiva un área deshabilitada, con los tipos que conservaba | DRA-61 |
+| `PUT /api/catalogo/tipos-documento/{tipo}/vigencia` | `CATALOGO_GESTIONAR` | Vigencia de un tipo: `{"meses": 1..120}` o `{"meses": null}` (sin vencimiento). Rige para los documentos que se firmen después; queda en el historial | DRA-62 |
 | `GET /api/documentos/{codigo}/formulario` | `DOCUMENTO_VER_AREA` | Formulario del tipo del propio documento, para corregirlo o reemitirlo aunque el tipo ya no esté asignado al área | DRA-60 |
 | `POST /api/documentos/{codigo}/correccion/vista-previa` | `DOCUMENTO_CORREGIR` | Vista previa de la corrección de un observado, con el tipo del propio documento | DRA-60 |
 
@@ -208,3 +209,10 @@ La tesis no nombra las áreas de la agencia. Se cargaron las del prototipo y **h
 | Área de Administración | Certificado de Prácticas, Certificado de Trabajo |
 
 Si cambian, se corrige con una migración nueva (regla 2).
+
+### Vigencia de los documentos (DRA-62, opción A)
+
+- `tipo_documento.vigencia_meses` (nulo = sin vencimiento) y `documento.vence_en` (V28). Al preparar la firma, `vence_en` = fecha de emisión impresa + meses, y el PDF imprime "Válido hasta el …".
+- **El contrato no cambia:** la fecha queda protegida por la huella del PDF. Al verificar, `VerificacionDeAutenticidad` extrae el texto del PDF ya comprobado y exige que "Válido hasta …" coincida con `vence_en`. Si no coincide, el resultado es `NO_VALIDO`.
+- `VENCIDO` se calcula con el reloj de Lima (`RelojConfig`; las pruebas lo adelantan con `RelojDePrueba`). No se guarda como estado. La entrega de HU25 rechaza un vencido y la búsqueda tiene el filtro `VENCIDOS`.
+

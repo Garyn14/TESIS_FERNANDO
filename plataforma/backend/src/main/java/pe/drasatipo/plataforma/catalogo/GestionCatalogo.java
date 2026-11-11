@@ -56,7 +56,7 @@ public class GestionCatalogo {
     Map<String, List<CatalogoRespuesta.TipoDeDocumento>> tiposPorArea = new LinkedHashMap<>();
     jdbc.query(
         """
-        SELECT a.codigo AS area, t.codigo, t.nombre, t.origen
+        SELECT a.codigo AS area, t.codigo, t.nombre, t.origen, t.vigencia_meses
         FROM area_tipo_documento at
         JOIN area a ON a.id = at.area_id
         JOIN tipo_documento t ON t.id = at.tipo_documento_id
@@ -70,7 +70,8 @@ public class GestionCatalogo {
                   new CatalogoRespuesta.TipoDeDocumento(
                       fila.getString("codigo"),
                       fila.getString("nombre"),
-                      fila.getString("origen")));
+                      fila.getString("origen"),
+                      fila.getObject("vigencia_meses", Integer.class)));
         });
     List<CatalogoRespuesta.AreaConfigurada> areas =
         jdbc.query(
@@ -90,16 +91,20 @@ public class GestionCatalogo {
                     tiposPorArea.getOrDefault(fila.getString("codigo"), List.of())));
     List<CatalogoRespuesta.TipoDeDocumento> tipos =
         jdbc.query(
-            "SELECT codigo, nombre, origen FROM tipo_documento WHERE activo ORDER BY nombre",
+            "SELECT codigo, nombre, origen, vigencia_meses FROM tipo_documento WHERE activo"
+                + " ORDER BY nombre",
             (fila, n) ->
                 new CatalogoRespuesta.TipoDeDocumento(
-                    fila.getString("codigo"), fila.getString("nombre"), fila.getString("origen")));
+                    fila.getString("codigo"),
+                    fila.getString("nombre"),
+                    fila.getString("origen"),
+                    fila.getObject("vigencia_meses", Integer.class)));
     List<CatalogoRespuesta.Cambio> historial =
         jdbc.query(
             """
             SELECT a.nombre AS area, h.evento, h.detalle, u.nombre_completo, h.realizado_en
             FROM catalogo_historial h
-            JOIN area a ON a.id = h.area_id
+            LEFT JOIN area a ON a.id = h.area_id
             JOIN usuario u ON u.id = h.realizado_por
             ORDER BY h.realizado_en DESC, h.id DESC
             LIMIT :limite
@@ -330,13 +335,53 @@ public class GestionCatalogo {
     registrarDetalle(area.id(), evento, area.nombre() + ": " + cambio, actor);
   }
 
-  private void registrarDetalle(short area, EventoCatalogo evento, String detalle, long actor) {
+  static final String VIGENCIA_INVALIDA =
+      "La vigencia debe ser de 1 a 120 meses, o sin vencimiento.";
+  static final String VIGENCIA_IGUAL = "«%s» ya tenía esa vigencia.";
+
+  /**
+   * DRA-62: cambia la vigencia de un tipo de documento. Solo rige para los documentos que se firmen
+   * después: los firmados conservan la fecha impresa en su PDF.
+   */
+  @Transactional
+  public CatalogoRespuesta cambiarVigencia(String codigoTipo, Integer meses, long actor) {
+    if (meses != null && (meses < 1 || meses > 120)) {
+      throw new ReglaDeNegocioException(HttpStatus.BAD_REQUEST, "meses", VIGENCIA_INVALIDA);
+    }
+    Fila tipo = tipo(codigoTipo);
+    int filas =
+        jdbc.update(
+            "UPDATE tipo_documento SET vigencia_meses = :meses WHERE id = :id"
+                + " AND vigencia_meses IS DISTINCT FROM :meses",
+            new org.springframework.jdbc.core.namedparam.MapSqlParameterSource()
+                .addValue("id", tipo.id())
+                .addValue("meses", meses, java.sql.Types.SMALLINT));
+    if (filas == 0) {
+      throw new ReglaDeNegocioException(
+          HttpStatus.CONFLICT, null, VIGENCIA_IGUAL.formatted(tipo.nombre()));
+    }
+    registrarDetalle(
+        null,
+        EventoCatalogo.VIGENCIA_CAMBIADA,
+        tipo.nombre()
+            + (meses == null
+                ? ": sin vencimiento"
+                : ": vigencia de %d %s".formatted(meses, meses == 1 ? "mes" : "meses")),
+        actor);
+    return consultar();
+  }
+
+  private void registrarDetalle(Short area, EventoCatalogo evento, String detalle, long actor) {
     jdbc.update(
         """
         INSERT INTO catalogo_historial (area_id, evento, detalle, realizado_por)
         VALUES (:area, :evento, :detalle, :actor)
         """,
-        Map.of("area", area, "evento", evento.name(), "detalle", detalle, "actor", actor));
+        new org.springframework.jdbc.core.namedparam.MapSqlParameterSource()
+            .addValue("area", area, java.sql.Types.SMALLINT)
+            .addValue("evento", evento.name())
+            .addValue("detalle", detalle)
+            .addValue("actor", actor));
   }
 
   private Fila area(String codigo) {

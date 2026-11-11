@@ -1,6 +1,9 @@
 package pe.drasatipo.plataforma.documentos;
 
-/** Datos para mostrar la vista previa del documento con la plantilla de su tipo (RF18). */
+/**
+ * Datos para mostrar la vista previa del documento con la plantilla de su tipo (RF18). {@code
+ * vigenciaMeses}: DRA-62, null si el tipo no vence.
+ */
 public record VistaPreviaRespuesta(
     String tipo,
     String tipoNombre,
@@ -10,7 +13,8 @@ public record VistaPreviaRespuesta(
     String apellidos,
     String dni,
     String texto,
-    String firmante) {
+    String firmante,
+    Short vigenciaMeses) {
 
   static VistaPreviaRespuesta de(SolicitudValidada solicitud, String firmante) {
     return new VistaPreviaRespuesta(
@@ -22,6 +26,7 @@ public record VistaPreviaRespuesta(
         solicitud.apellidos(),
         solicitud.dni(),
         solicitud.texto(),
-        firmante);
+        firmante,
+        solicitud.tipo().getVigenciaMeses());
   }
 }

@@ -60,6 +60,8 @@ export interface VistaPrevia {
   texto: string
   /** Nombre del Director que firma, o null si aún no hay ninguno. */
   firmante: string | null
+  /** DRA-62: meses de vigencia del tipo, o null si no vence (solo en la vista previa). */
+  vigenciaMeses?: number | null
 }
 
 export type EstadoDocumento =

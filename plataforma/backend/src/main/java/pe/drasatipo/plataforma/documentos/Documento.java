@@ -109,6 +109,10 @@ public class Documento {
   @Column(name = "fecha_emision")
   private LocalDate fechaEmision;
 
+  /** DRA-62: hasta qué fecha (inclusive) es válido, impresa en el PDF; null si no vence. */
+  @Column(name = "vence_en")
+  private LocalDate venceEn;
+
   @Column(name = "preparado_en")
   private OffsetDateTime preparadoEn;
 
@@ -362,6 +366,15 @@ public class Documento {
 
   public LocalDate getFechaEmision() {
     return fechaEmision;
+  }
+
+  public LocalDate getVenceEn() {
+    return venceEn;
+  }
+
+  /** DRA-62: vencido en {@code hoy} (hora de Lima). Se calcula; no es un estado. */
+  public boolean estaVencido(LocalDate hoy) {
+    return venceEn != null && hoy.isAfter(venceEn);
   }
 
   public OffsetDateTime getPreparadoEn() {

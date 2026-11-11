@@ -4,6 +4,7 @@ import { BOTON_ADVERTENCIA, BOTON_PRIMARIO, BOTON_SECUNDARIO, CAMPO } from '../c
 import { fechaYHora } from '../consulta/api'
 import {
   asignarTipo,
+  cambiarVigencia,
   consultarCatalogo,
   crearArea,
   deshabilitarArea,
@@ -25,6 +26,70 @@ const personas = (n: number) => (n === 1 ? '1 persona' : `${n} personas`)
 interface Quitar {
   area: AreaConfigurada
   tipo: TipoDeDocumento
+}
+
+const vigencia = (meses: number | null | undefined) =>
+  meses == null ? 'Sin vencimiento' : meses === 1 ? '1 mes' : `${meses} meses`
+
+/**
+ * DRA-62: la vigencia de un tipo de documento. Vacío es "Sin vencimiento". Rige para los
+ * documentos que se firmen después.
+ */
+function FilaVigencia({
+  tipo,
+  onGuardar,
+}: {
+  tipo: TipoDeDocumento
+  onGuardar: (meses: number | null) => Promise<void>
+}) {
+  const [valor, setValor] = useState(tipo.vigenciaMeses == null ? '' : String(tipo.vigenciaMeses))
+  const [enviando, setEnviando] = useState(false)
+  const id = `vigencia-${tipo.codigo}`
+  const meses = valor.trim() === '' ? null : Number(valor)
+  const cambio = meses !== (tipo.vigenciaMeses ?? null)
+
+  const guardar = async () => {
+    setEnviando(true)
+    try {
+      await onGuardar(meses)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <li className="flex flex-wrap items-end justify-between gap-3 py-3">
+      <span>
+        {tipo.nombre}
+        <span className="block text-sm text-muted">Ahora: {vigencia(tipo.vigenciaMeses)}</span>
+      </span>
+      <span className="flex items-end gap-3">
+        <label htmlFor={id} className="text-sm font-medium">
+          Meses de vigencia de {tipo.nombre}
+          <input
+            id={id}
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={120}
+            placeholder="Sin vencimiento"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            className={`${CAMPO} w-44`}
+          />
+        </label>
+        <button
+          type="button"
+          onClick={guardar}
+          disabled={!cambio || enviando}
+          aria-label={`Guardar la vigencia de ${tipo.nombre}`}
+          className={BOTON_SECUNDARIO}
+        >
+          Guardar
+        </button>
+      </span>
+    </li>
+  )
 }
 
 /** DRA-61: la ventana abierta para crear, renombrar, deshabilitar o reactivar un área. */
@@ -308,6 +373,15 @@ export default function PaginaAreas() {
     setQuitar(null)
   }
 
+  const guardarVigencia = (tipo: TipoDeDocumento) => async (meses: number | null) => {
+    await aplicar(
+      () => cambiarVigencia(tipo.codigo, meses),
+      meses == null
+        ? `${tipo.nombre} ya no vence.`
+        : `${tipo.nombre}: vigencia de ${vigencia(meses)}. Rige para los documentos que se firmen desde ahora.`,
+    )
+  }
+
   /** La ventana muestra el error; si todo sale bien, se cierra con el aviso. */
   const confirmarAccion = async (nombre: string) => {
     if (!accion) return
@@ -417,6 +491,26 @@ export default function PaginaAreas() {
               </ul>
             </section>
           )}
+
+          <section aria-labelledby="vigencia-documentos" className="rounded-xl border bg-card p-5">
+            <h2 id="vigencia-documentos" className="font-semibold">
+              Vigencia de los documentos
+            </h2>
+            <p className="mt-1 text-muted">
+              Si un tipo vence, su PDF imprime &quot;Válido hasta …&quot; y el portal informa cuando
+              venció. Deje el campo vacío para que no venza. El cambio rige para los documentos que
+              se firmen después; los ya firmados conservan su fecha.
+            </p>
+            <ul className="mt-2 divide-y">
+              {catalogo.tipos.map((t) => (
+                <FilaVigencia
+                  key={`${t.codigo}-${t.vigenciaMeses ?? 'sin'}`}
+                  tipo={t}
+                  onGuardar={guardarVigencia(t)}
+                />
+              ))}
+            </ul>
+          </section>
 
           <section aria-labelledby="historial-catalogo" className="rounded-xl border bg-card p-5">
             <h2 id="historial-catalogo" className="font-semibold">

@@ -1,12 +1,39 @@
 /** Resultado de la verificación (HU21): nunca trae el DNI, el CID ni el código del documento. */
 export interface Verificacion {
-  resultado: 'VALIDO' | 'ANULADO' | 'NO_VALIDO'
+  /** VENCIDO (DRA-62): auténtico, pero su vigencia terminó; no se muestra el documento. */
+  resultado: 'VALIDO' | 'ANULADO' | 'VENCIDO' | 'NO_VALIDO'
   mensaje: string
   tipo: string | null
   titular: string | null
   fechaEmision: string | null
   anuladoEn: string | null
   versionCorregida: boolean
+  /** DRA-62: hasta qué fecha (inclusive) es válido, AAAA-MM-DD; null si no vence. */
+  venceEn?: string | null
+}
+
+const MESES = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'setiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+]
+
+/**
+ * DRA-62: una fecha de calendario (AAAA-MM-DD) como la imprime el PDF: "11 de noviembre de 2027".
+ * No pasa por Date, para que la zona horaria no la mueva un día.
+ */
+export function fechaDeCalendario(fecha: string) {
+  const [anio, mes, dia] = fecha.split('-').map(Number)
+  return `${dia} de ${MESES[mes - 1]} de ${anio}`
 }
 
 /** La verificación no se pudo completar (blockchain o IPFS sin respuesta). */

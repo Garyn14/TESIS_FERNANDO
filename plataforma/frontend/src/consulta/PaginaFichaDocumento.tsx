@@ -4,7 +4,7 @@ import { fechaCorta } from '../documentos/api'
 import Estado from '../documentos/Estado'
 import Auditoria from './Auditoria'
 import Entrega from './Entrega'
-import { fechaYHora, fichaDelDocumento, type FichaDelDocumento } from './api'
+import { fechaEnLetras, fechaYHora, fichaDelDocumento, type FichaDelDocumento } from './api'
 
 /** Qué significa cada estado, para explicárselo al ciudadano (HU23). */
 function explicacion(ficha: FichaDelDocumento): string {
@@ -18,7 +18,10 @@ function explicacion(ficha: FichaDelDocumento): string {
     case 'RECHAZADO':
       return 'El Director rechazó el documento. Es definitivo: si corresponde, el ciudadano debe iniciar un nuevo trámite.'
     case 'FIRMADO':
-      return 'Firmado y registrado en la blockchain. Se puede entregar al ciudadano.'
+      // DRA-62: "Vencido" se calcula con la fecha; el documento sigue Firmado.
+      return ficha.vencido && ficha.venceEn
+        ? `Firmado, pero su vigencia terminó el ${fechaEnLetras(ficha.venceEn)}. Ya no se puede entregar; si corresponde, se reemite.`
+        : 'Firmado y registrado en la blockchain. Se puede entregar al ciudadano.'
     case 'ANULADO':
       return 'Fue anulado y ya no es válido.'
   }
@@ -87,6 +90,11 @@ export default function PaginaFichaDocumento({
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <h2 className="font-mono text-xl font-semibold">{ficha.codigo}</h2>
             <Estado estado={ficha.estado} />
+            {ficha.vencido && (
+              <span className="rounded-2xl bg-orange-pale px-3 py-1 text-sm font-medium text-orange">
+                Vencido
+              </span>
+            )}
           </div>
           <p className="mt-1 text-muted">{ficha.tipoNombre}</p>
 
@@ -99,6 +107,7 @@ export default function PaginaFichaDocumento({
               <Dato etiqueta="Enviado el">{fechaYHora(ficha.registradoEn)}</Dato>
               {ficha.firmadoEn && <Dato etiqueta="Firmado el">{fechaYHora(ficha.firmadoEn)}</Dato>}
               {ficha.anuladoEn && <Dato etiqueta="Anulado el">{fechaYHora(ficha.anuladoEn)}</Dato>}
+              {ficha.venceEn && <Dato etiqueta="Válido hasta">{fechaEnLetras(ficha.venceEn)}</Dato>}
             </dl>
             {ficha.motivo && MOTIVO[ficha.estado] && (
               <p className="mt-3 rounded-lg bg-orange-pale px-4 py-3">
@@ -143,7 +152,7 @@ export default function PaginaFichaDocumento({
               </div>
             ))}
           </dl>
-          {conEntrega && ficha.estado === 'FIRMADO' && (
+          {conEntrega && ficha.estado === 'FIRMADO' && !ficha.vencido && (
             <Entrega ficha={ficha} alEntregar={() => setVersion((v) => v + 1)} />
           )}
           {conAuditoria && <Auditoria key={version} codigo={ficha.codigo} />}

@@ -13,5 +13,7 @@ public enum EventoCatalogo {
   /** DRA-61: se deshabilitó un área sin personas activas: no registra documentos nuevos. */
   AREA_DESHABILITADA,
   /** DRA-61: se reactivó un área, con los tipos de documento que tenía. */
-  AREA_REACTIVADA
+  AREA_REACTIVADA,
+  /** DRA-62: se cambió la vigencia de un tipo; rige para los documentos que se firmen después. */
+  VIGENCIA_CAMBIADA
 }

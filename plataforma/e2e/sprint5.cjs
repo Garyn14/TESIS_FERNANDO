@@ -252,7 +252,7 @@ const paso = async (nombre, fn) => {
     const r = await verificar(tokenDe(kevin))
     guardar('hu21_02_pdf_alterado', r.cuerpo)
     tiempos.push(r.ms)
-    assert.deepEqual(r.cuerpo, { resultado: 'NO_VALIDO', mensaje: 'No encontramos un documento válido con estos datos.', tipo: null, titular: null, fechaEmision: null, anuladoEn: null, versionCorregida: false })
+    assert.deepEqual(r.cuerpo, { resultado: 'NO_VALIDO', mensaje: 'No encontramos un documento válido con estos datos.', tipo: null, titular: null, fechaEmision: null, anuladoEn: null, versionCorregida: false, venceEn: null })
     psql(`UPDATE documento SET cid = '${original}' WHERE codigo = '${kevin}'`)
     assert.equal((await verificar(tokenDe(kevin))).cuerpo.resultado, 'VALIDO')
     // También es No válido un documento que no se emitió, un token inexistente o mal formado.

@@ -140,6 +140,7 @@ describe('Buscar documentos (HU22)', () => {
       'Anulados',
       'Rechazados',
       'Listos para entregar',
+      'Vencidos',
     ])
     expect(screen.getByRole('tab', { name: 'Todos' })).toHaveAttribute('aria-selected', 'true')
 
@@ -229,5 +230,21 @@ describe('Buscar documentos (HU22)', () => {
     escribir('paredes')
     fireEvent.click(screen.getByRole('tab', { name: 'Todos' }))
     await vi.waitFor(() => expect(window.location.hash).toBe('#/buscar?texto=paredes'))
+  })
+
+  it('marca los documentos vencidos y los filtra (DRA-62)', async () => {
+    backend(() =>
+      respuesta(200, {
+        filas: [{ ...DOCUMENTO, estado: 'FIRMADO', vencido: true }],
+        hayMas: false,
+      }),
+    )
+    render(<PaginaBuscarDocumentos />)
+    await screen.findByText('DRA-2026-F8R2MA')
+    expect(screen.getByText('Vencido')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', { name: 'Vencidos' }))
+    await vi.waitFor(() =>
+      expect(parametros(consultas.at(-1)!)).toEqual({ estado: 'VENCIDOS', texto: '' }),
+    )
   })
 })

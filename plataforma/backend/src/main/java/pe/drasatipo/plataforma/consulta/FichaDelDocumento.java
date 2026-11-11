@@ -17,6 +17,8 @@ import pe.drasatipo.plataforma.documentos.EstadoDocumento;
  * @param reemplazadoPor el código de la reemisión que lo reemplazó, ya firmada
  * @param impresiones cuántas veces Mesa de Partes lo imprimió (HU25)
  * @param descargas cuántas veces Mesa de Partes descargó su PDF (HU25)
+ * @param venceEn DRA-62: hasta qué fecha (inclusive) es válido; null si no vence
+ * @param vencido DRA-62: firmado y con la vigencia terminada
  */
 public record FichaDelDocumento(
     String codigo,
@@ -37,4 +39,6 @@ public record FichaDelDocumento(
     String reemisionEnCurso,
     String reemplazadoPor,
     long impresiones,
-    long descargas) {}
+    long descargas,
+    java.time.LocalDate venceEn,
+    boolean vencido) {}
