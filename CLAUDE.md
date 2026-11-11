@@ -5,7 +5,7 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
 ## Dónde está todo
 
 - **Código:** `plataforma/` con:
-  - `backend`: Spring Boot 4.1, Java 21, Flyway V1–V23;
+  - `backend`: Spring Boot 4.1, Java 21, Flyway V1–V25;
   - `frontend`: plataforma interna, React 19 + Vite, puerto 5173;
   - `portal`: portal público de verificación, puerto 5174;
   - `contracts`: Hardhat, `RegistroDocumentos.sol`;
