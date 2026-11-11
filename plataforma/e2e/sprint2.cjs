@@ -133,7 +133,7 @@ const paso = async (nombre, fn) => {
     await rosa.getByRole('link', { name: 'Nuevo documento' }).click()
     await rosa.getByRole('link', { name: /Constancia de Productor Activo/ }).waitFor()
     assert.deepEqual(await tarjetas(rosa), ['Constancia de Productor Activo'])
-    await rosa.getByRole('banner').getByText('Área encargada – Área de Desarrollo Agrario').waitFor()
+    await rosa.getByRole('banner').getByText('Emisor de área – Área de Desarrollo Agrario').waitFor()
     await foto(rosa, 'hu07_06_area_cambiada_en_sesion')
     await rosa.context().close()
   })

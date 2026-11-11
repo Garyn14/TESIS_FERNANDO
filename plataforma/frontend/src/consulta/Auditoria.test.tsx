@@ -26,7 +26,7 @@ const FIRMADO: AuditoriaDelDocumento = {
       evento: 'REGISTRADO',
       realizadoEn: '2026-11-04T15:05:00Z',
       responsable: 'Pedro Morales Ccanto',
-      rol: 'Área encargada',
+      rol: 'Emisor de área',
       detalle: 'Registrado y enviado a revisión por Pedro Morales Ccanto (Área de Administración)',
     },
     {
@@ -75,7 +75,7 @@ describe('Historial y auditoría (HU24)', () => {
     const eventos = within(historial).getAllByRole('listitem')
     expect(eventos).toHaveLength(3)
     expect(eventos[0]).toHaveTextContent('Registrado y enviado a revisión')
-    expect(eventos[0]).toHaveTextContent('04/11/2026 10:05 · Pedro Morales Ccanto (Área encargada)')
+    expect(eventos[0]).toHaveTextContent('04/11/2026 10:05 · Pedro Morales Ccanto (Emisor de área)')
     expect(eventos[1]).toHaveTextContent('Rechazado por el Director')
     expect(eventos[1]).toHaveTextContent('datos de otra persona')
     // Un evento del sistema no tiene cuenta.
@@ -168,22 +168,22 @@ describe('Historial y auditoría (HU24)', () => {
           evento: 'IMPRESO',
           realizadoEn: '2026-11-06T14:00:00Z',
           responsable: 'Luz Flores Ticona',
-          rol: 'Consulta interna',
-          detalle: 'Impreso por Luz Flores Ticona (Consulta interna)',
+          rol: 'Mesa de Partes',
+          detalle: 'Impreso por Luz Flores Ticona (Mesa de Partes)',
         },
         {
           evento: 'IMPRESO',
           realizadoEn: '2026-11-06T15:00:00Z',
           responsable: 'Luz Flores Ticona',
-          rol: 'Consulta interna',
-          detalle: 'Duplicado impreso por Luz Flores Ticona (Consulta interna). Impresión n.° 2',
+          rol: 'Mesa de Partes',
+          detalle: 'Duplicado impreso por Luz Flores Ticona (Mesa de Partes). Impresión n.° 2',
         },
         {
           evento: 'DESCARGADO',
           realizadoEn: '2026-11-06T16:00:00Z',
           responsable: 'Luz Flores Ticona',
-          rol: 'Consulta interna',
-          detalle: 'PDF descargado por Luz Flores Ticona (Consulta interna)',
+          rol: 'Mesa de Partes',
+          detalle: 'PDF descargado por Luz Flores Ticona (Mesa de Partes)',
         },
       ],
       tecnico: SIN_REGISTRO,

@@ -12,7 +12,7 @@ const areas = [
 
 const roles = [
   { codigo: 'DIRECTOR', nombre: 'Director', descripcion: 'Revisa y firma documentos' },
-  { codigo: 'AREA_ENCARGADA', nombre: 'Área encargada', descripcion: 'Registra documentos' },
+  { codigo: 'AREA_ENCARGADA', nombre: 'Emisor de área', descripcion: 'Registra documentos' },
 ]
 
 function respuesta(estado: number, cuerpo: unknown) {

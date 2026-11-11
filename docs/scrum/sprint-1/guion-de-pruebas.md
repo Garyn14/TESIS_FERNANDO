@@ -53,9 +53,9 @@ Contraseñas que se usan en el guion (puede usar otras, siempre que tengan de 8 
 | 1.2 | Escriba la contraseña temporal, luego `AdminPropia26` dos veces, y pulse "Cambiar contraseña". | Entra a la plataforma. El menú muestra Inicio, Usuarios y Billetera del director. |
 | 1.3 | Entre a **Usuarios**. | Aparece la lista de cuentas, con la cuenta `admin`. Cada fila muestra nombre de usuario, nombre completo, rol, estado y fecha de creación. |
 | 1.4 | Pulse "Nueva cuenta". Escriba `ab` como nombre de usuario, deje vacío el nombre completo y pulse "Crear cuenta". | La cuenta no se crea. Se indica qué campo corregir: el usuario debe tener de 4 a 30 caracteres y el nombre completo es obligatorio. |
-| 1.5 | Cree la cuenta `rquispe`: nombre "Rosa Quispe Huamán", rol **Área encargada**, área **Área de Capacitación** y contraseña temporal `Demo2026`. El campo Área se valida en HU05. | Se muestra "Se creó la cuenta rquispe". La cuenta aparece en la lista, con estado **Activa**. |
+| 1.5 | Cree la cuenta `rquispe`: nombre "Rosa Quispe Huamán", rol **Emisor de área**, área **Área de Capacitación** y contraseña temporal `Demo2026`. El campo Área se valida en HU05. | Se muestra "Se creó la cuenta rquispe". La cuenta aparece en la lista, con estado **Activa**. |
 | 1.6 | Cree la cuenta `cmendoza`: nombre "Ing. Carlos Mendoza Rivera", rol **Director** y contraseña `Demo2026`. | Se crea y aparece activa en la lista. |
-| 1.7 | Cree la cuenta `ltorres`: nombre "Luis Torres Paredes", rol **Consulta interna** y contraseña `Demo2026`. | Se crea y aparece activa en la lista. |
+| 1.7 | Cree la cuenta `ltorres`: nombre "Luis Torres Paredes", rol **Mesa de Partes** y contraseña `Demo2026`. | Se crea y aparece activa en la lista. |
 | 1.8 | Revise el campo Rol de cualquier formulario. | Solo se puede elegir un rol por cuenta. |
 | 1.9 | Intente crear otra cuenta con el usuario `RQuispe` (con mayúsculas), cualquier nombre, rol Director y contraseña `Demo2026`. | La cuenta no se crea. Se muestra "El nombre de usuario ya está registrado". |
 
@@ -63,15 +63,15 @@ Contraseñas que se usan en el guion (puede usar otras, siempre que tengan de 8 
 
 ## 2. HU05: Asignar el área a un usuario (DRA-16)
 
-**Objetivo:** comprobar que toda cuenta del Área encargada tiene un área, que esa persona solo ve los tipos de documento de su área y que un cambio de área rige aunque tenga la sesión abierta.
+**Objetivo:** comprobar que toda cuenta del Emisor de área tiene un área, que esa persona solo ve los tipos de documento de su área y que un cambio de área rige aunque tenga la sesión abierta.
 
 | Paso | Qué hacer | Qué se espera |
 |---|---|---|
-| 2.1 | Como `admin`, pulse "Nueva cuenta" y elija el rol **Área encargada**. Complete el resto de datos pero no elija área, y pulse "Crear cuenta". | La cuenta no se guarda. Se muestra "Seleccione el área de la persona". Pulse "Cancelar". |
+| 2.1 | Como `admin`, pulse "Nueva cuenta" y elija el rol **Emisor de área**. Complete el resto de datos pero no elija área, y pulse "Crear cuenta". | La cuenta no se guarda. Se muestra "Seleccione el área de la persona". Pulse "Cancelar". |
 | 2.2 | En el mismo formulario, elija el área **Área de Capacitación**. | Debajo se muestra qué emite el área: "Certificado de Capacitación, Certificado de Reconocimiento". |
-| 2.3 | Cambie el rol a **Director** o a **Consulta interna**. Luego pulse "Cancelar". | El campo Área desaparece: solo existe para el Área encargada. |
+| 2.3 | Cambie el rol a **Director** o a **Mesa de Partes**. Luego pulse "Cancelar". | El campo Área desaparece: solo existe para el Emisor de área. |
 | 2.4 | Revise la lista de Usuarios. | La fila de `rquispe` muestra su área, Área de Capacitación, junto al rol. |
-| 2.5 | En la ventana de incógnito, ingrese con `rquispe` / `Demo2026`. Cambie la contraseña temporal por `Propia2026`. | El encabezado muestra "Área encargada – Área de Capacitación". En Inicio aparece "Documentos que emite Área de Capacitación" con sus dos certificados. |
+| 2.5 | En la ventana de incógnito, ingrese con `rquispe` / `Demo2026`. Cambie la contraseña temporal por `Propia2026`. | El encabezado muestra "Emisor de área – Área de Capacitación". En Inicio aparece "Documentos que emite Área de Capacitación" con sus dos certificados. |
 | 2.6 | Sin cerrar la sesión de Rosa, vuelva a la ventana del Administrador. Pulse "Editar" en `rquispe`, cambie el área a **Área de Desarrollo Agrario** y pulse "Guardar cambios". | Se muestra "Se guardaron los cambios". La lista muestra la nueva área. |
 | 2.7 | En la ventana de Rosa, pulse **Inicio**. | Ahora aparece "Documentos que emite Área de Desarrollo Agrario" con la "Constancia de Productor Activo". Los certificados de Capacitación ya no aparecen. |
 
@@ -99,7 +99,7 @@ Si alguno no es correcto, indíquelo en el ticket.
 | 3.4 | Abra "Por revisar". | Se muestra el aviso "Se habilita en el Sprint 3", porque esa pantalla todavía no existe. Las demás opciones futuras tienen el mismo tipo de aviso. |
 | 3.5 | Cierre sesión. Ingrese con `ltorres` / `Demo2026` y cambie la temporal por `Propia2026`. | El menú muestra solo Inicio y Buscar documentos. |
 | 3.6 | Con la sesión de Luis abierta, escriba en la barra de direcciones la dirección de la plataforma seguida de `#/usuarios`. | No se muestra la pantalla de Usuarios. Se indica "No tiene permiso para ver esta sección". |
-| 3.7 | Compare los menús que vio. | Área encargada (paso 2.5): Inicio, Mis documentos y Nuevo documento. Director: Inicio, Por revisar y Documentos firmados. Consulta interna: Inicio y Buscar documentos. Administrador: Inicio, Usuarios y Billetera del director. |
+| 3.7 | Compare los menús que vio. | Emisor de área (paso 2.5): Inicio, Mis documentos y Nuevo documento. Director: Inicio, Por revisar y Documentos firmados. Mesa de Partes: Inicio y Buscar documentos. Administrador: Inicio, Usuarios y Billetera del director. |
 | 3.8 | Cierre sesión. Intente ingresar con `cmendoza` y una contraseña equivocada tres veces seguidas. | Al tercer intento se indica que la cuenta quedó bloqueada por 3 intentos fallidos y hasta qué hora. |
 | 3.9 | Ingrese con `cmendoza` y la contraseña correcta, `Propia2026`. | Tampoco entra: mientras está bloqueada no se acepta ni la contraseña correcta. El desbloqueo se prueba en HU04, paso 4.4. |
 | 3.10 | En la ventana del Administrador, entre a Usuarios. | La fila de `cmendoza` indica "Bloqueada hasta" con la hora. |
@@ -143,7 +143,7 @@ Si alguno no es correcto, indíquelo en el ticket.
 | 5.5 | En la ventana de Luis, pulse cualquier opción del menú. | Su sesión se cierra con el aviso de que la cuenta fue desactivada. |
 | 5.6 | Intente ingresar otra vez con `ltorres` / `Propia2026`. | No entra. Se indica que la cuenta está desactivada y que debe comunicarse con el Administrador. |
 | 5.7 | Como `admin`, pulse "Reactivar" en `ltorres` y confirme. Luego ingrese con `ltorres` en la otra ventana. | La cuenta vuelve a estar activa y Luis entra con su mismo rol y menú. |
-| 5.8 | Con la sesión de Luis abierta, cambie como `admin` el rol de `ltorres` a **Director**. Luego, en la ventana de Luis, pulse Inicio. | El menú de Luis cambia al del Director sin que tenga que volver a ingresar. Al terminar, devuelva su rol a **Consulta interna**. |
+| 5.8 | Con la sesión de Luis abierta, cambie como `admin` el rol de `ltorres` a **Director**. Luego, en la ventana de Luis, pulse Inicio. | El menú de Luis cambia al del Director sin que tenga que volver a ingresar. Al terminar, devuelva su rol a **Mesa de Partes**. |
 | 5.9 | Como `admin`, pulse "Desactivar" en su propia cuenta, `admin`, y confirme. | No se permite: "No puede desactivar su propia cuenta". Pulse "Cancelar". |
 | 5.10 | Revise las acciones de cualquier fila. | No existe ninguna opción para eliminar cuentas. |
 

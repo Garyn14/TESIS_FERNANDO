@@ -36,6 +36,24 @@ class CatalogosInicialesTest {
   }
 
   @Test
+  void cadaRolTieneUnNombreQueDescribeLoQueHace() {
+    // DRA-59: los nombres de la tesis "Área encargada" y "Consulta interna" se reemplazan en
+    // pantalla.
+    assertThat(
+            jdbc.queryForList(
+                "SELECT codigo || ' = ' || nombre FROM rol ORDER BY codigo", String.class))
+        .containsExactly(
+            "ADMINISTRADOR = Administrador",
+            "AREA_ENCARGADA = Emisor de área",
+            "CONSULTA_INTERNA = Mesa de Partes",
+            "DIRECTOR = Director");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT descripcion FROM rol WHERE codigo = 'CONSULTA_INTERNA'", String.class))
+        .isEqualTo("Busca, consulta el historial, imprime y entrega documentos");
+  }
+
+  @Test
   void asignaPermisosInicialesACadaRol() {
     assertThat(permisosDe("ADMINISTRADOR"))
         .containsExactly("BILLETERA_GESTIONAR", "CUENTA_PROPIA", "USUARIOS_GESTIONAR");

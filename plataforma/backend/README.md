@@ -86,7 +86,7 @@ Cada servicio exige un permiso con `@PreAuthorize` (RF04). Sin sesión responde 
 | `POST /api/usuarios/{id}/reactivar` | `USUARIOS_GESTIONAR` | Devuelve el acceso con el mismo rol | HU02 |
 | `POST /api/usuarios/{id}/restablecer-contrasena` | `USUARIOS_GESTIONAR` | Asigna una contraseña temporal; desbloquea la cuenta y cierra sus sesiones | HU04 |
 | `GET /api/areas` | `USUARIOS_GESTIONAR` | Áreas activas con los tipos de documento que emite cada una | HU05 |
-| `GET /api/tipos-documento` | `DOCUMENTO_REGISTRAR` | Tipos que la sesión puede registrar: para el Área encargada, solo los de su área (RF05) | HU05 |
+| `GET /api/tipos-documento` | `DOCUMENTO_REGISTRAR` | Tipos que la sesión puede registrar: para el Emisor de área, solo los de su área (RF05) | HU05 |
 | `GET /api/billeteras` | `BILLETERA_GESTIONAR` | Directores (y cuentas con billetera) con el estado de firmante leído de la blockchain | HU06 |
 | `PUT /api/billeteras/{idCuenta}` | `BILLETERA_GESTIONAR` | Registra la billetera del director: formato, suma de verificación EIP-55, unicidad, solo Director, no administradora del contrato y sin cambiarla mientras sea firmante | HU06 |
 | `POST /api/billeteras/{idCuenta}/firmante` | `BILLETERA_GESTIONAR` | Recibe el identificador de una transacción firmada en el navegador, la verifica en la blockchain y la registra en el historial (sin duplicar) | HU06 |
@@ -179,13 +179,13 @@ Se basa en los roles del prototipo validado (`docs/diseno/prototipo_plataforma_i
 | Rol | Permisos |
 |---|---|
 | Administrador | `USUARIOS_GESTIONAR`, `BILLETERA_GESTIONAR`, `CUENTA_PROPIA` |
-| Área encargada | `DOCUMENTO_REGISTRAR`, `DOCUMENTO_VER_AREA`, `DOCUMENTO_CORREGIR`, `DOCUMENTO_REEMITIR`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
+| Emisor de área | `DOCUMENTO_REGISTRAR`, `DOCUMENTO_VER_AREA`, `DOCUMENTO_CORREGIR`, `DOCUMENTO_REEMITIR`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
 | Director | `DOCUMENTO_REVISAR`, `DOCUMENTO_FIRMAR`, `DOCUMENTO_OBSERVAR`, `DOCUMENTO_RECHAZAR`, `DOCUMENTO_ANULAR`, `DOCUMENTO_VER_FIRMADOS`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
-| Consulta interna | `DOCUMENTO_BUSCAR`, `AUDITORIA_VER`, `DOCUMENTO_IMPRIMIR`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
+| Mesa de Partes | `DOCUMENTO_BUSCAR`, `AUDITORIA_VER`, `DOCUMENTO_IMPRIMIR`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
 
-Las dos reglas de control interno de RF05 (el Área encargada solo ve su área, y quien registra no firma) **no son permisos**: se aplican en el código, sin importar lo que diga la configuración (HU05, HU11).
+Las dos reglas de control interno de RF05 (el Emisor de área solo ve su área, y quien registra no firma) **no son permisos**: se aplican en el código, sin importar lo que diga la configuración (HU05, HU11).
 
-La primera está en un solo componente, `areas/AlcanceDeArea` (HU05). Hoy limita los tipos de documento; las historias de documentos del Sprint 2 deben usarlo también para filtrar los documentos. El rol Área encargada exige un área activa al crear o editar la cuenta. Para los demás roles el área queda vacía.
+La primera está en un solo componente, `areas/AlcanceDeArea` (HU05). Hoy limita los tipos de documento; las historias de documentos del Sprint 2 deben usarlo también para filtrar los documentos. El rol Emisor de área exige un área activa al crear o editar la cuenta. Para los demás roles el área queda vacía.
 
 ### Áreas iniciales (pendiente de validar)
 

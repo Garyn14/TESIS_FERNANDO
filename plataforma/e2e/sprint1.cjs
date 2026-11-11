@@ -151,7 +151,7 @@ const paso = async (nombre, fn) => {
   await paso('HU05 · El Área encargada ve su área y solo los tipos de documento de su área', async () => {
     const rosa = await nueva()
     await ingresar(rosa, 'rquispe', PROPIA)
-    await rosa.getByRole('banner').getByText('Área encargada – Área de Capacitación').waitFor()
+    await rosa.getByRole('banner').getByText('Emisor de área – Área de Capacitación').waitFor()
     await rosa.getByRole('heading', { name: 'Documentos que emite Área de Capacitación' }).waitFor()
     const tipos = await rosa.evaluate(() =>
       fetch('/api/tipos-documento').then((r) => r.json()).then((t) => t.map((x) => x.codigo).sort()),

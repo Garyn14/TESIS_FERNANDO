@@ -477,7 +477,7 @@ const paso = async (nombre, fn) => {
       'Firmado y registrado en la blockchain',
       'Anulado',
     ])
-    assert.match(await eventos[0].textContent(), /Pedro Morales Ccanto \(Área encargada\)/)
+    assert.match(await eventos[0].textContent(), /Pedro Morales Ccanto \(Emisor de área\)/)
     assert.match(await eventos[1].textContent(), /Ing\. Carlos Mendoza Rivera \(Director\)/)
     // Lo que dice la base, evento por evento.
     assert.equal(Number(psql(`SELECT count(*) FROM documento_historial h JOIN documento d ON d.id = h.documento_id WHERE d.codigo = '${kevin}'`)), eventos.length)
@@ -585,7 +585,7 @@ const paso = async (nombre, fn) => {
     assert.equal('0x' + sha256(fs.readFileSync(archivo)), registrado.hashPdf)
     fs.rmSync(archivo)
     await entrega().getByText('Entregado: impreso 0 veces, descargado 1 vez').waitFor()
-    await luz.getByRole('region', { name: 'Historial' }).getByText('PDF descargado por Luz Flores Ticona (Consulta interna)').waitFor()
+    await luz.getByRole('region', { name: 'Historial' }).getByText('PDF descargado por Luz Flores Ticona (Mesa de Partes)').waitFor()
   })
   await paso('HU25 · Imprimir y reimprimir: la segunda impresión queda como duplicado, sin una nueva firma', async () => {
     await entrega().getByRole('button', { name: 'Imprimir', exact: true }).click()
@@ -595,8 +595,8 @@ const paso = async (nombre, fn) => {
     await entrega().getByRole('button', { name: 'Imprimir duplicado' }).click()
     await entrega().getByText('Entregado: impreso 2 veces, descargado 1 vez').waitFor()
     const historialDeLuz = luz.getByRole('region', { name: 'Historial' })
-    await historialDeLuz.getByText('Impreso por Luz Flores Ticona (Consulta interna)', { exact: true }).waitFor()
-    await historialDeLuz.getByText('Duplicado impreso por Luz Flores Ticona (Consulta interna). Impresión n.° 2').waitFor()
+    await historialDeLuz.getByText('Impreso por Luz Flores Ticona (Mesa de Partes)', { exact: true }).waitFor()
+    await historialDeLuz.getByText('Duplicado impreso por Luz Flores Ticona (Mesa de Partes). Impresión n.° 2').waitFor()
     assert.deepEqual(
       psql(`SELECT h.evento FROM documento_historial h JOIN documento d ON d.id = h.documento_id WHERE d.codigo = '${nuevaLucia}' AND h.evento IN ('IMPRESO', 'DESCARGADO') ORDER BY h.id`).split('\n'),
       ['DESCARGADO', 'IMPRESO', 'IMPRESO'],

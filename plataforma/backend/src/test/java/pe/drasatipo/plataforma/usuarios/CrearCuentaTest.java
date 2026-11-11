@@ -86,7 +86,7 @@ class CrearCuentaTest {
         .andExpect(header().string("Location", org.hamcrest.Matchers.startsWith("/api/usuarios/")))
         .andExpect(jsonPath("$.nombreUsuario").value("jperez"))
         .andExpect(jsonPath("$.rol").value("AREA_ENCARGADA"))
-        .andExpect(jsonPath("$.rolNombre").value("Área encargada"))
+        .andExpect(jsonPath("$.rolNombre").value("Emisor de área"))
         .andExpect(jsonPath("$.activo").value(true))
         .andExpect(jsonPath("$.debeCambiarContrasena").value(true))
         .andExpect(jsonPath("$.creadoEn").exists());

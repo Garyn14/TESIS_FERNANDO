@@ -45,10 +45,10 @@ Cuentas que se usan (las de los Sprints 2 a 5, más la de Mesa de Partes):
 | Cuenta | Nombre completo | Rol y área | Contraseña temporal | Contraseña propia |
 |---|---|---|---|---|
 | admin | (ya creada) | Administrador | La que entrega el equipo | AdminPropia26 |
-| pmorales | Pedro Morales Ccanto | Área encargada – Área de Administración | Demo2026 | Propia2026 |
-| rquispe | Rosa Quispe Huamán | Área encargada – Área de Capacitación | Demo2026 | Propia2026 |
+| pmorales | Pedro Morales Ccanto | Emisor de área – Área de Administración | Demo2026 | Propia2026 |
+| rquispe | Rosa Quispe Huamán | Emisor de área – Área de Capacitación | Demo2026 | Propia2026 |
 | cmendoza | Ing. Carlos Mendoza Rivera | Director | Demo2026 | Propia2026 |
-| lflores | Luz Flores Ticona | Consulta interna (Mesa de Partes) | Demo2026 | Propia2026 |
+| lflores | Luz Flores Ticona | Mesa de Partes | Demo2026 | Propia2026 |
 
 ---
 
@@ -58,7 +58,7 @@ Cuentas que se usan (las de los Sprints 2 a 5, más la de Mesa de Partes):
 
 | Paso | Qué hacer | Qué se espera |
 |---|---|---|
-| 0.1 | Como `admin`, cree las cuentas de la tabla (si no existen), incluida **`lflores`** con el rol **Consulta interna**. Registre la billetera del Director y otórguele el rol de firmante, como en el Sprint 4. | La fila del Director dice "✓ Firmante activo". |
+| 0.1 | Como `admin`, cree las cuentas de la tabla (si no existen), incluida **`lflores`** con el rol **Mesa de Partes**. Registre la billetera del Director y otórguele el rol de firmante, como en el Sprint 4. | La fila del Director dice "✓ Firmante activo". |
 | 0.2 | Como `pmorales`, registre cuatro **Certificados de Trabajo** con el cargo `asistente administrativa` y las fechas del 02/01/2025 al 30/09/2026:<ul><li>Lucía Paredes Quinto, DNI `45829364`, expediente `EXP-2026-005391`;</li><li>Kevin Ramos Ccanto, DNI `46385127`, expediente `EXP-2026-005392`;</li><li>Martha Rojas Inga, DNI `44200001`, expediente `EXP-2026-005401`;</li><li>Nilo Huamán Soto, DNI `44200002`, expediente `EXP-2026-005402`.</li></ul> | Los cuatro quedan Pendientes. |
 | 0.3 | Como `rquispe`, registre un lote de **Certificados de Capacitación** del evento `Manejo integrado de plagas en café` con tres beneficiarios: Juan Ccori Pari (`45218736`), María Elena Rojas Soto (`47390125`) y Edwin Quispe Huamán (`46001234`). | "Lote 2026-001" con 3 certificados Pendientes. |
 | 0.4 | Como `cmendoza`, firme a **Lucía** y a **Kevin** con MetaMask, y **rechace** a **Martha** con el motivo `La persona no laboró en la agencia en las fechas indicadas.` Deje a Nilo y el lote sin tocar. | Lucía y Kevin Firmados; Martha Rechazada. |
@@ -100,7 +100,7 @@ Cuentas que se usan (las de los Sprints 2 a 5, más la de Mesa de Partes):
 | 3.1 | Busque `45829364` y pulse el código de Lucía. | Se abre la **ficha**: el código, "Firmado" y la explicación "Firmado y registrado en la blockchain. Se puede entregar al ciudadano.", con las fechas de envío y de firma, y los datos (beneficiario, DNI, tipo, origen, expediente, área). |
 | 3.2 | Pulse "← Volver a Buscar documentos". | Vuelve a la búsqueda con `45829364` todavía escrito. |
 | 3.3 | Abra la ficha de **Martha**. | "El Director rechazó el documento. Es definitivo: si corresponde, el ciudadano debe iniciar un nuevo trámite.", con el **motivo del rechazo**. |
-| 3.4 | Baje hasta el **Historial** de la ficha de Lucía. | Cada evento tiene su título, su fecha y hora, y su responsable con su rol: "Registrado y enviado a revisión" por Pedro Morales Ccanto (Área encargada), "Revisado por el Director", "Firma iniciada: PDF final guardado en IPFS" y "Firmado y registrado en la blockchain". |
+| 3.4 | Baje hasta el **Historial** de la ficha de Lucía. | Cada evento tiene su título, su fecha y hora, y su responsable con su rol: "Registrado y enviado a revisión" por Pedro Morales Ccanto (Emisor de área), "Revisado por el Director", "Firma iniciada: PDF final guardado en IPFS" y "Firmado y registrado en la blockchain". |
 | 3.5 | Debajo, pulse "▸ Detalle técnico de auditoría". | Estaba **plegado**. Al abrirlo se ven la huella digital del PDF (SHA-256), el identificador en IPFS (CID), la transacción y el bloque de la firma, la billetera firmante y el contrato, cada uno con un botón "Copiar". |
 | 3.6 | Abra la ficha de **Nilo** y su detalle técnico. | "Está en revisión del Director. Todavía no se puede entregar." y "Todavía no tiene registro en la blockchain." |
 
@@ -113,9 +113,9 @@ Cuentas que se usan (las de los Sprints 2 a 5, más la de Mesa de Partes):
 | 4.1 | En Buscar documentos, pulse el filtro **Listos para entregar**. | Lucía y Kevin: los firmados que todavía no se entregaron. |
 | 4.2 | Abra la ficha de **Lucía**. | Una sección con "Listo para entregar" y los botones **Ver documento**, **Descargar PDF** e **Imprimir**. |
 | 4.3 | Pulse **Ver documento**. | Se abre el certificado firmado en otra pestaña, con su QR y su código. |
-| 4.4 | Pulse **Descargar PDF**. | Se guarda el archivo `DRA-2026-….pdf`. La sección dice "Entregado: impreso 0 veces, descargado 1 vez", y el historial suma "PDF descargado por Luz Flores Ticona (Consulta interna)". |
+| 4.4 | Pulse **Descargar PDF**. | Se guarda el archivo `DRA-2026-….pdf`. La sección dice "Entregado: impreso 0 veces, descargado 1 vez", y el historial suma "PDF descargado por Luz Flores Ticona (Mesa de Partes)". |
 | 4.5 | Pulse **Imprimir**. Cancele el diálogo de impresión. | Se abre el diálogo de impresión del navegador con el certificado. El historial suma "Impreso", y el botón cambia a **Imprimir duplicado**. |
-| 4.6 | Pulse **Imprimir duplicado** y cancele el diálogo. | El historial suma "Duplicado impreso": "Duplicado impreso por Luz Flores Ticona (Consulta interna). Impresión n.° 2". |
+| 4.6 | Pulse **Imprimir duplicado** y cancele el diálogo. | El historial suma "Duplicado impreso": "Duplicado impreso por Luz Flores Ticona (Mesa de Partes). Impresión n.° 2". |
 | 4.7 | Vuelva a Buscar documentos con el filtro **Listos para entregar**. | Solo Kevin: Lucía ya se entregó. |
 | 4.8 | Abra la ficha de **Martha**. | No tiene botones de entrega: solo se entrega un documento firmado. |
 
