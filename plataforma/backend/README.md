@@ -91,6 +91,11 @@ Cada servicio exige un permiso con `@PreAuthorize` (RF04). Sin sesión responde 
 | `PUT /api/billeteras/{idCuenta}` | `BILLETERA_GESTIONAR` | Registra la billetera del director: formato, suma de verificación EIP-55, unicidad, solo Director, no administradora del contrato y sin cambiarla mientras sea firmante | HU06 |
 | `POST /api/billeteras/{idCuenta}/firmante` | `BILLETERA_GESTIONAR` | Recibe el identificador de una transacción firmada en el navegador, la verifica en la blockchain y la registra en el historial (sin duplicar) | HU06 |
 | `GET /api/blockchain/red` | `CUENTA_PROPIA` | chainId, nombre y URL de la red, y dirección del contrato, para la billetera del navegador | HU06 |
+| `GET /api/catalogo` | `CATALOGO_GESTIONAR` | Pantalla "Áreas y documentos": áreas activas con sus tipos y sus personas activas, los tipos asignables y los 30 cambios más recientes | DRA-60 |
+| `PUT /api/catalogo/areas/{area}/tipos-documento/{tipo}` | `CATALOGO_GESTIONAR` | Asigna un tipo de documento a un área; si ya estaba, responde 409 sin cambiar nada | DRA-60 |
+| `DELETE /api/catalogo/areas/{area}/tipos-documento/{tipo}` | `CATALOGO_GESTIONAR` | Quita un tipo a un área: solo impide registrar documentos nuevos de ese tipo; si no estaba, responde 409 | DRA-60 |
+| `GET /api/documentos/{codigo}/formulario` | `DOCUMENTO_VER_AREA` | Formulario del tipo del propio documento, para corregirlo o reemitirlo aunque el tipo ya no esté asignado al área | DRA-60 |
+| `POST /api/documentos/{codigo}/correccion/vista-previa` | `DOCUMENTO_CORREGIR` | Vista previa de la corrección de un observado, con el tipo del propio documento | DRA-60 |
 
 No hay ninguna ruta para eliminar cuentas (RF01): `DELETE` responde 405.
 
@@ -178,7 +183,7 @@ Se basa en los roles del prototipo validado (`docs/diseno/prototipo_plataforma_i
 
 | Rol | Permisos |
 |---|---|
-| Administrador | `USUARIOS_GESTIONAR`, `BILLETERA_GESTIONAR`, `CUENTA_PROPIA` |
+| Administrador | `USUARIOS_GESTIONAR`, `BILLETERA_GESTIONAR`, `CATALOGO_GESTIONAR`, `CUENTA_PROPIA` |
 | Emisor de área | `DOCUMENTO_REGISTRAR`, `DOCUMENTO_VER_AREA`, `DOCUMENTO_CORREGIR`, `DOCUMENTO_REEMITIR`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
 | Director | `DOCUMENTO_REVISAR`, `DOCUMENTO_FIRMAR`, `DOCUMENTO_OBSERVAR`, `DOCUMENTO_RECHAZAR`, `DOCUMENTO_ANULAR`, `DOCUMENTO_VER_FIRMADOS`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
 | Mesa de Partes | `DOCUMENTO_BUSCAR`, `AUDITORIA_VER`, `DOCUMENTO_IMPRIMIR`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
