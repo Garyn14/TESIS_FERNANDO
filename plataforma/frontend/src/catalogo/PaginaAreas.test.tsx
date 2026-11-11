@@ -29,12 +29,14 @@ const inicial: Catalogo = {
     {
       codigo: 'ADMINISTRACION',
       nombre: 'Área de Administración',
+      activa: true,
       personasActivas: 2,
       tipos: [PRACTICAS, TRABAJO],
     },
     {
       codigo: 'DESARROLLO_AGRARIO',
       nombre: 'Área de Desarrollo Agrario',
+      activa: true,
       personasActivas: 1,
       tipos: [],
     },
@@ -198,6 +200,164 @@ describe('Áreas y documentos (DRA-60)', () => {
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Quitar' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(
       '«Área de Administración» no tiene asignado «Certificado de Trabajo».',
+    )
+  })
+})
+
+const DESHABILITADA = {
+  codigo: 'COMERCIALIZACION',
+  nombre: 'Área de Comercialización',
+  activa: false,
+  personasActivas: 0,
+  tipos: [CONSTANCIA],
+}
+
+describe('Gestionar áreas (DRA-61)', () => {
+  it('crea un área y muestra el aviso; no ofrece eliminar áreas', async () => {
+    const nueva = {
+      codigo: 'EXTENSION_RURAL',
+      nombre: 'Área de Extensión Rural',
+      activa: true,
+      personasActivas: 0,
+      tipos: [],
+    }
+    const fetch = backend({
+      'POST /api/catalogo/areas': () =>
+        respuesta(200, { ...inicial, areas: [...inicial.areas, nueva] }),
+    })
+    render(<PaginaAreas />)
+    await tarjeta('Área de Administración')
+    expect(screen.queryByRole('button', { name: /eliminar/i })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Nueva área' }))
+    const ventana = screen.getByRole('dialog', { name: 'Nueva área' })
+    fireEvent.change(within(ventana).getByLabelText(/Nombre del área/), {
+      target: { value: '  Área de   Extensión Rural ' },
+    })
+    fireEvent.click(within(ventana).getByRole('button', { name: 'Crear área' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Se creó el área «Área de Extensión Rural». Asígnele sus tipos de documento.',
+    )
+    expect(within(await tarjeta('Área de Extensión Rural')).getByRole('note')).toHaveTextContent(
+      'Esta área no puede emitir documentos.',
+    )
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/catalogo/areas',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ nombre: '  Área de   Extensión Rural ' }),
+      }),
+    )
+  })
+
+  it('muestra el error dentro de la ventana y la deja abierta', async () => {
+    backend({
+      'POST /api/catalogo/areas': () =>
+        respuesta(409, { mensaje: 'Ya existe un área con ese nombre.', campos: {} }),
+    })
+    render(<PaginaAreas />)
+    await tarjeta('Área de Administración')
+    fireEvent.click(screen.getByRole('button', { name: 'Nueva área' }))
+    const ventana = screen.getByRole('dialog', { name: 'Nueva área' })
+    fireEvent.change(within(ventana).getByLabelText(/Nombre del área/), {
+      target: { value: 'area de administracion' },
+    })
+    fireEvent.click(within(ventana).getByRole('button', { name: 'Crear área' }))
+    expect(await within(ventana).findByRole('alert')).toHaveTextContent(
+      'Ya existe un área con ese nombre.',
+    )
+    expect(screen.getByRole('dialog', { name: 'Nueva área' })).toBeInTheDocument()
+  })
+
+  it('cambia el nombre de un área desde su tarjeta', async () => {
+    const fetch = backend({
+      'PUT /api/catalogo/areas/ADMINISTRACION': () =>
+        respuesta(200, {
+          ...inicial,
+          areas: [
+            { ...inicial.areas[0], nombre: 'Área de Administración y Finanzas' },
+            inicial.areas[1],
+          ],
+        }),
+    })
+    render(<PaginaAreas />)
+    await tarjeta('Área de Administración')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Cambiar el nombre de Área de Administración' }),
+    )
+    const ventana = screen.getByRole('dialog', { name: 'Cambiar el nombre del área' })
+    const campo = within(ventana).getByLabelText(/Nombre del área/)
+    expect(campo).toHaveValue('Área de Administración')
+    fireEvent.change(campo, { target: { value: 'Área de Administración y Finanzas' } })
+    fireEvent.click(within(ventana).getByRole('button', { name: 'Guardar nombre' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      '«Área de Administración» ahora se llama «Área de Administración y Finanzas».',
+    )
+    expect(await tarjeta('Área de Administración y Finanzas')).toBeInTheDocument()
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/catalogo/areas/ADMINISTRACION',
+      expect.objectContaining({ method: 'PUT' }),
+    )
+  })
+
+  it('deshabilita con confirmación e informa si el área tiene personas activas', async () => {
+    backend({
+      'POST /api/catalogo/areas/ADMINISTRACION/deshabilitar': () =>
+        respuesta(409, {
+          mensaje:
+            'No se puede deshabilitar: el área tiene 2 personas activas. Muévalas a otra área desde Usuarios.',
+          campos: {},
+        }),
+    })
+    render(<PaginaAreas />)
+    await tarjeta('Área de Administración')
+    fireEvent.click(screen.getByRole('button', { name: 'Deshabilitar Área de Administración' }))
+    const ventana = screen.getByRole('dialog', { name: 'Deshabilitar área' })
+    expect(ventana).toHaveTextContent('¿Deshabilitar «Área de Administración»?')
+    expect(ventana).toHaveTextContent(
+      'Sus documentos en trámite siguen su flujo y los firmados siguen siendo válidos.',
+    )
+    fireEvent.click(within(ventana).getByRole('button', { name: 'Deshabilitar' }))
+    expect(await within(ventana).findByRole('alert')).toHaveTextContent(
+      'No se puede deshabilitar: el área tiene 2 personas activas. Muévalas a otra área desde Usuarios.',
+    )
+  })
+
+  it('lista las áreas deshabilitadas con sus tipos y las reactiva', async () => {
+    const fetch = backend({
+      'GET /api/catalogo': () =>
+        respuesta(200, { ...inicial, areas: [...inicial.areas, DESHABILITADA] }),
+      'POST /api/catalogo/areas/COMERCIALIZACION/reactivar': () =>
+        respuesta(200, {
+          ...inicial,
+          areas: [...inicial.areas, { ...DESHABILITADA, activa: true }],
+        }),
+    })
+    render(<PaginaAreas />)
+    const seccion = await screen.findByRole('region', { name: 'Áreas deshabilitadas' })
+    expect(seccion).toHaveTextContent('Área de Comercialización')
+    expect(seccion).toHaveTextContent('Conserva: Constancia de Productor Activo')
+    expect(
+      screen.queryByRole('article', { name: 'Área de Comercialización' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(
+      within(seccion).getByRole('button', { name: 'Reactivar Área de Comercialización' }),
+    )
+    const ventana = screen.getByRole('dialog', { name: 'Reactivar área' })
+    expect(ventana).toHaveTextContent('Vuelve con los tipos de documento que tenía.')
+    fireEvent.click(within(ventana).getByRole('button', { name: 'Reactivar' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Se reactivó «Área de Comercialización».',
+    )
+    expect(await tarjeta('Área de Comercialización')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Áreas deshabilitadas' })).not.toBeInTheDocument()
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/catalogo/areas/COMERCIALIZACION/reactivar',
+      expect.objectContaining({ method: 'POST' }),
     )
   })
 })
