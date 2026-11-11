@@ -119,7 +119,7 @@ El guion [`docs/scrum/qa/guion-de-pruebas-qa.md`](../scrum/qa/guion-de-pruebas-q
 | Para | Flujo en GitHub Actions |
 |---|---|
 | Trabajar con QA, o actualizarlo con lo último de `main` | **QA – Encender**. Tarda unos 10 minutos con QA ya creado. |
-| Dejar de pagar sin perder nada | **QA – Apagar**. Además corre **solo todos los días a las 00:00 de Lima**. |
+| Dejar de pagar sin perder nada | **QA – Apagar**. Además corre **solo todos los días a las 00:17 de Lima**. Si GitHub lo ejecuta tarde, después de las 06:00, no apaga nada (DRA-64). |
 | Empezar de cero, perdiendo todos los datos | **QA – Destruir**, escribiendo `DESTRUIR-QA`. El siguiente Encender crea un QA vacío, con **direcciones nuevas**. |
 | Cambiar el tamaño del servidor | **QA – Encender** con otro tamaño `t4g`, por ejemplo `t4g.large`. Se mantiene en los siguientes encendidos. |
 

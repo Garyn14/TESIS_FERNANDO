@@ -87,7 +87,7 @@ La red no cobra: el saldo de las billeteras es 0 DRA y el costo de cada operaci�
 - **QA conserva los datos.** A diferencia de la plataforma local, QA no empieza vacío cada vez. Este guion supone un QA recién creado. Si se repite, use otros expedientes y DNI, o empiece de cero con **QA – Destruir** y **QA – Encender** (con eso las direcciones cambian).
 - **MetaMask solo funciona en la ventana normal.** Use la ventana normal para el Administrador y el Director. Use una de incógnito, u otro navegador, para las demás cuentas.
 - **QA usa los tiempos de producción:** la sesión expira a los 30 minutos sin uso, la sincronización con la blockchain es cada 30 segundos y una firma a medias vuelve a Pendiente a los 15 minutos.
-- **QA se apaga solo a las 00:00 (hora de Lima).** Empiece con tiempo.
+- **QA se apaga solo a las 00:17 (hora de Lima).** Empiece con tiempo. Si GitHub ejecuta ese apagado tarde, después de las 06:00, no apaga nada: QA no se apaga en horario de trabajo.
 
 ### Cuentas del guion
 

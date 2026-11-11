@@ -77,7 +77,7 @@ Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuen
   - **QA – Encender:** levanta todo y publica la última versión de `main`.
   - **QA – Apagar:** detiene el EC2 y **conserva los datos**. Después deja CloudFront apuntando a un origen que no responde, para que el encabezado secreto no viaje a una IP reasignada.
   - **QA – Destruir:** borra todo y pide escribir `DESTRUIR-QA`.
-  - **Apagado automático** a las 00:00 de Lima. GitHub desactiva los flujos programados tras 60 días sin actividad en el repositorio.
+  - **Apagado automático** a las 00:17 de Lima. GitHub puede ejecutarlo horas tarde (llegó a las 08:13): fuera de la madrugada (desde las 06:00) no apaga nada (DRA-64). GitHub desactiva los flujos programados tras 60 días sin actividad en el repositorio.
 - **Archivos:** los flujos están en `.github/workflows/qa-*.yml` y sus scripts en `plataforma/infra/aws/acciones/`, que se prueban con un `aws` simulado (`probar-acciones.sh`).
   - El contrato de QA se despliega por `/rpc` la primera vez.
   - Sus billeteras de prueba quedan en `/dra-satipo/qa-billeteras/`, fuera del alcance del servidor.
