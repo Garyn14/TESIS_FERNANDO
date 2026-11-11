@@ -1843,7 +1843,8 @@ Lo que revisé en el código:
 - [ ] Pide confirmación.
 - [ ] **Si el área tiene personas activas asignadas, no se deshabilita:** "No se puede deshabilitar: el área tiene 2 personas activas. Muévalas a otra área desde Usuarios."
 - [ ] Un área deshabilitada **no aparece al crear o editar cuentas** y **no permite registrar documentos nuevos**.
-- [ ] Sus **documentos en trámite** siguen su flujo (revisión, firma, observación) y sus **documentos firmados siguen siendo válidos**: se verifican en el portal, se consultan, se imprimen, se anulan y se reemiten.
+- [ ] Sus **documentos en trámite** siguen su flujo (revisión, firma, observación) y sus **documentos firmados siguen siendo válidos**: se verifican en el portal, se consultan, se imprimen y se anulan. Para corregirlos o reemitirlos hace falta una persona activa del área, así que primero se reactiva el área.
+- [ ] Una cuenta desactivada de un área deshabilitada **no se reactiva** sin moverla antes a otra área: "El área «…» está deshabilitada. Edite la cuenta y asígnele otra área antes de reactivarla." (ajuste encontrado al construir: evita personas activas en un área deshabilitada).
 - [ ] La pantalla la muestra en una sección **"Áreas deshabilitadas"**.
 
 **Reactivar**

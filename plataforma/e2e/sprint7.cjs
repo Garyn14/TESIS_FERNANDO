@@ -1,7 +1,7 @@
 // Prueba de punta a punta real del Sprint 7: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). Crea sus propias cuentas desde la
 // pantalla Usuarios y recorre las historias del Sprint 7: DRA-60 (qué tipos de documento emite cada
-// área).
+// área) y DRA-61 (crear, renombrar, deshabilitar y reactivar áreas).
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
@@ -209,6 +209,155 @@ const paso = async (nombre, fn) => {
       'TIPO_ASIGNADO|admin',
     )
     await foto(admin, 'dra60_07_area_sin_tipos_e_historial')
+  })
+
+  // ------------------------------------------- DRA-61: crear, renombrar, deshabilitar y reactivar
+  const SANIDAD = 'Área de Sanidad Agraria'
+  const SANIDAD_FORESTAL = 'Área de Sanidad Agraria y Forestal'
+  const ventanaArea = (titulo) => admin.getByRole('dialog', { name: titulo })
+  const areas = async () => {
+    await admin.getByRole('link', { name: 'Áreas y documentos' }).click()
+    await tarjetaDe(admin, 'Área de Administración').waitFor()
+  }
+  /** Las áreas que ofrece el formulario de cuentas (HU05). */
+  const areasDelFormulario = async () => {
+    await admin.getByRole('link', { name: 'Usuarios' }).click()
+    await admin.getByRole('button', { name: 'Nueva cuenta' }).click()
+    await campo(admin, 'Rol').selectOption('AREA_ENCARGADA')
+    const opciones = await campo(admin, 'Área').locator('option').allTextContents()
+    await admin.getByRole('button', { name: 'Cancelar' }).click()
+    return opciones
+  }
+  await paso('DRA-61 · El Administrador crea un área: nace activa, sin tipos, y no admite un nombre repetido', async () => {
+    await admin.getByRole('button', { name: 'Nueva área' }).click()
+    await campo(admin, 'Nombre del área').fill('area de sanidad AGRARIA ')
+    await ventanaArea('Nueva área').getByRole('button', { name: 'Crear área' }).click()
+    await admin.getByRole('status').getByText('Se creó el área «area de sanidad AGRARIA». Asígnele sus tipos de documento.').waitFor()
+    // Se corrige el nombre: solo cambian mayúsculas y tildes de su propio nombre.
+    await tarjetaDe(admin, 'area de sanidad AGRARIA').getByRole('button', { name: 'Cambiar el nombre de area de sanidad AGRARIA' }).click()
+    await campo(admin, 'Nombre del área').fill(SANIDAD)
+    await ventanaArea('Cambiar el nombre del área').getByRole('button', { name: 'Guardar nombre' }).click()
+    const tarjeta = tarjetaDe(admin, SANIDAD)
+    await tarjeta.getByRole('note').getByText('Esta área no puede emitir documentos.').waitFor()
+    assert.equal(psql("SELECT codigo, activa FROM area WHERE nombre = 'Área de Sanidad Agraria'"), 'SANIDAD_AGRARIA|t')
+    await foto(admin, 'dra61_01_area_creada')
+    // El mismo nombre sin tildes ni mayúsculas ya existe.
+    await admin.getByRole('button', { name: 'Nueva área' }).click()
+    await campo(admin, 'Nombre del área').fill('AREA DE SANIDAD AGRARIA')
+    await ventanaArea('Nueva área').getByRole('button', { name: 'Crear área' }).click()
+    await ventanaArea('Nueva área').getByRole('alert').getByText('Ya existe un área con ese nombre.').waitFor()
+    await foto(admin, 'dra61_02_nombre_repetido')
+    await ventanaArea('Nueva área').getByRole('button', { name: 'Cancelar' }).click()
+    assert.equal(await admin.getByRole('button', { name: /Eliminar/ }).count(), 0)
+    await tarjeta.getByLabel('Asignar otro tipo de documento').selectOption('CERTIFICADO_TRABAJO')
+    await tarjeta.getByRole('button', { name: 'Asignar' }).click()
+    await admin.getByRole('status').getByText(`${SANIDAD} ya puede emitir Certificado de Trabajo.`).waitFor()
+  })
+  const luis = await nueva()
+  let enTramite
+  await paso('DRA-61 · La nueva área aparece en Usuarios y su persona registra un documento', async () => {
+    assert.ok((await areasDelFormulario()).includes(SANIDAD))
+    await admin.getByRole('button', { name: 'Nueva cuenta' }).click()
+    await campo(admin, 'Nombre de usuario').fill('lvargas')
+    await campo(admin, 'Nombre completo').fill('Luis Vargas Inga')
+    await campo(admin, 'Rol').selectOption('AREA_ENCARGADA')
+    await campo(admin, 'Área').selectOption({ label: SANIDAD })
+    await campo(admin, 'Contraseña temporal').fill(TEMPORAL)
+    await admin.getByRole('button', { name: 'Crear cuenta' }).click()
+    await admin.getByRole('status').getByText('Se creó la cuenta "lvargas"').waitFor()
+    await primerIngreso(luis, 'lvargas', TEMPORAL, PROPIA)
+    await luis.getByText(`Emisor de área – ${SANIDAD}`).waitFor()
+    await luis.getByRole('link', { name: 'Nuevo documento' }).click()
+    await luis.getByRole('link', { name: /Certificado de Trabajo/ }).waitFor()
+    assert.deepEqual(await tarjetas(luis), ['Certificado de Trabajo'])
+    const r = await enviar(luis, '/api/documentos', trabajo('EXP-2026-007101'))
+    assert.equal(r.estado, 201)
+    enTramite = r.cuerpo.codigo
+  })
+  await paso('DRA-61 · Cambiar el nombre se ve en la plataforma; el código y el historial anterior no cambian', async () => {
+    await areas()
+    await tarjetaDe(admin, SANIDAD).getByRole('button', { name: `Cambiar el nombre de ${SANIDAD}` }).click()
+    const campoNombre = campo(admin, 'Nombre del área')
+    assert.equal(await campoNombre.inputValue(), SANIDAD)
+    await campoNombre.fill(SANIDAD_FORESTAL)
+    await foto(admin, 'dra61_03_cambiar_nombre')
+    await ventanaArea('Cambiar el nombre del área').getByRole('button', { name: 'Guardar nombre' }).click()
+    await admin.getByRole('status').getByText(`«${SANIDAD}» ahora se llama «${SANIDAD_FORESTAL}».`).waitFor()
+    const historial = admin.getByRole('region', { name: 'Historial de cambios' })
+    await historial.getByText(`Nombre: ${SANIDAD} → ${SANIDAD_FORESTAL}`).waitFor()
+    await historial.getByText(`${SANIDAD}: se asignó Certificado de Trabajo`).waitFor()
+    assert.equal(psql(`SELECT codigo FROM area WHERE nombre = '${SANIDAD_FORESTAL}'`), 'SANIDAD_AGRARIA')
+    // Luis ve el nombre nuevo al volver a cargar la plataforma, también en la ficha de su documento.
+    await luis.reload()
+    await luis.getByText(`Emisor de área – ${SANIDAD_FORESTAL}`).waitFor()
+    await foto(luis, 'dra61_04_luis_con_el_nombre_nuevo')
+    const ficha = await luis.evaluate((c) => fetch('/api/documentos/' + c).then((x) => x.json()), enTramite)
+    assert.equal(ficha.areaNombre, SANIDAD_FORESTAL)
+  })
+  await paso('DRA-61 · No se deshabilita un área con personas activas', async () => {
+    await tarjetaDe(admin, SANIDAD_FORESTAL).getByRole('button', { name: `Deshabilitar ${SANIDAD_FORESTAL}` }).click()
+    const ventana = ventanaArea('Deshabilitar área')
+    await ventana.getByText('Sus documentos en trámite siguen su flujo y los firmados siguen siendo válidos.', { exact: false }).waitFor()
+    await ventana.getByRole('button', { name: 'Deshabilitar' }).click()
+    await ventana.getByRole('alert').getByText('No se puede deshabilitar: el área tiene 1 persona activa. Muévalas a otra área desde Usuarios.').waitFor()
+    await foto(admin, 'dra61_05_area_con_personas')
+    await ventana.getByRole('button', { name: 'Cancelar' }).click()
+    assert.equal(psql(`SELECT activa FROM area WHERE codigo = 'SANIDAD_AGRARIA'`), 't')
+  })
+  await paso('DRA-61 · Sin personas activas, se deshabilita: no aparece en Usuarios y conserva sus tipos', async () => {
+    await admin.getByRole('link', { name: 'Usuarios' }).click()
+    await admin.getByRole('button', { name: 'Desactivar lvargas' }).click()
+    await admin.getByRole('button', { name: 'Desactivar cuenta' }).click()
+    await admin.getByRole('status').waitFor()
+    await areas()
+    await tarjetaDe(admin, SANIDAD_FORESTAL).getByRole('button', { name: `Deshabilitar ${SANIDAD_FORESTAL}` }).click()
+    await ventanaArea('Deshabilitar área').getByRole('button', { name: 'Deshabilitar' }).click()
+    await admin.getByRole('status').getByText(`Se deshabilitó «${SANIDAD_FORESTAL}».`).waitFor()
+    const seccion = admin.getByRole('region', { name: 'Áreas deshabilitadas' })
+    await seccion.getByText(SANIDAD_FORESTAL).waitFor()
+    await seccion.getByText('Conserva: Certificado de Trabajo').waitFor()
+    assert.equal(await tarjetaDe(admin, SANIDAD_FORESTAL).count(), 0)
+    await foto(admin, 'dra61_06_area_deshabilitada')
+    assert.ok(!(await areasDelFormulario()).includes(SANIDAD_FORESTAL))
+  })
+  await paso('DRA-61 · Su documento en trámite sigue su flujo, y su cuenta no se reactiva sin moverla', async () => {
+    assert.equal((await enviar(carlos, `/api/revision/documentos/${enTramite}`, {})).estado, 200)
+    const o = await enviar(carlos, `/api/revision/documentos/${enTramite}/observacion`, { motivo: 'Falta la fecha de fin del contrato' })
+    assert.equal(o.estado, 200)
+    assert.equal(psql(`SELECT estado FROM documento WHERE codigo = '${enTramite}'`), 'OBSERVADO')
+    await admin.getByRole('button', { name: 'Reactivar lvargas' }).click()
+    await admin.getByRole('button', { name: 'Reactivar cuenta' }).click()
+    await admin.getByRole('alert').getByText(`El área «${SANIDAD_FORESTAL}» está deshabilitada. Edite la cuenta y asígnele otra área antes de reactivarla.`).waitFor()
+    await foto(admin, 'dra61_07_cuenta_en_area_deshabilitada')
+    await admin.getByRole('button', { name: 'Cancelar' }).click()
+  })
+  await paso('DRA-61 · Al reactivarla vuelve con sus tipos, y todo queda en el historial', async () => {
+    await areas()
+    const seccion = admin.getByRole('region', { name: 'Áreas deshabilitadas' })
+    await seccion.getByRole('button', { name: `Reactivar ${SANIDAD_FORESTAL}` }).click()
+    const ventana = ventanaArea('Reactivar área')
+    await ventana.getByText('Vuelve con los tipos de documento que tenía.', { exact: false }).waitFor()
+    await ventana.getByRole('button', { name: 'Reactivar' }).click()
+    await admin.getByRole('status').getByText(`Se reactivó «${SANIDAD_FORESTAL}».`).waitFor()
+    assert.match((await emite(admin, SANIDAD_FORESTAL)).join(' | '), /Certificado de Trabajo/)
+    const historial = admin.getByRole('region', { name: 'Historial de cambios' })
+    await historial.getByText(`${SANIDAD_FORESTAL}: se reactivó`).waitFor()
+    await historial.getByText(`${SANIDAD_FORESTAL}: se deshabilitó`).waitFor()
+    await foto(admin, 'dra61_08_area_reactivada_e_historial')
+    assert.equal(
+      psql("SELECT string_agg(evento, ',' ORDER BY id) FROM catalogo_historial WHERE evento LIKE 'AREA_%'"),
+      'AREA_CREADA,AREA_RENOMBRADA,AREA_RENOMBRADA,AREA_DESHABILITADA,AREA_REACTIVADA',
+    )
+    // Ahora sí se reactiva la cuenta de Luis, que vuelve a registrar el Certificado de Trabajo.
+    await admin.getByRole('link', { name: 'Usuarios' }).click()
+    await admin.getByRole('button', { name: 'Reactivar lvargas' }).click()
+    await admin.getByRole('button', { name: 'Reactivar cuenta' }).click()
+    await admin.getByRole('status').waitFor()
+    const deNuevo = await nueva()
+    await ingresar(deNuevo, 'lvargas', PROPIA)
+    await deNuevo.getByRole('link', { name: 'Nuevo documento' }).click()
+    await deNuevo.getByRole('link', { name: /Certificado de Trabajo/ }).waitFor()
+    assert.deepEqual(await tarjetas(deNuevo), ['Certificado de Trabajo'])
   })
 
   await b.close()

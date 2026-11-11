@@ -91,9 +91,13 @@ Cada servicio exige un permiso con `@PreAuthorize` (RF04). Sin sesión responde 
 | `PUT /api/billeteras/{idCuenta}` | `BILLETERA_GESTIONAR` | Registra la billetera del director: formato, suma de verificación EIP-55, unicidad, solo Director, no administradora del contrato y sin cambiarla mientras sea firmante | HU06 |
 | `POST /api/billeteras/{idCuenta}/firmante` | `BILLETERA_GESTIONAR` | Recibe el identificador de una transacción firmada en el navegador, la verifica en la blockchain y la registra en el historial (sin duplicar) | HU06 |
 | `GET /api/blockchain/red` | `CUENTA_PROPIA` | chainId, nombre y URL de la red, y dirección del contrato, para la billetera del navegador | HU06 |
-| `GET /api/catalogo` | `CATALOGO_GESTIONAR` | Pantalla "Áreas y documentos": áreas activas con sus tipos y sus personas activas, los tipos asignables y los 30 cambios más recientes | DRA-60 |
+| `GET /api/catalogo` | `CATALOGO_GESTIONAR` | Pantalla "Áreas y documentos": las áreas (activas y deshabilitadas) con sus tipos y sus personas activas, los tipos asignables y los 30 cambios más recientes | DRA-60, DRA-61 |
 | `PUT /api/catalogo/areas/{area}/tipos-documento/{tipo}` | `CATALOGO_GESTIONAR` | Asigna un tipo de documento a un área; si ya estaba, responde 409 sin cambiar nada | DRA-60 |
 | `DELETE /api/catalogo/areas/{area}/tipos-documento/{tipo}` | `CATALOGO_GESTIONAR` | Quita un tipo a un área: solo impide registrar documentos nuevos de ese tipo; si no estaba, responde 409 | DRA-60 |
+| `POST /api/catalogo/areas` | `CATALOGO_GESTIONAR` | Crea un área activa y sin tipos (`{"nombre"}`, 3 a 100 caracteres, único sin mayúsculas ni tildes: si no, 409). El código sale del nombre y no cambia | DRA-61 |
+| `PUT /api/catalogo/areas/{area}` | `CATALOGO_GESTIONAR` | Cambia el nombre de un área activa; lo ya guardado como texto conserva el nombre anterior | DRA-61 |
+| `POST /api/catalogo/areas/{area}/deshabilitar` | `CATALOGO_GESTIONAR` | Deshabilita un área sin personas activas (si tiene, 409 con la cantidad). No registra documentos nuevos; lo registrado sigue su trámite. No existe la operación de eliminar | DRA-61 |
+| `POST /api/catalogo/areas/{area}/reactivar` | `CATALOGO_GESTIONAR` | Reactiva un área deshabilitada, con los tipos que conservaba | DRA-61 |
 | `GET /api/documentos/{codigo}/formulario` | `DOCUMENTO_VER_AREA` | Formulario del tipo del propio documento, para corregirlo o reemitirlo aunque el tipo ya no esté asignado al área | DRA-60 |
 | `POST /api/documentos/{codigo}/correccion/vista-previa` | `DOCUMENTO_CORREGIR` | Vista previa de la corrección de un observado, con el tipo del propio documento | DRA-60 |
 

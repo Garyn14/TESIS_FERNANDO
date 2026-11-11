@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 import Modal from '../comun/Modal'
-import { BOTON_ADVERTENCIA, BOTON_SECUNDARIO, CAMPO } from '../comun/estilos'
+import { BOTON_ADVERTENCIA, BOTON_PRIMARIO, BOTON_SECUNDARIO, CAMPO } from '../comun/estilos'
 import { fechaYHora } from '../consulta/api'
 import {
   asignarTipo,
   consultarCatalogo,
+  crearArea,
+  deshabilitarArea,
   quitarTipo,
+  reactivarArea,
+  renombrarArea,
   type AreaConfigurada,
   type Catalogo,
   type TipoDeDocumento,
@@ -23,16 +27,134 @@ interface Quitar {
   tipo: TipoDeDocumento
 }
 
+/** DRA-61: la ventana abierta para crear, renombrar, deshabilitar o reactivar un área. */
+type AccionArea =
+  | { tipo: 'crear' }
+  | { tipo: 'renombrar'; area: AreaConfigurada }
+  | { tipo: 'deshabilitar'; area: AreaConfigurada }
+  | { tipo: 'reactivar'; area: AreaConfigurada }
+
+const TITULOS: Record<AccionArea['tipo'], string> = {
+  crear: 'Nueva área',
+  renombrar: 'Cambiar el nombre del área',
+  deshabilitar: 'Deshabilitar área',
+  reactivar: 'Reactivar área',
+}
+
+/** DRA-61: crear, renombrar, deshabilitar o reactivar un área, con su error dentro de la ventana. */
+function VentanaArea({
+  accion,
+  onConfirmar,
+  onCerrar,
+}: {
+  accion: AccionArea
+  onConfirmar: (nombre: string) => Promise<void>
+  onCerrar: () => void
+}) {
+  const conNombre = accion.tipo === 'crear' || accion.tipo === 'renombrar'
+  const [nombre, setNombre] = useState(accion.tipo === 'renombrar' ? accion.area.nombre : '')
+  const [error, setError] = useState('')
+  const [enviando, setEnviando] = useState(false)
+
+  const confirmar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setEnviando(true)
+    try {
+      await onConfirmar(nombre)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.')
+      setEnviando(false)
+    }
+  }
+
+  const boton = {
+    crear: 'Crear área',
+    renombrar: 'Guardar nombre',
+    deshabilitar: 'Deshabilitar',
+    reactivar: 'Reactivar',
+  }[accion.tipo]
+
+  return (
+    <Modal titulo={TITULOS[accion.tipo]} onCerrar={onCerrar}>
+      <form onSubmit={confirmar} className="space-y-4" noValidate>
+        {conNombre && (
+          <div>
+            <label className="block text-sm font-medium">
+              Nombre del área
+              <input
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                maxLength={100}
+                autoFocus
+                aria-describedby="ayuda-nombre-area"
+                className={CAMPO}
+              />
+            </label>
+            <p id="ayuda-nombre-area" className="mt-1 text-sm text-muted">
+              De 3 a 100 caracteres. No puede repetirse.
+            </p>
+          </div>
+        )}
+        {accion.tipo === 'crear' && (
+          <p>El área se crea activa y sin tipos de documento: asígnelos después en su tarjeta.</p>
+        )}
+        {accion.tipo === 'renombrar' && (
+          <p>
+            El nombre nuevo se verá en toda la plataforma. Los documentos ya emitidos no cambian.
+          </p>
+        )}
+        {accion.tipo === 'deshabilitar' && (
+          <>
+            <p>
+              ¿Deshabilitar <strong>«{accion.area.nombre}»</strong>?
+            </p>
+            <p>
+              No aparecerá al crear cuentas y no se podrán registrar documentos nuevos en ella. Sus
+              documentos en trámite siguen su flujo y los firmados siguen siendo válidos.
+            </p>
+          </>
+        )}
+        {accion.tipo === 'reactivar' && (
+          <p>
+            ¿Reactivar <strong>«{accion.area.nombre}»</strong>? Vuelve con los tipos de documento
+            que tenía.
+          </p>
+        )}
+        {error && (
+          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-red-800">
+            {error}
+          </p>
+        )}
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" onClick={onCerrar} className={BOTON_SECUNDARIO}>
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={enviando}
+            className={accion.tipo === 'deshabilitar' ? BOTON_ADVERTENCIA : BOTON_PRIMARIO}
+          >
+            {boton}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
 function TarjetaArea({
   area,
   tipos,
   onAsignar,
   onQuitar,
+  onAccion,
 }: {
   area: AreaConfigurada
   tipos: TipoDeDocumento[]
   onAsignar: (tipo: string) => Promise<void>
   onQuitar: (tipo: TipoDeDocumento) => void
+  onAccion: (accion: AccionArea) => void
 }) {
   const disponibles = tipos.filter((t) => !area.tipos.some((a) => a.codigo === t.codigo))
   const [elegido, setElegido] = useState('')
@@ -60,6 +182,24 @@ function TarjetaArea({
         </h2>
         <span className="text-sm text-muted">{personas(area.personasActivas)} del área</span>
       </header>
+      <div className="mt-1 flex gap-4 text-sm">
+        <button
+          type="button"
+          onClick={() => onAccion({ tipo: 'renombrar', area })}
+          aria-label={`Cambiar el nombre de ${area.nombre}`}
+          className="font-medium text-institutional hover:underline"
+        >
+          Cambiar nombre
+        </button>
+        <button
+          type="button"
+          onClick={() => onAccion({ tipo: 'deshabilitar', area })}
+          aria-label={`Deshabilitar ${area.nombre}`}
+          className="font-medium text-red-700 hover:underline"
+        >
+          Deshabilitar
+        </button>
+      </div>
 
       {area.tipos.length === 0 ? (
         <p role="note" className="mt-3 rounded-lg bg-orange-pale px-3 py-2">
@@ -121,6 +261,8 @@ function TarjetaArea({
 /**
  * DRA-60: el Administrador configura qué tipos de documento emite cada área (RF06). Quitar un tipo
  * solo impide registrar documentos nuevos de ese tipo; lo ya registrado sigue su trámite.
+ *
+ * DRA-61: también crea, renombra, deshabilita y reactiva áreas. No hay opción para eliminarlas.
  */
 export default function PaginaAreas() {
   const [catalogo, setCatalogo] = useState<Catalogo | null>(null)
@@ -128,6 +270,7 @@ export default function PaginaAreas() {
   const [aviso, setAviso] = useState('')
   const [quitar, setQuitar] = useState<Quitar | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const [accion, setAccion] = useState<AccionArea | null>(null)
 
   useEffect(() => {
     consultarCatalogo()
@@ -165,12 +308,52 @@ export default function PaginaAreas() {
     setQuitar(null)
   }
 
+  /** La ventana muestra el error; si todo sale bien, se cierra con el aviso. */
+  const confirmarAccion = async (nombre: string) => {
+    if (!accion) return
+    setError('')
+    setAviso('')
+    const nombreLimpio = nombre.trim().replace(/\s+/g, ' ')
+    const [peticion, mensaje] =
+      accion.tipo === 'crear'
+        ? [
+            () => crearArea(nombre),
+            `Se creó el área «${nombreLimpio}». Asígnele sus tipos de documento.`,
+          ]
+        : accion.tipo === 'renombrar'
+          ? [
+              () => renombrarArea(accion.area.codigo, nombre),
+              `«${accion.area.nombre}» ahora se llama «${nombreLimpio}».`,
+            ]
+          : accion.tipo === 'deshabilitar'
+            ? [
+                () => deshabilitarArea(accion.area.codigo),
+                `Se deshabilitó «${accion.area.nombre}».`,
+              ]
+            : [() => reactivarArea(accion.area.codigo), `Se reactivó «${accion.area.nombre}».`]
+    setCatalogo(await peticion())
+    setAviso(mensaje)
+    setAccion(null)
+  }
+
+  const activas = catalogo?.areas.filter((a) => a.activa) ?? []
+  const deshabilitadas = catalogo?.areas.filter((a) => !a.activa) ?? []
+
   return (
     <section className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <p className="text-muted">
-        Qué tipos de documento puede emitir cada área. Los cambios rigen desde la siguiente pantalla
-        de las personas del área.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-muted">
+          Qué tipos de documento puede emitir cada área. Los cambios rigen desde la siguiente
+          pantalla de las personas del área.
+        </p>
+        <button
+          type="button"
+          onClick={() => setAccion({ tipo: 'crear' })}
+          className={BOTON_PRIMARIO}
+        >
+          Nueva área
+        </button>
+      </div>
 
       {aviso && (
         <p role="status" className="rounded-lg bg-green-pale px-4 py-3 text-institutional">
@@ -186,16 +369,54 @@ export default function PaginaAreas() {
       {catalogo && (
         <>
           <div className="grid gap-4 md:grid-cols-2">
-            {catalogo.areas.map((a) => (
+            {activas.map((a) => (
               <TarjetaArea
                 key={a.codigo}
                 area={a}
                 tipos={catalogo.tipos}
                 onAsignar={asignar(a)}
                 onQuitar={(tipo) => setQuitar({ area: a, tipo })}
+                onAccion={setAccion}
               />
             ))}
           </div>
+
+          {deshabilitadas.length > 0 && (
+            <section aria-labelledby="areas-deshabilitadas" className="space-y-3">
+              <h2 id="areas-deshabilitadas" className="font-semibold">
+                Áreas deshabilitadas
+              </h2>
+              <p className="text-muted">
+                No aparecen al crear cuentas y no registran documentos nuevos. Sus documentos
+                firmados siguen siendo válidos.
+              </p>
+              <ul className="divide-y rounded-xl border bg-card">
+                {deshabilitadas.map((a) => (
+                  <li
+                    key={a.codigo}
+                    className="flex flex-wrap items-center justify-between gap-3 p-4"
+                  >
+                    <span>
+                      <span className="font-medium">{a.nombre}</span>
+                      <span className="block text-sm text-muted">
+                        {a.tipos.length === 0
+                          ? 'Sin tipos de documento'
+                          : `Conserva: ${a.tipos.map((t) => t.nombre).join(', ')}`}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setAccion({ tipo: 'reactivar', area: a })}
+                      aria-label={`Reactivar ${a.nombre}`}
+                      className={BOTON_SECUNDARIO}
+                    >
+                      Reactivar
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <section aria-labelledby="historial-catalogo" className="rounded-xl border bg-card p-5">
             <h2 id="historial-catalogo" className="font-semibold">
@@ -217,6 +438,14 @@ export default function PaginaAreas() {
             )}
           </section>
         </>
+      )}
+
+      {accion && (
+        <VentanaArea
+          accion={accion}
+          onConfirmar={confirmarAccion}
+          onCerrar={() => setAccion(null)}
+        />
       )}
 
       {quitar && (

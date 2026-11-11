@@ -3,14 +3,28 @@ package pe.drasatipo.plataforma.catalogo;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * La relación de áreas y tipos de documento de la migración V3, para restaurarla en las pruebas.
+ * Las áreas de la migración V3 (activas y con su nombre) y su relación con los tipos de documento,
+ * para restaurarlas en las pruebas. Las áreas creadas por las pruebas (DRA-61) se quedan, con
+ * nombres únicos.
  */
 public final class ConfiguracionInicial {
 
   private ConfiguracionInicial() {}
 
   public static void restaurar(JdbcTemplate jdbc) {
-    jdbc.update("DELETE FROM area_tipo_documento");
+    jdbc.update(
+        """
+        UPDATE area SET activa = true, nombre = inicial.nombre
+        FROM (VALUES
+            ('CAPACITACION',       'Área de Capacitación'),
+            ('DESARROLLO_AGRARIO', 'Área de Desarrollo Agrario'),
+            ('ADMINISTRACION',     'Área de Administración')
+        ) AS inicial (codigo, nombre)
+        WHERE area.codigo = inicial.codigo
+        """);
+    jdbc.update(
+        "DELETE FROM area_tipo_documento WHERE area_id IN (SELECT id FROM area WHERE codigo IN"
+            + " ('CAPACITACION', 'DESARROLLO_AGRARIO', 'ADMINISTRACION'))");
     jdbc.update(
         """
         INSERT INTO area_tipo_documento (area_id, tipo_documento_id)

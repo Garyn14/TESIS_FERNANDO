@@ -25,6 +25,8 @@ public class GestionUsuarios {
   static final String ULTIMO_ADMINISTRADOR = "Debe quedar al menos un Administrador activo.";
   static final String AREA_OBLIGATORIA = "Seleccione el área de la persona.";
   static final String AREA_INVALIDA = "Seleccione un área válida.";
+  static final String AREA_DESHABILITADA =
+      "El área «%s» está deshabilitada. Edite la cuenta y asígnele otra área antes de reactivarla.";
 
   private static final Logger log = LoggerFactory.getLogger(GestionUsuarios.class);
 
@@ -166,6 +168,13 @@ public class GestionUsuarios {
     Usuario actor = actor(nombreUsuarioActor);
     if (cuenta.isActivo()) {
       return CuentaRespuesta.de(cuenta);
+    }
+    // DRA-61: un área deshabilitada no tiene personas activas.
+    Area area = cuenta.getArea();
+    if (Rol.AREA_ENCARGADA.equals(cuenta.getRol().getCodigo())
+        && area != null
+        && !area.isActiva()) {
+      throw conflicto(null, AREA_DESHABILITADA.formatted(area.getNombre()));
     }
     cuenta.reactivar();
     registrar(cuenta, EventoCuenta.REACTIVADA, null, actor);
