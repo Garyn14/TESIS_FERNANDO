@@ -14,7 +14,7 @@ Fuente: sección 3.2.3 de la tesis (Tablas 17 a 23), con los puntos y el sprint 
 | E7 Anulación y reemisión | HU29–HU30 | 4 | 16 |
 | Sprint 7: propuestas del equipo (fuera del backlog original) | DRA-58 a DRA-62 | 7 | 16 |
 
-> **Nombres de los roles desde el Sprint 7 (DRA-59).** Las historias HU01–HU30 conservan los nombres de la tesis. En la plataforma, **"Área encargada"** se llama **"Administrador de área"** y **"Consulta interna"** se llama **"Mesa de Partes"**. Los códigos internos (`AREA_ENCARGADA`, `CONSULTA_INTERNA`) no cambian.
+> **Nombres de los roles desde el Sprint 7 (DRA-59).** Las historias HU01–HU30 conservan los nombres de la tesis. En la plataforma, **"Área encargada"** se llama **"Emisor de área"** y **"Consulta interna"** se llama **"Mesa de Partes"**. Los códigos internos (`AREA_ENCARGADA`, `CONSULTA_INTERNA`) no cambian.
 
 ---
 
@@ -1704,14 +1704,14 @@ Al revisar los flujos para la reunión con el negocio (`docs/negocio/flujos-del-
 
 | Código interno (no cambia) | Nombre actual (tesis) | Nombre nuevo | Qué hace |
 |---|---|---|---|
-| `AREA_ENCARGADA` | Área encargada | **Administrador de área** | Registra, corrige y reemite los documentos de su área |
+| `AREA_ENCARGADA` | Área encargada | **Emisor de área** | Registra, corrige y reemite los documentos de su área |
 | `CONSULTA_INTERNA` | Consulta interna | **Mesa de Partes** | Busca todos los documentos, informa su estado y los entrega |
 | `ADMINISTRADOR` | Administrador | Administrador (sin cambio) | Gestiona cuentas, áreas y la billetera del Director |
 | `DIRECTOR` | Director | Director (sin cambio) | Revisa, observa, rechaza, firma y anula |
 
 **Criterios de aceptación**
 
-- [ ] Los nombres nuevos se ven en todas las pantallas: el formulario y la lista de **Usuarios**, **Billetera del director**, el **encabezado** (por ejemplo, "Administrador de área – Área de Capacitación"), la bienvenida de **Inicio** y el **Historial** de la ficha de un documento (el rol de quien hizo cada evento).
+- [ ] Los nombres nuevos se ven en todas las pantallas: el formulario y la lista de **Usuarios**, **Billetera del director**, el **encabezado** (por ejemplo, "Emisor de área – Área de Capacitación"), la bienvenida de **Inicio** y el **Historial** de la ficha de un documento (el rol de quien hizo cada evento).
 - [ ] Solo cambia el **nombre visible**. Los códigos internos (`AREA_ENCARGADA`, `CONSULTA_INTERNA`), los permisos, la regla de área (RF05) y el comportamiento de cada rol no cambian.
 - [ ] Las cuentas existentes conservan su rol: nadie gana ni pierde permisos.
 - [ ] **El historial no se reescribe:** los eventos de cuenta ya registrados conservan el texto con el que se guardaron (por ejemplo, "Rol: Director → Consulta interna"). Los nuevos usan los nombres nuevos.
@@ -1735,7 +1735,7 @@ Al revisar los flujos para la reunión con el negocio (`docs/negocio/flujos-del-
 
 **Decisiones a validar**
 
-1. **"Administrador de área" puede confundirse con "Administrador".** Lo eligió el equipo; alternativas si el negocio lo prefiere: "Emisor de área" o "Responsable de emisión".
+1. **"Emisor de área"** en lugar de "Administrador de área", que se confundía con el rol Administrador. Se descartaron "Encargado de área" (suena a jefe, el perfil de DRA-58), "Responsable de emisión" (largo), "Gestor de documentos" (no dice que es de un área) y "Registrador de área" (solo describe el registro).
 2. Las historias y la tesis conservan los nombres originales, con una tabla de equivalencias.
 3. Los guiones de prueba **sí** se actualizan, porque describen lo que se ve en pantalla y se usarán en la validación del PO (DRA-48).
 

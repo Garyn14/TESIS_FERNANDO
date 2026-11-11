@@ -31,7 +31,7 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 
   | Orden | Ticket | Historia | Puntos |
   |---|---|---|---|
-  | 1 | DRA-59 | Renombrar los roles: "Área encargada" → "Administrador de área" y "Consulta interna" → "Mesa de Partes" | 2 |
+  | 1 | DRA-59 | Renombrar los roles: "Área encargada" → "Emisor de área" y "Consulta interna" → "Mesa de Partes" | 2 |
   | 2 | DRA-60 | El Administrador configura qué tipos de documento emite cada área | 3 |
   | 3 | DRA-61 | El Administrador crea, renombra, deshabilita y reactiva áreas | 3 |
   | 4 | DRA-58 | Nuevo rol "Mesa de Partes de área" | 3 |
