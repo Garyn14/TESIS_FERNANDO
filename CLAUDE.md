@@ -43,22 +43,23 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 - Si no corresponde a ninguna historia, va en un ticket independiente.
 - Un cambio menor (redacción, un ajuste de estilo, una dependencia) puede ir sin ticket, a criterio del equipo, citándolo en el commit.
 
-## Estado al 08/11/2026
+## Estado al 11/11/2026
 
 | Sprint | Estado |
 |---|---|
 | 0–2 | Cerrados y aprobados por el PO (47 puntos) |
 | 3 (HU10–12, HU16–18), 4 (HU13–15, HU29–30) y 5 (HU19–21) | Cerrados **sin la validación del PO**, por decisión del equipo: el 3 y el 4 el 05/11 (74 puntos), el 5 el 07/11 (16 puntos) |
 | 6 (HU22–28) | Cerrado el 08/11 **sin la validación del PO** (19 puntos). Con él están cerradas las 30 historias del backlog: **156 de 156 puntos** |
+| 7 (DRA-58 a DRA-62, fuera del backlog original) | Cerrado el 11/11 **sin la validación del PO** (16 puntos): nombres de roles, áreas y tipos configurables, Mesa de Partes de área y vigencia opcional. Acta en `docs/scrum/sprint-7/revision.md` |
 
 **Lo siguiente:** no quedan historias del backlog original por construir. **QA en AWS (DRA-44) se cerró el 11/11/2026.** Quedan en Jira:
-- la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 6 (`docs/scrum/sprint-N/guion-de-pruebas.md`), que se hará en la reunión con el negocio (material en `docs/negocio/flujos-del-sistema.md` y `presentacion/video-presentacion.mp4`);
-- **propuestas del equipo, sin construir hasta que el negocio las confirme:** DRA-58 (rol "Mesa de Partes de área"), DRA-59 (renombrar los roles), DRA-60 (configurar áreas y tipos de documento), DRA-61 (gestionar áreas), DRA-62 (vigencia opcional de los documentos; decidida la opción A: la fecha va en el PDF) y DRA-63 (spike: seguridad de la billetera del Director);
+- la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 7 (`docs/scrum/sprint-N/guion-de-pruebas.md`), que se hará en la reunión con el negocio (material en `docs/negocio/flujos-del-sistema.md` y `presentacion/video-presentacion.mp4`);
+- **DRA-63** (spike: seguridad de la billetera del Director), sin construir. Las propuestas DRA-58 a DRA-62 se construyeron en el Sprint 7;
 - **DRA-65 (PROD en AWS)**, a la espera del dominio y el alcance.
 
 Cada observación del PO se registra como un ticket nuevo y se construye con el flujo de siempre. También falta actualizar la Tabla 26 de la tesis con el calendario de `jira.md`.
 
-**Validación del PO:** se hace **al final del proyecto** (DRA-48, en el backlog), con los guiones de los Sprints 3 a 6. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
+**Validación del PO:** se hace **al final del proyecto** (DRA-48, en el backlog), con los guiones de los Sprints 3 a 7. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
 
 **Pendientes conocidos:**
 - PROD en AWS (DRA-65): alcance y dominio por definir (saldrá de la misma plantilla de QA);
