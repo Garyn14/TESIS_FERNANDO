@@ -20,7 +20,13 @@ export interface Rol {
   codigo: string
   nombre: string
   descripcion: string
+  /** El rol exige un área y solo ve lo de ella (Emisor de área, Mesa de Partes de área; DRA-58). */
+  limitadoAlArea: boolean
 }
+
+/** True si el rol elegido exige área (HU05, RF05; DRA-58). */
+export const exigeArea = (roles: Rol[], codigo: string) =>
+  roles.some((r) => r.codigo === codigo && r.limitadoAlArea)
 
 export interface TipoDocumento {
   codigo: string
@@ -33,14 +39,11 @@ export interface Area {
   tipos: TipoDocumento[]
 }
 
-/** Rol que exige área (HU05, RF05). */
-export const AREA_ENCARGADA = 'AREA_ENCARGADA'
-
 export interface NuevaCuenta {
   nombreUsuario: string
   nombreCompleto: string
   rol: string
-  /** Código del área; solo para el rol Área encargada. */
+  /** Código del área; solo para los roles limitados a un área. */
   area: string
   contrasenaTemporal: string
 }
@@ -54,10 +57,10 @@ export const listarRoles = () => solicitar<Rol[]>('/api/roles')
 export const listarAreas = () => solicitar<Area[]>('/api/areas')
 
 /** Tipos de documento que la sesión puede registrar: los de su área si es Área encargada (RF05). */
-/** Solo el Área encargada lleva área; para los demás roles se envía null. */
-const conArea = <T extends { rol: string; area: string }>(datos: T) => ({
+/** Sin área elegida se envía null; el servidor ignora el área de los roles que no la llevan. */
+const conArea = <T extends { area: string }>(datos: T) => ({
   ...datos,
-  area: datos.rol === AREA_ENCARGADA && datos.area ? datos.area : null,
+  area: datos.area || null,
 })
 
 export const crearCuenta = (datos: NuevaCuenta) =>

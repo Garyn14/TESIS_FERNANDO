@@ -11,8 +11,24 @@ const areas = [
 ]
 
 const roles = [
-  { codigo: 'DIRECTOR', nombre: 'Director', descripcion: 'Revisa y firma documentos' },
-  { codigo: 'AREA_ENCARGADA', nombre: 'Emisor de área', descripcion: 'Registra documentos' },
+  {
+    codigo: 'DIRECTOR',
+    nombre: 'Director',
+    descripcion: 'Revisa y firma documentos',
+    limitadoAlArea: false,
+  },
+  {
+    codigo: 'AREA_ENCARGADA',
+    nombre: 'Emisor de área',
+    descripcion: 'Registra documentos',
+    limitadoAlArea: true,
+  },
+  {
+    codigo: 'MESA_PARTES_AREA',
+    nombre: 'Mesa de Partes de área',
+    descripcion: 'Busca, consulta el historial, imprime y entrega los documentos de su área',
+    limitadoAlArea: true,
+  },
 ]
 
 function respuesta(estado: number, cuerpo: unknown) {
@@ -97,5 +113,27 @@ describe('FormularioCuenta (HU01)', () => {
     expect(contrasena).toHaveAttribute('type', 'password')
     fireEvent.click(screen.getByRole('button', { name: 'Mostrar' }))
     expect(contrasena).toHaveAttribute('type', 'text')
+  })
+
+  it('pide el área para Mesa de Partes de área y la envía (DRA-58)', async () => {
+    const cuenta = { id: 6, nombreUsuario: 'atorres', rolNombre: 'Mesa de Partes de área' }
+    const fetch = vi.spyOn(globalThis, 'fetch').mockReturnValue(respuesta(201, cuenta))
+    const onCreada = vi.fn()
+    render(
+      <FormularioCuenta roles={roles} areas={areas} onCreada={onCreada} onCancelar={vi.fn()} />,
+    )
+    expect(screen.queryByLabelText('Área')).not.toBeInTheDocument()
+
+    llenar('atorres', 'Ana Torres Rojas', 'MESA_PARTES_AREA', 'Clave2026!')
+    expect(screen.getByText('Seleccione el área de la persona.')).toBeInTheDocument()
+    expect(fetch).not.toHaveBeenCalled()
+
+    fireEvent.change(screen.getByLabelText('Área'), { target: { value: 'CAPACITACION' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+    await waitFor(() => expect(onCreada).toHaveBeenCalledWith(cuenta))
+    expect(JSON.parse(fetch.mock.calls[0][1]?.body as string)).toMatchObject({
+      rol: 'MESA_PARTES_AREA',
+      area: 'CAPACITACION',
+    })
   })
 })

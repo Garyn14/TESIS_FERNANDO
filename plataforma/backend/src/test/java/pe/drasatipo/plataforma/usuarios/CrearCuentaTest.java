@@ -208,10 +208,11 @@ class CrearCuentaTest {
   }
 
   @Test
-  void listaLosCuatroRolesParaElFormulario() throws Exception {
+  void listaLosRolesParaElFormulario() throws Exception {
+    // Los cuatro de RF01 y, desde DRA-58, Mesa de Partes de área.
     mvc.perform(get("/api/roles"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(4))
+        .andExpect(jsonPath("$.length()").value(5))
         .andExpect(jsonPath("$[?(@.codigo == 'ADMINISTRADOR')].nombre").value("Administrador"));
   }
 }

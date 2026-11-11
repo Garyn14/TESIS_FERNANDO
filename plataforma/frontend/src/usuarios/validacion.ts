@@ -1,12 +1,12 @@
-import { AREA_ENCARGADA, type EdicionCuenta, type NuevaCuenta } from './api'
+import { type EdicionCuenta, type NuevaCuenta } from './api'
 
 const PATRON_USUARIO = /^[a-z][a-z0-9._]{3,29}$/
 
 export type Errores = Partial<Record<keyof NuevaCuenta, string>>
 
 /** Mismas reglas que el backend (HU01), para avisar antes de enviar. */
-export function validarCuenta(datos: NuevaCuenta): Errores {
-  const errores: Errores = validarEdicion(datos)
+export function validarCuenta(datos: NuevaCuenta, exigeArea: boolean): Errores {
+  const errores: Errores = validarEdicion(datos, exigeArea)
   if (!datos.nombreUsuario) errores.nombreUsuario = 'Ingrese el nombre de usuario.'
   else if (!PATRON_USUARIO.test(datos.nombreUsuario))
     errores.nombreUsuario =
@@ -17,14 +17,16 @@ export function validarCuenta(datos: NuevaCuenta): Errores {
   return errores
 }
 
-/** Datos editables (HU02, HU05): nombre completo, rol y, para el Área encargada, el área. */
-export function validarEdicion(datos: EdicionCuenta): Errores {
+/**
+ * Datos editables (HU02, HU05): nombre completo, rol y, para los roles limitados a un área (Emisor
+ * de área, Mesa de Partes de área), el área.
+ */
+export function validarEdicion(datos: EdicionCuenta, exigeArea: boolean): Errores {
   const errores: Errores = {}
   if (!datos.nombreCompleto) errores.nombreCompleto = 'Ingrese el nombre completo.'
   else if (datos.nombreCompleto.length < 3 || datos.nombreCompleto.length > 150)
     errores.nombreCompleto = 'El nombre completo debe tener de 3 a 150 caracteres.'
   if (!datos.rol) errores.rol = 'Seleccione un rol.'
-  else if (datos.rol === AREA_ENCARGADA && !datos.area)
-    errores.area = 'Seleccione el área de la persona.'
+  else if (exigeArea && !datos.area) errores.area = 'Seleccione el área de la persona.'
   return errores
 }

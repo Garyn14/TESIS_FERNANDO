@@ -59,6 +59,12 @@ public class BusquedaDeDocumentos {
 
   @Transactional(readOnly = true)
   public ResultadoDeBusqueda buscar(String texto, FiltroDeEstado filtro) {
+    return buscar(texto, filtro, null);
+  }
+
+  /** DRA-58: con {@code area}, solo los documentos de esa área (Mesa de Partes de área). */
+  @Transactional(readOnly = true)
+  public ResultadoDeBusqueda buscar(String texto, FiltroDeEstado filtro, Short area) {
     String limpio = texto == null ? "" : texto.strip().replaceAll("\\s+", " ");
     if (!limpio.isEmpty() && limpio.replace(" ", "").length() < MINIMO_DE_CARACTERES) {
       throw new DatosInvalidosException(Map.of("texto", MUY_CORTO));
@@ -68,6 +74,10 @@ public class BusquedaDeDocumentos {
             .addValue("estados", filtro.nombres())
             .addValue("limite", MAXIMO_DE_DOCUMENTOS + 1);
     String condicion = limpio.isEmpty() ? "" : "AND (" + condicion(limpio, parametros) + ")";
+    if (area != null) {
+      condicion += " AND d.area_id = :area";
+      parametros.addValue("area", area);
+    }
     if (filtro.sinEntregar()) {
       condicion +=
           " AND NOT EXISTS (SELECT 1 FROM documento_historial h WHERE h.documento_id = d.id"

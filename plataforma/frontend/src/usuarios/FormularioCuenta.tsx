@@ -1,14 +1,7 @@
 import { useId, useState, type FormEvent } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { BOTON_PRIMARIO, BOTON_SECUNDARIO, CAMPO } from '../comun/estilos'
-import {
-  crearCuenta,
-  AREA_ENCARGADA,
-  type Area,
-  type Cuenta,
-  type NuevaCuenta,
-  type Rol,
-} from './api'
+import { crearCuenta, exigeArea, type Area, type Cuenta, type NuevaCuenta, type Rol } from './api'
 import CampoArea from './CampoArea'
 import { validarCuenta, type Errores } from './validacion'
 
@@ -45,7 +38,7 @@ export default function FormularioCuenta({ roles, areas, onCreada, onCancelar }:
       nombreUsuario: datos.nombreUsuario.trim().toLowerCase(),
       nombreCompleto: datos.nombreCompleto.trim(),
     }
-    const encontrados = validarCuenta(normalizados)
+    const encontrados = validarCuenta(normalizados, exigeArea(roles, normalizados.rol))
     setErrores(encontrados)
     setErrorGeneral('')
     if (Object.keys(encontrados).length > 0) return
@@ -136,7 +129,7 @@ export default function FormularioCuenta({ roles, areas, onCreada, onCancelar }:
           ))}
       </div>
 
-      {datos.rol === AREA_ENCARGADA && (
+      {exigeArea(roles, datos.rol) && (
         <CampoArea
           id={`${id}-area`}
           valor={datos.area}

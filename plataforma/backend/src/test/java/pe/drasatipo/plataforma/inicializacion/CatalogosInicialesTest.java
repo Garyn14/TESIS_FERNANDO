@@ -29,10 +29,20 @@ class CatalogosInicialesTest {
   }
 
   @Test
-  void cargaLosCuatroRolesDeRf01() {
+  void cargaLosCuatroRolesDeRf01YElDeDra58() {
     assertThat(jdbc.queryForList("SELECT codigo FROM rol", String.class))
         .containsExactlyInAnyOrder(
-            "ADMINISTRADOR", "AREA_ENCARGADA", "DIRECTOR", "CONSULTA_INTERNA");
+            "ADMINISTRADOR", "AREA_ENCARGADA", "DIRECTOR", "CONSULTA_INTERNA", "MESA_PARTES_AREA");
+    // DRA-58: los roles limitados a un área exigen el área y solo ven lo de ella.
+    assertThat(jdbc.queryForList("SELECT codigo FROM rol WHERE limitado_al_area", String.class))
+        .containsExactlyInAnyOrder("AREA_ENCARGADA", "MESA_PARTES_AREA");
+    assertThat(
+            jdbc.queryForList(
+                "SELECT p.codigo FROM rol_permiso rp JOIN rol r ON r.id = rp.rol_id"
+                    + " JOIN permiso p ON p.id = rp.permiso_id WHERE r.codigo = 'MESA_PARTES_AREA'",
+                String.class))
+        .containsExactlyInAnyOrder(
+            "CUENTA_PROPIA", "DOCUMENTO_BUSCAR", "AUDITORIA_VER", "DOCUMENTO_IMPRIMIR");
   }
 
   @Test
@@ -46,7 +56,8 @@ class CatalogosInicialesTest {
             "ADMINISTRADOR = Administrador",
             "AREA_ENCARGADA = Emisor de área",
             "CONSULTA_INTERNA = Mesa de Partes",
-            "DIRECTOR = Director");
+            "DIRECTOR = Director",
+            "MESA_PARTES_AREA = Mesa de Partes de área");
     assertThat(
             jdbc.queryForObject(
                 "SELECT descripcion FROM rol WHERE codigo = 'CONSULTA_INTERNA'", String.class))

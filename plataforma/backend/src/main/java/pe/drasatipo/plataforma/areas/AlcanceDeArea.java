@@ -3,26 +3,46 @@ package pe.drasatipo.plataforma.areas;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
-import pe.drasatipo.plataforma.usuarios.Rol;
+import org.springframework.transaction.annotation.Transactional;
 import pe.drasatipo.plataforma.usuarios.Usuario;
+import pe.drasatipo.plataforma.usuarios.UsuarioRepository;
 
 /**
- * Regla de control interno de RF05: un usuario del Área encargada solo accede a lo de su área, sin
- * importar los permisos configurados. Es el único lugar donde se decide; las historias de
- * documentos (Sprint 2 en adelante) deben pasar por aquí.
+ * Regla de control interno de RF05: un usuario de un rol limitado a su área (Emisor de área, Mesa
+ * de Partes de área) solo accede a lo de su área, sin importar los permisos configurados. Es el
+ * único lugar donde se decide; las historias de documentos (Sprint 2 en adelante) deben pasar por
+ * aquí.
  */
 @Component
 public class AlcanceDeArea {
 
   private final TipoDocumentoRepository tipos;
+  private final UsuarioRepository usuarios;
 
-  public AlcanceDeArea(TipoDocumentoRepository tipos) {
+  public AlcanceDeArea(TipoDocumentoRepository tipos, UsuarioRepository usuarios) {
     this.tipos = tipos;
+    this.usuarios = usuarios;
   }
 
-  /** True si la cuenta está limitada a su área (rol Área encargada). */
+  /**
+   * True si la cuenta está limitada a su área: Emisor de área y, desde DRA-58, Mesa de Partes de
+   * área. Lo decide una propiedad del rol, no su código.
+   */
   public boolean estaLimitada(Usuario cuenta) {
-    return Rol.AREA_ENCARGADA.equals(cuenta.getRol().getCodigo());
+    return cuenta.getRol().isLimitadoAlArea();
+  }
+
+  /**
+   * DRA-58: el área a la que se limita la consulta de documentos (búsqueda, ficha y entrega), o
+   * vacío si la cuenta ve todas las áreas. Una cuenta limitada sin área no ve nada (área -1).
+   */
+  @Transactional(readOnly = true)
+  public Optional<Short> areaDeConsulta(String nombreUsuario) {
+    Usuario cuenta = usuarios.findByNombreUsuarioIgnoreCase(nombreUsuario).orElseThrow();
+    if (!estaLimitada(cuenta)) {
+      return Optional.empty();
+    }
+    return Optional.of(cuenta.getArea() == null ? (short) -1 : cuenta.getArea().getId());
   }
 
   /**

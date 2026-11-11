@@ -12,11 +12,15 @@ public class Rol {
   public static final String ADMINISTRADOR = "ADMINISTRADOR";
   public static final String AREA_ENCARGADA = "AREA_ENCARGADA";
   public static final String DIRECTOR = "DIRECTOR";
+  public static final String MESA_PARTES_AREA = "MESA_PARTES_AREA";
 
   @Id private Short id;
   private String codigo;
   private String nombre;
   private String descripcion;
+
+  /** DRA-58: el rol exige un área y solo accede a lo de ella (RF05). */
+  private boolean limitadoAlArea;
 
   protected Rol() {}
 
@@ -34,5 +38,9 @@ public class Rol {
 
   public String getDescripcion() {
     return descripcion;
+  }
+
+  public boolean isLimitadoAlArea() {
+    return limitadoAlArea;
   }
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { BOTON_PRIMARIO } from '../comun/estilos'
 import Modal from '../comun/Modal'
 import {
-  AREA_ENCARGADA,
+  exigeArea,
   listarAreas,
   listarCuentas,
   listarRoles,
@@ -128,7 +128,7 @@ export default function PaginaUsuarios() {
                   <td className="px-3 py-3">
                     {c.rolNombre}
                     {c.areaNombre && <span className="block text-muted">{c.areaNombre}</span>}
-                    {c.rol === AREA_ENCARGADA && !c.area && (
+                    {exigeArea(roles, c.rol) && !c.area && (
                       <span className="block text-orange">⚠ Sin área asignada</span>
                     )}
                   </td>
