@@ -389,3 +389,68 @@ Al revisar los flujos para la reunión con el negocio (`docs/negocio/flujos-del-
 | Prioridad | Puntos | Sprint | Ticket |
 |---|---|---|---|
 | Media | 2 | 7 | DRA-59 |
+
+---
+
+## DRA-60: Configurar qué tipos de documento emite cada área
+
+**Sprint 7 · propuesta del equipo, fuera del backlog original de la tesis.**
+
+**Como** Administrador, **quiero** configurar desde la plataforma qué tipos de documento puede emitir cada área, **para** adaptarla a la organización sin depender del equipo de desarrollo.
+
+**Contexto**
+
+Cada área solo puede emitir los tipos de documento que tiene asignados (RF06). La regla se aplica en el servidor, en `AlcanceDeArea` (HU05, HU07). Hoy la relación es un catálogo que solo cambia el equipo de desarrollo con una migración:
+
+| Área | Tipos que puede emitir hoy |
+|---|---|
+| Área de Capacitación | Certificado de Capacitación, Certificado de Reconocimiento |
+| Área de Desarrollo Agrario | Constancia de Productor Activo |
+| Área de Administración | Certificado de Prácticas, Certificado de Trabajo |
+
+La relación es de muchos a muchos: un mismo tipo puede pertenecer a más de un área.
+
+**Un ajuste necesario.** Hoy, corregir un documento observado (HU15) y reemitir uno firmado (HU30) vuelven a comprobar que el tipo esté asignado al área. Si el Administrador quita un tipo, el área ya no podría corregir ni reemitir sus documentos de ese tipo. Esta historia separa las dos cosas: **la asignación solo controla el registro de documentos nuevos**. Los certificados de un lote no tienen el problema, porque su corrección solo valida nombre, apellidos y DNI.
+
+**Criterios de aceptación**
+
+- [ ] Una pantalla nueva **"Áreas y documentos"** en el menú del Administrador, después de "Billetera del director". Lista cada área activa con sus tipos de documento asignados y la cantidad de personas activas del área (rol Emisor de área).
+- [ ] El Administrador **asigna** a un área cualquier tipo de documento activo que todavía no tenga, y **quita** uno que tenga. Un tipo puede quedar asignado a más de un área.
+- [ ] Quitar pide confirmación: "¿Quitar «Certificado de Trabajo» del Área de Administración? 2 personas del área dejarán de poder registrar documentos de este tipo. Los documentos ya registrados siguen su trámite."
+- [ ] Un área puede quedarse sin tipos, pero la pantalla lo advierte: "Esta área no puede emitir documentos."
+- [ ] El cambio rige desde la **siguiente pantalla** de las personas del área: en Nuevo documento aparecen los tipos nuevos y dejan de aparecer los quitados (HU03, HU07).
+- [ ] Quitar un tipo **solo impide registrar documentos nuevos** de ese tipo. Los ya registrados siguen perteneciendo al área y siguen su flujo normal: revisión, firma, **corrección de los observados**, **reemisión**, anulación, consulta e impresión.
+- [ ] Cada asignación y cada quita quedan en un **historial de cambios**, con quién la hizo, cuándo y qué cambió (por ejemplo, "Área de Capacitación: se asignó Constancia de Productor Activo"). La pantalla muestra los 30 cambios más recientes.
+- [ ] Asignar un tipo que ya está asignado, o quitar uno que no lo está, no cambia nada y lo indica, también si dos administradores lo hacen a la vez.
+- [ ] Solo el Administrador puede ver y usar la pantalla, con un permiso nuevo, `CATALOGO_GESTIONAR`. Sin sesión se responde 401 y con otro rol, 403 (RF04).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Crear, renombrar, deshabilitar y reactivar áreas | DRA-61, en esta misma pantalla y con el mismo historial |
+| Crear tipos de documento nuevos | Cada tipo tiene su formulario, su texto y su plantilla del PDF: sigue siendo trabajo del equipo de desarrollo |
+| Cambiar el origen de un tipo (a solicitud de parte o de oficio) | Define el formulario y el flujo de registro (HU08, HU09) |
+| Mover documentos ya registrados a otra área | Los documentos pertenecen al área que los emitió |
+| La vigencia de cada tipo | DRA-62, que se configura en esta misma pantalla |
+
+**Notas técnicas**
+
+- API, con permiso `CATALOGO_GESTIONAR`:
+  - `GET /api/catalogo` → áreas activas con sus tipos y personas activas, los tipos asignables y el historial reciente;
+  - `PUT /api/catalogo/areas/{area}/tipos-documento/{tipo}` (asignar) y `DELETE` de la misma ruta (quitar), por código.
+- Migración **V25**: el permiso `CATALOGO_GESTIONAR` para el Administrador y la tabla `catalogo_historial` (área, evento, detalle, quién y cuándo), que DRA-61 reutiliza.
+- La asignación se escribe con una sola sentencia (`INSERT … ON CONFLICT DO NOTHING` / `DELETE`), y la cantidad de filas afectadas dice si cambió algo.
+- `RegistroDeDocumentos`: la corrección y la reemisión validan con el tipo del documento original, sin pasar por `AlcanceDeArea.tipoPermitido`. La visibilidad del documento (`puedeVerArea`) se sigue comprobando.
+
+**Decisiones a validar**
+
+1. La pantalla se llama "Áreas y documentos" y va en el menú del Administrador.
+2. Un permiso nuevo (`CATALOGO_GESTIONAR`) en lugar de reutilizar `USUARIOS_GESTIONAR`, para poder separar ambas funciones más adelante.
+3. Quitar un tipo **no** afecta a lo ya registrado: corrección y reemisión siguen funcionando.
+4. El historial de cambios es nuevo y propio del catálogo; se ve en la misma pantalla.
+5. Solo se pueden asignar los tipos que ya existen; crear tipos nuevos sigue siendo trabajo de desarrollo.
+
+| Prioridad | Puntos | Sprint | Ticket |
+|---|---|---|---|
+| Media | 3 | 7 | DRA-60 |
