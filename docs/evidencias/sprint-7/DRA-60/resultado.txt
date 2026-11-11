@@ -1,0 +1,10 @@
+Sprint 7 (DRA-60): 9 pasos correctos
+✓ Preparación · El Administrador crea las cuentas desde la pantalla Usuarios
+✓ Preparación · Pedro envía un Certificado de Trabajo y el Director lo observa
+✓ DRA-60 · El Administrador tiene la pantalla "Áreas y documentos" con cada área, sus tipos y sus personas
+✓ DRA-60 · Solo el Administrador ve la pantalla y usa su API
+✓ DRA-60 · Asigna la Constancia de Productor Activo al Área de Capacitación y Rosa la ve sin volver a ingresar
+✓ DRA-60 · Quitar pide confirmación con las personas afectadas
+✓ DRA-60 · Pedro ya no puede registrar un Certificado de Trabajo nuevo
+✓ DRA-60 · Pero corrige y reenvía su Certificado de Trabajo observado
+✓ DRA-60 · Un área sin tipos muestra la advertencia, y los cambios quedan en el historial
