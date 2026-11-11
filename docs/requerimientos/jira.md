@@ -17,11 +17,28 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 | 4 | 04/11 – 05/11 | Cerrado (27 de 27 puntos; validación del PO en el Sprint 5) | Observar, rechazar, corregir, anular y reemitir | HU13–HU15, HU29–HU30 | 27 |
 | 5 | 05/11 – 07/11 | Cerrado (16 de 16 puntos; validación del PO al final, en DRA-48) | Verificación pública de autenticidad | HU19–HU21 | 16 |
 | 6 | 08/11 – 08/11 | Cerrado (19 de 19 puntos; validación del PO al final, en DRA-48) | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
-| | | | | **Total** | **156** |
+| | | | | **Total del backlog original** | **156** |
+| 7 | 11/11 – 18/11 | En curso (0 de 16 puntos) | Ajustar roles y áreas a la organización y agregar la vigencia opcional de los documentos | DRA-59, DRA-60, DRA-61, DRA-58, DRA-62 | 16 |
 
 **Avance:** 156 de 156 puntos cerrados (100 %): todas las historias del backlog. De ellos, 47 (Sprints 1 y 2) están aprobados por el PO; los 109 de los Sprints 3 a 6 esperan la validación final del PO (DRA-48). Velocidad: 24 puntos en el Sprint 1, 23 en el Sprint 2, 47 en el Sprint 3, 27 en el Sprint 4, 16 en el Sprint 5 y 19 en el Sprint 6.
 
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
+
+### Sprint 7 (desde el 11/11/2026)
+
+- **Fuera del backlog original de la tesis:** son propuestas del equipo surgidas al revisar los flujos con el negocio (`docs/negocio/flujos-del-sistema.md`). Las aprobó el responsable del proyecto el 11/11/2026, sin esperar la reunión con el negocio.
+- **Historias, en orden de construcción** (por dependencias):
+
+  | Orden | Ticket | Historia | Puntos |
+  |---|---|---|---|
+  | 1 | DRA-59 | Renombrar los roles: "Área encargada" → "Administrador de área" y "Consulta interna" → "Mesa de Partes" | 2 |
+  | 2 | DRA-60 | El Administrador configura qué tipos de documento emite cada área | 3 |
+  | 3 | DRA-61 | El Administrador crea, renombra, deshabilita y reactiva áreas | 3 |
+  | 4 | DRA-58 | Nuevo rol "Mesa de Partes de área" | 3 |
+  | 5 | DRA-62 | Vigencia opcional por tipo de documento (la fecha va en el PDF) | 5 |
+
+- **Fuera del Sprint:** DRA-63 (spike de seguridad de la billetera del Director) y DRA-65 (PROD en AWS).
+- **En Jira,** "DRA Sprint 7" se creó e inició el 11/11, con fin planificado el 18/11.
 
 ### Ambiente QA en AWS (desde el 08/11/2026)
 
