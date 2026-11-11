@@ -50,7 +50,7 @@ Contraseñas que se usan en el guion (puede usar otras, siempre que tengan de 8 
 | Paso | Qué hacer | Qué se espera |
 |---|---|---|
 | 1.1 | Abra la plataforma. Ingrese con `admin` y la contraseña temporal. | Aparece la pantalla "Cambie su contraseña". Es obligatorio cambiarla: esto se valida en detalle en HU04. |
-| 1.2 | Escriba la contraseña temporal, luego `AdminPropia26` dos veces, y pulse "Cambiar contraseña". | Entra a la plataforma. El menú muestra Inicio, Usuarios y Billetera del director. |
+| 1.2 | Escriba la contraseña temporal, luego `AdminPropia26` dos veces, y pulse "Cambiar contraseña". | Entra a la plataforma. El menú muestra Inicio, Usuarios, Billetera del director y Áreas y documentos. |
 | 1.3 | Entre a **Usuarios**. | Aparece la lista de cuentas, con la cuenta `admin`. Cada fila muestra nombre de usuario, nombre completo, rol, estado y fecha de creación. |
 | 1.4 | Pulse "Nueva cuenta". Escriba `ab` como nombre de usuario, deje vacío el nombre completo y pulse "Crear cuenta". | La cuenta no se crea. Se indica qué campo corregir: el usuario debe tener de 4 a 30 caracteres y el nombre completo es obligatorio. |
 | 1.5 | Cree la cuenta `rquispe`: nombre "Rosa Quispe Huamán", rol **Emisor de área**, área **Área de Capacitación** y contraseña temporal `Demo2026`. El campo Área se valida en HU05. | Se muestra "Se creó la cuenta rquispe". La cuenta aparece en la lista, con estado **Activa**. |
@@ -99,7 +99,7 @@ Si alguno no es correcto, indíquelo en el ticket.
 | 3.4 | Abra "Por revisar". | Se muestra el aviso "Se habilita en el Sprint 3", porque esa pantalla todavía no existe. Las demás opciones futuras tienen el mismo tipo de aviso. |
 | 3.5 | Cierre sesión. Ingrese con `ltorres` / `Demo2026` y cambie la temporal por `Propia2026`. | El menú muestra solo Inicio y Buscar documentos. |
 | 3.6 | Con la sesión de Luis abierta, escriba en la barra de direcciones la dirección de la plataforma seguida de `#/usuarios`. | No se muestra la pantalla de Usuarios. Se indica "No tiene permiso para ver esta sección". |
-| 3.7 | Compare los menús que vio. | Emisor de área (paso 2.5): Inicio, Mis documentos y Nuevo documento. Director: Inicio, Por revisar y Documentos firmados. Mesa de Partes: Inicio y Buscar documentos. Administrador: Inicio, Usuarios y Billetera del director. |
+| 3.7 | Compare los menús que vio. | Emisor de área (paso 2.5): Inicio, Mis documentos y Nuevo documento. Director: Inicio, Por revisar y Documentos firmados. Mesa de Partes: Inicio y Buscar documentos. Administrador: Inicio, Usuarios, Billetera del director y Áreas y documentos. |
 | 3.8 | Cierre sesión. Intente ingresar con `cmendoza` y una contraseña equivocada tres veces seguidas. | Al tercer intento se indica que la cuenta quedó bloqueada por 3 intentos fallidos y hasta qué hora. |
 | 3.9 | Ingrese con `cmendoza` y la contraseña correcta, `Propia2026`. | Tampoco entra: mientras está bloqueada no se acepta ni la contraseña correcta. El desbloqueo se prueba en HU04, paso 4.4. |
 | 3.10 | En la ventana del Administrador, entre a Usuarios. | La fila de `cmendoza` indica "Bloqueada hasta" con la hora. |
