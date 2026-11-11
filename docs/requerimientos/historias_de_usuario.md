@@ -1952,7 +1952,7 @@ Esta historia amplía **HU05 (DRA-16)**, que asigna el área, y reutiliza la bú
 **Decisiones a validar**
 
 1. **Nombre y código:** "Mesa de Partes de área", con el código `MESA_PARTES_AREA`, siguiendo los nombres de DRA-59. Antes, en el ticket, se llamaba "Consulta de área".
-2. **Puede entregar** (ver, descargar e imprimir) como Mesa de Partes, no solo consultar, como confirmaste al crear el ticket.
+2. **Puede entregar** (ver, descargar e imprimir) como Mesa de Partes, no solo consultar, como se confirmó al crear el ticket.
 3. **Sin avisos.**
 4. **Un documento de otra área se responde como inexistente (404)**, para no revelar qué documentos existen en otras áreas.
 5. **Una propiedad del rol decide quién tiene área**, en vez de nombres fijos en el código. Así, un rol futuro limitado a un área no exige cambiar la lógica.
