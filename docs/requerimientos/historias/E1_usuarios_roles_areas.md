@@ -494,7 +494,7 @@ Lo que revisé en el código:
 - [ ] La pantalla la muestra en una sección **"Áreas deshabilitadas"**.
 
 **Reactivar**
-- [ ] Una área deshabilitada se reactiva con confirmación y **vuelve con sus tipos de documento**, que se conservan mientras está deshabilitada.
+- [ ] Un área deshabilitada se reactiva con confirmación y **vuelve con sus tipos de documento**, que se conservan mientras está deshabilitada.
 
 **Todas las acciones**
 - [ ] **No existe la opción de eliminar** un área, ni en la pantalla ni en la API.
