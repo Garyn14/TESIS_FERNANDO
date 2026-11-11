@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import pe.drasatipo.plataforma.ContenedoresDePrueba;
 import pe.drasatipo.plataforma.billeteras.ContratoFalso;
+import pe.drasatipo.plataforma.catalogo.ConfiguracionInicial;
 
 /**
  * DRA-61: deshabilitar un área solo impide registrar documentos nuevos en ella. Lo ya registrado
@@ -36,6 +38,12 @@ class AreaDeshabilitadaTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired PasswordEncoder codificador;
   @Autowired ContratoFalso contrato;
+
+  /** Deja deshabilitada el área de la prueba aunque falle, para no afectar a las demás. */
+  @AfterEach
+  void restaurarConfiguracion() {
+    ConfiguracionInicial.restaurar(jdbc);
+  }
 
   private ResultActions json(MockHttpSession sesion, String ruta, String cuerpo) throws Exception {
     return mvc.perform(
