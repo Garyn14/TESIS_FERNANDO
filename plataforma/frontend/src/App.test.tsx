@@ -21,12 +21,12 @@ const ADMIN = sesionDe('ADMINISTRADOR', 'Administrador', [
   'USUARIOS_GESTIONAR',
   'BILLETERA_GESTIONAR',
 ])
-const AREA = sesionDe('AREA_ENCARGADA', 'Área encargada', [
+const AREA = sesionDe('AREA_ENCARGADA', 'Emisor de área', [
   'DOCUMENTO_REGISTRAR',
   'DOCUMENTO_VER_AREA',
 ])
 const DIRECTOR = sesionDe('DIRECTOR', 'Director', ['DOCUMENTO_REVISAR', 'DOCUMENTO_VER_FIRMADOS'])
-const CONSULTA = sesionDe('CONSULTA_INTERNA', 'Consulta interna', ['DOCUMENTO_BUSCAR'])
+const CONSULTA = sesionDe('CONSULTA_INTERNA', 'Mesa de Partes', ['DOCUMENTO_BUSCAR'])
 
 /** Simula el backend con la sesión indicada (null: sin sesión). */
 function backend(sesion: Sesion | null, extra: Record<string, () => Promise<Response>> = {}) {
@@ -69,9 +69,9 @@ describe('App (HU03)', () => {
 
   it.each([
     ['Administrador', ADMIN, ['Inicio', 'Usuarios', 'Billetera del director']],
-    ['Área encargada', AREA, ['Inicio', 'Mis documentos', 'Nuevo documento']],
+    ['Emisor de área', AREA, ['Inicio', 'Mis documentos', 'Nuevo documento']],
     ['Director', DIRECTOR, ['Inicio', 'Por revisar', 'Documentos firmados']],
-    ['Consulta interna', CONSULTA, ['Inicio', 'Buscar documentos']],
+    ['Mesa de Partes', CONSULTA, ['Inicio', 'Buscar documentos']],
   ])('el menú de %s muestra solo sus vistas', async (_rol, sesion, esperadas) => {
     backend(sesion)
     render(<App />)
@@ -83,7 +83,7 @@ describe('App (HU03)', () => {
     render(<App />)
     const encabezado = await screen.findByRole('banner')
     expect(within(encabezado).getByText('Rosa Quispe Huamán')).toBeInTheDocument()
-    expect(within(encabezado).getByText('Área encargada')).toBeInTheDocument()
+    expect(within(encabezado).getByText('Emisor de área')).toBeInTheDocument()
     expect(within(encabezado).getByText('RQ')).toBeInTheDocument()
   })
 
@@ -233,7 +233,7 @@ describe('App (HU03)', () => {
     fireEvent.click(within(ventana).getByRole('button', { name: 'Cambiar contraseña' }))
     expect(await within(ventana).findByRole('status')).toHaveTextContent('Su contraseña se cambió.')
   })
-  it('el Área encargada ve su área en el encabezado y lo que emite en Inicio', async () => {
+  it('el Emisor de área ve su área en el encabezado y lo que emite en Inicio', async () => {
     backend(
       { ...AREA, areaNombre: 'Área de Capacitación' },
       {
@@ -247,7 +247,7 @@ describe('App (HU03)', () => {
     render(<App />)
     const encabezado = await screen.findByRole('banner')
     expect(
-      within(encabezado).getByText('Área encargada – Área de Capacitación'),
+      within(encabezado).getByText('Emisor de área – Área de Capacitación'),
     ).toBeInTheDocument()
     expect(
       await screen.findByRole('heading', { name: 'Documentos que emite Área de Capacitación' }),

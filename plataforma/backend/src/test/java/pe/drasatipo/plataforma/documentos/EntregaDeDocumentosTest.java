@@ -110,7 +110,7 @@ class EntregaDeDocumentosTest {
     Map<String, Object> antes =
         jdbc.queryForMap(
             "SELECT transaccion, hash_pdf, cid, estado FROM documento WHERE codigo = ?", codigo);
-    String quien = nombre(mesaDePartes) + " (Consulta interna)";
+    String quien = nombre(mesaDePartes) + " (Mesa de Partes)";
 
     entregar(mesaDePartes, codigo, "IMPRESION")
         .andExpect(status().isOk())
@@ -141,7 +141,7 @@ class EntregaDeDocumentosTest {
     mvc.perform(
             get("/api/consulta/documentos/%s/auditoria".formatted(codigo)).session(mesaDePartes))
         .andExpect(jsonPath("$.eventos[-1].evento").value("DESCARGADO"))
-        .andExpect(jsonPath("$.eventos[-1].rol").value("Consulta interna"));
+        .andExpect(jsonPath("$.eventos[-1].rol").value("Mesa de Partes"));
   }
 
   @Test

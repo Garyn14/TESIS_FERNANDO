@@ -52,7 +52,7 @@ Cuentas que se usan (las mismas de los Sprints 2 a 4):
 | Cuenta | Nombre completo | Rol y área | Contraseña temporal | Contraseña propia |
 |---|---|---|---|---|
 | admin | (ya creada) | Administrador | La que entrega el equipo | AdminPropia26 |
-| pmorales | Pedro Morales Ccanto | Área encargada – Área de Administración | Demo2026 | Propia2026 |
+| pmorales | Pedro Morales Ccanto | Emisor de área – Área de Administración | Demo2026 | Propia2026 |
 | cmendoza | Ing. Carlos Mendoza Rivera | Director | Demo2026 | Propia2026 |
 
 ---

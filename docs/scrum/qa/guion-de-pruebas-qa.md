@@ -94,11 +94,11 @@ La red no cobra: el saldo de las billeteras es 0 DRA y el costo de cada operaci�
 | Cuenta | Nombre completo | Rol y área | Contraseña temporal | Contraseña propia |
 |---|---|---|---|---|
 | admin | (ya creada) | Administrador | La de Parameter Store | AdminPropia26 |
-| rquispe | Rosa Quispe Huamán | Área encargada – Área de Capacitación | Demo2026 | Propia2026 |
-| pmorales | Pedro Morales Ccanto | Área encargada – Área de Administración | Demo2026 | Propia2026 |
+| rquispe | Rosa Quispe Huamán | Emisor de área – Área de Capacitación | Demo2026 | Propia2026 |
+| pmorales | Pedro Morales Ccanto | Emisor de área – Área de Administración | Demo2026 | Propia2026 |
 | cmendoza | Ing. Carlos Mendoza Rivera | Director | Demo2026 | Propia2026 |
-| lflores | Luz Flores Ticona | Consulta interna (Mesa de Partes) | Demo2026 | Propia2026 |
-| ltorres | Luis Torres Paredes | Consulta interna | Demo2026 | Propia2026 |
+| lflores | Luz Flores Ticona | Mesa de Partes | Demo2026 | Propia2026 |
+| ltorres | Luis Torres Paredes | Mesa de Partes | Demo2026 | Propia2026 |
 
 Son contraseñas de prueba de QA, las mismas de los guiones del PO.
 
@@ -113,9 +113,9 @@ Historias: HU01, HU05, HU03, HU04, HU02 y HU06 (Sprint 1).
 | 1.1 | Abra la plataforma de QA. Ingrese con `admin` y la contraseña de Parameter Store. | Aparece "Cambie su contraseña". Es obligatorio cambiarla. | ☐ OK ☐ NO OK ☐ Obs. |
 | 1.2 | Escriba la temporal, luego `AdminPropia26` dos veces, y pulse "Cambiar contraseña". | Entra. El menú muestra Inicio, Usuarios y Billetera del director. | ☐ OK ☐ NO OK ☐ Obs. |
 | 1.3 | En **Usuarios**, pulse "Nueva cuenta". Escriba `ab` como usuario, deje vacío el nombre y pulse "Crear cuenta". | No se crea. Se indica que el usuario debe tener de 4 a 30 caracteres y que el nombre completo es obligatorio. | ☐ OK ☐ NO OK ☐ Obs. |
-| 1.4 | Elija el rol **Área encargada** sin elegir área y pulse "Crear cuenta". | No se guarda: "Seleccione el área de la persona". | ☐ OK ☐ NO OK ☐ Obs. |
+| 1.4 | Elija el rol **Emisor de área** sin elegir área y pulse "Crear cuenta". | No se guarda: "Seleccione el área de la persona". | ☐ OK ☐ NO OK ☐ Obs. |
 | 1.5 | Elija el área **Área de Capacitación**. | Debajo se muestra "Certificado de Capacitación, Certificado de Reconocimiento". | ☐ OK ☐ NO OK ☐ Obs. |
-| 1.6 | Cree las **seis cuentas** de la tabla de arriba (salvo `admin`), cada una con su nombre, rol, área y la temporal `Demo2026`. | Cada una muestra "Se creó la cuenta …" y aparece **Activa** en la lista. Las del Área encargada muestran su área junto al rol. | ☐ OK ☐ NO OK ☐ Obs. |
+| 1.6 | Cree las **seis cuentas** de la tabla de arriba (salvo `admin`), cada una con su nombre, rol, área y la temporal `Demo2026`. | Cada una muestra "Se creó la cuenta …" y aparece **Activa** en la lista. Las del Emisor de área muestran su área junto al rol. | ☐ OK ☐ NO OK ☐ Obs. |
 | 1.7 | Intente crear otra cuenta con el usuario `RQuispe` (con mayúsculas). | No se crea: "El nombre de usuario ya está registrado". | ☐ OK ☐ NO OK ☐ Obs. |
 | 1.8 | En la ventana de incógnito, ingrese con `ltorres` / `Demo2026` y cambie la temporal por `Propia2026`. | El menú muestra solo Inicio y Buscar documentos. | ☐ OK ☐ NO OK ☐ Obs. |
 | 1.9 | Con la sesión de Luis, escriba la dirección de la plataforma seguida de `#/usuarios`. | "No tiene permiso para ver esta sección". | ☐ OK ☐ NO OK ☐ Obs. |
@@ -245,7 +245,7 @@ Historias: HU22, HU23, HU24, HU25 y HU28 (Sprint 6).
 | 7.6 | Abra la ficha de **Lucía**. | Código, "Firmado", "Firmado y registrado en la blockchain. Se puede entregar al ciudadano.", las fechas y los datos. | ☐ OK ☐ NO OK ☐ Obs. |
 | 7.7 | Baje al **Historial** y pulse "▸ Detalle técnico de auditoría". | Historial con cada evento, su fecha y su responsable: registrado, observado, corregido, revisado, PDF guardado en IPFS y firmado. El detalle técnico estaba plegado y muestra el SHA-256, el **CID de IPFS**, la **transacción y el bloque** en la blockchain de QA, la billetera firmante y el contrato, cada uno con "Copiar". | ☐ OK ☐ NO OK ☐ Obs. |
 | 7.8 | Pulse **Ver documento**. | Se abre el certificado firmado en otra pestaña, con su QR. **Déjelo abierto para la sección 8.** | ☐ OK ☐ NO OK ☐ Obs. |
-| 7.9 | Pulse **Descargar PDF**. Luego **Imprimir** y cancele el diálogo. | Se guarda `DRA-2026-….pdf`. El historial suma "PDF descargado por Luz Flores Ticona (Consulta interna)" e "Impreso", y el botón cambia a **Imprimir duplicado**. | ☐ OK ☐ NO OK ☐ Obs. |
+| 7.9 | Pulse **Descargar PDF**. Luego **Imprimir** y cancele el diálogo. | Se guarda `DRA-2026-….pdf`. El historial suma "PDF descargado por Luz Flores Ticona (Mesa de Partes)" e "Impreso", y el botón cambia a **Imprimir duplicado**. | ☐ OK ☐ NO OK ☐ Obs. |
 | 7.10 | Abra la ficha de **Martha**. | "El Director rechazó el documento. Es definitivo…", con el motivo. Sin botones de entrega. | ☐ OK ☐ NO OK ☐ Obs. |
 | 7.11 | Abra también, en otras pestañas, el documento del **original de Kevin** (anulado) y el de **Nilo** (anulado), con "Ver documento" desde su ficha. | Se abren sus PDF, para escanearlos en la sección 8. | ☐ OK ☐ NO OK ☐ Obs. |
 

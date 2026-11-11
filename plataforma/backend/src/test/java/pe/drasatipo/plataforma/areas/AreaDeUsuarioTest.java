@@ -131,7 +131,7 @@ class AreaDeUsuarioTest {
             .andExpect(jsonPath("$.area").value("CAPACITACION"))
             .andExpect(jsonPath("$.areaNombre").value("Área de Capacitación"));
     assertThat(ultimoEvento(idCreado(resultado)))
-        .isEqualTo("Rol: Área encargada; Área: Área de Capacitación");
+        .isEqualTo("Rol: Emisor de área; Área: Área de Capacitación");
   }
 
   @Test

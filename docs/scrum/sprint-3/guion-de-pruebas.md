@@ -51,8 +51,8 @@ Cuentas que se usan (las mismas del Sprint 2):
 | Cuenta | Nombre completo | Rol y área | Contraseña temporal | Contraseña propia |
 |---|---|---|---|---|
 | admin | (ya creada) | Administrador | La que entrega el equipo | AdminPropia26 |
-| rquispe | Rosa Quispe Huamán | Área encargada – Área de Capacitación | Demo2026 | Propia2026 |
-| pmorales | Pedro Morales Ccanto | Área encargada – Área de Administración | Demo2026 | Propia2026 |
+| rquispe | Rosa Quispe Huamán | Emisor de área – Área de Capacitación | Demo2026 | Propia2026 |
+| pmorales | Pedro Morales Ccanto | Emisor de área – Área de Administración | Demo2026 | Propia2026 |
 | cmendoza | Ing. Carlos Mendoza Rivera | Director | Demo2026 | Propia2026 |
 
 ---

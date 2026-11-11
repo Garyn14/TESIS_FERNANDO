@@ -14,16 +14,16 @@ Al final están las **preguntas que el negocio todavía debe responder** y las *
 4. [Los flujos, paso a paso](#4-los-flujos-paso-a-paso)
    - [F1. Preparar la plataforma (Administrador)](#f1-preparar-la-plataforma-administrador)
    - [F2. Ingresar a la plataforma (todos)](#f2-ingresar-a-la-plataforma-todos)
-   - [F3. Registrar un documento a solicitud de parte (Área encargada)](#f3-registrar-un-documento-a-solicitud-de-parte-área-encargada)
-   - [F4. Emitir certificados por lista (Área encargada)](#f4-emitir-certificados-por-lista-área-encargada)
+   - [F3. Registrar un documento a solicitud de parte (Emisor de área)](#f3-registrar-un-documento-a-solicitud-de-parte-emisor-de-área)
+   - [F4. Emitir certificados por lista (Emisor de área)](#f4-emitir-certificados-por-lista-emisor-de-área)
    - [F5. Revisar, observar, rechazar y firmar (Director)](#f5-revisar-observar-rechazar-y-firmar-director)
-   - [F6. Corregir un documento observado (Área encargada)](#f6-corregir-un-documento-observado-área-encargada)
+   - [F6. Corregir un documento observado (Emisor de área)](#f6-corregir-un-documento-observado-emisor-de-área)
    - [F7. Qué pasa por dentro al firmar](#f7-qué-pasa-por-dentro-al-firmar)
    - [F8. Verificar un documento (cualquier persona)](#f8-verificar-un-documento-cualquier-persona)
    - [F9. Atender al ciudadano (Mesa de Partes)](#f9-atender-al-ciudadano-mesa-de-partes)
    - [F10. Avisos dentro de la plataforma](#f10-avisos-dentro-de-la-plataforma)
    - [F11. Anular un documento firmado (Director)](#f11-anular-un-documento-firmado-director)
-   - [F12. Reemitir un documento con datos corregidos (Área encargada y Director)](#f12-reemitir-un-documento-con-datos-corregidos-área-encargada-y-director)
+   - [F12. Reemitir un documento con datos corregidos (Emisor de área y Director)](#f12-reemitir-un-documento-con-datos-corregidos-emisor-de-área-y-director)
 5. [Reglas de control interno y seguridad](#5-reglas-de-control-interno-y-seguridad)
 6. [Lo que la plataforma no hace (todavía)](#6-lo-que-la-plataforma-no-hace-todavía)
 7. [Preguntas pendientes para el negocio](#7-preguntas-pendientes-para-el-negocio)
@@ -67,10 +67,12 @@ Al final están las **preguntas que el negocio todavía debe responder** y las *
 | Rol | Quién es en la agencia | Qué puede hacer | Menú que ve |
 |---|---|---|---|
 | **Administrador** | Responsable de sistemas | Crea, edita, desactiva y reactiva cuentas; restablece contraseñas; registra la billetera del Director y le otorga o revoca el permiso de firmar | Inicio, Usuarios, Billetera del director |
-| **Área encargada** | Personal de cada área (Capacitación, Desarrollo Agrario, Administración) | Registra documentos de **su área**, emite por lista, corrige los observados y reemite los firmados con error | Inicio, Mis documentos, Nuevo documento |
+| **Emisor de área** | Personal de cada área (Capacitación, Desarrollo Agrario, Administración) | Registra documentos de **su área**, emite por lista, corrige los observados y reemite los firmados con error | Inicio, Mis documentos, Nuevo documento |
 | **Director** | El director de la agencia | Revisa, observa, rechaza, firma y anula documentos | Inicio, Por revisar, Documentos firmados |
-| **Consulta interna** | Mesa de Partes | Busca cualquier documento, informa su estado al ciudadano, ve su historial e imprime o descarga los firmados (incluidos duplicados) | Inicio, Buscar documentos |
+| **Mesa de Partes** | Personal de Mesa de Partes | Busca cualquier documento, informa su estado al ciudadano, ve su historial e imprime o descarga los firmados (incluidos duplicados) | Inicio, Buscar documentos |
 | **Público** | Cualquier tercero | Verifica la autenticidad de un documento | Portal público, sin menú |
+
+> Desde el Sprint 7 (DRA-59), dos roles cambiaron de nombre en la plataforma: **Emisor de área** se llamaba "Área encargada" y **Mesa de Partes** se llamaba "Consulta interna". En la tesis conservan los nombres originales.
 
 Todos los roles internos tienen la **campana de avisos** en el encabezado y la opción **Cambiar contraseña**.
 
@@ -114,7 +116,7 @@ stateDiagram-v2
 | Paso | Qué hace | Qué controla la plataforma |
 |---|---|---|
 | 1 | Entra con la cuenta `admin`, que se crea al instalar la plataforma, y cambia su contraseña temporal. | Nadie usa la plataforma con una contraseña que otro conoce. |
-| 2 | En **Usuarios**, crea cada cuenta: nombre de usuario, nombre completo, rol, contraseña temporal y, si es del Área encargada, **su área**. | El usuario no se repite; cada cuenta tiene un solo rol; el área es obligatoria para el Área encargada. |
+| 2 | En **Usuarios**, crea cada cuenta: nombre de usuario, nombre completo, rol, contraseña temporal y, si es del Emisor de área, **su área**. | El usuario no se repite; cada cuenta tiene un solo rol; el área es obligatoria para el Emisor de área. |
 | 3 | Entrega a cada persona su usuario y su contraseña temporal. | Al primer ingreso, la persona debe cambiarla. |
 | 4 | En **Billetera del director**, registra la dirección de la billetera digital del Director. | Valida el formato y que no esté asignada a otra cuenta. |
 | 5 | Conecta **su propia** billetera (la de administrador del contrato) y pulsa **Otorgar rol de firmante**. Confirma en la billetera. | La fila del Director pasa a "✓ Firmante activo". Ese estado se lee de la blockchain, no de la base de datos. |
@@ -139,7 +141,7 @@ Protecciones: el Administrador no puede desactivarse ni quitarse el rol a sí mi
 | Cuenta desactivada | Se indica que está desactivada y que se comunique con el Administrador. |
 | Intenta abrir una pantalla de otro rol | "No tiene permiso para ver esta sección". |
 
-### F3. Registrar un documento a solicitud de parte (Área encargada)
+### F3. Registrar un documento a solicitud de parte (Emisor de área)
 
 **Ejemplo:** Pedro, del Área de Administración, emite el Certificado de Trabajo que Lucía pidió en Mesa de Partes.
 
@@ -152,7 +154,7 @@ Protecciones: el Administrador no puede desactivarse ni quitarse el rol a sí mi
 
 Lo sigue en **Mis documentos**, que muestra solo los documentos de su área.
 
-### F4. Emitir certificados por lista (Área encargada)
+### F4. Emitir certificados por lista (Emisor de área)
 
 **Ejemplo:** Rosa, del Área de Capacitación, emite los certificados de los 40 participantes del taller de café.
 
@@ -192,7 +194,7 @@ Lo sigue en **Mis documentos**, que muestra solo los documentos de su área.
 
 En **Documentos firmados**, el Director ve lo que ya firmó y desde ahí puede anular.
 
-### F6. Corregir un documento observado (Área encargada)
+### F6. Corregir un documento observado (Emisor de área)
 
 | Paso | Qué hace | Qué controla la plataforma |
 |---|---|---|
@@ -263,7 +265,7 @@ Una **campana** en el encabezado muestra la cantidad de avisos sin leer. Al puls
 | Quién recibe | Cuándo | Ejemplo |
 |---|---|---|
 | **Director** | Llega un documento, un lote, un corregido o una reemisión para revisar | "Nuevo lote pendiente: Lote 2026-001 – Manejo integrado de plagas en café (3 certificados)" |
-| **Área encargada** (toda el área) | Un documento suyo se firma, se observa, se rechaza o se anula | "Observado: Certificado de Trabajo – Lucía Paredes Quinto. Motivo: …" |
+| **Emisor de área** (toda el área) | Un documento suyo se firma, se observa, se rechaza o se anula | "Observado: Certificado de Trabajo – Lucía Paredes Quinto. Motivo: …" |
 | **Mesa de Partes** | Un documento está listo para entregar o fue rechazado | "Listo para entregar: Certificado de Trabajo – Lucía Paredes Quinto (expediente EXP-2026-005391)" |
 
 **Reglas de los avisos:**
@@ -286,14 +288,14 @@ Una **campana** en el encabezado muestra la cantidad de avisos sin leer. Al puls
 
 El motivo de la anulación queda en el historial interno, **no en la blockchain**, porque puede contener datos personales.
 
-### F12. Reemitir un documento con datos corregidos (Área encargada y Director)
+### F12. Reemitir un documento con datos corregidos (Emisor de área y Director)
 
 **Cuándo:** un documento firmado tiene un error, por ejemplo un apellido mal escrito o una fecha equivocada, y hay que corregirlo **sin que el ciudadano vuelva a Mesa de Partes**.
 
 | Paso | Quién | Qué ocurre |
 |---|---|---|
-| 1 | Área encargada | En el detalle del documento firmado pulsa **Reemitir con corrección**. El formulario viene precargado, con el aviso "Cuando el Director firme el nuevo documento, el original se anulará automáticamente". |
-| 2 | Área encargada | Corrige al menos un dato y escribe el **motivo de la reemisión**. |
+| 1 | Emisor de área | En el detalle del documento firmado pulsa **Reemitir con corrección**. El formulario viene precargado, con el aviso "Cuando el Director firme el nuevo documento, el original se anulará automáticamente". |
+| 2 | Emisor de área | Corrige al menos un dato y escribe el **motivo de la reemisión**. |
 | 3 | — | Se crea un **documento nuevo**, con **otro código** y el **mismo número de expediente**. El original sigue Firmado y muestra "Reemisión en revisión". |
 | 4 | Director | En Por revisar ve la etiqueta **"Reemisión"**, el código que reemplaza, **la lista de cambios** y el motivo. Puede firmarla, observarla o rechazarla. |
 | 5 | Director | Al firmarla, **en una sola operación** se registra el nuevo documento y se anula el original, que queda con el aviso "Reemplazado por [código nuevo]". |
@@ -308,7 +310,7 @@ En el portal, el original aparece **Anulado** con el aviso de que existe una ver
 
 | Regla | Cómo se cumple |
 |---|---|
-| **Cada área ve solo lo suyo** | El Área encargada solo ve y registra documentos de su área, aunque intente entrar por otra vía. |
+| **Cada área ve solo lo suyo** | El Emisor de área solo ve y registra documentos de su área, aunque intente entrar por otra vía. |
 | **Quien administra los permisos no firma** | La billetera del Administrador del contrato no puede ser firmante. |
 | **No se firma sin revisar** | El Director tiene que abrir el documento antes de poder firmarlo. Un corregido exige abrirlo de nuevo. |
 | **Lo enviado no se modifica** | Solo se corrige con una observación (antes de firmar) o con una reemisión (después). |
@@ -445,7 +447,7 @@ Se desactivan: pierden el acceso al instante, pero su historial se conserva, por
 | 20 min | **Preguntas pendientes**: cerrar al menos las de prioridad alta | [Sección 7](#7-preguntas-pendientes-para-el-negocio) |
 | 8 min | **Próximos pasos** | Abajo |
 
-**Consejo para la demostración:** usar dos pantallas o dos navegadores (el Área encargada en uno y el Director en otro) y **un celular** para escanear el QR. El momento de mayor impacto es el escaneo: que alguien del negocio lo haga con su propio celular.
+**Consejo para la demostración:** usar dos pantallas o dos navegadores (el Emisor de área en uno y el Director en otro) y **un celular** para escanear el QR. El momento de mayor impacto es el escaneo: que alguien del negocio lo haga con su propio celular.
 
 **Ambiente de QA:**
 

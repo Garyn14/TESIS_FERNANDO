@@ -88,7 +88,7 @@ class AuditoriaDelDocumentoTest {
     assertThat(eventos).allSatisfy(e -> assertThat(e.get("realizadoEn")).isNotNull());
     assertThat(eventos.getFirst())
         .containsEntry("responsable", nombre(area))
-        .containsEntry("rol", "Área encargada");
+        .containsEntry("rol", "Emisor de área");
     assertThat(eventos.getFirst().get("detalle").toString())
         .startsWith("Registrado y enviado a revisión por " + nombre(area));
     assertThat(eventos.getLast())

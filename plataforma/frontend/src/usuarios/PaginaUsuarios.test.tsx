@@ -6,8 +6,8 @@ import PaginaUsuarios from './PaginaUsuarios'
 const roles = [
   { codigo: 'ADMINISTRADOR', nombre: 'Administrador', descripcion: 'Gestiona cuentas' },
   { codigo: 'DIRECTOR', nombre: 'Director', descripcion: 'Firma documentos' },
-  { codigo: 'CONSULTA_INTERNA', nombre: 'Consulta interna', descripcion: 'Mesa de Partes' },
-  { codigo: 'AREA_ENCARGADA', nombre: 'Área encargada', descripcion: 'Registra documentos' },
+  { codigo: 'CONSULTA_INTERNA', nombre: 'Mesa de Partes', descripcion: 'Mesa de Partes' },
+  { codigo: 'AREA_ENCARGADA', nombre: 'Emisor de área', descripcion: 'Registra documentos' },
 ]
 
 const areas = [
@@ -69,7 +69,7 @@ describe('PaginaUsuarios (HU02)', () => {
           ...lrojas,
           nombreCompleto: 'Luis Rojas Paredes',
           rol: 'CONSULTA_INTERNA',
-          rolNombre: 'Consulta interna',
+          rolNombre: 'Mesa de Partes',
         }),
     })
     render(<PaginaUsuarios />)
@@ -89,7 +89,7 @@ describe('PaginaUsuarios (HU02)', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(
       'Se guardaron los cambios de "lrojas".',
     )
-    expect(within(await fila('lrojas')).getByText('Consulta interna')).toBeInTheDocument()
+    expect(within(await fila('lrojas')).getByText('Mesa de Partes')).toBeInTheDocument()
     const put = fetch.mock.calls.find(([, o]) => o?.method === 'PUT')
     expect(JSON.parse(put?.[1]?.body as string)).toEqual({
       nombreCompleto: 'Luis Rojas Paredes',
@@ -197,7 +197,7 @@ describe('PaginaUsuarios (HU02)', () => {
     render(<PaginaUsuarios />)
     expect(await screen.findByText(/Bloqueada hasta 12:34/)).toBeInTheDocument()
   })
-  it('el Área encargada exige elegir un área y muestra lo que emite', async () => {
+  it('el Emisor de área exige elegir un área y muestra lo que emite', async () => {
     const fetch = backend({
       'POST /api/usuarios': () =>
         respuesta(201, {
@@ -205,7 +205,7 @@ describe('PaginaUsuarios (HU02)', () => {
           id: 9,
           nombreUsuario: 'rquispe',
           rol: 'AREA_ENCARGADA',
-          rolNombre: 'Área encargada',
+          rolNombre: 'Emisor de área',
           area: 'CAPACITACION',
           areaNombre: 'Área de Capacitación',
         }),
@@ -242,10 +242,10 @@ describe('PaginaUsuarios (HU02)', () => {
     expect(JSON.parse(envio?.[1]?.body as string).area).toBe('CAPACITACION')
   })
 
-  it('marca las cuentas del Área encargada que no tienen área', async () => {
+  it('marca las cuentas del Emisor de área que no tienen área', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation((ruta) =>
       ruta === '/api/usuarios'
-        ? respuesta(200, [{ ...lrojas, rol: 'AREA_ENCARGADA', rolNombre: 'Área encargada' }])
+        ? respuesta(200, [{ ...lrojas, rol: 'AREA_ENCARGADA', rolNombre: 'Emisor de área' }])
         : respuesta(200, ruta === '/api/areas' ? areas : roles),
     )
     render(<PaginaUsuarios />)

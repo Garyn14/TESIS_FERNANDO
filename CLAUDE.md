@@ -116,5 +116,6 @@ Subtareas, todas cerradas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (pr
 
 - Cada cambio de estado de un documento es una sola sentencia `UPDATE … WHERE estado = X`.
 - El servidor solo marca algo como firmado o anulado después de leer la transacción en la blockchain. La blockchain manda (RNF10).
+- **Nombres de los roles (DRA-59):** en pantalla, "Emisor de área" (código `AREA_ENCARGADA`, "Área encargada" en la tesis) y "Mesa de Partes" (código `CONSULTA_INTERNA`, "Consulta interna" en la tesis). Las historias HU01–HU30 conservan los nombres de la tesis.
 - JPQL con las constantes de enum calificadas (`DocumentoRepository.PENDIENTE`, …).
 - Pruebas del backend con Testcontainers: Postgres 17 y un Kubo real (`IpfsDePrueba`). El contrato se simula con `ContratoFalso`; las ayudas están en `DocumentosDePrueba`.

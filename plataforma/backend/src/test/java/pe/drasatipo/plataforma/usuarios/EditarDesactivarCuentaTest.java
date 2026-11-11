@@ -135,7 +135,7 @@ class EditarDesactivarCuentaTest {
             org.assertj.core.groups.Tuple.tuple("CREADA", "Rol: Director", "admin.prueba"),
             org.assertj.core.groups.Tuple.tuple(
                 "EDITADA",
-                "Nombre completo: Luis Rojas → Luis Rojas Paredes; Rol: Director → Consulta interna",
+                "Nombre completo: Luis Rojas → Luis Rojas Paredes; Rol: Director → Mesa de Partes",
                 "admin.prueba"));
   }
 

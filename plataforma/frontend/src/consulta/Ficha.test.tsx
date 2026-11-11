@@ -163,7 +163,7 @@ describe('Ficha del documento (HU23)', () => {
                 evento: 'REGISTRADO',
                 realizadoEn: '2026-11-04T15:05:00Z',
                 responsable: 'Pedro Morales Ccanto',
-                rol: 'Área encargada',
+                rol: 'Emisor de área',
                 detalle: null,
               },
             ],

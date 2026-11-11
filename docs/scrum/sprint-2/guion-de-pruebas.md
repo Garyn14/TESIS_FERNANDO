@@ -34,9 +34,9 @@ Contraseñas que se usan en el guion (puede usar otras, siempre que tengan de 8 
 | Cuenta | Nombre completo | Rol y área | Contraseña temporal | Contraseña propia |
 |---|---|---|---|---|
 | admin | (ya creada) | Administrador | La que entrega el equipo | AdminPropia26 |
-| rquispe | Rosa Quispe Huamán | Área encargada – Área de Capacitación | Demo2026 | Propia2026 |
-| pmorales | Pedro Morales Ccanto | Área encargada – Área de Administración | Demo2026 | Propia2026 |
-| msalazar | Marco Salazar Vela | Área encargada – Área de Desarrollo Agrario | Demo2026 | Propia2026 |
+| rquispe | Rosa Quispe Huamán | Emisor de área – Área de Capacitación | Demo2026 | Propia2026 |
+| pmorales | Pedro Morales Ccanto | Emisor de área – Área de Administración | Demo2026 | Propia2026 |
+| msalazar | Marco Salazar Vela | Emisor de área – Área de Desarrollo Agrario | Demo2026 | Propia2026 |
 | cmendoza | Ing. Carlos Mendoza Rivera | Director | Demo2026 | Propia2026 |
 
 ---
@@ -56,7 +56,7 @@ El Director `cmendoza` no hace nada en este Sprint. Su nombre completo, "Ing. Ca
 
 ## 1. HU07: Seleccionar el tipo de documento (DRA-18)
 
-**Objetivo:** comprobar que el Área encargada ve solo los tipos de documento de su área, cada uno con su origen. Los de oficio abren el registro por lista y los de solicitud de parte, el registro individual.
+**Objetivo:** comprobar que el Emisor de área ve solo los tipos de documento de su área, cada uno con su origen. Los de oficio abren el registro por lista y los de solicitud de parte, el registro individual.
 
 | Paso | Qué hacer | Qué se espera |
 |---|---|---|
