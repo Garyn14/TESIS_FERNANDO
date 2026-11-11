@@ -51,18 +51,24 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 | 3 (HU10–12, HU16–18), 4 (HU13–15, HU29–30) y 5 (HU19–21) | Cerrados **sin la validación del PO**, por decisión del equipo: el 3 y el 4 el 05/11 (74 puntos), el 5 el 07/11 (16 puntos) |
 | 6 (HU22–28) | Cerrado el 08/11 **sin la validación del PO** (19 puntos). Con él están cerradas las 30 historias del backlog: **156 de 156 puntos** |
 
-**Lo siguiente:** no quedan historias por construir. Quedan en el backlog de Jira: la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 6 (`docs/scrum/sprint-N/guion-de-pruebas.md`), y **DRA-44 (AWS)**, ahora **en curso**: el ambiente de **QA**, ver la sección siguiente. Cada observación del PO se registra como un ticket nuevo y se construye con el flujo de siempre. También falta actualizar la Tabla 26 de la tesis con el calendario de `jira.md`.
+**Lo siguiente:** no quedan historias del backlog original por construir. **QA en AWS (DRA-44) se cerró el 11/11/2026.** Quedan en Jira:
+- la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 6 (`docs/scrum/sprint-N/guion-de-pruebas.md`), que se hará en la reunión con el negocio (material en `docs/negocio/flujos-del-sistema.md` y `presentacion/video-presentacion.mp4`);
+- **propuestas del equipo, sin construir hasta que el negocio las confirme:** DRA-58 (rol "Mesa de Partes de área"), DRA-59 (renombrar los roles), DRA-60 (configurar áreas y tipos de documento), DRA-61 (gestionar áreas), DRA-62 (vigencia opcional de los documentos; decidida la opción A: la fecha va en el PDF) y DRA-63 (spike: seguridad de la billetera del Director);
+- **DRA-65 (PROD en AWS)**, a la espera del dominio y el alcance.
+
+Cada observación del PO se registra como un ticket nuevo y se construye con el flujo de siempre. También falta actualizar la Tabla 26 de la tesis con el calendario de `jira.md`.
 
 **Validación del PO:** se hace **al final del proyecto** (DRA-48, en el backlog), con los guiones de los Sprints 3 a 6. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
 
 **Pendientes conocidos:**
-- PROD en AWS: alcance y dominio por definir (saldrá de la misma plantilla de QA);
+- PROD en AWS (DRA-65): alcance y dominio por definir (saldrá de la misma plantilla de QA);
+- la clave temporal de AWS `claude-sesion` (permisos de administrador, usada para preparar QA) sigue activa: eliminarla cuando ya no se necesite. Sin ticket, por decisión del equipo;
 - **Dependabot** (DRA-49) propone actualizaciones cada lunes: se revisan con la CI y, si tocan el PDF, el QR o el portal, con las pruebas de punta a punta. Su `package-lock.json` a veces viene desincronizado: se regenera con `npm install`. Pospuestas hasta después de la validación del PO (DRA-50): **OpenPDF 3** (cambia el nombre de los paquetes, `com.lowagie` → hay que migrar `GeneradorDePdf`), **Apache POI 6** y **TypeScript 7** en los contratos;
 - preguntas abiertas al PO, listadas en cada `revision.md`.
 
-## Ambiente QA en AWS (DRA-44, en curso desde el 08/11/2026)
+## Ambiente QA en AWS (DRA-44, cerrado el 11/11/2026)
 
-Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuenta), DRA-54 (CloudFront y HTTPS), DRA-55 (región us-east-2) y DRA-56 (acceso con usuario de IAM).
+Subtareas, todas cerradas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuenta), DRA-54 (CloudFront y HTTPS), DRA-55 (región us-east-2), DRA-56 (acceso con usuario de IAM), DRA-57 (guion de QA) y DRA-64 (apagado fuera de horario).
 
 - **Diseño:** escenario A de `docs/arquitectura/estimacion-costos-aws.md`, en **us-east-2 (Ohio)**.
   - La cuenta es de la **experiencia nueva de AWS** (AWS Builder ID, sin usuario raíz), **en el plan de pago** desde el 08/11/2026: el plan gratuito no permite el t4g.medium (DRA-56). La región la fija AWS por el país: no se puede elegir otra sin activar las funciones avanzadas (DRA-55).
@@ -84,7 +90,7 @@ Subtareas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (presupuesto y cuen
 - **Acceso (DRA-56):** la política de AWS de esta cuenta prohíbe el proveedor OIDC (`iam:*Provider*`). GitHub entra con el usuario de IAM `dra-satipo-github-qa`, cuya clave está **solo** en los secretos del ambiente `qa` de GitHub (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) y se cambia cada 90 días (guía, sección 8). **Nunca va en el repositorio.**
 - **Cuenta:** se prepara una sola vez con `plataforma/infra/aws/cuenta/cuenta.yml` (CloudFormation): usuario de IAM para GitHub, bucket del estado y presupuesto. Guía para el dueño de la cuenta: `docs/arquitectura/despliegue-aws.md`. GitHub necesita el ambiente `qa`, sin revisores obligatorios y limitado a `main`, con los secretos de la clave y la variable `TF_ESTADO_BUCKET`.
 - **Costo:** AWS Budgets avisa a $10, $25 y $50 (créditos sin descontar). Estimado: unos $11–14 al mes con QA encendido 10 h × 22 días y unos $2–3 al mes apagado. Hay $100 de crédito, que vence el próximo año.
-- **PROD:** alcance por definir. Sale de la misma plantilla, con el dominio de la DRA y un certificado de ACM en las mismas distribuciones.
+- **PROD (DRA-65):** alcance por definir. Sale de la misma plantilla, con el dominio de la DRA y un certificado de ACM en las mismas distribuciones.
 
 ## Entorno de pruebas (lo que hay que saber)
 
