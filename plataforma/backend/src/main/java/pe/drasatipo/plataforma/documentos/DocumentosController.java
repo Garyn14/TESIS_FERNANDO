@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import pe.drasatipo.plataforma.areas.TipoDocumentoRespuesta;
 
 /**
  * Documentos del Área encargada (HU08). No hay rutas para modificar ni eliminar un documento
@@ -45,6 +46,16 @@ public class DocumentosController {
   @PreAuthorize("hasAuthority('DOCUMENTO_VER_AREA')")
   public List<DocumentoResumen> delArea(Authentication sesion) {
     return registro.delArea(sesion.getName());
+  }
+
+  /** DRA-60: vista previa de la corrección, con el tipo del propio documento. */
+  @PostMapping("/{codigo}/correccion/vista-previa")
+  @PreAuthorize("hasAuthority('DOCUMENTO_CORREGIR')")
+  public VistaPreviaRespuesta vistaPreviaCorreccion(
+      @PathVariable String codigo,
+      @RequestBody SolicitudDocumento solicitud,
+      Authentication sesion) {
+    return registro.vistaPreviaCorreccion(sesion.getName(), codigo, solicitud);
   }
 
   /** HU15: corrige un documento observado y lo reenvía a revisión. */
@@ -83,5 +94,12 @@ public class DocumentosController {
   @PreAuthorize("hasAuthority('DOCUMENTO_VER_AREA')")
   public DocumentoRespuesta detalle(@PathVariable String codigo, Authentication sesion) {
     return registro.detalle(sesion.getName(), codigo);
+  }
+
+  /** DRA-60: el formulario del tipo del documento, para corregirlo o reemitirlo. */
+  @GetMapping("/{codigo}/formulario")
+  @PreAuthorize("hasAuthority('DOCUMENTO_VER_AREA')")
+  public TipoDocumentoRespuesta formulario(@PathVariable String codigo, Authentication sesion) {
+    return registro.formulario(sesion.getName(), codigo);
   }
 }

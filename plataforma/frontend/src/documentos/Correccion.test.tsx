@@ -75,8 +75,9 @@ describe('Corregir y reenviar un observado (HU15)', () => {
   it('el formulario viene precargado, muestra el motivo y reenvía con el mismo código', async () => {
     const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation((ruta, init) => {
       const r = String(ruta)
-      if (r.startsWith('/api/tipos-documento/')) return respuesta(200, TRABAJO)
-      if (r === '/api/documentos/vista-previa')
+      // DRA-60: el formulario sale del tipo del propio documento, no de los tipos del área.
+      if (r.endsWith('/formulario')) return respuesta(200, TRABAJO)
+      if (r.endsWith('/correccion/vista-previa'))
         return respuesta(200, { ...OBSERVADO, ...JSON.parse(String(init?.body)) })
       if (r.endsWith('/correccion'))
         return respuesta(200, { ...OBSERVADO, estado: 'PENDIENTE', motivo: null, corregido: true })

@@ -8,6 +8,7 @@ import { cerrarSesion, obtenerSesion, type Sesion } from './sesion/api'
 import PaginaCambioObligatorio from './sesion/PaginaCambioObligatorio'
 import PaginaLogin from './sesion/PaginaLogin'
 import PaginaBilletera from './billeteras/PaginaBilletera'
+import PaginaAreas from './catalogo/PaginaAreas'
 import PaginaDetalleDocumento from './documentos/PaginaDetalleDocumento'
 import PaginaCorreccion from './documentos/PaginaCorreccion'
 import PaginaReemision from './documentos/PaginaReemision'
@@ -123,6 +124,7 @@ export default function App() {
   else if (opcion.pendiente) contenido = <PaginaPendiente mensaje={opcion.pendiente} />
   else if (opcion.ruta === 'usuarios') contenido = <PaginaUsuarios />
   else if (opcion.ruta === 'billetera') contenido = <PaginaBilletera />
+  else if (opcion.ruta === 'areas') contenido = <PaginaAreas />
   // HU10: abrir un elemento registra la revisión; la bandeja se vuelve a cargar en cada visita.
   else if (opcion.ruta === 'por-revisar')
     contenido =

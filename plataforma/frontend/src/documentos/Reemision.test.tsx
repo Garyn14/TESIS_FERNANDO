@@ -113,7 +113,8 @@ describe('Reemitir un documento firmado (HU30)', () => {
   it('el formulario viene precargado, pide el motivo y envía la reemisión', async () => {
     const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation((ruta, init) => {
       const r = String(ruta)
-      if (r.startsWith('/api/tipos-documento/')) return respuesta(200, TRABAJO)
+      // DRA-60: el formulario sale del tipo del propio documento, no de los tipos del área.
+      if (r.endsWith('/formulario')) return respuesta(200, TRABAJO)
       if (r.endsWith('/reemision/vista-previa'))
         return respuesta(200, { ...FIRMADO, ...JSON.parse(String(init?.body)) })
       if (r.endsWith('/reemision')) return respuesta(201, REEMISION)

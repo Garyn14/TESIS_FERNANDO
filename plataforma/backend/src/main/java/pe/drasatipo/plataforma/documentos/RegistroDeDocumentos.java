@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.drasatipo.plataforma.areas.AlcanceDeArea;
 import pe.drasatipo.plataforma.areas.TipoDocumento;
+import pe.drasatipo.plataforma.areas.TipoDocumentoRespuesta;
 import pe.drasatipo.plataforma.avisos.Avisos;
 import pe.drasatipo.plataforma.avisos.TipoDeAviso;
 import pe.drasatipo.plataforma.comun.DatosInvalidosException;
@@ -76,6 +77,36 @@ public class RegistroDeDocumentos {
   @Transactional(readOnly = true)
   public VistaPreviaRespuesta vistaPrevia(String nombreUsuario, SolicitudDocumento solicitud) {
     return VistaPreviaRespuesta.de(validar(cuenta(nombreUsuario), solicitud), firmante());
+  }
+
+  /**
+   * DRA-60: vista previa de la corrección de un observado (HU15), con el tipo del propio documento,
+   * aunque ya no esté asignado al área. Igual que la corrección: una reemisión mantiene su
+   * expediente.
+   */
+  @Transactional(readOnly = true)
+  public VistaPreviaRespuesta vistaPreviaCorreccion(
+      String nombreUsuario, String codigo, SolicitudDocumento solicitud) {
+    Usuario cuenta = cuenta(nombreUsuario);
+    Documento documento =
+        documentos
+            .findByCodigo(codigo)
+            .filter(d -> alcance.puedeVerArea(cuenta, d.getArea()))
+            .orElseThrow(
+                () -> new ReglaDeNegocioException(HttpStatus.FORBIDDEN, null, DE_OTRA_AREA));
+    return VistaPreviaRespuesta.de(
+        validarDelTipo(
+            documento.getTipo(),
+            new SolicitudDocumento(
+                documento.getTipo().getCodigo(),
+                documento.isReemision()
+                    ? documento.getNumeroExpediente()
+                    : solicitud.numeroExpediente(),
+                solicitud.nombres(),
+                solicitud.apellidos(),
+                solicitud.dni(),
+                solicitud.datos())),
+        firmante());
   }
 
   /**
@@ -161,6 +192,20 @@ public class RegistroDeDocumentos {
         .findByCodigo(codigo)
         .filter(d -> alcance.puedeVerArea(cuenta, d.getArea()))
         .map(this::conVinculos)
+        .orElseThrow(() -> new ReglaDeNegocioException(HttpStatus.FORBIDDEN, null, DE_OTRA_AREA));
+  }
+
+  /**
+   * DRA-60: el formulario del tipo del propio documento, para corregirlo (HU15) o reemitirlo (HU30)
+   * aunque el tipo ya no esté asignado al área. Solo para quien puede ver el documento (RF05).
+   */
+  @Transactional(readOnly = true)
+  public TipoDocumentoRespuesta formulario(String nombreUsuario, String codigo) {
+    Usuario cuenta = cuenta(nombreUsuario);
+    return documentos
+        .findByCodigo(codigo)
+        .filter(d -> alcance.puedeVerArea(cuenta, d.getArea()))
+        .map(d -> TipoDocumentoRespuesta.de(d.getTipo()))
         .orElseThrow(() -> new ReglaDeNegocioException(HttpStatus.FORBIDDEN, null, DE_OTRA_AREA));
   }
 
@@ -293,8 +338,8 @@ public class RegistroDeDocumentos {
 
   private SolicitudValidada validarSolicitud(
       Usuario cuenta, Documento original, SolicitudDocumento solicitud) {
-    return validar(
-        cuenta,
+    return validarDelTipo(
+        original.getTipo(),
         new SolicitudDocumento(
             original.getTipo().getCodigo(),
             original.getNumeroExpediente(),
@@ -379,8 +424,8 @@ public class RegistroDeDocumentos {
     String texto;
     if (documento.getLote() == null) {
       SolicitudValidada validada =
-          validar(
-              cuenta,
+          validarDelTipo(
+              documento.getTipo(),
               new SolicitudDocumento(
                   documento.getTipo().getCodigo(),
                   // HU30: una reemisión mantiene el expediente del original.
@@ -464,6 +509,15 @@ public class RegistroDeDocumentos {
       throw new ReglaDeNegocioException(
           HttpStatus.BAD_REQUEST, "tipo", "Este tipo de documento se registra por lista.");
     }
+    return validarDelTipo(tipo, solicitud);
+  }
+
+  /**
+   * DRA-60: la corrección (HU15) y la reemisión (HU30) validan con el tipo del documento, aunque ya
+   * no esté asignado al área. La asignación solo controla el registro de documentos nuevos; la
+   * visibilidad del documento se comprueba aparte, con {@code AlcanceDeArea.puedeVerArea}.
+   */
+  private SolicitudValidada validarDelTipo(TipoDocumento tipo, SolicitudDocumento solicitud) {
     PlantillasDeDocumento.Plantilla plantilla =
         PlantillasDeDocumento.de(tipo.getCodigo()).orElseThrow();
     return ValidacionDeSolicitud.validar(solicitud, tipo, plantilla);

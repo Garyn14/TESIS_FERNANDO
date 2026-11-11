@@ -7,6 +7,7 @@ import {
   reemitir,
   registrar,
   vistaPrevia,
+  vistaPreviaCorreccion,
   vistaPreviaReemision,
   type Documento,
   type SolicitudDocumento,
@@ -111,7 +112,9 @@ export default function FormularioSolicitud({
       setPrevia(
         await (reemision && original
           ? vistaPreviaReemision(original.codigo, datosDeReemision(s))
-          : vistaPrevia(s)),
+          : original
+            ? vistaPreviaCorreccion(original.codigo, s)
+            : vistaPrevia(s)),
       )
     } catch (e) {
       fallo(e)

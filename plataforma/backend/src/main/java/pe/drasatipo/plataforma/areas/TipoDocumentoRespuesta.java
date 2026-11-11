@@ -13,7 +13,7 @@ public record TipoDocumentoRespuesta(
     String origen,
     List<CampoPlantilla> campos) {
 
-  static TipoDocumentoRespuesta de(TipoDocumento tipo) {
+  public static TipoDocumentoRespuesta de(TipoDocumento tipo) {
     return new TipoDocumentoRespuesta(
         tipo.getCodigo(),
         tipo.getNombre(),

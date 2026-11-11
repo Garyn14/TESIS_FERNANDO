@@ -19,6 +19,11 @@ export const MENU: OpcionMenu[] = [
     permiso: 'BILLETERA_GESTIONAR',
   },
   {
+    ruta: 'areas',
+    titulo: 'Áreas y documentos',
+    permiso: 'CATALOGO_GESTIONAR',
+  },
+  {
     ruta: 'mis-documentos',
     titulo: 'Mis documentos',
     permiso: 'DOCUMENTO_VER_AREA',
