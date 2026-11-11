@@ -532,3 +532,78 @@ Lo que revisé en el código:
 | Prioridad | Puntos | Sprint | Ticket |
 |---|---|---|---|
 | Media | 3 | 7 | DRA-61 |
+
+---
+
+## DRA-58: Nuevo rol "Mesa de Partes de área"
+
+**Sprint 7 · propuesta del equipo, fuera del backlog original de la tesis.**
+
+**Como** persona que atiende o supervisa los documentos de un área, **quiero** buscar, consultar y entregar los documentos de mi área, **para** atender a los beneficiarios y hacer seguimiento a los trámites sin poder registrarlos ni modificarlos.
+
+**Contexto**
+
+Hoy la visibilidad de los documentos depende del rol (nombres de DRA-59):
+
+| Rol | Qué ve |
+|---|---|
+| Emisor de área | Los documentos de **su área**; además los registra, corrige y reemite |
+| Mesa de Partes | Los documentos de **todas las áreas**, para consultarlos y entregarlos |
+| Director | Lo que le llega a revisión y lo firmado |
+
+Falta un perfil **de solo consulta y entrega limitado a un área**, por ejemplo, el jefe de un área o la persona que atiende en ella. Con lo que existe hoy, habría que darle Emisor de área (que registra y modifica) o Mesa de Partes (que ve todas las áreas).
+
+El nombre sigue a DRA-59: **"Mesa de Partes de área"** hace lo mismo que Mesa de Partes, pero solo con su área.
+
+Esta historia amplía **HU05 (DRA-16)**, que asigna el área, y reutiliza la búsqueda, la ficha, el historial y la entrega de **HU22–HU25**.
+
+**Criterios de aceptación**
+
+**La cuenta**
+- [ ] Existe el rol **"Mesa de Partes de área"**, que el Administrador asigna desde Usuarios.
+- [ ] Al elegirlo, el campo **Área** aparece y es **obligatorio**, igual que en Emisor de área. Sin área, la cuenta no se guarda: "Seleccione el área de la persona." Solo se ofrecen las áreas activas (DRA-61).
+- [ ] El encabezado muestra el rol y el área: "Mesa de Partes de área – Área de Capacitación". El menú muestra solo **Inicio** y **Buscar documentos**.
+
+**Lo que puede hacer, solo con su área**
+- [ ] **Buscar documentos** muestra solo los documentos de **su área**, en cualquier estado, con los mismos filtros y la misma búsqueda de HU22 (por nombre, DNI, código, expediente o lote).
+- [ ] Abre la **ficha** de cada documento de su área, con el estado, los datos, el historial y el detalle técnico de auditoría (HU23, HU24).
+- [ ] **Ve, descarga e imprime** los documentos firmados de su área, igual que Mesa de Partes (HU25). Antes de entregarlos se comprueban con la blockchain, y la descarga y la impresión quedan en el historial (desde la segunda impresión, como duplicado).
+
+**Lo que no puede hacer**
+- [ ] **No** registra, corrige, reemite, revisa, firma ni anula documentos.
+- [ ] **No** ve los documentos de otras áreas. La regla se aplica en el servidor: un documento de otra área responde **igual que uno inexistente** (404), también si se llama a la API directamente (RF04, RF05).
+- [ ] **No recibe avisos.** Es un perfil de consulta; si el negocio lo pide, se agrega después.
+
+**Cambios de área**
+- [ ] Si el Administrador le cambia el área, rige desde su siguiente pantalla, como en Emisor de área.
+- [ ] Cuenta como **persona activa** del área: mientras la tenga, el área no se deshabilita (DRA-61).
+
+**Fuera del alcance**
+
+| Tema | Por qué |
+|---|---|
+| Avisos para este rol | Decidido: sin avisos por ahora |
+| Que una persona consulte más de un área | Hoy una cuenta tiene una sola área; sería otra historia |
+| Limitar Mesa de Partes a ciertas áreas | Mesa de Partes sigue viendo todas las áreas |
+
+**Notas técnicas**
+
+- Migración **V27**:
+  - el rol `MESA_PARTES_AREA` con los permisos de Mesa de Partes menos los avisos: `CUENTA_PROPIA`, `DOCUMENTO_BUSCAR`, `AUDITORIA_VER` y `DOCUMENTO_IMPRIMIR`;
+  - una columna nueva, `rol.limitado_al_area`, verdadera para `AREA_ENCARGADA` y `MESA_PARTES_AREA`.
+- **El área obligatoria y la regla de área dependen de esa propiedad del rol**, no del código "Emisor de área". Lo aplican:
+  - `AlcanceDeArea` y `GestionUsuarios` en el servidor;
+  - el formulario de cuentas en el frontend, que la recibe de `GET /api/roles`.
+- **Búsqueda, ficha, auditoría y entrega (`/api/consulta`)** reciben el área de la sesión. Si el rol está limitado, la búsqueda filtra por `d.area_id` y las demás consultas responden 404 a un documento de otra área.
+
+**Decisiones a validar**
+
+1. **Nombre y código:** "Mesa de Partes de área", con el código `MESA_PARTES_AREA`, siguiendo los nombres de DRA-59. Antes, en el ticket, se llamaba "Consulta de área".
+2. **Puede entregar** (ver, descargar e imprimir) como Mesa de Partes, no solo consultar, como confirmaste al crear el ticket.
+3. **Sin avisos.**
+4. **Un documento de otra área se responde como inexistente (404)**, para no revelar qué documentos existen en otras áreas.
+5. **Una propiedad del rol decide quién tiene área**, en vez de nombres fijos en el código. Así, un rol futuro limitado a un área no exige cambiar la lógica.
+
+| Prioridad | Puntos | Sprint | Ticket |
+|---|---|---|---|
+| Media | 3 | 7 | DRA-58 |
