@@ -4,10 +4,30 @@ import type { Cuenta } from './api'
 import PaginaUsuarios from './PaginaUsuarios'
 
 const roles = [
-  { codigo: 'ADMINISTRADOR', nombre: 'Administrador', descripcion: 'Gestiona cuentas' },
-  { codigo: 'DIRECTOR', nombre: 'Director', descripcion: 'Firma documentos' },
-  { codigo: 'CONSULTA_INTERNA', nombre: 'Mesa de Partes', descripcion: 'Mesa de Partes' },
-  { codigo: 'AREA_ENCARGADA', nombre: 'Emisor de área', descripcion: 'Registra documentos' },
+  {
+    codigo: 'ADMINISTRADOR',
+    nombre: 'Administrador',
+    descripcion: 'Gestiona cuentas',
+    limitadoAlArea: false,
+  },
+  {
+    codigo: 'DIRECTOR',
+    nombre: 'Director',
+    descripcion: 'Firma documentos',
+    limitadoAlArea: false,
+  },
+  {
+    codigo: 'CONSULTA_INTERNA',
+    nombre: 'Mesa de Partes',
+    descripcion: 'Mesa de Partes',
+    limitadoAlArea: false,
+  },
+  {
+    codigo: 'AREA_ENCARGADA',
+    nombre: 'Emisor de área',
+    descripcion: 'Registra documentos',
+    limitadoAlArea: true,
+  },
 ]
 
 const areas = [

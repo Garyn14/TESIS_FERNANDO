@@ -1,7 +1,8 @@
 // Prueba de punta a punta real del Sprint 7: navegador + frontend + backend + PostgreSQL, sin
 // simulaciones. Requiere una base de datos vacía (levantar.sh). Crea sus propias cuentas desde la
 // pantalla Usuarios y recorre las historias del Sprint 7: DRA-60 (qué tipos de documento emite cada
-// área) y DRA-61 (crear, renombrar, deshabilitar y reactivar áreas).
+// área), DRA-61 (crear, renombrar, deshabilitar y reactivar áreas) y DRA-58 (Mesa de Partes de
+// área).
 const { chromium } = require('playwright')
 const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
@@ -358,6 +359,74 @@ const paso = async (nombre, fn) => {
     await deNuevo.getByRole('link', { name: 'Nuevo documento' }).click()
     await deNuevo.getByRole('link', { name: /Certificado de Trabajo/ }).waitFor()
     assert.deepEqual(await tarjetas(deNuevo), ['Certificado de Trabajo'])
+  })
+
+  // ------------------------------------------- DRA-58: Mesa de Partes de área
+  const ana = await nueva()
+  const tablaDe = (p) => p.getByRole('table')
+  const columnaDe = async (p) =>
+    (await tablaDe(p).locator('tbody tr td:first-child').allTextContents()).map((t) => t.replace(/[▸▾]\s*/, '').trim())
+  const hasta = async (descripcion, condicion, maximo = 30_000) => {
+    const limite = Date.now() + maximo
+    while (Date.now() < limite) {
+      if (await condicion()) return
+      await new Promise((listo) => setTimeout(listo, 500))
+    }
+    throw new Error('No se cumplió: ' + descripcion)
+  }
+  await paso('DRA-58 · El Administrador crea una cuenta de Mesa de Partes de área: el área es obligatoria', async () => {
+    await admin.getByRole('link', { name: 'Usuarios' }).click()
+    await admin.getByRole('button', { name: 'Nueva cuenta' }).click()
+    await campo(admin, 'Nombre de usuario').fill('amontes')
+    await campo(admin, 'Nombre completo').fill('Ana Montes Rojas')
+    await campo(admin, 'Rol').selectOption('MESA_PARTES_AREA')
+    await campo(admin, 'Contraseña temporal').fill(TEMPORAL)
+    await admin.getByRole('button', { name: 'Crear cuenta' }).click()
+    await admin.getByText('Seleccione el área de la persona.').waitFor()
+    await foto(admin, 'dra58_01_area_obligatoria')
+    await campo(admin, 'Área').selectOption({ label: 'Área de Administración' })
+    await admin.getByRole('button', { name: 'Crear cuenta' }).click()
+    await admin.getByRole('status').getByText('Se creó la cuenta "amontes" con el rol Mesa de Partes de área.').waitFor()
+    assert.equal(
+      psql("SELECT r.codigo, a.codigo FROM usuario u JOIN rol r ON r.id = u.rol_id JOIN area a ON a.id = u.area_id WHERE u.nombre_usuario = 'amontes'"),
+      'MESA_PARTES_AREA|ADMINISTRACION',
+    )
+  })
+  await paso('DRA-58 · Ana ve solo Inicio y Buscar documentos, con su rol y su área', async () => {
+    await primerIngreso(ana, 'amontes', TEMPORAL, PROPIA)
+    await ana.getByText('Mesa de Partes de área – Área de Administración').waitFor()
+    assert.deepEqual(await menu(ana), ['Inicio', 'Buscar documentos'])
+    await foto(ana, 'dra58_02_menu_de_ana')
+  })
+  await paso('DRA-58 · Buscar documentos muestra solo los documentos de su área', async () => {
+    // Los dos documentos del sprint tienen el mismo DNI: el de Pedro (Administración) y el de Luis
+    // (Sanidad Agraria y Forestal).
+    assert.equal(psql("SELECT count(*) FROM documento WHERE dni = '45829364'"), '2')
+    await ana.getByRole('link', { name: 'Buscar documentos' }).click()
+    await hasta('se cargan los más recientes', async () => (await tablaDe(ana).isVisible()) && (await columnaDe(ana)).length > 0)
+    assert.deepEqual(await columnaDe(ana), [observado])
+    await ana.getByRole('searchbox').fill('45829364')
+    await hasta('la búsqueda por DNI muestra solo el de su área', async () =>
+      JSON.stringify(await columnaDe(ana)) === JSON.stringify([observado]) && ana.url().includes('texto=45829364'))
+    await tablaDe(ana).locator('tbody tr').getByText('Área de Administración').waitFor()
+    await foto(ana, 'dra58_03_busqueda_solo_su_area')
+  })
+  await paso('DRA-58 · Abre la ficha de su documento; uno de otra área responde como inexistente', async () => {
+    await tablaDe(ana).getByRole('link', { name: observado }).click()
+    await ana.getByRole('heading', { name: observado }).waitFor()
+    const area = await ana.getByText('Área', { exact: true }).locator('xpath=following-sibling::dd[1]').textContent()
+    assert.equal(area, 'Área de Administración')
+    await foto(ana, 'dra58_04_ficha_de_su_area')
+    await ana.goto(URL + '#/buscar/' + enTramite)
+    await ana.getByRole('alert').getByText(`No se encontró el documento ${enTramite}.`).waitFor()
+    await foto(ana, 'dra58_05_documento_de_otra_area')
+    for (const ruta of ['', '/auditoria', '/pdf'])
+      assert.equal(await api(ana, `/api/consulta/documentos/${enTramite}${ruta}`), 404, ruta)
+    assert.equal(await api(ana, `/api/consulta/documentos/${observado}/auditoria`), 200)
+    // No registra documentos ni recibe avisos.
+    assert.equal(await api(ana, '/api/tipos-documento'), 403)
+    assert.equal(await api(ana, '/api/avisos'), 403)
+    assert.equal((await enviar(ana, '/api/documentos', trabajo('EXP-2026-007201'))).estado, 403)
   })
 
   await b.close()

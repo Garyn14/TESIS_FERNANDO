@@ -5,7 +5,7 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
 ## Dónde está todo
 
 - **Código:** `plataforma/` con:
-  - `backend`: Spring Boot 4.1, Java 21, Flyway V1–V26;
+  - `backend`: Spring Boot 4.1, Java 21, Flyway V1–V27;
   - `frontend`: plataforma interna, React 19 + Vite, puerto 5173;
   - `portal`: portal público de verificación, puerto 5174;
   - `contracts`: Hardhat, `RegistroDocumentos.sol`;
@@ -116,6 +116,6 @@ Subtareas, todas cerradas: DRA-51 (Terraform), DRA-52 (disparadores), DRA-53 (pr
 
 - Cada cambio de estado de un documento es una sola sentencia `UPDATE … WHERE estado = X`.
 - El servidor solo marca algo como firmado o anulado después de leer la transacción en la blockchain. La blockchain manda (RNF10).
-- **Nombres de los roles (DRA-59):** en pantalla, "Emisor de área" (código `AREA_ENCARGADA`, "Área encargada" en la tesis) y "Mesa de Partes" (código `CONSULTA_INTERNA`, "Consulta interna" en la tesis). Las historias HU01–HU30 conservan los nombres de la tesis.
+- **Nombres de los roles (DRA-59):** en pantalla, "Emisor de área" (código `AREA_ENCARGADA`, "Área encargada" en la tesis) y "Mesa de Partes" (código `CONSULTA_INTERNA`, "Consulta interna" en la tesis). Las historias HU01–HU30 conservan los nombres de la tesis. **DRA-58** agrega "Mesa de Partes de área" (`MESA_PARTES_AREA`): Mesa de Partes limitada a su área. Qué roles exigen área y solo ven lo de ella lo decide `rol.limitado_al_area`, no el código del rol.
 - JPQL con las constantes de enum calificadas (`DocumentoRepository.PENDIENTE`, …).
 - Pruebas del backend con Testcontainers: Postgres 17 y un Kubo real (`IpfsDePrueba`). El contrato se simula con `ContratoFalso`; las ayudas están en `DocumentosDePrueba`.

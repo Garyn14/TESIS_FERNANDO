@@ -171,9 +171,7 @@ public class GestionUsuarios {
     }
     // DRA-61: un área deshabilitada no tiene personas activas.
     Area area = cuenta.getArea();
-    if (Rol.AREA_ENCARGADA.equals(cuenta.getRol().getCodigo())
-        && area != null
-        && !area.isActiva()) {
+    if (cuenta.getRol().isLimitadoAlArea() && area != null && !area.isActiva()) {
       throw conflicto(null, AREA_DESHABILITADA.formatted(area.getNombre()));
     }
     cuenta.reactivar();
@@ -182,11 +180,12 @@ public class GestionUsuarios {
   }
 
   /**
-   * HU05 (RF05, RF06): el rol Área encargada exige un área activa; los demás roles no tienen área,
-   * aunque la solicitud traiga una.
+   * HU05 (RF05, RF06): los roles limitados a un área (Emisor de área y, desde DRA-58, Mesa de
+   * Partes de área) exigen un área activa; los demás no tienen área, aunque la solicitud traiga
+   * una.
    */
   private Area areaPara(Rol rol, String codigoArea) {
-    if (!Rol.AREA_ENCARGADA.equals(rol.getCodigo())) {
+    if (!rol.isLimitadoAlArea()) {
       return null;
     }
     if (codigoArea == null || codigoArea.isBlank()) {

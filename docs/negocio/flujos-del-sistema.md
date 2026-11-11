@@ -70,6 +70,7 @@ Al final están las **preguntas que el negocio todavía debe responder** y las *
 | **Emisor de área** | Personal de cada área (Capacitación, Desarrollo Agrario, Administración) | Registra documentos de **su área**, emite por lista, corrige los observados y reemite los firmados con error | Inicio, Mis documentos, Nuevo documento |
 | **Director** | El director de la agencia | Revisa, observa, rechaza, firma y anula documentos | Inicio, Por revisar, Documentos firmados |
 | **Mesa de Partes** | Personal de Mesa de Partes | Busca cualquier documento, informa su estado al ciudadano, ve su historial e imprime o descarga los firmados (incluidos duplicados) | Inicio, Buscar documentos |
+| **Mesa de Partes de área** | El jefe de un área o quien atiende en ella | Lo mismo que Mesa de Partes, pero **solo con los documentos de su área**, y sin avisos (Sprint 7, DRA-58) | Inicio, Buscar documentos |
 | **Público** | Cualquier tercero | Verifica la autenticidad de un documento | Portal público, sin menú |
 
 > Desde el Sprint 7 (DRA-59), dos roles cambiaron de nombre en la plataforma: **Emisor de área** se llamaba "Área encargada" y **Mesa de Partes** se llamaba "Consulta interna". En la tesis conservan los nombres originales.

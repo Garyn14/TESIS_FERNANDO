@@ -3,7 +3,7 @@ import { ErrorApi } from '../api/cliente'
 import { BOTON_PRIMARIO, BOTON_SECUNDARIO, CAMPO } from '../comun/estilos'
 import {
   editarCuenta,
-  AREA_ENCARGADA,
+  exigeArea,
   type Area,
   type Cuenta,
   type EdicionCuenta,
@@ -40,7 +40,7 @@ export default function FormularioEdicion({ cuenta, roles, areas, onGuardada, on
   const enviar = async (evento: FormEvent) => {
     evento.preventDefault()
     const normalizados = { ...datos, nombreCompleto: datos.nombreCompleto.trim() }
-    const encontrados = validarEdicion(normalizados)
+    const encontrados = validarEdicion(normalizados, exigeArea(roles, normalizados.rol))
     setErrores(encontrados)
     setErrorGeneral('')
     if (Object.keys(encontrados).length > 0) return
@@ -114,7 +114,7 @@ export default function FormularioEdicion({ cuenta, roles, areas, onGuardada, on
         )}
       </div>
 
-      {datos.rol === AREA_ENCARGADA && (
+      {exigeArea(roles, datos.rol) && (
         <CampoArea
           id={`${id}-area`}
           valor={datos.area}

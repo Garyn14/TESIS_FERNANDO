@@ -80,7 +80,7 @@ Cada servicio exige un permiso con `@PreAuthorize` (RF04). Sin sesión responde 
 | `PUT /api/sesion/contrasena` | `CUENTA_PROPIA` | Cambia la contraseña propia; exige la actual | HU04 |
 | `GET /api/usuarios` | `USUARIOS_GESTIONAR` | Lista las cuentas, la más reciente primero. Nunca incluye la contraseña | HU01 |
 | `POST /api/usuarios` | `USUARIOS_GESTIONAR` | Crea una cuenta activa con contraseña temporal. Responde 201 | HU01 |
-| `GET /api/roles` | `USUARIOS_GESTIONAR` | Roles para el formulario de la cuenta | HU01 |
+| `GET /api/roles` | `USUARIOS_GESTIONAR` | Roles para el formulario de la cuenta, con `limitadoAlArea`: el formulario pide el área (Emisor de área y Mesa de Partes de área) | HU01, DRA-58 |
 | `PUT /api/usuarios/{id}` | `USUARIOS_GESTIONAR` | Edita el nombre completo y el rol | HU02 |
 | `POST /api/usuarios/{id}/desactivar` | `USUARIOS_GESTIONAR` | Quita el acceso sin borrar la cuenta | HU02 |
 | `POST /api/usuarios/{id}/reactivar` | `USUARIOS_GESTIONAR` | Devuelve el acceso con el mismo rol | HU02 |
@@ -191,8 +191,9 @@ Se basa en los roles del prototipo validado (`docs/diseno/prototipo_plataforma_i
 | Emisor de área | `DOCUMENTO_REGISTRAR`, `DOCUMENTO_VER_AREA`, `DOCUMENTO_CORREGIR`, `DOCUMENTO_REEMITIR`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
 | Director | `DOCUMENTO_REVISAR`, `DOCUMENTO_FIRMAR`, `DOCUMENTO_OBSERVAR`, `DOCUMENTO_RECHAZAR`, `DOCUMENTO_ANULAR`, `DOCUMENTO_VER_FIRMADOS`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
 | Mesa de Partes | `DOCUMENTO_BUSCAR`, `AUDITORIA_VER`, `DOCUMENTO_IMPRIMIR`, `NOTIFICACIONES_VER`, `CUENTA_PROPIA` |
+| Mesa de Partes de área (DRA-58, V27) | `DOCUMENTO_BUSCAR`, `AUDITORIA_VER`, `DOCUMENTO_IMPRIMIR`, `CUENTA_PROPIA` (sin avisos) |
 
-Las dos reglas de control interno de RF05 (el Emisor de área solo ve su área, y quien registra no firma) **no son permisos**: se aplican en el código, sin importar lo que diga la configuración (HU05, HU11).
+Las dos reglas de control interno de RF05 (los roles limitados a un área solo ven lo de su área, y quien registra no firma) **no son permisos**: se aplican en el código, sin importar lo que diga la configuración (HU05, HU11). Qué roles están limitados a un área lo decide la columna `rol.limitado_al_area` (V27). En `/api/consulta`, Mesa de Partes de área solo busca, consulta y entrega los documentos de su área: uno de otra área responde 404, igual que uno inexistente (DRA-58).
 
 La primera está en un solo componente, `areas/AlcanceDeArea` (HU05). Hoy limita los tipos de documento; las historias de documentos del Sprint 2 deben usarlo también para filtrar los documentos. El rol Emisor de área exige un área activa al crear o editar la cuenta. Para los demás roles el área queda vacía.
 
