@@ -21,6 +21,13 @@ export const tiposPermitidos = () => solicitar<TipoDocumento[]>('/api/tipos-docu
 export const tipoPermitido = (codigo: string) =>
   solicitar<TipoDocumento>(`/api/tipos-documento/${encodeURIComponent(codigo)}`)
 
+/**
+ * DRA-60: el formulario del tipo de un documento ya registrado, para corregirlo o reemitirlo aunque
+ * el tipo ya no esté asignado al área.
+ */
+export const formularioDelDocumento = (codigo: string) =>
+  solicitar<TipoDocumento>(`/api/documentos/${encodeURIComponent(codigo)}/formulario`)
+
 /** Campo propio del formulario de un tipo a solicitud de parte (HU08). */
 export interface Campo {
   nombre: string
@@ -104,6 +111,13 @@ export interface DocumentoResumen {
 /** Valida en el servidor y arma el texto, sin guardar nada. */
 export const vistaPrevia = (solicitud: SolicitudDocumento) =>
   solicitar<VistaPrevia>('/api/documentos/vista-previa', {
+    method: 'POST',
+    body: JSON.stringify(solicitud),
+  })
+
+/** DRA-60: vista previa de la corrección de un observado, con el tipo del propio documento. */
+export const vistaPreviaCorreccion = (codigo: string, solicitud: SolicitudDocumento) =>
+  solicitar<VistaPrevia>(`/api/documentos/${encodeURIComponent(codigo)}/correccion/vista-previa`, {
     method: 'POST',
     body: JSON.stringify(solicitud),
   })

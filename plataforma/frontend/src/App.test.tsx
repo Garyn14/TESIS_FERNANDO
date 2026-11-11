@@ -20,6 +20,7 @@ const sesionDe = (rol: string, rolNombre: string, permisos: string[]): Sesion =>
 const ADMIN = sesionDe('ADMINISTRADOR', 'Administrador', [
   'USUARIOS_GESTIONAR',
   'BILLETERA_GESTIONAR',
+  'CATALOGO_GESTIONAR',
 ])
 const AREA = sesionDe('AREA_ENCARGADA', 'Emisor de área', [
   'DOCUMENTO_REGISTRAR',
@@ -68,7 +69,11 @@ describe('App (HU03)', () => {
   })
 
   it.each([
-    ['Administrador', ADMIN, ['Inicio', 'Usuarios', 'Billetera del director']],
+    [
+      'Administrador',
+      ADMIN,
+      ['Inicio', 'Usuarios', 'Billetera del director', 'Áreas y documentos'],
+    ],
     ['Emisor de área', AREA, ['Inicio', 'Mis documentos', 'Nuevo documento']],
     ['Director', DIRECTOR, ['Inicio', 'Por revisar', 'Documentos firmados']],
     ['Mesa de Partes', CONSULTA, ['Inicio', 'Buscar documentos']],
@@ -213,7 +218,12 @@ describe('App (HU03)', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Cambiar contraseña' }))
 
-    expect(await opcionesDelMenu()).toEqual(['Inicio', 'Usuarios', 'Billetera del director'])
+    expect(await opcionesDelMenu()).toEqual([
+      'Inicio',
+      'Usuarios',
+      'Billetera del director',
+      'Áreas y documentos',
+    ])
   })
 
   it('cualquier usuario puede cambiar su contraseña desde el encabezado', async () => {

@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
-import { documento as consultar, tipoPermitido, type Documento, type TipoDocumento } from './api'
+import {
+  documento as consultar,
+  formularioDelDocumento,
+  type Documento,
+  type TipoDocumento,
+} from './api'
 import FormularioSolicitud from './FormularioSolicitud'
 
 /**
@@ -15,7 +20,7 @@ export default function PaginaCorreccion({ codigo }: { codigo: string }) {
     consultar(codigo)
       .then(async (d) => {
         setDoc(d)
-        if (d.estado === 'OBSERVADO' && !d.lote) setTipo(await tipoPermitido(d.tipo))
+        if (d.estado === 'OBSERVADO' && !d.lote) setTipo(await formularioDelDocumento(d.codigo))
       })
       .catch((e) => setError(e instanceof ErrorApi ? e.message : 'No se pudo abrir el documento.'))
   }, [codigo])

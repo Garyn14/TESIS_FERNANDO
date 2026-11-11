@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { ErrorApi } from '../api/cliente'
-import { documento as consultar, tipoPermitido, type Documento, type TipoDocumento } from './api'
+import {
+  documento as consultar,
+  formularioDelDocumento,
+  type Documento,
+  type TipoDocumento,
+} from './api'
 import FormularioSolicitud from './FormularioSolicitud'
 
 /**
@@ -16,7 +21,7 @@ export default function PaginaReemision({ codigo }: { codigo: string }) {
       .then(async (d) => {
         setDoc(d)
         if (d.estado === 'FIRMADO' && !d.lote && !d.reemisionEnCurso)
-          setTipo(await tipoPermitido(d.tipo))
+          setTipo(await formularioDelDocumento(d.codigo))
       })
       .catch((e) => setError(e instanceof ErrorApi ? e.message : 'No se pudo abrir el documento.'))
   }, [codigo])

@@ -56,7 +56,8 @@ class CatalogosInicialesTest {
   @Test
   void asignaPermisosInicialesACadaRol() {
     assertThat(permisosDe("ADMINISTRADOR"))
-        .containsExactly("BILLETERA_GESTIONAR", "CUENTA_PROPIA", "USUARIOS_GESTIONAR");
+        .containsExactly(
+            "BILLETERA_GESTIONAR", "CATALOGO_GESTIONAR", "CUENTA_PROPIA", "USUARIOS_GESTIONAR");
     assertThat(permisosDe("DIRECTOR"))
         .contains("DOCUMENTO_FIRMAR", "DOCUMENTO_ANULAR")
         .doesNotContain("DOCUMENTO_REGISTRAR");
