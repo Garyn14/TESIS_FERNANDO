@@ -73,7 +73,7 @@ Se ejecutan a mano en GitHub, en la pestaña **Actions**. Los tres comparten un 
 | Flujo | Qué hace | Tiempo aproximado |
 |---|---|---|
 | **QA – Encender** (`.github/workflows/qa-encender.yml`) | Ver los pasos debajo de la tabla. | 15–25 min la primera vez; 8–12 después |
-| **QA – Apagar** (`qa-apagar.yml`) | Detiene el servidor y **conserva los datos**. Después deja CloudFront apuntando a `servidor-apagado.invalid` (DRA-54). Corre solo todos los días a las **00:00 de Lima** y también a mano. Si QA ya está apagado o no existe, termina sin error. | 5–8 min |
+| **QA – Apagar** (`qa-apagar.yml`) | Detiene el servidor y **conserva los datos**. Después deja CloudFront apuntando a `servidor-apagado.invalid` (DRA-54). Corre solo todos los días a las **00:17 de Lima** y también a mano. Si GitHub ejecuta el programado tarde, después de las 06:00 de Lima, no apaga nada (DRA-64). Si QA ya está apagado o no existe, termina sin error. | 5–8 min |
 | **QA – Destruir** (`qa-destruir.yml`) | Pide escribir `DESTRUIR-QA` y borra todo con Terraform, datos incluidos. Después borra el contrato y las billeteras de Parameter Store. El próximo Encender crea un QA vacío, **con direcciones de CloudFront nuevas**. | 10–20 min |
 
 Pasos de **QA – Encender**, siempre con la última versión de `main`:

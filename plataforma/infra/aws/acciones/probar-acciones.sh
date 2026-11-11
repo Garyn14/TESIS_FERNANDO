@@ -60,6 +60,14 @@ echo "== instancia.sh"
 comprobar "devuelve id, tipo y estado" "[ \"\$('$AQUI/instancia.sh' qa)\" = \"\$(printf 'i-0abc\tt4g.medium\tstopped')\" ]"
 comprobar "busca el servidor del ambiente, sin los ya eliminados" "grep -q 'Name=tag:Name,Values=dra-satipo-qa Name=instance-state-name,Values=pending,running,stopping,stopped' '$LLAMADAS'"
 
+echo "== horario-de-apagado.sh (DRA-64)"
+comprobar "a mano apaga a cualquier hora" "[ \"\$(HORA_LIMA=14 '$AQUI/horario-de-apagado.sh' workflow_dispatch)\" = si ]"
+comprobar "el programado apaga a las 00:17" "[ \"\$(HORA_LIMA=00 '$AQUI/horario-de-apagado.sh' schedule)\" = si ]"
+comprobar "el programado apaga hasta las 05:59" "[ \"\$(HORA_LIMA=05 '$AQUI/horario-de-apagado.sh' schedule)\" = si ]"
+comprobar "el programado no apaga desde las 06:00" "[ \"\$(HORA_LIMA=06 '$AQUI/horario-de-apagado.sh' schedule)\" = no ]"
+comprobar "el programado no apaga a las 08 (como el retraso del 10/11)" "[ \"\$(HORA_LIMA=08 '$AQUI/horario-de-apagado.sh' schedule)\" = no ]"
+comprobar "el programado no apaga a las 23" "[ \"\$(HORA_LIMA=23 '$AQUI/horario-de-apagado.sh' schedule)\" = no ]"
+
 echo "== Disparadores (.github/workflows/qa-*.yml)"
 FLUJOS=$(cd "$AQUI/../../../.." && pwd)/.github/workflows
 for flujo in "$FLUJOS"/qa-*.yml; do
@@ -68,6 +76,11 @@ for flujo in "$FLUJOS"/qa-*.yml; do
   comprobar "$(basename "$flujo"): el primer paso descarga el código" \
     "python3 -c 'import sys,yaml; d=yaml.safe_load(open(sys.argv[1])); assert all(j[\"steps\"][0].get(\"uses\",\"\").startswith(\"actions/checkout\") for j in d[\"jobs\"].values())' '$flujo'"
 done
+APAGAR="$FLUJOS/qa-apagar.yml"
+comprobar "qa-apagar.yml: el programado no corre en el minuto 0" \
+  "python3 -c 'import sys,yaml; d=yaml.safe_load(open(sys.argv[1])); assert all(c[\"cron\"].split()[0] != \"0\" for c in d[True][\"schedule\"])' '$APAGAR'"
+comprobar "qa-apagar.yml: la cuenta solo se configura si corresponde apagar" \
+  "python3 -c 'import sys,yaml; d=yaml.safe_load(open(sys.argv[1])); p=d[\"jobs\"][\"apagar\"][\"steps\"]; assert p[1][\"id\"]==\"horario\" and \"horario-de-apagado.sh\" in p[1][\"run\"]; assert p[2][\"if\"]==\"steps.horario.outputs.apagar == \x27si\x27\"' '$APAGAR'"
 
 if [ "$fallas" -gt 0 ]; then
   echo "$fallas comprobaciones fallaron."

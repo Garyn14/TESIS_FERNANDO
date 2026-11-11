@@ -1,11 +1,13 @@
 # QA – Apagar (DRA-52): detiene el servidor de QA y CONSERVA todos los datos (disco, base de datos,
 # documentos en IPFS y la cadena de Besu). Con QA apagado solo se cobra el disco y unos centavos de
-# S3. Corre solo todos los días a las 00:00 de Lima, por si quedó encendido, y también a mano.
+# S3. Corre solo todos los días a las 00:17 de Lima, por si quedó encendido, y también a mano.
+# GitHub puede ejecutar el programado horas tarde: fuera de la madrugada no apaga nada (DRA-64).
 name: QA – Apagar
 
 on:
   schedule:
-    - cron: '0 5 * * *' # 00:00 en Lima (UTC-5 todo el año)
+    # 00:17 en Lima (UTC-5 todo el año). Fuera del minuto 0, que GitHub retrasa más (DRA-64).
+    - cron: '17 5 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -32,8 +34,18 @@ jobs:
     steps:
       # Primero el código: los pasos corren en plataforma/, que no existe antes de descargarlo.
       - uses: actions/checkout@v7
+      # DRA-64: el programado que llega tarde (de 06:00 a 23:59 de Lima) no apaga QA en pleno uso.
+      - name: Horario del apagado
+        id: horario
+        run: |
+          apagar=$(infra/aws/acciones/horario-de-apagado.sh "$GITHUB_EVENT_NAME")
+          echo "apagar=$apagar" >> "$GITHUB_OUTPUT"
+          if [ "$apagar" = no ]; then
+            echo "El apagado programado llegó a las $(TZ=America/Lima date +%H:%M) de Lima, fuera del horario (00:00 a 06:00): QA sigue encendido." >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Configuración de la cuenta
         id: cuenta
+        if: steps.horario.outputs.apagar == 'si'
         env:
           CLAVE: ${{ secrets.AWS_ACCESS_KEY_ID }}
         run: |

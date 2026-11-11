@@ -163,5 +163,5 @@ jobs:
               echo "Las billeteras de prueba están en /dra-satipo/qa-billeteras/."
             fi
             echo
-            echo "QA se apaga solo a las 00:00 (hora de Lima). Para apagarlo antes: **QA – Apagar**."
+            echo "QA se apaga solo a las 00:17 (hora de Lima). Para apagarlo antes: **QA – Apagar**."
           } >> "$GITHUB_STEP_SUMMARY"
