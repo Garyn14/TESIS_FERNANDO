@@ -3,7 +3,13 @@ import type { EstadoDocumento } from '../documentos/api'
 
 /** Filtros por estado de Buscar documentos (HU22). */
 export type FiltroDeEstado =
-  'TODOS' | 'EN_TRAMITE' | 'FIRMADOS' | 'ANULADOS' | 'RECHAZADOS' | 'LISTOS_PARA_ENTREGAR'
+  | 'TODOS'
+  | 'EN_TRAMITE'
+  | 'FIRMADOS'
+  | 'ANULADOS'
+  | 'RECHAZADOS'
+  | 'LISTOS_PARA_ENTREGAR'
+  | 'VENCIDOS'
 
 export const FILTROS: { valor: FiltroDeEstado; titulo: string }[] = [
   { valor: 'TODOS', titulo: 'Todos' },
@@ -13,6 +19,8 @@ export const FILTROS: { valor: FiltroDeEstado; titulo: string }[] = [
   { valor: 'RECHAZADOS', titulo: 'Rechazados' },
   // HU25: firmados que todavía no se imprimieron ni descargaron.
   { valor: 'LISTOS_PARA_ENTREGAR', titulo: 'Listos para entregar' },
+  // DRA-62: firmados cuya vigencia terminó.
+  { valor: 'VENCIDOS', titulo: 'Vencidos' },
 ]
 
 /** Un documento, o un lote con los certificados que coinciden con la búsqueda. */
@@ -26,6 +34,8 @@ export interface FilaDeBusqueda {
   areaNombre: string
   registradoEn: string
   estado: EstadoDocumento | null
+  /** DRA-62: firmado y con la vigencia terminada (null en un lote). */
+  vencido?: boolean | null
   /** En un lote: cuántos certificados tiene en total. */
   cantidad: number | null
   /** En un lote: si se muestran todos sus certificados. */
@@ -68,6 +78,30 @@ export interface FichaDelDocumento {
   /** HU25: cuántas veces Mesa de Partes lo imprimió y descargó. */
   impresiones: number
   descargas: number
+  /** DRA-62: hasta qué fecha (inclusive) es válido, o null si no vence. */
+  venceEn?: string | null
+  vencido?: boolean
+}
+
+const MESES = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'setiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+]
+
+/** Una fecha AAAA-MM-DD con el mes en letras, como en el PDF: 11 de noviembre de 2027. */
+export function fechaEnLetras(fecha: string) {
+  const [anio, mes, dia] = fecha.split('-').map(Number)
+  return `${dia} de ${MESES[mes - 1]} de ${anio}`
 }
 
 export const fichaDelDocumento = (codigo: string) =>

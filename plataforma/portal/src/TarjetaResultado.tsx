@@ -1,4 +1,4 @@
-import { fechaLarga, type Verificacion } from './api'
+import { fechaDeCalendario, fechaLarga, type Verificacion } from './api'
 
 const ENCABEZADOS = {
   VALIDO: { titulo: 'Documento válido', icono: '✓', clase: 'border-institutional bg-green-pale' },
@@ -7,11 +7,15 @@ const ENCABEZADOS = {
     icono: '⊘',
     clase: 'border-neutral-icon bg-neutral-pale',
   },
+  // DRA-62: auténtico, pero su vigencia terminó.
+  VENCIDO: { titulo: 'Documento vencido', icono: '⌛', clase: 'border-orange bg-orange-pale' },
   NO_VALIDO: { titulo: 'Documento no válido', icono: '✕', clase: 'border-red-700 bg-red-50' },
 }
 
+const ESTADO = { VALIDO: 'Vigente', ANULADO: 'Anulado', VENCIDO: 'Vencido', NO_VALIDO: '' }
+
 /**
- * El resultado de una verificación (HU19, HU20): Válido, Anulado o No válido, con los datos que
+ * El resultado de una verificación (HU19, HU20): Válido, Anulado, Vencido (DRA-62) o No válido, con los datos que
  * entrega el servidor (HU21). Nunca muestra el documento: eso lo decide quien la usa.
  */
 export default function TarjetaResultado({
@@ -48,8 +52,14 @@ export default function TarjetaResultado({
           <Dato etiqueta="Tipo de documento" valor={v.tipo} />
           <Dato etiqueta="Titular" valor={v.titular} />
           <Dato etiqueta="Fecha de emisión" valor={v.fechaEmision && fechaLarga(v.fechaEmision)} />
-          <Dato etiqueta="Estado" valor={v.resultado === 'VALIDO' ? 'Vigente' : 'Anulado'} />
+          <Dato etiqueta="Estado" valor={ESTADO[v.resultado]} />
           {v.anuladoEn && <Dato etiqueta="Fecha de anulación" valor={fechaLarga(v.anuladoEn)} />}
+          {v.venceEn && v.resultado !== 'ANULADO' && (
+            <Dato
+              etiqueta={v.resultado === 'VENCIDO' ? 'Venció el' : 'Vigente hasta'}
+              valor={fechaDeCalendario(v.venceEn)}
+            />
+          )}
         </dl>
       )}
       {v.versionCorregida && (

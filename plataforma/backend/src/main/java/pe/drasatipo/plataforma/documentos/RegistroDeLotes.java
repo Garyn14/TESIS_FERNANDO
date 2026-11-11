@@ -212,7 +212,8 @@ public class RegistroDeLotes {
         beneficiario.apellidos(),
         beneficiario.dni(),
         texto,
-        registro.firmante());
+        registro.firmante(),
+        tipo.getVigenciaMeses());
   }
 
   private LoteValidado validar(Usuario cuenta, SolicitudLote solicitud) {

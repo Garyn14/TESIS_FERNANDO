@@ -189,13 +189,14 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
   @Modifying
   @Query(
       "UPDATE Documento d SET d.hashPdf = :hash, d.cid = :cid, d.fechaEmision = :fecha,"
-          + " d.preparadoEn = :ahora WHERE d.id = :id AND d.estado = "
+          + " d.venceEn = :vence, d.preparadoEn = :ahora WHERE d.id = :id AND d.estado = "
           + PROCESANDO)
   int guardarPdf(
       @Param("id") Long id,
       @Param("hash") String hash,
       @Param("cid") String cid,
       @Param("fecha") LocalDate fecha,
+      @Param("vence") LocalDate vence,
       @Param("ahora") OffsetDateTime ahora);
 
   /**
@@ -248,7 +249,8 @@ public interface DocumentoRepository extends JpaRepository<Documento, Long> {
       "UPDATE Documento d SET d.estado = "
           + PENDIENTE
           + ", d.hashPdf = NULL, d.cid = NULL,"
-          + " d.fechaEmision = NULL, d.preparadoEn = NULL, d.firmaIniciadaEn = NULL"
+          + " d.fechaEmision = NULL, d.venceEn = NULL, d.preparadoEn = NULL,"
+          + " d.firmaIniciadaEn = NULL"
           + " WHERE d.id = :id AND d.estado = "
           + PROCESANDO)
   int devolverAPendiente(@Param("id") Long id);

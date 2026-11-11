@@ -2,7 +2,9 @@ package pe.drasatipo.plataforma.verificacion;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.HexFormat;
 import java.util.Optional;
@@ -21,6 +23,7 @@ import pe.drasatipo.plataforma.comun.ReglaDeNegocioException;
 import pe.drasatipo.plataforma.documentos.Documento;
 import pe.drasatipo.plataforma.documentos.DocumentoRepository;
 import pe.drasatipo.plataforma.documentos.EstadoDocumento;
+import pe.drasatipo.plataforma.documentos.GeneradorDePdf;
 import pe.drasatipo.plataforma.verificacion.ResultadoVerificacion.Resultado;
 
 /**
@@ -42,12 +45,17 @@ public class VerificacionDeAutenticidad {
   private final DocumentoRepository documentos;
   private final ContratoRegistro contrato;
   private final AlmacenDeArchivos almacen;
+  private final Clock reloj;
 
   public VerificacionDeAutenticidad(
-      DocumentoRepository documentos, ContratoRegistro contrato, AlmacenDeArchivos almacen) {
+      DocumentoRepository documentos,
+      ContratoRegistro contrato,
+      AlmacenDeArchivos almacen,
+      Clock reloj) {
     this.documentos = documentos;
     this.contrato = contrato;
     this.almacen = almacen;
+    this.reloj = reloj;
   }
 
   /**
@@ -140,6 +148,15 @@ public class VerificacionDeAutenticidad {
     if (!documento.getDniHmac().equalsIgnoreCase(registro.get().dniHmac())) {
       return noValido(codigo, "el HMAC del DNI de la plataforma no es el registrado");
     }
+    // DRA-62: la fecha de vencimiento guardada debe ser la impresa en el PDF, cuya huella se acaba
+    // de comprobar con la blockchain. Si alguien la cambia en la base, se nota.
+    if (!vigenciaCoincide(pdf, documento.getVenceEn())) {
+      LOG.error(
+          "Inconsistencia: la fecha de vencimiento de {} en la base ({}) no es la impresa en su PDF",
+          codigo,
+          documento.getVenceEn());
+      return noValido(codigo, "la fecha de vencimiento no coincide con la del PDF");
+    }
     Optional<Instant> anulado = contrato.anuladoEn(codigo);
     if (anulado.isEmpty() && documento.getEstado() == EstadoDocumento.ANULADO) {
       LOG.error(
@@ -157,16 +174,49 @@ public class VerificacionDeAutenticidad {
                 documento.getBeneficiario(),
                 emitido,
                 anulado.get().atOffset(ZoneOffset.UTC),
-                contrato.reemplazadoPor(codigo).isPresent())
-            : new ResultadoVerificacion(
-                Resultado.VALIDO,
-                ResultadoVerificacion.MENSAJE_VALIDO,
-                documento.getTipo().getNombre(),
-                documento.getBeneficiario(),
-                emitido,
-                null,
-                false);
+                contrato.reemplazadoPor(codigo).isPresent(),
+                documento.getVenceEn())
+            : documento.estaVencido(LocalDate.now(reloj))
+                ? new ResultadoVerificacion(
+                    Resultado.VENCIDO,
+                    ResultadoVerificacion.MENSAJE_VENCIDO.formatted(
+                        GeneradorDePdf.enLetras(documento.getVenceEn())),
+                    documento.getTipo().getNombre(),
+                    documento.getBeneficiario(),
+                    emitido,
+                    null,
+                    false,
+                    documento.getVenceEn())
+                : new ResultadoVerificacion(
+                    Resultado.VALIDO,
+                    ResultadoVerificacion.MENSAJE_VALIDO,
+                    documento.getTipo().getNombre(),
+                    documento.getBeneficiario(),
+                    emitido,
+                    null,
+                    false,
+                    documento.getVenceEn());
     return new Comprobacion(resultado, pdf);
+  }
+
+  /**
+   * DRA-62: el PDF imprime "Válido hasta …" solo si el documento vence, y con la misma fecha que la
+   * base. Se compara el texto del PDF sin saltos de línea ni espacios repetidos.
+   */
+  static boolean vigenciaCoincide(byte[] pdf, LocalDate venceEn) {
+    String texto;
+    try {
+      texto =
+          new com.lowagie.text.pdf.parser.PdfTextExtractor(new com.lowagie.text.pdf.PdfReader(pdf))
+              .getTextFromPage(1)
+              .replaceAll("\\s+", " ");
+    } catch (java.io.IOException e) {
+      LOG.error("No se pudo leer el texto del PDF", e);
+      return false;
+    }
+    return venceEn == null
+        ? !texto.contains("Válido hasta")
+        : texto.contains(GeneradorDePdf.validoHasta(venceEn));
   }
 
   private static Comprobacion noValido(String codigo, String motivo) {

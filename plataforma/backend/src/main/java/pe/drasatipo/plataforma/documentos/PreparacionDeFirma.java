@@ -95,7 +95,8 @@ public class PreparacionDeFirma {
 
   public record Resultado(List<Preparado> preparados, List<NoPreparado> noPreparados) {}
 
-  private record Iniciado(Long id, String codigo, PdfFinal pdf, String dniHmac, String reemplaza) {}
+  private record Iniciado(
+      Long id, String codigo, PdfFinal pdf, String dniHmac, String reemplaza, LocalDate venceEn) {}
 
   /**
    * Prepara los documentos indicados y los Pendientes de los lotes indicados (HU11: un lote se
@@ -173,7 +174,12 @@ public class PreparacionDeFirma {
       }
       transaccion.executeWithoutResult(estado -> {
         documentos.guardarPdf(
-            iniciado.id(), iniciado.pdf().sha256(), cid, fechaEmision, OffsetDateTime.now());
+            iniciado.id(),
+            iniciado.pdf().sha256(),
+            cid,
+            fechaEmision,
+            iniciado.venceEn(),
+            OffsetDateTime.now());
         historial.save(
             new HistorialDocumento(
                 iniciado.id(),
@@ -220,7 +226,8 @@ public class PreparacionDeFirma {
         codigo,
         generadorDePdf.generar(documento, director.getNombreCompleto(), fechaEmision, false),
         documento.getDniHmac(),
-        original == null ? null : original.getCodigo());
+        original == null ? null : original.getCodigo(),
+        documento.getTipo().venceEn(fechaEmision));
   }
 
   /**

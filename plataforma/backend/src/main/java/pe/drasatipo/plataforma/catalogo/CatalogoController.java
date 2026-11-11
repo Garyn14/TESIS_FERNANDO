@@ -70,6 +70,14 @@ public class CatalogoController {
     return catalogo.reactivarArea(area, actor(sesion));
   }
 
+  @PutMapping("/tipos-documento/{tipo}/vigencia")
+  public CatalogoRespuesta cambiarVigencia(
+      @PathVariable String tipo,
+      @RequestBody CatalogoRespuesta.SolicitudVigencia solicitud,
+      Authentication sesion) {
+    return catalogo.cambiarVigencia(tipo, solicitud.meses(), actor(sesion));
+  }
+
   private long actor(Authentication sesion) {
     return usuarios.findByNombreUsuarioIgnoreCase(sesion.getName()).orElseThrow().getId();
   }

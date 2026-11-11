@@ -1,0 +1,6 @@
+Sprint 1: 32 pasos correctos (segunda ejecución; la primera falló a destiempo en HU06, ver el README)
+Sprint 2: 23 pasos correctos
+Sprint 3: 34 pasos correctos
+Sprint 4: 32 pasos correctos
+Sprint 5: 17 pasos correctos (después de agregar venceEn a la respuesta esperada, ver el README)
+Sprint 6: 30 pasos correctos

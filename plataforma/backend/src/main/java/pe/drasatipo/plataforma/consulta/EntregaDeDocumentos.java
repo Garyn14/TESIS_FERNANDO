@@ -25,6 +25,7 @@ public class EntregaDeDocumentos {
 
   static final String NO_FIRMADO = "Solo se entrega un documento firmado.";
   static final String ANULADO = "El documento está anulado: no se puede entregar.";
+  static final String VENCIDO = "Este documento venció el %s; no se puede entregar.";
   static final String NO_COINCIDE =
       "El documento no coincide con su registro en la blockchain. No se puede entregar."
           + " Comuníquese con el Administrador.";
@@ -98,6 +99,14 @@ public class EntregaDeDocumentos {
     Resultado resultado = comprobacion.resultado().resultado();
     if (resultado == Resultado.ANULADO) {
       throw new ReglaDeNegocioException(HttpStatus.CONFLICT, null, ANULADO);
+    }
+    // DRA-62: un documento vencido no se entrega, igual que uno anulado.
+    if (resultado == Resultado.VENCIDO) {
+      throw new ReglaDeNegocioException(
+          HttpStatus.CONFLICT,
+          null,
+          VENCIDO.formatted(
+              pe.drasatipo.plataforma.documentos.GeneradorDePdf.enLetras(documento.getVenceEn())));
     }
     if (resultado != Resultado.VALIDO) {
       throw new ReglaDeNegocioException(HttpStatus.CONFLICT, null, NO_COINCIDE);

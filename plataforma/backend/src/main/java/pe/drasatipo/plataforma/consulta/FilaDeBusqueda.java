@@ -11,6 +11,7 @@ import pe.drasatipo.plataforma.documentos.EstadoDocumento;
  * @param lote el número del lote; en un documento a solicitud de parte, {@code null}
  * @param cantidad en un lote, cuántos certificados tiene en total
  * @param completo en un lote, si se muestran todos sus certificados
+ * @param vencido DRA-62: firmado y con la vigencia terminada (null en la fila de un lote)
  * @param certificados en un lote, los certificados que coinciden, en el orden de la lista
  */
 public record FilaDeBusqueda(
@@ -23,6 +24,7 @@ public record FilaDeBusqueda(
     String areaNombre,
     OffsetDateTime registradoEn,
     EstadoDocumento estado,
+    Boolean vencido,
     Integer cantidad,
     Boolean completo,
     List<FilaDeBusqueda> certificados) {
@@ -36,7 +38,8 @@ public record FilaDeBusqueda(
       String numeroExpediente,
       String areaNombre,
       OffsetDateTime registradoEn,
-      EstadoDocumento estado) {
+      EstadoDocumento estado,
+      boolean vencido) {
     return new FilaDeBusqueda(
         codigo,
         lote,
@@ -47,6 +50,7 @@ public record FilaDeBusqueda(
         areaNombre,
         registradoEn,
         estado,
+        vencido,
         null,
         null,
         null);
@@ -68,6 +72,7 @@ public record FilaDeBusqueda(
         null,
         areaNombre,
         registradoEn,
+        null,
         null,
         cantidad,
         certificados.size() == cantidad,

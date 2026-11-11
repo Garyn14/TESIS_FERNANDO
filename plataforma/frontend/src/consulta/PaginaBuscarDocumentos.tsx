@@ -197,7 +197,14 @@ function FilaDocumento({
       <td className={`${CELDA} whitespace-nowrap`}>{fila.numeroExpediente ?? '—'}</td>
       <td className={CELDA}>{fila.areaNombre}</td>
       <td className={`${CELDA} whitespace-nowrap`}>{fechaCorta(fila.registradoEn)}</td>
-      <td className={CELDA}>{fila.estado && <Estado estado={fila.estado} />}</td>
+      <td className={CELDA}>
+        {fila.estado && <Estado estado={fila.estado} />}
+        {fila.vencido && (
+          <span className="mt-1 block w-fit rounded-2xl bg-orange-pale px-3 py-1 text-sm font-medium text-orange">
+            Vencido
+          </span>
+        )}
+      </td>
     </tr>
   )
 }

@@ -13,8 +13,10 @@ public enum FiltroDeEstado {
   FIRMADOS(List.of(EstadoDocumento.FIRMADO)),
   ANULADOS(List.of(EstadoDocumento.ANULADO)),
   RECHAZADOS(List.of(EstadoDocumento.RECHAZADO)),
-  /** HU25: firmados que Mesa de Partes todavía no imprimió ni descargó. */
-  LISTOS_PARA_ENTREGAR(List.of(EstadoDocumento.FIRMADO), true);
+  /** HU25: firmados que Mesa de Partes todavía no imprimió ni descargó, y que no vencieron. */
+  LISTOS_PARA_ENTREGAR(List.of(EstadoDocumento.FIRMADO), true),
+  /** DRA-62: firmados cuya vigencia ya terminó. "Vencido" se calcula; no es un estado. */
+  VENCIDOS(List.of(EstadoDocumento.FIRMADO));
 
   private final List<EstadoDocumento> estados;
   private final boolean sinEntregar;
