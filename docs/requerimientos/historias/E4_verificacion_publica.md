@@ -168,3 +168,85 @@ Los cuatro primeros son los de la Tabla 20 de la tesis. Los demás detallan cóm
 | Prioridad | Puntos | Sprint | RF |
 |---|---|---|---|
 | Alta | 8 | 5 | RF38, RF41 |
+
+---
+
+## DRA-62: Vigencia opcional por tipo de documento
+
+**Sprint 7 · propuesta del equipo, fuera del backlog original de la tesis.**
+
+**Como** Administrador, **quiero** definir si un tipo de documento tiene vigencia, **para** que quien lo verifique sepa si sigue vigente o ya venció.
+
+**Contexto**
+
+Hoy ningún documento vence: un documento firmado es válido hasta que se anule. La tesis (RF01–RF51) y el prototipo no consideran la vigencia, pero algunos documentos podrían necesitarla (por ejemplo, la Constancia de Productor Activo). La plataforma **ofrece la opción**, aunque la agencia decida no usarla: por defecto, ningún tipo vence.
+
+Un documento vencido **sigue apareciendo en el portal**, igual que un anulado. El papel impreso sigue existiendo con su QR, y quien lo verifique debe saber que ya no está vigente.
+
+**Opción A (decidida):** la fecha de vencimiento va **impresa en el PDF**, cuya huella ya está en la blockchain, así que **el contrato no cambia**.
+
+| Momento | Qué ocurre |
+|---|---|
+| Configuración | El Administrador define, por tipo de documento, "Sin vencimiento" (por defecto) o una vigencia en meses |
+| Firma | La fecha de vencimiento se calcula desde la fecha de emisión y se imprime en el PDF: "Válido hasta el 11 de noviembre de 2027" |
+| Verificación | Hasta esa fecha, inclusive, **Documento válido**, con "Vigente hasta …". Desde el día siguiente, **Documento vencido** |
+
+**Criterios de aceptación**
+
+**Configuración**
+- [ ] En **"Áreas y documentos"**, una sección **"Vigencia de los documentos"** lista cada tipo con su vigencia: "Sin vencimiento" o una cantidad de meses, de 1 a 120. **Por defecto, todos quedan "Sin vencimiento"**, así que la plataforma se comporta igual que hoy hasta que alguien la configure.
+- [ ] Solo la cambia el Administrador (`CATALOGO_GESTIONAR`), y cada cambio queda en el historial de cambios: "Constancia de Productor Activo: vigencia de 12 meses" o "… : sin vencimiento".
+- [ ] El cambio **solo afecta a los documentos que se firmen después**. Los ya firmados conservan la fecha con la que se emitieron.
+
+**Emisión**
+- [ ] Al preparar la firma, la fecha de vencimiento se calcula como **la fecha de emisión impresa en el PDF más los meses de vigencia** (hora de Lima) y queda fija.
+- [ ] El PDF final imprime **"Válido hasta el {fecha}"**, con el mes en letras, debajo de la fecha de emisión. Un documento sin vencimiento no imprime nada nuevo.
+- [ ] La vista previa del registro muestra "Vigencia: 12 meses desde la fecha de emisión", y la muestra en PDF que revisa el Director imprime la fecha que tendría si se firmara ese día.
+- [ ] Una **reemisión** (HU30) toma la vigencia actual de su tipo, contada desde su propia fecha de emisión.
+
+**Verificación pública (portal)**
+- [ ] Un documento vigente con vencimiento muestra **Documento válido** con "Vigente hasta el {fecha}".
+- [ ] Un documento vencido muestra **"Documento vencido"**: "Este documento venció el {fecha} y ya no está vigente.", con el tipo, el titular, la fecha de emisión y la de vencimiento. **No muestra el PDF**, igual que un anulado.
+- [ ] Si un documento está vencido y además anulado, se informa **Anulado**.
+- [ ] Funciona igual con el QR y con el código de verificación.
+- [ ] **La fecha no se puede alterar sin que se note:** al verificar, el servidor contrasta la fecha guardada con la impresa en el PDF, cuya huella está en la blockchain. Si no coinciden, el resultado es **No válido** y queda en el registro del servidor.
+
+**Uso interno**
+- [ ] La ficha de Mesa de Partes muestra "Válido hasta" y la etiqueta **"Vencido"** cuando corresponde.
+- [ ] Mesa de Partes **no puede ver, imprimir ni descargar un documento vencido**, igual que uno anulado (HU25): "Este documento venció el {fecha}; no se puede entregar."
+- [ ] La búsqueda (HU22) suma el filtro **"Vencidos"**.
+- [ ] "Vencido" **no es un estado que se guarde**: se calcula con la fecha. El documento sigue Firmado, y se puede reemitir para emitir uno nuevo con otra vigencia.
+
+**Fuera del alcance**
+
+| Tema | Por qué |
+|---|---|
+| Renovar automáticamente un documento vencido | La renovación es un trámite nuevo |
+| Avisar antes del vencimiento | Los avisos son internos; se agrega si el negocio lo pide |
+| Una vigencia distinta por documento, escrita al registrar | Esta historia la define por tipo |
+| Aplicar vigencia a los documentos ya firmados | Su PDF y su registro no se pueden cambiar |
+| Registrar la fecha en el contrato (opción B) | Exige una versión nueva del contrato; se descartó |
+
+**Notas técnicas**
+
+- **Migración V28:**
+  - `tipo_documento.vigencia_meses` (nulo = sin vencimiento, de 1 a 120);
+  - `documento.vence_en` (DATE, se fija junto con la fecha de emisión al preparar la firma);
+  - `catalogo_historial.area_id` pasa a admitir nulo, porque un cambio de vigencia es de un tipo y no de un área.
+- **API:** `PUT /api/catalogo/tipos-documento/{tipo}/vigencia` con `{"meses": 12}` o `{"meses": null}`.
+- **Verificación (`VerificacionDeAutenticidad`, HU21):**
+  - suma el resultado `VENCIDO` y el campo `venceEn`;
+  - extrae el texto del PDF ya comprobado con la blockchain y exige que "Válido hasta …" coincida con `vence_en`, o que no aparezca si no hay vencimiento.
+- La entrega de HU25 reutiliza ese resultado.
+
+**Decisiones a validar**
+
+1. **Desde cuándo se cuenta:** desde la fecha de emisión impresa en el PDF (el día en que el Director inicia la firma, en hora de Lima). El documento es válido **hasta ese día inclusive** y vence desde el día siguiente.
+2. **Dónde se configura:** en la pantalla "Áreas y documentos", con el mismo historial de cambios de DRA-60 y DRA-61.
+3. **Vencido no se puede entregar internamente:** Mesa de Partes no lo ve, imprime ni descarga, igual que un anulado.
+4. **El portal no muestra el PDF de un documento vencido**, igual que uno anulado: solo sus datos y la fecha de vencimiento.
+5. **La fecha guardada se contrasta con la del PDF** en cada verificación. Si alguien la cambiara en la base, el documento saldría No válido.
+
+| Prioridad | Puntos | Sprint | Ticket |
+|---|---|---|---|
+| Media | 5 | 7 | DRA-62 |
