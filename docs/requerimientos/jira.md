@@ -55,10 +55,22 @@ Surgieron al revisar la madurez del proyecto. Son tareas del backlog, sin sprint
 
 | Ticket | Tarea | Estado |
 |---|---|---|
-| DRA-66 | Respaldos automáticos y recuperación de la base de datos y del IPFS (**solo PROD**; QA se recrea) | Por hacer |
-| DRA-67 | Protección de datos personales (Ley 29733): base para la revisión del área legal | **En espera** de una definición formal (etiqueta `en-espera`) |
-| DRA-68 | Monitoreo y alertas del servidor, el portal, la red Besu y el IPFS | Por hacer, con la preparación de PROD |
-| DRA-69 | Manuales de usuario por rol y guía de operación | **En espera** de una definición formal; conviene después de DRA-48 |
+| DRA-66 | Respaldos automáticos y recuperación de la base de datos y del IPFS (**solo PROD**) | Por hacer. Se define en el módulo de Terraform `modulos/ambiente` detrás de la variable `respaldos_activos`, se prueba en QA y luego se desactiva |
+| DRA-67 | Protección de datos personales (Ley 29733): base para la revisión del área legal | **Bloqueado** hasta el final del proyecto (etiqueta `bloqueado`) |
+| DRA-68 | Monitoreo y alertas del servidor, el portal, la red Besu y el IPFS | Por hacer, igual que DRA-66, con la variable `monitoreo_activo` |
+| DRA-69 | **Épica E8 · Ayuda y documentación para usuarios** (era la tarea de manuales) | Ver abajo |
+
+### Épica E8 · Ayuda y documentación para usuarios (DRA-69, 13/11/2026)
+
+El contenido se escribe en el repositorio y la plataforma y el portal lo muestran. No se usa Confluence: el sitio lo tiene activado, pero vacío. Conviene construirla después de DRA-48.
+
+| Orden | Ticket | Historia | Dónde se ve |
+|---|---|---|---|
+| 1 | DRA-70 | "¿Cómo verificar un documento?" | Portada del portal |
+| 2 | DRA-71 | Preguntas frecuentes para ciudadanos y empleadores | Portal |
+| 3 | DRA-72 | Manual de usuario de cada rol | Inicio de la plataforma |
+| 4 | DRA-73 | Preguntas frecuentes generales y por rol | Inicio de la plataforma |
+| 5 | DRA-74 | Guía de operación del Administrador (depende de DRA-66) | Inicio del Administrador |
 
 **Trabajo futuro, sin ticket (decisión del 13/11/2026):** distribuir los validadores de la red Besu en máquinas de instituciones distintas. Hoy los 4 validadores están en un mismo servidor, así que la red tiene un solo operador. La tesis lo menciona como limitación y trabajo futuro.
 
