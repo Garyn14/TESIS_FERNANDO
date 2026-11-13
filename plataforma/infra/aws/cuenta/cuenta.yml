@@ -35,7 +35,8 @@ Resources:
       ManagedPolicyArns:
         - !Sub 'arn:${AWS::Partition}:iam::aws:policy/PowerUserAccess'
       Policies:
-        # IAM solo para el rol y el perfil del servidor (nombres dra-satipo-*).
+        # IAM solo para el rol y el perfil del servidor, y para el rol de los respaldos (DRA-66),
+        # con nombres dra-satipo-*.
         - PolicyName: iam-del-servidor
           PolicyDocument:
             Version: '2012-10-17'
@@ -67,6 +68,7 @@ Resources:
                 Resource:
                   - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/dra-satipo-*-servidor'
                   - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:instance-profile/dra-satipo-*-servidor'
+                  - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/dra-satipo-*-respaldos'
               # Al rol del servidor solo se le puede adjuntar la política de SSM administrada por AWS.
               - Sid: SoloLaPoliticaDeSsm
                 Effect: Allow
@@ -85,6 +87,24 @@ Resources:
                 Condition:
                   StringEquals:
                     'iam:PassedToService': ec2.amazonaws.com
+              # DRA-66: al rol de los respaldos solo se le adjunta la política de Data Lifecycle
+              # Manager administrada por AWS, y solo se entrega a ese servicio.
+              - Sid: SoloLaPoliticaDeRespaldos
+                Effect: Allow
+                Action:
+                  - iam:AttachRolePolicy
+                  - iam:DetachRolePolicy
+                Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/dra-satipo-*-respaldos'
+                Condition:
+                  ArnEquals:
+                    'iam:PolicyARN': !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AWSDataLifecycleManagerServiceRole'
+              - Sid: EntregarElRolDeRespaldosADlm
+                Effect: Allow
+                Action: iam:PassRole
+                Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/dra-satipo-*-respaldos'
+                Condition:
+                  StringEquals:
+                    'iam:PassedToService': dlm.amazonaws.com
               - Sid: LeerPoliticasAdministradas
                 Effect: Allow
                 Action: [iam:GetPolicy, iam:GetPolicyVersion]

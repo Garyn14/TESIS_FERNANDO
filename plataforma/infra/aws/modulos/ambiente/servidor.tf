@@ -90,7 +90,9 @@ resource "aws_instance" "servidor" {
     tags                  = { Name = local.nombre }
   }
 
-  tags = { Name = local.nombre }
+  # Respaldo: la etiqueta con la que Data Lifecycle Manager encuentra al servidor (DRA-66). Va
+  # siempre; sin la política (respaldos_activos apagado) no tiene efecto.
+  tags = { Name = local.nombre, Respaldo = local.nombre }
 
   lifecycle {
     # Una imagen nueva de Amazon Linux reemplazaría el servidor y borraría los datos.

@@ -65,7 +65,18 @@ Pasos:
 
    Muestra dos valores: la clave (`AKIA…`) y su secreto. AWS muestra el secreto **una sola vez**: páselo directo al paso 3, sin guardarlo en archivos, chats ni correos.
 
-**Qué puede hacer ese usuario:** crear y borrar la red, el servidor, los buckets, CloudFront y los parámetros de QA, gracias a la política `PowerUserAccess`. Esa política no incluye IAM ni la administración de la cuenta. En IAM solo puede crear el rol y el perfil del servidor (`dra-satipo-*-servidor`), adjuntarles únicamente la política de SSM de AWS y entregarlos únicamente a EC2.
+**Qué puede hacer ese usuario:** crear y borrar la red, el servidor, los buckets, CloudFront y los parámetros de QA, gracias a la política `PowerUserAccess`. Esa política no incluye IAM ni la administración de la cuenta. En IAM solo puede crear el rol y el perfil del servidor (`dra-satipo-*-servidor`), adjuntarles únicamente la política de SSM de AWS y entregarlos únicamente a EC2. Desde DRA-66, también el rol de los respaldos (`dra-satipo-*-respaldos`), solo con la política de copias de AWS y solo para ese servicio.
+
+### 2b. Actualizar la pila para los respaldos (DRA-66, una sola vez)
+
+Los respaldos usan un rol de AWS para el servicio de copias (Data Lifecycle Manager). La plantilla de la cuenta deja que GitHub cree **solo ese rol** (`dra-satipo-*-respaldos`), le adjunte **solo** la política de copias de AWS y se lo entregue **solo** a ese servicio. Si la pila se creó antes del 13/11/2026, hay que actualizarla:
+
+1. Descargue de nuevo `cuenta.yml` desde GitHub.
+2. En **CloudFormation → Stacks**, elija `dra-satipo-cuenta` y pulse **Update → Replace existing template**.
+3. Suba `cuenta.yml`, pulse **Next** dos veces sin cambiar nada, marque **I acknowledge…** y pulse **Submit**.
+4. Espere el estado **UPDATE_COMPLETE**. No cambia la clave de GitHub ni el bucket del estado.
+
+Sin esta actualización, encender los respaldos falla con un error de permisos al crear el rol. Detalle en [respaldos.md](respaldos.md).
 
 ## 3. Crear el ambiente `qa` en GitHub
 

@@ -112,6 +112,18 @@ Encendido solo en horario de trabajo (~217 h/mes), el EC2 baja a $14,58 y el tot
 
 Es la arquitectura que conviene **describir** en la tesis como despliegue de producción para la DRA, sin necesidad de levantarla.
 
+## 4b. Respaldos de PROD (DRA-66)
+
+Una copia diaria del disco del servidor con Data Lifecycle Manager, que no cobra; solo se paga el almacenamiento de las copias: **$0,05 por GB al mes** en us-east-2.
+
+| Concepto | Supuesto | Costo al mes |
+|---|---|---|
+| Primera copia (completa) | ~10 GB usados de los 20 del disco | ~$0,50 |
+| Copias siguientes (solo los cambios) | 100–300 MB por día × 30 copias guardadas | ~$0,15–0,45 |
+| **Total** | | **~$1–2** |
+
+La cifra real se mide en la prueba en QA y se anota en la evidencia de DRA-66. En QA los respaldos están apagados y no cuestan nada.
+
 ## 5. Créditos y cargos adicionales
 
 - **Créditos gratuitos:** desde julio de 2025, las cuentas nuevas de AWS reciben hasta **$200 en créditos válidos por 6 meses**. Con eso, el escenario A de 3 meses ($192,62) quedaría prácticamente cubierto. *Hay que confirmar las condiciones vigentes al crear la cuenta.*

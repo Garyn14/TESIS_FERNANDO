@@ -45,7 +45,9 @@ class Acceso(unittest.TestCase):
             for recurso in recursos:
                 arn = recurso["Fn::Sub"]
                 self.assertTrue(
-                    arn.endswith("dra-satipo-*-servidor") or arn.endswith(":policy/*"),
+                    arn.endswith("dra-satipo-*-servidor")
+                    or arn.endswith("dra-satipo-*-respaldos")
+                    or arn.endswith(":policy/*"),
                     f"{declaracion['Sid']}: {arn}",
                 )
             acciones = declaracion["Action"]
@@ -59,6 +61,20 @@ class Acceso(unittest.TestCase):
         self.assertTrue(adjuntar["Fn::Sub"].endswith(":policy/AmazonSSMManagedInstanceCore"))
         entregar = por_sid["EntregarElRolAlServidor"]["Condition"]["StringEquals"]
         self.assertEqual(entregar["iam:PassedToService"], "ec2.amazonaws.com")
+
+
+    def test_rol_de_respaldos_solo_con_su_politica_y_solo_para_dlm(self):
+        # DRA-66: el rol de los respaldos solo recibe la política de Data Lifecycle Manager y solo
+        # se entrega a ese servicio.
+        (politica,) = self.rol["Policies"]
+        por_sid = {d["Sid"]: d for d in declaraciones(politica)}
+        adjuntar = por_sid["SoloLaPoliticaDeRespaldos"]
+        self.assertTrue(adjuntar["Resource"]["Fn::Sub"].endswith("role/dra-satipo-*-respaldos"))
+        arn = adjuntar["Condition"]["ArnEquals"]["iam:PolicyARN"]["Fn::Sub"]
+        self.assertTrue(arn.endswith(":policy/service-role/AWSDataLifecycleManagerServiceRole"))
+        entregar = por_sid["EntregarElRolDeRespaldosADlm"]
+        self.assertTrue(entregar["Resource"]["Fn::Sub"].endswith("role/dra-satipo-*-respaldos"))
+        self.assertEqual(entregar["Condition"]["StringEquals"]["iam:PassedToService"], "dlm.amazonaws.com")
 
 
 class EstadoDeTerraform(unittest.TestCase):

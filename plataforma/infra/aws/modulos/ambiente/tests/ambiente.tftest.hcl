@@ -224,3 +224,82 @@ run "descripciones_que_acepta_aws" {
     error_message = "Las descripciones del grupo de seguridad y sus reglas no pueden tener tildes ni eñes."
   }
 }
+
+# DRA-66: los respaldos son para PROD. Apagados (por defecto) no crean nada ni cuestan nada.
+run "respaldos_apagados_por_defecto" {
+  command = plan
+
+  assert {
+    condition     = length(aws_dlm_lifecycle_policy.respaldos) == 0 && length(aws_iam_role.respaldos) == 0
+    error_message = "Sin respaldos_activos no se crea la política de copias ni su rol."
+  }
+  assert {
+    condition     = aws_ssm_parameter.respaldos.value == "no"
+    error_message = "El servidor debe saber que no hay respaldos (no instala el volcado de PostgreSQL)."
+  }
+  assert {
+    condition     = aws_instance.servidor.tags["Respaldo"] == "dra-satipo-qa"
+    error_message = "El servidor lleva la etiqueta con la que DLM lo encuentra."
+  }
+}
+
+run "respaldos_encendidos" {
+  command = plan
+
+  variables {
+    respaldos_activos   = true
+    respaldos_retencion = 30
+  }
+
+  assert {
+    condition     = length(aws_dlm_lifecycle_policy.respaldos) == 1
+    error_message = "Con respaldos_activos se crea la política de copias."
+  }
+  assert {
+    condition     = aws_dlm_lifecycle_policy.respaldos[0].policy_details[0].resource_types == tolist(["INSTANCE"])
+    error_message = "Se copia el servidor completo (todos sus discos en el mismo instante)."
+  }
+  assert {
+    condition     = aws_dlm_lifecycle_policy.respaldos[0].policy_details[0].target_tags["Respaldo"] == "dra-satipo-qa"
+    error_message = "La política copia solo el servidor de este ambiente."
+  }
+  assert {
+    condition     = aws_dlm_lifecycle_policy.respaldos[0].policy_details[0].schedule[0].create_rule[0].times == tolist(["08:00"])
+    error_message = "Por defecto, la copia es a las 08:00 UTC (03:00 de Lima)."
+  }
+  assert {
+    condition     = aws_dlm_lifecycle_policy.respaldos[0].policy_details[0].schedule[0].create_rule[0].interval == 24
+    error_message = "Una copia diaria."
+  }
+  assert {
+    condition     = aws_dlm_lifecycle_policy.respaldos[0].policy_details[0].schedule[0].retain_rule[0].count == 30
+    error_message = "Se conservan las últimas 30 copias."
+  }
+  assert {
+    condition     = aws_iam_role.respaldos[0].name == "dra-satipo-qa-respaldos"
+    error_message = "El rol termina en -respaldos: es el único que la cuenta deja entregar a DLM."
+  }
+  assert {
+    condition     = jsondecode(aws_iam_role.respaldos[0].assume_role_policy).Statement[0].Principal.Service == "dlm.amazonaws.com"
+    error_message = "Solo Data Lifecycle Manager puede usar el rol de respaldos."
+  }
+  assert {
+    condition     = can(regex("^[0-9A-Za-z _-]+$", aws_dlm_lifecycle_policy.respaldos[0].description))
+    error_message = "DLM solo acepta letras sin tildes, números, espacios y guiones en la descripción."
+  }
+  assert {
+    condition     = aws_ssm_parameter.respaldos.value == "si"
+    error_message = "El servidor debe saber que hay respaldos (instala el volcado de PostgreSQL)."
+  }
+}
+
+run "hora_de_respaldo_invalida" {
+  command = plan
+
+  variables {
+    respaldos_activos  = true
+    respaldos_hora_utc = "3:00"
+  }
+
+  expect_failures = [var.respaldos_hora_utc]
+}

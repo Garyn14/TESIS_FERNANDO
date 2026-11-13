@@ -1,0 +1,51 @@
+# QA – Respaldar ahora (DRA-66): copia del disco completo del servidor de QA en el momento (base de
+# datos, PDF del IPFS y la blockchain), con un volcado de PostgreSQL antes. Sirve antes de una
+# operación delicada, y para probar los respaldos que usará PROD. Las copias manuales no las borra
+# la retención: se borran a mano o con "QA – Destruir" (docs/arquitectura/respaldos.md).
+name: QA – Respaldar ahora
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ambiente-qa
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-2 # región fija de la cuenta (DRA-55)
+  AMBIENTE: qa
+
+jobs:
+  respaldar:
+    name: Respaldar QA
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: plataforma
+    steps:
+      # Primero el código: los pasos corren en plataforma/, que no existe antes de descargarlo.
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          # DRA-56: la cuenta prohíbe el proveedor OIDC; la clave es un secreto del ambiente qa.
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Respaldar el servidor
+        run: infra/aws/acciones/respaldar-ahora.sh "$AMBIENTE" | tee "$RUNNER_TEMP/respaldo.txt"
+      - name: Resumen
+        run: |
+          {
+            echo "### Respaldo de QA"
+            grep '^Respaldo listo' "$RUNNER_TEMP/respaldo.txt"
+            echo
+            echo "Copias del ambiente (de la más reciente a la más antigua):"
+            echo '```'
+            infra/aws/acciones/listar-respaldos.sh "$AMBIENTE"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

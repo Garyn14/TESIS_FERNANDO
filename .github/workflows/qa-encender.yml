@@ -11,6 +11,11 @@ on:
         description: Tamaño del servidor (vacío = el que ya tiene; t4g.medium la primera vez). Solo tipos t4g.
         required: false
         default: ''
+      respaldos:
+        description: Activar los respaldos diarios (DRA-66). Solo para probarlos; QA no los necesita. Sin marcar, se desactivan.
+        type: boolean
+        required: false
+        default: false
 
 # Encender, Apagar y Destruir nunca corren a la vez.
 concurrency:
@@ -96,7 +101,8 @@ jobs:
           BUCKET: ${{ vars.TF_ESTADO_BUCKET }}
         run: |
           terraform init -input=false -backend-config="bucket=$BUCKET"
-          terraform apply -input=false -auto-approve -var "tipo_instancia=$TIPO"
+          terraform apply -input=false -auto-approve -var "tipo_instancia=$TIPO" \
+            -var "respaldos_activos=${{ inputs.respaldos == true }}"
           terraform output -json ambiente > "$RUNNER_TEMP/ambiente.json"
           jq -r '
             "SERVIDOR=\(.servidor_id)",

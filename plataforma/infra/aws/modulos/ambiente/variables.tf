@@ -39,3 +39,32 @@ variable "configuracion" {
   type        = map(string)
   default     = {}
 }
+
+# Respaldos (DRA-66): solo para PROD. En QA se enciende únicamente para probarlos.
+variable "respaldos_activos" {
+  description = "Si se crean las copias diarias del disco del servidor (DRA-66). Apagado por defecto: no crea nada ni cuesta nada."
+  type        = bool
+  default     = false
+}
+
+variable "respaldos_hora_utc" {
+  description = "Hora de la copia diaria, en UTC (HH:MM). 08:00 UTC son las 03:00 de Lima."
+  type        = string
+  default     = "08:00"
+
+  validation {
+    condition     = can(regex("^([01][0-9]|2[0-3]):[0-5][0-9]$", var.respaldos_hora_utc))
+    error_message = "Use el formato HH:MM, en UTC."
+  }
+}
+
+variable "respaldos_retencion" {
+  description = "Cuántas copias diarias se conservan; la más antigua se borra sola."
+  type        = number
+  default     = 30
+
+  validation {
+    condition     = var.respaldos_retencion >= 1 && var.respaldos_retencion <= 1000
+    error_message = "Entre 1 y 1000 copias."
+  }
+}
