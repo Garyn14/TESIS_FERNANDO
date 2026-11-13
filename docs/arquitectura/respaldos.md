@@ -42,7 +42,7 @@ Antes de una operación delicada (una actualización importante, un cambio de Di
 
 Pasos:
 1. **Elegir la copia.** En **Actions → "QA – Restaurar respaldo" → Run workflow**, deje los campos vacíos y ejecútelo: solo lista las copias, de la más reciente a la más antigua, con su fecha (en UTC; Lima son 5 horas menos) y su tipo (`diario` o `manual`). Elija la última **antes** del problema.
-2. **Avisar** a quienes usan la plataforma: durante la restauración (10–20 minutos) no está disponible.
+2. **Avisar** a quienes usan la plataforma: durante la restauración no está disponible (en QA tardó menos de 4 minutos).
 3. **Restaurar.** Ejecute otra vez el disparador, con:
    - **copia:** el identificador `snap-…` elegido;
    - **confirmación:** `RESTAURAR-QA`.
@@ -53,7 +53,7 @@ Pasos:
    - ingresar como Administrador y revisar que las cuentas estén.
 5. **El Director restablece su billetera.** Como la blockchain volvió atrás, MetaMask recuerda transacciones que ya no existen y la próxima firma quedaría trabada. En MetaMask: **Configuración → Avanzado → Borrar datos de actividad de la pestaña** (o "Restablecer cuenta"). No borra la billetera ni la clave.
 6. **Volver a registrar** lo que se firmó después de la copia: buscar en la blockchain lo que ya no existe y registrarlo y firmarlo de nuevo.
-7. **Actualizar la versión:** el disco restaurado trae la versión de la plataforma de ese momento. El siguiente **Encender** instala la última.
+7. **Ejecutar Encender:** el disco restaurado trae la versión de la plataforma de ese momento y **llega sin etiquetas** (AWS no las copia). Encender instala la última versión y le devuelve las etiquetas, sin reemplazar el servidor.
 
 **El disco reemplazado no se borra:** queda como un disco "disponible" con el nombre del servidor, por si hiciera falta volver atrás. Bórrelo cuando la restauración esté comprobada (sección 5).
 
@@ -66,17 +66,14 @@ Pasos:
 - los scripts de respaldar, listar y restaurar, con un `aws` simulado;
 - que el volcado de PostgreSQL se genera, se rota y se restaura con los datos.
 
-**Prueba en QA**, con los respaldos encendidos y luego apagados de nuevo. El resultado queda en `docs/evidencias/sprint-8/DRA-66/`.
-1. Firmar un documento A, tomar una copia y firmar un documento B.
-2. Restaurar la copia.
-3. Comprobar que A sale "Documento válido", por el QR y por el código, y que B ya no existe.
+**Prueba en QA** (13/11/2026): se simuló la pérdida de la base de datos y del IPFS, y se restauró una copia. El detalle está en `docs/evidencias/sprint-8/DRA-66/`.
 
 ## 5. Limpieza y costo
 
 - **Borrar una copia manual:** en la consola de AWS, **EC2 → Snapshots**, filtre por la etiqueta `TipoDeRespaldo = manual`, elija la copia y **Actions → Delete snapshot**.
 - **Borrar el disco reemplazado** después de una restauración: **EC2 → Volumes**, el que está en estado `available` con el nombre del servidor → **Actions → Delete volume**.
 - **QA – Destruir** borra también las copias y los discos sobrantes de QA.
-- **Costo:** las copias guardan solo los bloques que cambiaron desde la anterior. Se estima entre **$1 y $2 al mes** en PROD (ver `estimacion-costos-aws.md`). Data Lifecycle Manager no cobra.
+- **Costo:** las copias guardan solo los bloques que cambiaron desde la anterior. Se estima **menos de $1 al mes** en PROD (la primera copia medida en QA ocupó 5,4 GB) (ver `estimacion-costos-aws.md`). Data Lifecycle Manager no cobra.
 
 ## 6. Avisos
 
