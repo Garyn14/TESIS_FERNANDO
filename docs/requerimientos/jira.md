@@ -60,7 +60,7 @@ Surgieron al revisar la madurez del proyecto. Son tareas del backlog, sin sprint
 | DRA-68 | Monitoreo y alertas del servidor, el portal, la red Besu y el IPFS | Por hacer, con la preparación de PROD |
 | DRA-69 | Manuales de usuario por rol y guía de operación | **En espera** de una definición formal; conviene después de DRA-48 |
 
-**En análisis, sin ticket:** distribuir los validadores de la red Besu en máquinas de instituciones distintas.
+**Trabajo futuro, sin ticket (decisión del 13/11/2026):** distribuir los validadores de la red Besu en máquinas de instituciones distintas. Hoy los 4 validadores están en un mismo servidor, así que la red tiene un solo operador. La tesis lo menciona como limitación y trabajo futuro.
 
 ### Ambiente QA en AWS (desde el 08/11/2026)
 
