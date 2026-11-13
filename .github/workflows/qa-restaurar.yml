@@ -44,7 +44,7 @@ jobs:
         run: |
           echo "::error::Restaurar se ejecuta desde main. Elija la rama main al ejecutar."
           exit 1
-      - uses: aws-actions/configure-aws-credentials@v5
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           # DRA-56: la cuenta prohíbe el proveedor OIDC; la clave es un secreto del ambiente qa.
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
