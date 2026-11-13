@@ -56,7 +56,7 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 - la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 7 (`docs/scrum/sprint-N/guion-de-pruebas.md`), que se hará en la reunión con el negocio (material en `docs/negocio/flujos-del-sistema.md` y `presentacion/video-presentacion.mp4`);
 - **DRA-63** (spike: seguridad de la billetera del Director), sin construir. Las propuestas DRA-58 a DRA-62 se construyeron en el Sprint 7;
 - **DRA-65 (PROD en AWS)**, a la espera del dominio y el alcance;
-- **requisitos antes de PROD** (12/11/2026, etiqueta `antes-de-prod`): DRA-66 (respaldos, solo PROD), DRA-67 (datos personales, **en espera** del área legal), DRA-68 (monitoreo y alertas) y DRA-69 (manuales, **en espera** de definición). Distribuir los validadores de Besu en instituciones distintas queda como **trabajo futuro**, sin ticket: lo menciona la tesis.
+- **requisitos antes de PROD** (12/11/2026, etiqueta `antes-de-prod`): DRA-66 (respaldos) y DRA-68 (monitoreo), que se definen en el módulo de Terraform detrás de un interruptor, se prueban en QA y se desactivan hasta PROD; DRA-67 (datos personales, **bloqueado** hasta el final); y la **épica E8 · Ayuda y documentación (DRA-69)**, con DRA-70 a DRA-74: "¿Cómo verificar?" y preguntas frecuentes en el portal, y manual por rol, preguntas frecuentes y guía de operación en la plataforma, con el contenido en el repositorio (no se usa Confluence). Distribuir los validadores de Besu en instituciones distintas queda como **trabajo futuro**, sin ticket: lo menciona la tesis.
 
 Cada observación del PO se registra como un ticket nuevo y se construye con el flujo de siempre. También falta actualizar la Tabla 26 de la tesis con el calendario de `jira.md`.
 
