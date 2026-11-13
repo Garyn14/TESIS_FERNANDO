@@ -23,8 +23,7 @@ echo "Copia del disco del servidor $instancia…"
 copias=$(aws ec2 create-snapshots \
   --instance-specification "InstanceId=$instancia" \
   --description "Respaldo manual de $NOMBRE - DRA-66" \
-  --copy-tags-from-source volume \
-  --tag-specifications "ResourceType=snapshot,Tags=[{Key=Ambiente,Value=$AMBIENTE},{Key=TipoDeRespaldo,Value=manual}]" \
+  --tag-specifications "ResourceType=snapshot,Tags=[{Key=Name,Value=$NOMBRE},{Key=Ambiente,Value=$AMBIENTE},{Key=TipoDeRespaldo,Value=manual}]" \
   --query 'Snapshots[].SnapshotId' --output text)
 [ -n "$copias" ] || { echo "AWS no devolvió ninguna copia." >&2; exit 1; }
 echo "Copias en curso: $copias"

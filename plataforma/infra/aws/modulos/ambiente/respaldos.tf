@@ -45,8 +45,10 @@ resource "aws_dlm_lifecycle_policy" "respaldos" {
     target_tags    = { Respaldo = local.nombre }
 
     schedule {
-      name      = "diaria"
-      copy_tags = true
+      name = "diaria"
+      # Etiquetas propias y no las del disco: el disco ya trae Ambiente (default_tags) y AWS rechaza
+      # una etiqueta repetida. Así las copias no dependen de cómo se etiquetó el disco.
+      copy_tags = false
 
       create_rule {
         interval      = 24
@@ -61,6 +63,7 @@ resource "aws_dlm_lifecycle_policy" "respaldos" {
       }
 
       tags_to_add = {
+        Name           = local.nombre
         Ambiente       = var.ambiente
         TipoDeRespaldo = "diario"
       }
