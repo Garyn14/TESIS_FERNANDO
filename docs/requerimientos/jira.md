@@ -49,6 +49,19 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 - **DRA-48** ahora incluye la validación del Sprint 7.
 - **Quedan en el backlog:** DRA-48, DRA-63 (spike de la billetera del Director) y DRA-65 (PROD en AWS).
 
+### Requisitos antes de PROD (creados el 12/11/2026)
+
+Surgieron al revisar la madurez del proyecto. Son tareas del backlog, sin sprint, enlazadas a DRA-65 (etiqueta `antes-de-prod`):
+
+| Ticket | Tarea | Estado |
+|---|---|---|
+| DRA-66 | Respaldos automáticos y recuperación de la base de datos y del IPFS (**solo PROD**; QA se recrea) | Por hacer |
+| DRA-67 | Protección de datos personales (Ley 29733): base para la revisión del área legal | **En espera** de una definición formal (etiqueta `en-espera`) |
+| DRA-68 | Monitoreo y alertas del servidor, el portal, la red Besu y el IPFS | Por hacer, con la preparación de PROD |
+| DRA-69 | Manuales de usuario por rol y guía de operación | **En espera** de una definición formal; conviene después de DRA-48 |
+
+**En análisis, sin ticket:** distribuir los validadores de la red Besu en máquinas de instituciones distintas.
+
 ### Ambiente QA en AWS (desde el 08/11/2026)
 
 - **DRA-44 pasó a En curso**, con el alcance limitado a QA. PROD queda por definir.
