@@ -4,7 +4,7 @@
 
 ## 1. Qué se vigila
 
-Un **vigilante** corre en el servidor cada 5 minutos y deja el resultado en CloudWatch, el servicio de alertas de AWS. Si una parte falla **en dos revisiones seguidas** (unos 10 minutos), llega un correo con el asunto `ALARM: "dra-satipo-<ambiente> - …"`. Cuando se recupera, llega otro con `OK: …`.
+Un **vigilante** corre en el servidor cada minuto y deja el resultado en CloudWatch, el servicio de alertas de AWS. Si una parte falla **durante unos 10 minutos** (dos ventanas seguidas de 5 minutos), llega un correo con el asunto `ALARM: "dra-satipo-<ambiente> - …"`. Cuando se recupera, llega otro con `OK: …`.
 
 | Alerta | Qué significa | Qué hacer |
 |---|---|---|
@@ -16,6 +16,8 @@ Un **vigilante** corre en el servidor cada 5 minutos y deja el resultado en Clou
 | **Falló una copia del disco** (correo sin "ALARM") | La copia diaria de DRA-66 no se hizo | Tome una con "Respaldar ahora" (ver `respaldos.md`). Si vuelve a fallar, revise **EC2 → Snapshots** |
 
 Si el servidor se cae por completo, llega **una sola alerta** ("La plataforma no responde"), no una por cada parte.
+
+**Al activar el monitoreo** puede llegar un primer aviso "La plataforma no responde", seguido de "OK" a los pocos minutos: la alarma se crea antes del primer reporte del vigilante, y la falta de datos cuenta como falla. No requiere ninguna acción.
 
 ## 2. Entrar al servidor
 
@@ -49,7 +51,7 @@ Si los cuatro están corriendo y no avanza, revise `docker logs --tail 100 plata
 
 | Parte | Dónde |
 |---|---|
-| Vigilante (cada 5 minutos, temporizador `plataforma-vigilante`) | `infra/aws/servidor/vigilar.sh` |
+| Vigilante (cada minuto, temporizador `plataforma-vigilante`) | `infra/aws/servidor/vigilar.sh` |
 | Alarmas y regla de copias fallidas, detrás del interruptor `monitoreo_activo` | `infra/aws/modulos/ambiente/monitoreo.tf` |
 | Tema de los correos (`dra-satipo-alertas`) | `infra/aws/cuenta/cuenta.yml`, ver `despliegue-aws.md` sección 2c |
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Vigilante del servidor (DRA-68). Cada 5 minutos revisa las partes que necesita la verificación y
+# Vigilante del servidor (DRA-68). Cada minuto revisa las partes que necesita la verificación y
 # publica en CloudWatch una métrica por parte (1 = funciona, 0 = no). Las alarmas del módulo de
-# Terraform (monitoreo.tf) avisan por correo después de dos fallas seguidas, o si el vigilante deja
-# de reportar (servidor caído).
+# Terraform (monitoreo.tf) avisan por correo si una parte falla en dos ventanas seguidas de 5
+# minutos, o si el vigilante deja de reportar (servidor caído). Corre cada minuto y no cada 5: así
+# cada ventana recibe unos 5 reportes, y un retraso de segundos no la deja vacía (visto en QA).
 #
 #   Plataforma   el backend responde su salud, que incluye la base de datos
 #   Blockchain   la red Besu sigue produciendo bloques (con menos de 3 validadores se detiene)
@@ -48,7 +49,7 @@ done
 anterior=$(cat "$ESTADO/bloque" 2>/dev/null || echo -1)
 blockchain=0
 if [ "$bloque" -ge 0 ]; then
-  # Un bloque cada 2 s: en 5 minutos la cadena tiene que haber avanzado. La primera vez basta con
+  # Un bloque cada 2 s: en un minuto la cadena tiene que haber avanzado (unos 30 bloques). La primera vez basta con
   # que responda.
   { [ "$anterior" -lt 0 ] || [ "$bloque" -gt "$anterior" ]; } && blockchain=1
   mkdir -p "$ESTADO" && echo "$bloque" > "$ESTADO/bloque"

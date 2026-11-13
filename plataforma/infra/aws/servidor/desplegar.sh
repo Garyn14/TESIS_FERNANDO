@@ -68,6 +68,6 @@ interruptor() { sed -n "s/^$1='\(.*\)'$/\1/p" "$BASE/plataforma.env"; }
 # DRA-66: volcado de PostgreSQL a las 02:50 de Lima, antes de la copia diaria del disco (03:00).
 temporizador volcado "$(interruptor RESPALDOS_ACTIVOS)" "volcado diario de PostgreSQL (DRA-66)" \
   "*-*-* 02:50:00 America/Lima" "$BASE/app/infra/aws/servidor/volcar-base.sh"
-# DRA-68: el vigilante publica en CloudWatch, cada 5 minutos, si cada parte funciona.
+# DRA-68: el vigilante publica en CloudWatch, cada minuto, si cada parte funciona.
 temporizador vigilante "$(interruptor MONITOREO_ACTIVO)" "vigilante del servidor (DRA-68)" \
-  "*:0/5" "$BASE/app/infra/aws/servidor/vigilar.sh"
+  "minutely" "$BASE/app/infra/aws/servidor/vigilar.sh"
