@@ -37,9 +37,9 @@ docker ps --format 'table {{.Names}}\t{{.Status}}'
 
 1. Revise los cuatro nodos: `docker ps -a --filter name=besu`.
 2. Inicie los que estén detenidos: `docker start plataforma-besu-nodo2-1` (y los demás).
-3. En unos 30 segundos, la red vuelve a producir bloques por sí sola. Lo firmado antes no se pierde.
+3. La red vuelve a producir bloques **por sí sola**, y lo firmado antes no se pierde. **Puede tardar varios minutos:** tras una parada larga, los validadores esperan cada vez más entre un intento de acuerdo y el siguiente. En QA, después de 8 minutos con dos validadores detenidos, la red tardó **17 minutos** en reanudarse. Mientras tanto, la alerta sigue activa: llega el aviso "OK" cuando la red avanza otra vez.
 
-Si los cuatro están corriendo y no avanza, revise `docker logs --tail 100 plataforma-besu-nodo1-1` y, como último recurso, restaure una copia (`respaldos.md`).
+Si los cuatro están corriendo y la red no avanza después de 30 minutos, revise `docker logs --tail 100 plataforma-besu-nodo1-1` y, como último recurso, restaure una copia (`respaldos.md`).
 
 ## 4. El disco se llena
 
@@ -73,4 +73,4 @@ En la CI:
 - `terraform test` comprueba que sin el interruptor no se crea nada y que, con él, se crean las alarmas, sus umbrales y la regla;
 - el servidor en Docker comprueba que el vigilante publica 1 con todo funcionando y 0 al detener la blockchain, el IPFS o el backend.
 
-La prueba en QA está en `docs/evidencias/sprint-8/DRA-68/`.
+En QA (13/11/2026) se detuvieron dos validadores y el backend. Las alertas llegaron en 6 y 7 minutos, y el aviso de recuperación cuando cada parte volvió. El detalle está en `docs/evidencias/sprint-8/DRA-68/`.
