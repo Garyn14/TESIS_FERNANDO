@@ -78,6 +78,15 @@ Los respaldos usan un rol de AWS para el servicio de copias (Data Lifecycle Mana
 
 Sin esta actualización, encender los respaldos falla con un error de permisos al crear el rol. Detalle en [respaldos.md](respaldos.md).
 
+### 2c. Actualizar la pila para el monitoreo (DRA-68, una sola vez)
+
+El monitoreo envía sus alertas por correo desde un tema de avisos de AWS (SNS) llamado `dra-satipo-alertas`, que crea la plantilla de la cuenta. Usa el **mismo correo** de las alertas del presupuesto, guardado en la pila: el correo no está en el repositorio. Si la pila se actualizó antes del 14/11/2026:
+
+1. Repita los pasos 1 a 4 de la sección 2b con el `cuenta.yml` nuevo.
+2. **Confirme la suscripción:** AWS envía al correo de las alertas un mensaje "AWS Notification - Subscription Confirmation". Pulse **Confirm subscription**. Sin ese paso, las alertas no llegan.
+
+Sin el tema, encender el monitoreo falla al buscarlo. Detalle en [monitoreo.md](monitoreo.md).
+
 ## 3. Crear el ambiente `qa` en GitHub
 
 1. En el repositorio, vaya a **Settings → Environments → New environment**, escriba `qa` y pulse **Configure environment**.

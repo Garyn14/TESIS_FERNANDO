@@ -113,6 +113,21 @@ class Presupuesto(unittest.TestCase):
         self.assertEqual(self.p["Budget"]["TimeUnit"], "MONTHLY")
 
 
+class Alertas(unittest.TestCase):
+    def test_tema_con_el_nombre_que_busca_terraform_y_el_correo_de_la_pila(self):
+        tema = RECURSOS["TemaAlertas"]["Properties"]
+        self.assertEqual(tema["TopicName"], "dra-satipo-alertas")  # var.monitoreo_tema
+        self.assertEqual(tema["Subscription"], [{"Protocol": "email", "Endpoint": {"Ref": "CorreoAlertas"}}])
+
+    def test_solo_publican_las_alarmas_y_reglas_de_esta_cuenta(self):
+        (declaracion,) = declaraciones(RECURSOS["PoliticaTemaAlertas"]["Properties"])
+        self.assertEqual(declaracion["Action"], "sns:Publish")
+        self.assertEqual(
+            sorted(declaracion["Principal"]["Service"]), ["cloudwatch.amazonaws.com", "events.amazonaws.com"]
+        )
+        self.assertEqual(declaracion["Condition"]["StringEquals"]["aws:SourceAccount"], {"Ref": "AWS::AccountId"})
+
+
 class Salidas(unittest.TestCase):
     def test_entrega_lo_que_se_copia_en_github(self):
         self.assertEqual(set(PLANTILLA["Outputs"]), {"UsuarioGitHub", "BucketEstado"})

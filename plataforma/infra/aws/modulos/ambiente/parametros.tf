@@ -55,6 +55,14 @@ resource "aws_ssm_parameter" "configuracion" {
 
 # DRA-66: el servidor guarda un volcado de PostgreSQL antes de cada copia solo si los respaldos
 # están activos (servidor/desplegar.sh instala o quita el temporizador).
+# DRA-68: el vigilante del servidor corre solo si el monitoreo está activo (desplegar.sh instala o
+# quita su temporizador).
+resource "aws_ssm_parameter" "monitoreo" {
+  name  = "${local.ruta_parametros}/MONITOREO_ACTIVO"
+  type  = "String"
+  value = var.monitoreo_activo ? "si" : "no"
+}
+
 resource "aws_ssm_parameter" "respaldos" {
   name  = "${local.ruta_parametros}/RESPALDOS_ACTIVOS"
   type  = "String"

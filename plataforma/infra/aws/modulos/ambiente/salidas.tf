@@ -52,3 +52,8 @@ output "respaldos_activos" {
   description = "Si el ambiente tiene copias diarias del disco del servidor (DRA-66)."
   value       = var.respaldos_activos
 }
+
+output "monitoreo_activo" {
+  description = "Si el ambiente tiene alarmas y vigilante del servidor (DRA-68)."
+  value       = var.monitoreo_activo
+}

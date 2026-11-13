@@ -58,6 +58,30 @@ variable "respaldos_hora_utc" {
   }
 }
 
+# Monitoreo (DRA-68): solo para PROD. En QA se enciende únicamente para probarlo.
+variable "monitoreo_activo" {
+  description = "Si se crean las alarmas y corre el vigilante del servidor (DRA-68). Apagado por defecto: no crea nada ni cuesta nada."
+  type        = bool
+  default     = false
+}
+
+variable "monitoreo_tema" {
+  description = "Tema de SNS de la cuenta que envía las alertas por correo (lo crea infra/aws/cuenta/cuenta.yml)."
+  type        = string
+  default     = "dra-satipo-alertas"
+}
+
+variable "monitoreo_disco_umbral" {
+  description = "Porcentaje del disco usado a partir del cual se avisa."
+  type        = number
+  default     = 85
+
+  validation {
+    condition     = var.monitoreo_disco_umbral >= 50 && var.monitoreo_disco_umbral <= 95
+    error_message = "Entre 50 y 95 por ciento."
+  }
+}
+
 variable "respaldos_retencion" {
   description = "Cuántas copias diarias se conservan; la más antigua se borra sola."
   type        = number

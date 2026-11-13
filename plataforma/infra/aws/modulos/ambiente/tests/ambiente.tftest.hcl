@@ -18,6 +18,9 @@ mock_provider "aws" {
   mock_data "aws_ec2_managed_prefix_list" {
     defaults = { id = "pl-3b927c52" }
   }
+  mock_data "aws_sns_topic" {
+    defaults = { arn = "arn:aws:sns:us-east-2:123456789012:dra-satipo-alertas" }
+  }
 }
 
 mock_provider "random" {}
@@ -308,4 +311,79 @@ run "hora_de_respaldo_invalida" {
   }
 
   expect_failures = [var.respaldos_hora_utc]
+}
+
+run "monitoreo_apagado_por_defecto" {
+  command = plan
+
+  assert {
+    condition     = length(aws_cloudwatch_metric_alarm.vigilante) == 0 && length(aws_cloudwatch_metric_alarm.servidor) == 0 && length(aws_cloudwatch_event_rule.copia_fallida) == 0 && length(data.aws_sns_topic.alertas) == 0
+    error_message = "Sin monitoreo_activo no se crean alarmas ni la regla de copias fallidas, ni se busca el tema de SNS."
+  }
+  assert {
+    condition     = aws_ssm_parameter.monitoreo.value == "no"
+    error_message = "El servidor debe saber que no hay monitoreo (no instala el vigilante)."
+  }
+}
+
+run "monitoreo_encendido" {
+  command = plan
+
+  variables {
+    monitoreo_activo = true
+  }
+
+  assert {
+    condition     = toset(keys(aws_cloudwatch_metric_alarm.vigilante)) == toset(["plataforma", "blockchain", "ipfs", "disco"]) && length(aws_cloudwatch_metric_alarm.servidor) == 1
+    error_message = "Una alarma por cada parte que revisa el vigilante, y otra para la máquina."
+  }
+  assert {
+    condition = alltrue([for a in values(aws_cloudwatch_metric_alarm.vigilante) :
+      a.namespace == "DRA-Satipo" && a.dimensions["Ambiente"] == "qa" && a.period == 300 &&
+      a.evaluation_periods == 2 && a.datapoints_to_alarm == 2 &&
+      a.alarm_actions == toset(["arn:aws:sns:us-east-2:123456789012:dra-satipo-alertas"]) &&
+    a.ok_actions == a.alarm_actions])
+    error_message = "Cada alarma lee la métrica del vigilante de su ambiente, avisa tras dos revisiones fallidas y manda el correo al fallar y al recuperarse."
+  }
+  assert {
+    # Con el servidor caído el vigilante no reporta: una sola alerta (la plataforma), no cuatro.
+    condition     = aws_cloudwatch_metric_alarm.vigilante["plataforma"].treat_missing_data == "breaching" && aws_cloudwatch_metric_alarm.vigilante["blockchain"].treat_missing_data == "notBreaching" && aws_cloudwatch_metric_alarm.vigilante["ipfs"].treat_missing_data == "notBreaching"
+    error_message = "Solo la alarma de la plataforma cuenta como falla que el vigilante deje de reportar."
+  }
+  assert {
+    condition     = aws_cloudwatch_metric_alarm.vigilante["disco"].comparison_operator == "GreaterThanThreshold" && aws_cloudwatch_metric_alarm.vigilante["disco"].threshold == 85
+    error_message = "El disco avisa al superar el 85 %."
+  }
+  assert {
+    condition     = aws_cloudwatch_metric_alarm.vigilante["blockchain"].alarm_name == "dra-satipo-qa - La blockchain no produce bloques"
+    error_message = "El nombre de la alarma dice en español qué falla, y es el asunto del correo."
+  }
+  assert {
+    condition     = jsondecode(aws_cloudwatch_event_rule.copia_fallida[0].event_pattern).detail.result == ["failed"]
+    error_message = "La regla avisa solo de las copias que fallan."
+  }
+  assert {
+    condition     = aws_ssm_parameter.monitoreo.value == "si"
+    error_message = "El servidor debe instalar el vigilante."
+  }
+}
+
+run "umbral_de_disco_invalido" {
+  command = plan
+
+  variables {
+    monitoreo_activo       = true
+    monitoreo_disco_umbral = 99
+  }
+
+  expect_failures = [var.monitoreo_disco_umbral]
+}
+
+run "el_servidor_solo_publica_en_su_espacio" {
+  command = plan
+
+  assert {
+    condition     = jsondecode(aws_iam_role_policy.metricas.policy).Statement[0].Action == "cloudwatch:PutMetricData" && jsondecode(aws_iam_role_policy.metricas.policy).Statement[0].Condition.StringEquals["cloudwatch:namespace"] == "DRA-Satipo" && length(jsondecode(aws_iam_role_policy.metricas.policy).Statement) == 1
+    error_message = "El servidor solo publica métricas, y solo en el espacio DRA-Satipo."
+  }
 }

@@ -48,6 +48,21 @@ resource "aws_iam_role_policy" "servidor" {
   })
 }
 
+# DRA-68: el vigilante publica sus métricas, solo en el espacio DRA-Satipo.
+resource "aws_iam_role_policy" "metricas" {
+  name = "metricas-del-vigilante"
+  role = aws_iam_role.servidor.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Action    = "cloudwatch:PutMetricData"
+      Resource  = "*"
+      Condition = { StringEquals = { "cloudwatch:namespace" = "DRA-Satipo" } }
+    }]
+  })
+}
+
 resource "aws_iam_instance_profile" "servidor" {
   name = "${local.nombre}-servidor"
   role = aws_iam_role.servidor.name
