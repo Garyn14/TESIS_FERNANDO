@@ -30,7 +30,7 @@ jobs:
     steps:
       # Primero el código: los pasos corren en plataforma/, que no existe antes de descargarlo.
       - uses: actions/checkout@v7
-      - uses: aws-actions/configure-aws-credentials@v5
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           # DRA-56: la cuenta prohíbe el proveedor OIDC; la clave es un secreto del ambiente qa.
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
