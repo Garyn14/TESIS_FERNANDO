@@ -26,6 +26,8 @@ jobs:
     timeout-minutes: 45
     defaults:
       run:
+        # bash explícito: GitHub agrega pipefail, y un error antes de "| tee" detiene el paso.
+        shell: bash
         working-directory: plataforma
     steps:
       # Primero el código: los pasos corren en plataforma/, que no existe antes de descargarlo.

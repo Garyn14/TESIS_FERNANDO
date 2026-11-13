@@ -256,6 +256,12 @@ run "respaldos_encendidos" {
     error_message = "Con respaldos_activos se crea la política de copias."
   }
   assert {
+    # El disco ya trae Ambiente (default_tags): copiar sus etiquetas y además agregar Ambiente hace
+    # que AWS rechace la copia por etiqueta repetida (visto en QA con "Respaldar ahora").
+    condition     = aws_dlm_lifecycle_policy.respaldos[0].policy_details[0].schedule[0].copy_tags == false && aws_dlm_lifecycle_policy.respaldos[0].policy_details[0].schedule[0].tags_to_add["Ambiente"] == "qa" && aws_dlm_lifecycle_policy.respaldos[0].policy_details[0].schedule[0].tags_to_add["TipoDeRespaldo"] == "diario"
+    error_message = "Las copias diarias llevan sus propias etiquetas y no copian las del disco."
+  }
+  assert {
     condition     = aws_dlm_lifecycle_policy.respaldos[0].policy_details[0].resource_types == tolist(["INSTANCE"])
     error_message = "Se copia el servidor completo (todos sus discos en el mismo instante)."
   }
