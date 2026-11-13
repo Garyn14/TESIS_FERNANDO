@@ -130,7 +130,7 @@ En QA los respaldos están apagados y no cuestan nada.
 |---|---|---|
 | Métricas propias de CloudWatch (el vigilante) | 4 | $0 (capa gratuita permanente: 10 métricas) |
 | Alarmas de CloudWatch | 5 | $0 (capa gratuita permanente: 10 alarmas) |
-| Publicación de métricas | ~8 600 llamadas | $0 (capa gratuita permanente: 1 millón) |
+| Publicación de métricas | ~43 000 llamadas (una por minuto) | $0 (capa gratuita permanente: 1 millón) |
 | Correos de SNS y la regla de EventBridge | pocos | $0 (capa gratuita permanente: 1 000 correos) |
 | **Total** | | **$0** |
 

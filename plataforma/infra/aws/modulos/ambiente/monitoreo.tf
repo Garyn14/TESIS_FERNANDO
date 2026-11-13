@@ -1,9 +1,12 @@
 # Monitoreo y alertas (DRA-68): un correo cuando el servidor, la plataforma, la blockchain, el IPFS
 # o el disco fallan, y otro cuando se recuperan. También avisa si falla una copia de DRA-66.
 #
-# - El vigilante del servidor (servidor/vigilar.sh) publica cada 5 minutos una métrica por parte
+# - El vigilante del servidor (servidor/vigilar.sh) publica cada minuto una métrica por parte
 #   en el espacio DRA-Satipo de CloudWatch (1 = funciona, 0 = no).
-# - Las alarmas avisan después de dos revisiones fallidas seguidas (unos 10 minutos).
+# - Las alarmas miran ventanas de 5 minutos y avisan si dos seguidas fallan (unos 10 minutos).
+#   Con un reporte por minuto, una ventana solo queda vacía si el vigilante de verdad dejó de correr.
+# - Al activar el monitoreo, la alarma de la plataforma puede avisar una vez antes del primer
+#   reporte del vigilante (no hay datos todavía) y pasar a OK a los pocos minutos.
 # - Los correos salen del tema de SNS de la cuenta (cuenta.yml), con el correo de las alertas del
 #   presupuesto: así el correo no está en el repositorio. Hay que confirmar la suscripción una vez.
 #
@@ -15,7 +18,7 @@
 locals {
   monitoreo       = var.monitoreo_activo ? 1 : 0
   espacio         = "DRA-Satipo"
-  revision        = 300                               # segundos: el vigilante corre cada 5 minutos
+  revision        = 300                               # segundos: ventana de cada alarma (el vigilante reporta cada minuto)
   tema_de_alertas = data.aws_sns_topic.alertas[*].arn # vacío con el monitoreo apagado
 
   # Alarmas sobre las métricas del vigilante.
