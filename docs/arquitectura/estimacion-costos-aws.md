@@ -118,11 +118,11 @@ Una copia diaria del disco del servidor con Data Lifecycle Manager, que no cobra
 
 | Concepto | Supuesto | Costo al mes |
 |---|---|---|
-| Primera copia (completa) | ~10 GB usados de los 20 del disco | ~$0,50 |
+| Primera copia (completa) | 5,4 GB, medido en QA el 13/11/2026 (disco de 20 GB) | ~$0,27 |
 | Copias siguientes (solo los cambios) | 100–300 MB por día × 30 copias guardadas | ~$0,15–0,45 |
-| **Total** | | **~$1–2** |
+| **Total** | | **menos de $1** (hasta ~$2 si la base de datos y los PDF crecen) |
 
-La cifra real se mide en la prueba en QA y se anota en la evidencia de DRA-66. En QA los respaldos están apagados y no cuestan nada.
+En QA los respaldos están apagados y no cuestan nada.
 
 ## 5. Créditos y cargos adicionales
 
