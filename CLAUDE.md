@@ -43,7 +43,7 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 - Si no corresponde a ninguna historia, va en un ticket independiente.
 - Un cambio menor (redacción, un ajuste de estilo, una dependencia) puede ir sin ticket, a criterio del equipo, citándolo en el commit.
 
-## Estado al 11/11/2026
+## Estado al 13/11/2026
 
 | Sprint | Estado |
 |---|---|
@@ -51,6 +51,7 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 | 3 (HU10–12, HU16–18), 4 (HU13–15, HU29–30) y 5 (HU19–21) | Cerrados **sin la validación del PO**, por decisión del equipo: el 3 y el 4 el 05/11 (74 puntos), el 5 el 07/11 (16 puntos) |
 | 6 (HU22–28) | Cerrado el 08/11 **sin la validación del PO** (19 puntos). Con él están cerradas las 30 historias del backlog: **156 de 156 puntos** |
 | 7 (DRA-58 a DRA-62, fuera del backlog original) | Cerrado el 11/11 **sin la validación del PO** (16 puntos): nombres de roles, áreas y tipos configurables, Mesa de Partes de área y vigencia opcional. Acta en `docs/scrum/sprint-7/revision.md` |
+| 8 (13/11 – 20/11) | **En curso**, 21 puntos: DRA-66 (respaldos), DRA-68 (monitoreo), DRA-70 y DRA-71 (ayuda del portal), DRA-75 (manual general, versión 1) y DRA-74 (guía de operación), en ese orden |
 
 **Lo siguiente:** no quedan historias del backlog original por construir. **QA en AWS (DRA-44) se cerró el 11/11/2026.** Quedan en Jira:
 - la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 7 (`docs/scrum/sprint-N/guion-de-pruebas.md`), que se hará en la reunión con el negocio (material en `docs/negocio/flujos-del-sistema.md` y `presentacion/video-presentacion.mp4`);
