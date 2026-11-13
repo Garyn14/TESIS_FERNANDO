@@ -98,6 +98,21 @@ comprobar "la cadena de Besu continúa (no vuelve al bloque 0)" si "$([ "$bloque
 comprobar "la cuenta inicial del Administrador sigue existiendo" admin \
   "$(compose exec -T postgres psql -U plataforma -tAc "select nombre_usuario from usuario where nombre_usuario = 'admin'")"
 
+echo "== DRA-66: volcado de PostgreSQL antes de la copia del disco"
+VOLCADOS="$PRUEBA/volcados"
+for _ in 1 2 3 4; do
+  VOLCADOS="$VOLCADOS" "$PRUEBA/app/infra/aws/servidor/volcar-base.sh" >/dev/null
+  sleep 1 # los nombres llevan la fecha al segundo
+done
+comprobar "se conservan solo los 3 volcados más recientes" 3 "$(find "$VOLCADOS" -name 'plataforma-*.dump' | wc -l | tr -d ' ')"
+comprobar "no quedan volcados a medias" 0 "$(find "$VOLCADOS" -name '*.parcial' | wc -l | tr -d ' ')"
+ultimo=$(find "$VOLCADOS" -name 'plataforma-*.dump' | sort | tail -n 1)
+# El volcado se restaura en una base aparte y trae los datos: es una copia portable de verdad.
+compose exec -T postgres createdb -U plataforma restaurada
+compose exec -T postgres pg_restore -U plataforma -d restaurada < "$ultimo"
+comprobar "el volcado se restaura y trae los datos" "Área de prueba de persistencia" \
+  "$(compose exec -T postgres psql -U plataforma -d restaurada -tAc "select nombre from area where codigo = 'PERSIST'")"
+
 if [ "$fallas" -gt 0 ]; then
   echo "$fallas comprobaciones fallaron."
   compose logs --tail 40 backend nginx

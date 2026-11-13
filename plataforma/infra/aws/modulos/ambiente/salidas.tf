@@ -47,3 +47,8 @@ output "distribuciones" {
   description = "Identificadores de las distribuciones de CloudFront, para invalidar index.html al publicar."
   value       = { for nombre, d in aws_cloudfront_distribution.sitio : nombre => d.id }
 }
+
+output "respaldos_activos" {
+  description = "Si el ambiente tiene copias diarias del disco del servidor (DRA-66)."
+  value       = var.respaldos_activos
+}

@@ -22,12 +22,21 @@ case "$1 $2" in
   "ssm get-command-invocation")
     if [[ "$*" == *"--query Status"* ]]; then echo "${AWS_SIMULADO_RESULTADO:-Success}"; else printf 'Plataforma lista.\t\n'; fi ;;
   "ssm get-parameter") [ "${AWS_SIMULADO_CONTRATO:-no}" = si ] || exit 254 ;;
-  "ec2 describe-instances") printf 'i-0abc\tt4g.medium\tstopped\n' ;;
+  "ec2 describe-instances") printf 'i-0abc\tt4g.medium\t%s\n' "${AWS_SIMULADO_ESTADO:-stopped}" ;;
+  "ec2 create-snapshots") echo "snap-0nuevo" ;;
+  "ec2 describe-snapshots")
+    if [[ "$*" == *"--snapshot-ids"* ]]; then
+      printf '%s\t%s\n' "${AWS_SIMULADO_COPIA_AMBIENTE:-qa}" "${AWS_SIMULADO_COPIA_ESTADO:-completed}"
+    else
+      printf 'snap-0nuevo\t2026-11-13T08:00:00Z\tcompleted\tdiario\n'
+    fi ;;
+  "ec2 create-replace-root-volume-task") echo "replacevol-123" ;;
+  "ec2 describe-replace-root-volume-tasks") echo "${AWS_SIMULADO_REEMPLAZO:-succeeded}" ;;
   "cloudfront create-invalidation") echo "I123" ;;
 esac
 FIN
 chmod +x "$PRUEBA/bin/aws"
-export PATH="$PRUEBA/bin:$PATH" LLAMADAS="$PRUEBA/llamadas" SSM_PAUSA=0
+export PATH="$PRUEBA/bin:$PATH" LLAMADAS="$PRUEBA/llamadas" SSM_PAUSA=0 RESTAURAR_PAUSA=0
 
 echo "== publicar-sitio.sh"
 SITIO="$PRUEBA/dist"
@@ -67,6 +76,36 @@ comprobar "el programado apaga hasta las 05:59" "[ \"\$(HORA_LIMA=05 '$AQUI/hora
 comprobar "el programado no apaga desde las 06:00" "[ \"\$(HORA_LIMA=06 '$AQUI/horario-de-apagado.sh' schedule)\" = no ]"
 comprobar "el programado no apaga a las 08 (como el retraso del 10/11)" "[ \"\$(HORA_LIMA=08 '$AQUI/horario-de-apagado.sh' schedule)\" = no ]"
 comprobar "el programado no apaga a las 23" "[ \"\$(HORA_LIMA=23 '$AQUI/horario-de-apagado.sh' schedule)\" = no ]"
+
+echo "== respaldar-ahora.sh (DRA-66)"
+: > "$LLAMADAS"
+comprobar "no respalda un servidor apagado" "! '$AQUI/respaldar-ahora.sh' qa >/dev/null 2>&1"
+comprobar "y no crea ninguna copia" "! grep -q create-snapshots '$LLAMADAS'"
+: > "$LLAMADAS"
+comprobar "con el servidor encendido, respalda" "AWS_SIMULADO_ESTADO=running '$AQUI/respaldar-ahora.sh' qa >/dev/null"
+comprobar "primero deja el volcado de PostgreSQL" "[ \"\$(grep -n 'ssm send-command' '$LLAMADAS' | cut -d: -f1)\" -lt \"\$(grep -n 'create-snapshots' '$LLAMADAS' | cut -d: -f1)\" ] && grep 'ssm send-command' '$LLAMADAS' | grep -q volcar-base.sh"
+comprobar "copia el servidor completo, con las etiquetas del ambiente" "grep 'ec2 create-snapshots' '$LLAMADAS' | grep -q 'InstanceId=i-0abc.*--copy-tags-from-source volume.*Key=Ambiente,Value=qa},{Key=TipoDeRespaldo,Value=manual}'"
+comprobar "espera a que la copia termine" "grep -q 'ec2 wait snapshot-completed --snapshot-ids snap-0nuevo' '$LLAMADAS'"
+
+echo "== listar-respaldos.sh (DRA-66)"
+: > "$LLAMADAS"
+comprobar "lista las copias del ambiente" "'$AQUI/listar-respaldos.sh' qa | grep -q snap-0nuevo"
+comprobar "solo las de ese ambiente y que son respaldos" "grep 'ec2 describe-snapshots' '$LLAMADAS' | grep -q 'Name=tag:Ambiente,Values=qa Name=tag-key,Values=TipoDeRespaldo'"
+
+echo "== restaurar-respaldo.sh (DRA-66)"
+: > "$LLAMADAS"
+comprobar "no restaura una copia de otro ambiente" "! AWS_SIMULADO_COPIA_AMBIENTE=prod '$AQUI/restaurar-respaldo.sh' qa snap-0nuevo >/dev/null 2>&1"
+comprobar "no restaura una copia incompleta" "! AWS_SIMULADO_COPIA_ESTADO=pending '$AQUI/restaurar-respaldo.sh' qa snap-0nuevo >/dev/null 2>&1"
+comprobar "y en esos casos no toca el disco" "! grep -q create-replace-root-volume-task '$LLAMADAS'"
+: > "$LLAMADAS"
+comprobar "restaura una copia válida" "AWS_SIMULADO_ESTADO=running '$AQUI/restaurar-respaldo.sh' qa snap-0nuevo >/dev/null"
+comprobar "reemplaza el disco del mismo servidor y conserva el anterior" "grep 'ec2 create-replace-root-volume-task' '$LLAMADAS' | grep -q -- '--instance-id i-0abc --snapshot-id snap-0nuevo --no-delete-replaced-root-volume'"
+comprobar "después vuelve a desplegar la plataforma" "grep 'ssm send-command' '$LLAMADAS' | grep -q plataforma-desplegar"
+: > "$LLAMADAS"
+comprobar "con el servidor apagado, lo enciende antes" "'$AQUI/restaurar-respaldo.sh' qa snap-0nuevo >/dev/null && grep -q 'ec2 start-instances --instance-ids i-0abc' '$LLAMADAS'"
+: > "$LLAMADAS"
+comprobar "falla si el reemplazo del disco falla" "! AWS_SIMULADO_ESTADO=running AWS_SIMULADO_REEMPLAZO=failed '$AQUI/restaurar-respaldo.sh' qa snap-0nuevo >/dev/null 2>&1"
+comprobar "y entonces no despliega" "! grep -q plataforma-desplegar '$LLAMADAS'"
 
 echo "== Disparadores (.github/workflows/qa-*.yml)"
 FLUJOS=$(cd "$AQUI/../../../.." && pwd)/.github/workflows

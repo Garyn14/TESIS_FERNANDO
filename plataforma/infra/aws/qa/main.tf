@@ -35,6 +35,12 @@ provider "aws" {
   }
 }
 
+variable "respaldos_activos" {
+  description = "Respaldos diarios (DRA-66). Son para PROD: en QA solo se activan para probarlos (entrada del disparador Encender)."
+  type        = bool
+  default     = false
+}
+
 variable "tipo_instancia" {
   description = "Tamaño del servidor de QA. Se puede cambiar al encender (entrada del disparador)."
   type        = string
@@ -47,6 +53,8 @@ module "ambiente" {
   ambiente       = "qa"
   tipo_instancia = var.tipo_instancia
   disco_gb       = 20
+
+  respaldos_activos = var.respaldos_activos
 
   # Como el modo demo del entorno local: sesión de 30 minutos, sincronización con la blockchain
   # cada 30 segundos y plazo de firma de 15 minutos (los valores de producción).

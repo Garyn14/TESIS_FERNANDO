@@ -52,3 +52,11 @@ resource "aws_ssm_parameter" "configuracion" {
   type  = "String"
   value = each.value
 }
+
+# DRA-66: el servidor guarda un volcado de PostgreSQL antes de cada copia solo si los respaldos
+# están activos (servidor/desplegar.sh instala o quita el temporizador).
+resource "aws_ssm_parameter" "respaldos" {
+  name  = "${local.ruta_parametros}/RESPALDOS_ACTIVOS"
+  type  = "String"
+  value = var.respaldos_activos ? "si" : "no"
+}
