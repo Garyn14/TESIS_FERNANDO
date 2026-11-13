@@ -124,6 +124,18 @@ Una copia diaria del disco del servidor con Data Lifecycle Manager, que no cobra
 
 En QA los respaldos están apagados y no cuestan nada.
 
+## 4c. Monitoreo de PROD (DRA-68)
+
+| Concepto | Cantidad | Costo al mes |
+|---|---|---|
+| Métricas propias de CloudWatch (el vigilante) | 4 | $0 (capa gratuita permanente: 10 métricas) |
+| Alarmas de CloudWatch | 5 | $0 (capa gratuita permanente: 10 alarmas) |
+| Publicación de métricas | ~8 600 llamadas | $0 (capa gratuita permanente: 1 millón) |
+| Correos de SNS y la regla de EventBridge | pocos | $0 (capa gratuita permanente: 1 000 correos) |
+| **Total** | | **$0** |
+
+Si otro servicio de la cuenta usara la capa gratuita de CloudWatch, cada métrica extra cuesta $0,30 y cada alarma $0,10 al mes.
+
 ## 5. Créditos y cargos adicionales
 
 - **Créditos gratuitos:** desde julio de 2025, las cuentas nuevas de AWS reciben hasta **$200 en créditos válidos por 6 meses**. Con eso, el escenario A de 3 meses ($192,62) quedaría prácticamente cubierto. *Hay que confirmar las condiciones vigentes al crear la cuenta.*

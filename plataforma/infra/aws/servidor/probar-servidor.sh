@@ -113,6 +113,41 @@ compose exec -T postgres pg_restore -U plataforma -d restaurada < "$ultimo"
 comprobar "el volcado se restaura y trae los datos" "Área de prueba de persistencia" \
   "$(compose exec -T postgres psql -U plataforma -d restaurada -tAc "select nombre from area where codigo = 'PERSIST'")"
 
+echo "== DRA-68: el vigilante publica en CloudWatch si cada parte funciona"
+# aws simulado: guarda lo que se publicaría en CloudWatch.
+mkdir -p "$PRUEBA/bin"
+cat > "$PRUEBA/bin/aws" <<'FIN'
+#!/usr/bin/env bash
+echo "$*" > "$PRUEBA_METRICAS"
+FIN
+chmod +x "$PRUEBA/bin/aws"
+vigilar() {
+  PATH="$PRUEBA/bin:$PATH" PRUEBA_METRICAS="$PRUEBA/metricas" AMBIENTE=prueba REGION=us-east-2 \
+    VIGILANTE_ESTADO="$PRUEBA/vigilante" "$PRUEBA/app/infra/aws/servidor/vigilar.sh" >/dev/null
+}
+valor() { # valor <métrica>: lo último que publicó el vigilante
+  grep -o "MetricName=$1,Dimensions=\[{Name=Ambiente,Value=prueba}\],Value=[0-9]*" "$PRUEBA/metricas" | sed 's/.*Value=//'
+}
+vigilar
+comprobar "publica en el espacio DRA-Satipo de la región del servidor" 1 \
+  "$(grep -c -- '--region us-east-2 --namespace DRA-Satipo' "$PRUEBA/metricas")"
+comprobar "con todo funcionando: plataforma 1" 1 "$(valor Plataforma)"
+comprobar "con todo funcionando: IPFS 1" 1 "$(valor IPFS)"
+sleep 6
+vigilar
+comprobar "la cadena avanza: blockchain 1" 1 "$(valor Blockchain)"
+comprobar "informa el disco usado (0 a 100)" 1 "$(valor DiscoUsado | awk '$1 >= 0 && $1 <= 100 {print 1}')"
+# Con 2 de 4 validadores, QBFT no llega a 3 votos y deja de producir bloques.
+compose stop besu-nodo3 besu-nodo4 >/dev/null 2>&1
+vigilar
+sleep 6
+vigilar
+comprobar "con la red detenida: blockchain 0" 0 "$(valor Blockchain)"
+compose stop ipfs backend >/dev/null 2>&1
+vigilar
+comprobar "con el IPFS detenido: IPFS 0" 0 "$(valor IPFS)"
+comprobar "con el backend detenido: plataforma 0" 0 "$(valor Plataforma)"
+
 if [ "$fallas" -gt 0 ]; then
   echo "$fallas comprobaciones fallaron."
   compose logs --tail 40 backend nginx

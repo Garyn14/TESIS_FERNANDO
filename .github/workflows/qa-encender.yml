@@ -16,6 +16,11 @@ on:
         type: boolean
         required: false
         default: false
+      monitoreo:
+        description: Activar las alarmas y el vigilante (DRA-68). Solo para probarlos; QA se apaga de noche y avisaría a diario. Sin marcar, se desactivan.
+        type: boolean
+        required: false
+        default: false
 
 # Encender, Apagar y Destruir nunca corren a la vez.
 concurrency:
@@ -102,7 +107,8 @@ jobs:
         run: |
           terraform init -input=false -backend-config="bucket=$BUCKET"
           terraform apply -input=false -auto-approve -var "tipo_instancia=$TIPO" \
-            -var "respaldos_activos=${{ inputs.respaldos == true }}"
+            -var "respaldos_activos=${{ inputs.respaldos == true }}" \
+            -var "monitoreo_activo=${{ inputs.monitoreo == true }}"
           terraform output -json ambiente > "$RUNNER_TEMP/ambiente.json"
           jq -r '
             "SERVIDOR=\(.servidor_id)",

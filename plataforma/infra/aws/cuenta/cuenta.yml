@@ -23,7 +23,7 @@ Parameters:
     AllowedPattern: '^[a-z0-9-]+$'
   CorreoAlertas:
     Type: String
-    Description: Correo que recibe las alertas de gasto del presupuesto.
+    Description: Correo que recibe las alertas de gasto del presupuesto y las del monitoreo (DRA-68).
     AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
 
 Resources:
@@ -156,6 +156,36 @@ Resources:
             Condition:
               Bool:
                 'aws:SecureTransport': 'false'
+
+  # Alertas del monitoreo (DRA-68): las alarmas de CloudWatch y la regla de copias fallidas de cada
+  # ambiente (modulos/ambiente/monitoreo.tf) publican aquí, y AWS las manda por correo. El correo
+  # queda en la pila, no en el repositorio. AWS envía un enlace para confirmar la suscripción.
+  TemaAlertas:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: dra-satipo-alertas
+      DisplayName: DRA Satipo
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref CorreoAlertas
+
+  # Solo las alarmas y las reglas de esta cuenta pueden publicar en el tema.
+  PoliticaTemaAlertas:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics: [!Ref TemaAlertas]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AlarmasYReglasDeEstaCuenta
+            Effect: Allow
+            Principal:
+              Service: [cloudwatch.amazonaws.com, events.amazonaws.com]
+            Action: sns:Publish
+            Resource: !Ref TemaAlertas
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Ref AWS::AccountId
 
   # Presupuesto de TODA la cuenta. Los créditos NO se descuentan (IncludeCredit: false): si se
   # descontaran, el gasto neto sería $0 mientras dure el crédito y las alertas nunca llegarían.
