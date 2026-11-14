@@ -81,7 +81,7 @@ const TITULOS = [
     await p.goto(PORTAL)
     await p.getByRole('navigation', { name: 'Ayuda' }).getByRole('link').click()
     await guia(p).waitFor()
-    await p.getByRole('link', { name: 'Verificar un documento' }).click()
+    await p.getByRole('link', { name: 'Verificar un documento', exact: true }).click()
     await p.getByLabel('Código de verificación').waitFor()
     assert.equal(new URL(p.url()).pathname, '/')
     await p.close()
