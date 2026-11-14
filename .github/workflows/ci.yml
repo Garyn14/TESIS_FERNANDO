@@ -231,8 +231,12 @@ jobs:
     name: Revisión estática (SonarQube Cloud)
     runs-on: ubuntu-latest
     needs: [backend, frontend, portal]
-    # En los PR que vienen de otro repositorio (Dependabot, forks) no hay acceso al secreto.
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    # El plan gratuito de SonarQube Cloud solo muestra main y los pull requests (no otras ramas):
+    # se analiza main en cada push y cada PR del mismo repositorio. Los PR de otro repositorio
+    # (Dependabot, forks) no tienen acceso al secreto.
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     continue-on-error: true
     timeout-minutes: 15
     steps:
@@ -299,6 +303,9 @@ jobs:
           slither contracts/ --solc-remaps "@openzeppelin/=node_modules/@openzeppelin/" \
             --filter-paths node_modules --exclude-dependencies \
             --sarif slither.sarif --fail-none > slither.txt 2>&1 || true
+          # Rutas desde la raíz del repositorio, para que la pestaña Security enlace al archivo.
+          jq '(.runs[].results[].locations[].physicalLocation.artifactLocation.uri) |= "plataforma/contracts/" + .' \
+            slither.sarif > slither-repo.sarif && mv slither-repo.sarif slither.sarif
           grep -vE "running$|Multiple frameworks" slither.txt > slither-limpio.txt
           {
             echo "## Slither (contrato)"

@@ -12,6 +12,7 @@ Parte del código se escribió con ayuda de un asistente de IA (lo declara la te
 
 - Dos jobs nuevos en `.github/workflows/ci.yml`:
   - **Revisión estática (SonarQube Cloud):** espera al backend, al frontend y al portal, y usa lo que ellos dejan como artefactos (las clases compiladas, el informe de JaCoCo y el `lcov.info` de Vitest), sin volver a correr las pruebas.
+    Corre **solo en `main` y en los pull requests**: el plan gratuito de SonarQube Cloud no deja ver el análisis de otras ramas (lo comprobé en la DRA-78: "Organization is not allowed to access data from non main branches"). En una rama `DRA-*` el job aparece como omitido.
   - **Revisión estática (contrato y secretos):** Slither y gitleaks.
 - **Por ahora son informativos (DRA-78):** si encuentran algo, o si fallan, la CI sigue en verde (`continue-on-error`). Bloquear solo lo grave del código nuevo es la DRA-79.
 - **Código nuevo** = lo que cambia respecto de `main` (`sonar.newCode.referenceBranch=main` en `sonar-project.properties`).

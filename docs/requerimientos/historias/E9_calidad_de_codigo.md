@@ -36,7 +36,7 @@ SonarQube Cloud ya está preparado por el dueño del repositorio:
   - JaCoCo en el backend, con un informe XML en `mvn verify`;
   - `@vitest/coverage-v8` en el frontend y el portal, con un informe `lcov`.
   - Las cantidades de pruebas no cambian.
-- [ ] Un **job nuevo, "Revisión estática (SonarQube Cloud)"**, que corre después del backend, el frontend y el portal y usa sus resultados (clases compiladas e informes de cobertura) sin volver a correr las pruebas. Analiza `main` y cada rama `DRA-*`.
+- [ ] Un **job nuevo, "Revisión estática (SonarQube Cloud)"**, que corre después del backend, el frontend y el portal y usa sus resultados (clases compiladas e informes de cobertura) sin volver a correr las pruebas. Analiza `main` y los pull requests del mismo repositorio. *(Ajuste al construir: el plan gratuito de SonarQube Cloud no muestra otras ramas, así que en las ramas `DRA-*` el job se omite.)*
 
 **Contrato y secretos**
 - [ ] Un **job nuevo, "Revisión estática (contrato y secretos)"**:
