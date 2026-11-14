@@ -42,7 +42,17 @@ En un entorno limpio, con la red Besu real: **15 pasos correctos**, de los cuale
 
 ## Regresión
 
-El menú de todos los roles cambió, así que se corrieron las pruebas de punta a punta de los Sprints 1 a 7. Ahora esperan la nueva opción del menú. Los resultados están en [regresion.txt](regresion.txt).
+El menú de todos los roles cambió, así que se corrieron las pruebas de punta a punta de los Sprints 1 a 7, cada una en un entorno limpio. Ahora esperan la nueva opción del menú. Todas pasaron ([regresion.txt](regresion.txt)):
+
+| Sprint | Pasos correctos |
+|---|---|
+| 1 | 32 |
+| 2 | 23 |
+| 3 | 34 |
+| 4 | 32 |
+| 5 | 17 |
+| 6 | 30 |
+| 7 | 26 |
 
 ## Ajustes encontrados
 
