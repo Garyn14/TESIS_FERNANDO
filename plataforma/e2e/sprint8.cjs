@@ -80,7 +80,10 @@ const TITULOS = [
   await paso('DRA-70 · El pie de cada página lleva a la guía, y la guía vuelve a verificar', async () => {
     const p = await b.newPage({ viewport: { width: 1280, height: 900 } })
     await p.goto(PORTAL)
-    await p.getByRole('navigation', { name: 'Ayuda' }).getByRole('link').click()
+    await p
+      .getByRole('navigation', { name: 'Ayuda' })
+      .getByRole('link', { name: '¿Cómo verificar un documento?' })
+      .click()
     await guia(p).waitFor()
     await p.getByRole('link', { name: 'Verificar un documento', exact: true }).click()
     await p.getByLabel('Código de verificación').waitFor()
