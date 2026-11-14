@@ -126,7 +126,8 @@ export default function DibujoDocumento() {
           </Leyenda>
           <Leyenda numero={2}>
             <strong>Código de verificación</strong>: impreso debajo del QR, con la forma{' '}
-            <span className="whitespace-nowrap">DRA-2026-XXXXXX</span>. También aparece en la última línea del documento.
+            <span className="whitespace-nowrap">DRA-2026-XXXXXX</span>. También aparece en la última
+            línea del documento.
           </Leyenda>
           <Leyenda numero={3}>
             <strong>Fecha de emisión</strong> y, si el documento tiene vigencia, la fecha{' '}

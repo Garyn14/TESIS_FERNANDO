@@ -1,0 +1,7 @@
+✓ DRA-70 · Desde la portada se llega a la guía "¿Cómo verificar un documento?"
+✓ DRA-70 · La guía explica el QR, el código, dónde están y los 6 resultados
+✓ DRA-70 · Un QR que no corresponde a ningún documento lleva a la guía
+✓ DRA-70 · El pie de cada página lleva a la guía, y la guía vuelve a verificar
+✓ DRA-70 · En el celular la guía se lee sin desplazarse de lado
+
+5 pasos correctos
