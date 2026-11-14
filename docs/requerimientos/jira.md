@@ -19,7 +19,7 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 | 6 | 08/11 – 08/11 | Cerrado (19 de 19 puntos; validación del PO al final, en DRA-48) | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
 | | | | | **Total del backlog original** | **156** |
 | 7 | 11/11 – 11/11 | Cerrado (16 de 16 puntos; validación del PO al final, en DRA-48) | Ajustar roles y áreas a la organización y agregar la vigencia opcional de los documentos | DRA-59, DRA-60, DRA-61, DRA-58, DRA-62 | 16 |
-| 8 | 13/11 – 14/11 | Cerrado (21 de 21 puntos; validación del PO al final, en DRA-48; Jira pendiente) | Preparar la operación de PROD y dar la primera ayuda a los usuarios | DRA-66, DRA-68, DRA-70, DRA-71, DRA-75, DRA-74 | 21 |
+| 8 | 13/11 – 14/11 | Cerrado (21 de 21 puntos; validación del PO al final, en DRA-48) | Preparar la operación de PROD y dar la primera ayuda a los usuarios | DRA-66, DRA-68, DRA-70, DRA-71, DRA-75, DRA-74 | 21 |
 
 **Avance:** 156 de 156 puntos cerrados (100 %): todas las historias del backlog. De ellos, 47 (Sprints 1 y 2) están aprobados por el PO; los 109 de los Sprints 3 a 6 esperan la validación final del PO (DRA-48). Velocidad: 24 puntos en el Sprint 1, 23 en el Sprint 2, 47 en el Sprint 3, 27 en el Sprint 4, 16 en el Sprint 5 y 19 en el Sprint 6.
 
@@ -79,7 +79,7 @@ El 13/11 se agregó **DRA-75, el manual general (versión 1)**: un solo manual q
 
 - **Las 6 historias se construyeron** del 13 al 14/11, con la CI en verde y la prueba de punta a punta del Sprint (17 pasos). Acta en [docs/scrum/sprint-8/revision.md](../scrum/sprint-8/revision.md).
 - **Se cerró sin la validación del PO**, como los Sprints 3 a 7: queda para DRA-48.
-- **Jira quedó pendiente:** el conector se desconectó el 13/11, después de pasar DRA-66 a En revisión. Las descripciones, los comentarios, las transiciones y el cierre del Sprint 8 (id 37) están en [docs/scrum/sprint-8/pendiente-jira.md](../scrum/sprint-8/pendiente-jira.md), para registrarlos en cuanto vuelva.
+- **En Jira**, las 6 historias pasaron a Listo con su comentario de cierre, y el Sprint 8 (id 37) se cerró el 14/11. El conector estuvo desconectado del 13 al 14/11: lo pendiente se guardó en [docs/scrum/sprint-8/pendiente-jira.md](../scrum/sprint-8/pendiente-jira.md) y se registró cuando volvió.
 - **Quedan en el backlog:**
   - DRA-48 (validación del PO);
   - DRA-63 (spike de la billetera);

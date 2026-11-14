@@ -68,7 +68,6 @@ Las tomé al refinar o al construir cada historia, y el responsable del proyecto
 
 | Tema | Qué falta | Cuándo |
 |---|---|---|
-| **Jira de este Sprint** | El conector de Jira se desconectó a mitad del Sprint. Faltan las descripciones, los comentarios y las transiciones de DRA-68, DRA-70, DRA-71, DRA-75 y DRA-74, y cerrar el Sprint 8. Todo está listo en [pendiente-jira.md](pendiente-jira.md) | En cuanto vuelva el conector |
 | **Suscripción del correo de alertas** | El dueño del correo de alertas debe confirmar la suscripción ("AWS Notification - Subscription Confirmation"). Después se comprueba la entrega con un aviso de prueba | Antes de activar el monitoreo en PROD |
 | Validación del PO de los Sprints 3 a 8 (DRA-48) | Las historias se cerraron sin las pruebas del PO | Al final del proyecto |
 | DRA-72 y DRA-73 | Manual por rol (versión 2) y preguntas frecuentes de la plataforma | Después de DRA-48 |
@@ -111,9 +110,7 @@ Las tomé al refinar o al construir cada historia, y el responsable del proyecto
 
 - **Cierre del Sprint 8:** 14/11/2026, por decisión del equipo, **sin la validación del PO**, igual que en los Sprints 3 a 7.
 - **Cómo se cerró:** las 6 historias están construidas, integradas a `main` con la CI en verde (7 jobs) y verificadas con la prueba de punta a punta o, las de infraestructura, en QA.
-- **En Jira:**
-  - DRA-66 quedó **En revisión**, con su comentario.
-  - Las demás y el cierre del Sprint quedan pendientes por la desconexión del conector ([pendiente-jira.md](pendiente-jira.md)). Al registrarlas, pasan a **Listo**, con un comentario que deja constancia de que la validación del PO está pendiente.
+- **En Jira:** las 6 historias pasaron a **Listo**, con un comentario de cierre que deja constancia de que la validación del PO está pendiente, y el Sprint 8 se cerró el 14/11/2026. El conector se desconectó a mitad del Sprint: lo pendiente se guardó en [pendiente-jira.md](pendiente-jira.md) y se registró en cuanto volvió.
 - **Validación pendiente:** el PO probará los Sprints 3 a 8 **al final del proyecto**, en **DRA-48**. **Cada observación del PO se registrará como un ticket nuevo**; las historias cerradas no se reabren.
 - **Quedan en el backlog:**
   - DRA-48 (validación del PO);
@@ -124,11 +121,11 @@ Las tomé al refinar o al construir cada historia, y el responsable del proyecto
 
 | Historia | Ticket | Puntos | Decisión | Registro en Jira |
 |---|---|---|---|---|
-| Respaldos y recuperación | DRA-66 | 5 | Cerrada sin validación del PO | En revisión desde el 13/11; pasa a Listo con el cierre |
-| Monitoreo y alertas | DRA-68 | 5 | Cerrada sin validación del PO | Pendiente (conector) |
-| "¿Cómo verificar un documento?" | DRA-70 | 2 | Cerrada sin validación del PO | Pendiente (conector) |
-| Preguntas frecuentes del portal | DRA-71 | 3 | Cerrada sin validación del PO | Pendiente (conector) |
-| Manual de usuario general (versión 1) | DRA-75 | 3 | Cerrada sin validación del PO | Pendiente (conector) |
-| Guía de operación | DRA-74 | 3 | Cerrada sin validación del PO | Pendiente (conector) |
+| Respaldos y recuperación | DRA-66 | 5 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 14/11; validación en DRA-48 |
+| Monitoreo y alertas | DRA-68 | 5 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 14/11; validación en DRA-48 |
+| "¿Cómo verificar un documento?" | DRA-70 | 2 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 14/11; validación en DRA-48 |
+| Preguntas frecuentes del portal | DRA-71 | 3 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 14/11; validación en DRA-48 |
+| Manual de usuario general (versión 1) | DRA-75 | 3 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 14/11; validación en DRA-48 |
+| Guía de operación | DRA-74 | 3 | Cerrada sin validación del PO (Listo) | Comentario de cierre del 14/11; validación en DRA-48 |
 
-**Resultado:** 6 de 6 historias, con 21 puntos. La velocidad del Sprint 8 es de 21 puntos. Sumados a los 172 cerrados hasta el Sprint 7, son **193 puntos**.
+**Resultado:** 6 de 6 historias cerradas, con 21 puntos. En Jira, el Sprint 8 se cerró el 14/11/2026. La velocidad del Sprint 8 es de 21 puntos. Sumados a los 172 cerrados hasta el Sprint 7, son **193 puntos**.

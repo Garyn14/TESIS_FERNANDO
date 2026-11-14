@@ -1,6 +1,8 @@
-# Pendiente en Jira del Sprint 8
+# Pendiente en Jira del Sprint 8 (registrado)
 
-El conector de Jira se desconectó a mitad del Sprint 8, el 13/11/2026. Este archivo guarda lo que falta registrar, para hacerlo en cuanto vuelva. Al terminar, se borra o se marca como registrado.
+El conector de Jira se desconectó a mitad del Sprint 8, el 13/11/2026. Este archivo guardó lo que faltaba registrar.
+
+> **Registrado el 14/11/2026**, cuando volvió el conector: las descripciones de DRA-68, DRA-70, DRA-71, DRA-75 y DRA-74, sus comentarios, las transiciones (En curso, En revisión y Listo, también DRA-66) con un comentario de cierre en cada una, y el cierre del Sprint 8 (id 37). Se conserva como registro de lo que se subió.
 
 ## Qué falta
 
