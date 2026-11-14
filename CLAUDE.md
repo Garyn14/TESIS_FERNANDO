@@ -28,9 +28,9 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
    - Frontend y portal: `npx prettier --write src`, `npm run lint`, `npx vitest run`, `npm run build`.
 4. **Prueba de punta a punta** del sprint en un entorno limpio (`plataforma/e2e/sprintN.cjs`, con `./e2e/regresion.sh N`), y regresión de los sprints anteriores.
 5. **Evidencia** en `docs/evidencias/sprint-N/HUxx/README.md`, con capturas, qué se comprueba, pruebas automáticas y ajustes encontrados.
-6. **Push** y esperar la CI con los **9 jobs** en verde (desde DRA-78, dos son de revisión estática e informativos; el de SonarQube se omite en las ramas `DRA-*`). **Las cantidades de pruebas se toman del registro de la CI** (`gh run view <id> --log`), nunca se calculan a mano: ya hubo que corregir cifras inventadas.
-7. **Registrar** la ejecución en `integracion-continua.md`, en un commit aparte.
-8. **Fusionar** a `main` con fast-forward y hacer push.
+6. **Push** de la rama y **pull request hacia `main`** (`gh pr create`, en español, sin líneas de coautoría). Esperar la CI **del PR** con los **9 jobs** en verde (DRA-79). Dos son de revisión estática y bloquean solo lo grave: una clave nueva (gitleaks), un aviso nuevo medio o alto en el contrato (Slither) y un hallazgo nuevo de seguridad o fiabilidad alto o bloqueante (SonarQube, que solo corre en `main` y en los PR). Si algo grave aparece, se corrige o, si es un falso positivo revisado, se excluye con su justificación (`docs/calidad/README.md`). **Un PR en rojo no se fusiona.** **Las cantidades de pruebas se toman del registro de la CI** (`gh run view <id> --log`), nunca se calculan a mano: ya hubo que corregir cifras inventadas.
+7. **Registrar** la ejecución en `integracion-continua.md`, en un commit aparte (va también al PR).
+8. **Fusionar** a `main` con fast-forward desde la terminal y hacer push: GitHub marca el PR como fusionado solo y el historial sigue lineal.
 9. **Jira:** comentario detallado en primera persona (qué construí, cómo lo probé, decisiones a validar, lo que queda fuera, ajustes) y transición a **En revisión** (31).
 10. **Informar** al usuario en español y preguntar "¿Ok para continuar con la HUxx?".
 

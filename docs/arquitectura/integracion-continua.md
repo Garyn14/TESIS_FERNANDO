@@ -13,7 +13,7 @@ La integración continua (CI) comprueba de forma automática que cada cambio sub
 | Evento | Ramas |
 |---|---|
 | `push` | `main` y cualquier rama que empiece con `DRA-` (por ejemplo `DRA-14-login-por-rol`) |
-| `pull_request` | Cualquier pull request hacia el repositorio |
+| `pull_request` | Cualquier pull request hacia el repositorio. Desde la DRA-79, cada historia llega a `main` por un PR: es la ejecución que cuenta, porque incluye SonarQube |
 
 Una ejecución completa tarda unos 2 minutos. Los jobs más lentos son el de la red Besu, que levanta 4 nodos, y el del backend, que levanta un PostgreSQL real para las pruebas.
 
@@ -40,14 +40,14 @@ flowchart LR
     CS --> CS1[Slither sobre el contrato] --> CS2[gitleaks sobre todo el historial] --> CS3[SARIF a la pestaña Security]
     B4 & F5 & P2 --> SQ[Job Revisión estática: SonarQube Cloud, solo main y PR] --> SQ1[Análisis con las clases y la cobertura]
     B4 & F5 & P2 & C4 & RB4 & IP4 & AW4 --> R{¿Los siete en verde?}
-    CS3 & SQ1 -. informativos, no bloquean .-> R
+    CS3 & SQ1 -. bloquean solo lo grave .-> R
     R -- Sí --> OK[Cambio integrable a main]
     R -- No --> KO[Se corrige en la misma rama]
 ```
 
 Los siete jobs corren **en paralelo** y son independientes: si falla uno, los otros terminan igual y se ve qué parte del proyecto tiene el problema.
 
-Desde la DRA-78 hay **dos jobs más de revisión estática** (nueve en total), por ahora **informativos**: muestran lo que encuentran, pero no ponen la CI en rojo (`continue-on-error`). El de SonarQube Cloud espera al backend, al frontend y al portal y usa sus artefactos; corre solo en `main` y en los pull requests, porque el plan gratuito no muestra otras ramas (en una rama `DRA-*` aparece omitido). Detalle en [`docs/calidad/README.md`](../calidad/README.md).
+Desde la DRA-78 hay **dos jobs más de revisión estática** (nueve en total). Desde la DRA-79 **bloquean solo lo grave**: una clave nueva, un aviso nuevo medio o alto en el contrato y, en un pull request, un hallazgo nuevo de seguridad o fiabilidad alto o bloqueante; lo demás queda como aviso. El de SonarQube Cloud espera al backend, al frontend y al portal y usa sus artefactos; corre solo en `main` y en los pull requests, porque el plan gratuito no muestra otras ramas (en una rama `DRA-*` aparece omitido). Detalle en [`docs/calidad/README.md`](../calidad/README.md).
 
 ## 4. Qué valida cada job
 

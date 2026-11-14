@@ -225,8 +225,9 @@ jobs:
       - name: Servidor de AWS en Docker (nginx, /rpc, HU20 y persistencia)
         run: ./servidor/probar-servidor.sh ../../backend/target/plataforma-backend-*.jar
 
-  # DRA-78: revisión estática. Informativa: no bloquea la CI (continue-on-error); los hallazgos se
-  # ven en SonarQube Cloud, en el resumen del job y en la pestaña Security del repositorio.
+  # Revisión estática (DRA-78). Desde la DRA-79 bloquea solo lo grave: una clave nueva (gitleaks),
+  # un aviso nuevo medio o alto en el contrato (Slither) y, en un pull request, un hallazgo nuevo de
+  # seguridad o fiabilidad alto o bloqueante (SonarQube). Lo demás queda como aviso.
   sonarqube:
     name: Revisión estática (SonarQube Cloud)
     runs-on: ubuntu-latest
@@ -237,7 +238,6 @@ jobs:
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
-    continue-on-error: true
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
@@ -268,11 +268,15 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # DRA-79: en un PR falla solo con un hallazgo nuevo grave; el umbral "Sonar way" es un aviso.
+      - name: Revisar lo grave del código nuevo
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: .github/scripts/revisar-sonarqube.sh "${{ github.event.pull_request.number }}"
 
   analisis-contrato-y-secretos:
     name: Revisión estática (contrato y secretos)
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 10
     permissions:
       contents: read
@@ -280,8 +284,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # Historial completo: gitleaks busca secretos en todos los commits.
+          # Historial completo: gitleaks busca secretos en todos los commits de lo que se integra.
           fetch-depth: 0
+      - name: Prueba del script de SonarQube (con un SonarQube simulado)
+        run: |
+          shellcheck .github/scripts/*.sh
+          .github/scripts/probar-revisar-sonarqube.sh
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
@@ -305,7 +313,7 @@ jobs:
           slither contracts/ --solc-remaps "@openzeppelin/=node_modules/@openzeppelin/" \
             --filter-paths node_modules --exclude-dependencies \
             --triage-database slither.db.json \
-            --sarif slither.sarif --fail-none > slither.txt 2>&1 || true
+            --sarif slither.sarif --fail-medium > slither.txt 2>&1 || salida=$?
           # Rutas desde la raíz del repositorio, para que la pestaña Security enlace al archivo.
           jq '(.runs[].results[].locations[].physicalLocation.artifactLocation.uri) |= "plataforma/contracts/" + .' \
             slither.sarif > slither-repo.sarif && mv slither-repo.sarif slither.sarif
@@ -316,11 +324,21 @@ jobs:
             cat slither-limpio.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          # DRA-79: un aviso nuevo de gravedad media o alta falla la CI.
+          if [ "${salida:-0}" -ne 0 ]; then
+            echo "::error::Slither encontró un aviso nuevo de gravedad media o alta en el contrato (ver el resumen)."
+            exit 1
+          fi
+      # DRA-79: revisa el historial de lo que se integra (HEAD), no las otras ramas; una clave fuera de
+      # .gitleaksignore falla la CI.
       - name: Secretos en todo el historial con gitleaks
+        if: always()
         run: |
+          salida=0
           docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 \
-            git /repo --redact --exit-code 0 \
-            --report-format sarif --report-path /repo/gitleaks.sarif 2>&1 | tee gitleaks.txt
+            git /repo --log-opts=HEAD --redact --exit-code 1 \
+            --report-format sarif --report-path /repo/gitleaks.sarif > gitleaks.txt 2>&1 || salida=$?
+          cat gitleaks.txt
           {
             echo "## gitleaks (secretos)"
             echo '```'
@@ -328,6 +346,10 @@ jobs:
             jq -r '.runs[0].results[] | "\(.ruleId)  \(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)"' gitleaks.sarif
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$salida" -ne 0 ]; then
+            echo "::error::gitleaks encontró una posible clave (ver el resumen). Si es real, revóquela de inmediato: el repositorio es público."
+            exit 1
+          fi
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -339,13 +361,13 @@ jobs:
           retention-days: 30
       # Los PR de otro repositorio no pueden publicar en la pestaña Security.
       - name: Publicar Slither en la pestaña Security
-        if: github.event_name == 'push'
+        if: always() && github.event_name == 'push'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: plataforma/contracts/slither.sarif
           category: slither
       - name: Publicar gitleaks en la pestaña Security
-        if: github.event_name == 'push'
+        if: always() && github.event_name == 'push'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: gitleaks.sarif

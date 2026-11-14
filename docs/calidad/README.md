@@ -14,7 +14,16 @@ Parte del código se escribió con ayuda de un asistente de IA (lo declara la te
   - **Revisión estática (SonarQube Cloud):** espera al backend, al frontend y al portal, y usa lo que ellos dejan como artefactos (las clases compiladas, el informe de JaCoCo y el `lcov.info` de Vitest), sin volver a correr las pruebas.
     Corre **solo en `main` y en los pull requests**: el plan gratuito de SonarQube Cloud no deja ver el análisis de otras ramas (lo comprobé en la DRA-78: "Organization is not allowed to access data from non main branches"). En una rama `DRA-*` el job aparece como omitido.
   - **Revisión estática (contrato y secretos):** Slither y gitleaks.
-- **Por ahora son informativos (DRA-78):** si encuentran algo, o si fallan, la CI sigue en verde (`continue-on-error`). Bloquear solo lo grave del código nuevo es la DRA-79.
+- **Bloquean solo lo grave (DRA-79):**
+
+  | Bloquea (la CI falla) | No bloquea (aviso) |
+  | --- | --- |
+  | Una clave nueva en el historial de lo que se integra (gitleaks, salvo las huellas de `.gitleaksignore`) | El umbral "Sonar way": mantenibilidad, cobertura y duplicación del código nuevo |
+  | Un aviso nuevo de gravedad media o alta en el contrato (Slither, salvo los de `slither.db.json`) | Los hallazgos de gravedad media o baja |
+  | En un **pull request**, un hallazgo nuevo de seguridad o fiabilidad con gravedad alta o bloqueante (SonarQube) | En `main`, un hallazgo grave: avisa para abrir un ticket de corrección |
+
+  La decisión de SonarQube la toma `.github/scripts/revisar-sonarqube.sh` después del análisis, consultando los hallazgos del PR (el plan gratuito no deja editar el umbral "Sonar way", que exigiría más de lo acordado). Sus casos se prueban en la CI con un SonarQube simulado (`probar-revisar-sonarqube.sh`).
+- **Cada historia llega a `main` por un pull request** (DRA-79), porque el plan gratuito solo analiza `main` y los PR. Se fusiona con fast-forward desde la terminal, solo con los 9 jobs en verde. Sin protección de rama en GitHub, a propósito: el bloqueo lo cumple el flujo (un PR en rojo no se fusiona).
 - **Código nuevo** = lo que cambia respecto de `main` (`sonar.newCode.referenceBranch=main` en `sonar-project.properties`).
 - **Cobertura:** el backend la mide con JaCoCo dentro de `./mvnw verify` (`target/site/jacoco/jacoco.xml`); el frontend y el portal con `npm test -- --coverage` (`coverage/lcov.info`).
 
