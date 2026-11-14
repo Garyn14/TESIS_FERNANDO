@@ -96,3 +96,5 @@ Los propongo para que el equipo los valide; ninguno es urgente.
 | Ticket | Qué cambió | Resultado esperado tras el análisis de `main` |
 | --- | --- | --- |
 | **DRA-80** | Exclusiones de los falsos positivos y aceptados: 20 reglas por archivo en `sonar-project.properties`, 5 avisos en `plataforma/contracts/slither.db.json` y 3 huellas en `.gitleaksignore` | SonarQube: 12 hallazgos abiertos (los reales); Slither y gitleaks: 0 |
+| **DRA-81** | `Textos` sin expresiones regulares (S8786, S5850), *records* que comparan el contenido del PDF (S6218), y ajustes en `e2e/sprint6.cjs` (S8786) y `cloudfront.cjs` (S9383) | SonarQube: 3 hallazgos abiertos (los de la DRA-82) |
+| **DRA-82** | Política de cada bucket con la negación de todo acceso sin HTTPS (S6249), probada con `terraform test` | SonarQube: 0 hallazgos abiertos |

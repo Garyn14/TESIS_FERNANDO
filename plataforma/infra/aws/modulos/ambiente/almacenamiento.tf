@@ -43,3 +43,53 @@ resource "aws_s3_bucket_ownership_controls" "sin_acl" {
     object_ownership = "BucketOwnerEnforced"
   }
 }
+
+# Política de cada bucket (una sola por bucket en S3). DRA-82: todos niegan cualquier acceso que no
+# use HTTPS. Además, el del frontend y el del portal solo se dejan leer por su propia distribución
+# de CloudFront (Origin Access Control, DRA-54).
+locals {
+  sitio_del_bucket = { frontend = "plataforma", portal = "portal" }
+}
+
+resource "aws_s3_bucket_policy" "politica" {
+  for_each = local.buckets
+
+  bucket = each.value
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = concat(
+      [{
+        Sid       = "SoloHttps"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource  = ["arn:aws:s3:::${each.value}", "arn:aws:s3:::${each.value}/*"]
+        Condition = { Bool = { "aws:SecureTransport" = "false" } }
+      }],
+      contains(keys(local.sitio_del_bucket), each.key) ? [{
+        Sid       = "LecturaDesdeCloudFront"
+        Effect    = "Allow"
+        Principal = { Service = "cloudfront.amazonaws.com" }
+        Action    = "s3:GetObject"
+        Resource  = "arn:aws:s3:::${each.value}/*"
+        Condition = {
+          StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.sitio[local.sitio_del_bucket[each.key]].arn }
+        }
+      }] : []
+    )
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.privado]
+}
+
+# La política de la plataforma y del portal antes se llamaba solo_cloudfront: Terraform la
+# actualiza en su lugar, sin borrarla y crearla de nuevo.
+moved {
+  from = aws_s3_bucket_policy.solo_cloudfront["plataforma"]
+  to   = aws_s3_bucket_policy.politica["frontend"]
+}
+
+moved {
+  from = aws_s3_bucket_policy.solo_cloudfront["portal"]
+  to   = aws_s3_bucket_policy.politica["portal"]
+}

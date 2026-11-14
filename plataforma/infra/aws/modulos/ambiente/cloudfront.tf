@@ -166,27 +166,7 @@ resource "aws_s3_object" "aviso_de_apagado" {
   })
 }
 
-# Cada bucket solo se deja leer por su propia distribución (Origin Access Control).
-resource "aws_s3_bucket_policy" "solo_cloudfront" {
-  for_each = local.sitios
-
-  bucket = each.value.bucket.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid       = "LecturaDesdeCloudFront"
-      Effect    = "Allow"
-      Principal = { Service = "cloudfront.amazonaws.com" }
-      Action    = "s3:GetObject"
-      Resource  = "${each.value.bucket.arn}/*"
-      Condition = {
-        StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.sitio[each.key].arn }
-      }
-    }]
-  })
-
-  depends_on = [aws_s3_bucket_public_access_block.privado]
-}
+# La política de cada bucket (con la lectura desde CloudFront) está en almacenamiento.tf (DRA-82).
 
 # Direcciones que el backend necesita conocer: la del portal va en el QR y en la leyenda de cada
 # PDF (HU16), y la del RPC se ofrece a MetaMask del Director (HU06).
