@@ -24,12 +24,26 @@ Parte del código se escribió con ayuda de un asistente de IA (lo declara la te
 - En GitHub: el secreto de repositorio `SONAR_TOKEN`. **El token nunca va en el repositorio ni en un mensaje.** Si se filtra, se revoca en SonarQube Cloud (My Account → Security) y se crea otro.
 - Los PR que vienen de otro repositorio (Dependabot, forks) no tienen acceso al secreto: en ellos el job de SonarQube no corre.
 
+## Cómo excluir un falso positivo (DRA-80)
+
+**Antes de excluir, se revisa el hallazgo.** Solo se excluye lo que, leído el código, no es un defecto (falso positivo) o es una decisión ya tomada (aceptado), y siempre con la justificación escrita. Las exclusiones viven en el repositorio, no en la web de las herramientas: así quedan versionadas y se revisan como el resto del código.
+
+| Herramienta | Dónde | Cómo |
+| --- | --- | --- |
+| SonarQube Cloud | `sonar-project.properties` | Agregar un identificador a `sonar.issue.ignore.multicriteria` y sus dos líneas, `ruleKey` (la regla, por ejemplo `java:S2077`) y `resourceKey` (el archivo o un patrón), con un comentario que diga por qué. Se excluye esa regla en ese archivo, no la regla entera |
+| Slither | `plataforma/contracts/slither.db.json` | Correr Slither con `--triage-mode --triage-database slither.db.json` y elegir los avisos revisados. Guarda una huella de cada aviso: uno nuevo sigue apareciendo. Anotar la justificación en la medición |
+| gitleaks | `.gitleaksignore` en la raíz | Agregar la huella del hallazgo (`commit:archivo:regla:línea`, la muestra gitleaks en su informe) con un comentario. Una clave nueva tiene otra huella y sigue apareciendo |
+
+**Si gitleaks encuentra una clave real**, excluirla no basta: el repositorio es público, así que hay que revocarla y cambiarla de inmediato. Después se decide si hace falta limpiar el historial.
+
+Exclusiones vigentes: 20 reglas por archivo en SonarQube, 5 avisos en Slither y 3 huellas en gitleaks, todas justificadas en la [medición inicial](medicion-inicial.md).
+
 ## Correr las herramientas en local
 
 ```bash
 # Slither (desde plataforma/contracts, con npm ci hecho)
 pip install slither-analyzer==0.11.6 solc-select==1.2.0 && solc-select install 0.8.30
-SOLC_VERSION=0.8.30 slither contracts/ --solc-remaps "@openzeppelin/=node_modules/@openzeppelin/" --filter-paths node_modules --exclude-dependencies
+SOLC_VERSION=0.8.30 slither contracts/ --solc-remaps "@openzeppelin/=node_modules/@openzeppelin/" --filter-paths node_modules --exclude-dependencies --triage-database slither.db.json
 ```
 
 ```bash

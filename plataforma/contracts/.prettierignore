@@ -3,3 +3,4 @@ artifacts
 cache
 types
 package-lock.json
+slither.db.json

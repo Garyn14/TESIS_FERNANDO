@@ -293,6 +293,8 @@ jobs:
       - name: Dependencias del contrato (OpenZeppelin)
         working-directory: plataforma/contracts
         run: npm ci
+      # DRA-80: slither.db.json guarda los avisos revisados que son falsos positivos
+      # (docs/calidad/medicion-inicial.md, sección 5); un aviso nuevo sigue apareciendo.
       - name: Contrato con Slither
         working-directory: plataforma/contracts
         env:
@@ -302,6 +304,7 @@ jobs:
           solc-select install 0.8.30
           slither contracts/ --solc-remaps "@openzeppelin/=node_modules/@openzeppelin/" \
             --filter-paths node_modules --exclude-dependencies \
+            --triage-database slither.db.json \
             --sarif slither.sarif --fail-none > slither.txt 2>&1 || true
           # Rutas desde la raíz del repositorio, para que la pestaña Security enlace al archivo.
           jq '(.runs[].results[].locations[].physicalLocation.artifactLocation.uri) |= "plataforma/contracts/" + .' \

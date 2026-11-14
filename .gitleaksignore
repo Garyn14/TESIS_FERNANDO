@@ -1,0 +1,10 @@
+# DRA-80: falsos positivos de gitleaks, revisados uno por uno (docs/calidad/medicion-inicial.md, sección 6).
+# Cada línea es la huella de un hallazgo: commit:archivo:regla:línea. Una clave nueva tiene otra
+# huella y sigue apareciendo. Nunca agregar una línea sin revisar antes el hallazgo.
+
+# Comentario que dice que la credencial de SonarQube va solo en el secreto SONAR_TOKEN de GitHub.
+82c02769827d65df455155e394385544b822a425:sonar-project.properties:generic-api-key:4
+# Token de verificación inventado para una prueba del portal.
+4397699bccf3582d7715513bdc6301eaa986ab52:plataforma/portal/src/App.test.tsx:generic-api-key:6
+# Token de verificación inventado para una prueba del PDF.
+28371a89dff31254b46ee0a749272eb3617d058f:plataforma/backend/src/test/java/pe/drasatipo/plataforma/documentos/GeneradorDePdfTest.java:generic-api-key:22

@@ -52,7 +52,7 @@ Primera revisión de todo el código con las tres herramientas, sobre `main` en 
 | terraform:S6249 (3) | `almacenamiento.tf`: buckets sin política de solo HTTPS | **Real** (bajo) | Se entra por CloudFront con HTTPS, pero una política `aws:SecureTransport` lo garantiza. Es barato agregarla |
 | terraform:S6258 (4), cloudformation:S6258 | Buckets, CloudFront y bucket del estado sin registros de acceso | Aceptado | Decisión de costo para QA. Se reconsidera para PROD (DRA-65) |
 | cloudformation:S6327 | `cuenta.yml`: tema de alertas sin cifrado KMS | Aceptado | Las alertas no llevan datos sensibles; KMS tiene costo mensual |
-| javascript:S4036 (22) | Pruebas de punta a punta: `execFileSync` con `PATH` | Falso positivo | Scripts de prueba que corren en la máquina del equipo, no en el servidor |
+| javascript:S4036 (22) | Pruebas de punta a punta (20) e `infra/aws/pruebas/cloudfront.cjs` (2): `execFileSync` con `PATH` | Falso positivo | Scripts de prueba que corren en la máquina del equipo, no en el servidor |
 | jssecurity:S6350 | `e2e/sprint5.cjs`: `psql` con SQL de la prueba | Falso positivo | El SQL lo escribe la prueba; no hay entrada de usuario |
 | shell:S6505 (4) | `e2e/levantar.sh`, `de-punta-a-punta.sh`: `npm ci` sin `--ignore-scripts` | Aceptado | Hardhat y otras dependencias necesitan sus scripts de instalación. Dependabot vigila las dependencias (DRA-49) |
 
@@ -90,3 +90,9 @@ Los propongo para que el equipo los valide; ninguno es urgente.
 | **C. Clasificar en las herramientas** | Marcar en SonarQube Cloud los falsos positivos y aceptados con su justificación (lo hace el dueño del proyecto en la web; un token de solo lectura no alcanza) y un `.gitleaksignore` con los 3 falsos positivos. Así el siguiente análisis muestra solo lo pendiente | Media: lo necesita la DRA-79 para no bloquear por falsos positivos |
 
 **Para la DRA-79:** el plan gratuito de SonarQube Cloud solo evalúa `main` y los pull requests. Bloquear "lo grave del código nuevo" antes de fusionar exige que cada historia llegue a `main` por un pull request, en lugar del fast-forward actual. Hay que decidirlo al refinar la DRA-79.
+
+## 8. Seguimiento
+
+| Ticket | Qué cambió | Resultado esperado tras el análisis de `main` |
+| --- | --- | --- |
+| **DRA-80** | Exclusiones de los falsos positivos y aceptados: 20 reglas por archivo en `sonar-project.properties`, 5 avisos en `plataforma/contracts/slither.db.json` y 3 huellas en `.gitleaksignore` | SonarQube: 12 hallazgos abiertos (los reales); Slither y gitleaks: 0 |

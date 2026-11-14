@@ -14,7 +14,7 @@ Fuente: sección 3.2.3 de la tesis (Tablas 17 a 23), con los puntos y el sprint 
 | E7 Anulación y reemisión | HU29–HU30 | 4 | 16 |
 | Sprint 7: propuestas del equipo (fuera del backlog original) | DRA-58 a DRA-62 | 7 | 16 |
 | E8 Ayuda y documentación (fuera del backlog original) | DRA-70 a DRA-75 | 8 | 11 en el Sprint 8 |
-| E9 Mejora y revisión estática del código (fuera del backlog original) | DRA-78 y DRA-79 | — | 7 |
+| E9 Mejora y revisión estática del código (fuera del backlog original) | DRA-78 a DRA-82 | — | 12 |
 
 > **Nombres de los roles desde el Sprint 7 (DRA-59).** Las historias HU01–HU30 conservan los nombres de la tesis. En la plataforma, **"Área encargada"** se llama **"Emisor de área"** y **"Consulta interna"** se llama **"Mesa de Partes"**. Los códigos internos (`AREA_ENCARGADA`, `CONSULTA_INTERNA`) no cambian.
 
@@ -2344,3 +2344,47 @@ SonarQube Cloud ya está preparado por el dueño del repositorio:
 | Prioridad | Puntos |
 |---|---|
 | Media | 5 |
+
+---
+
+## DRA-80: Clasificar los falsos positivos y aceptados de la revisión estática
+
+*Propuesta C de la medición inicial de la DRA-78 · bloquea a la DRA-79.*
+
+**Como** equipo de desarrollo, **quiero** que las herramientas dejen de mostrar los hallazgos que ya revisamos y no son defectos, **para** que cada análisis muestre solo lo pendiente y la DRA-79 pueda bloquear sin falsas alarmas.
+
+**Contexto**
+
+La medición inicial (`docs/calidad/medicion-inicial.md`) clasificó a mano los 115 hallazgos: en SonarQube, 83 falsos positivos y 12 aceptados; en Slither, 5 falsos positivos; en gitleaks, 3 falsos positivos. Si nadie los marca, aparecen igual en cada análisis. Y gitleaks revisa todo el historial: si la DRA-79 lo volviera bloqueante hoy, la CI quedaría en rojo.
+
+**Criterios de aceptación**
+
+**SonarQube**
+- [ ] Los falsos positivos y aceptados se excluyen **en `sonar-project.properties`** (`sonar.issue.ignore.multicriteria`), cada uno por regla y archivo, con un comentario que dice por qué. No se marcan a mano en la web.
+- [ ] Solo se excluye lo clasificado en la medición: los 12 hallazgos reales siguen visibles para la DRA-81 y la DRA-82.
+- [ ] Tras el análisis de `main`, SonarQube muestra **12 hallazgos abiertos**, los reales.
+
+**Slither**
+- [ ] Se excluye el detector `timestamp` y `incorrect-equality` solo donde se comprobó que es un falso positivo (el 0 como "no registrado"), con su justificación. Tras el análisis, Slither muestra **0 avisos**.
+
+**gitleaks**
+- [ ] Un `.gitleaksignore` en la raíz con la huella (commit, archivo, regla y línea) de cada uno de los 3 falsos positivos, con un comentario. Tras el análisis, gitleaks muestra **0 coincidencias**.
+- [ ] Una clave nueva sigue apareciendo: la huella incluye el commit, así que un hallazgo nuevo no queda oculto.
+
+**Guía**
+- [ ] `docs/calidad/README.md` explica cómo excluir un falso positivo en cada herramienta, con su justificación, y que nunca se excluye un hallazgo sin revisarlo antes.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Corregir los hallazgos reales | DRA-81 (backend y pruebas) y DRA-82 (buckets) |
+| Bloquear la CI | DRA-79 |
+
+**Decisión a validar**
+
+- **Exclusiones en el repositorio, no en la web de SonarQube.** Quedan versionadas junto con su justificación, se revisan en cada cambio como el resto del código y no dependen de una cuenta. Lo que se pierde: en la web el hallazgo no aparece como "aceptado", simplemente no aparece. La justificación está en el archivo y en la medición inicial.
+
+| Prioridad | Puntos |
+|---|---|
+| Media | 2 |
