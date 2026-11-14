@@ -46,37 +46,78 @@ resource "aws_s3_bucket_ownership_controls" "sin_acl" {
 
 # Política de cada bucket (una sola por bucket en S3). DRA-82: todos niegan cualquier acceso que no
 # use HTTPS. Además, el del frontend y el del portal solo se dejan leer por su propia distribución
-# de CloudFront (Origin Access Control, DRA-54).
-locals {
-  sitio_del_bucket = { frontend = "plataforma", portal = "portal" }
-}
-
-resource "aws_s3_bucket_policy" "politica" {
-  for_each = local.buckets
-
-  bucket = each.value
+# de CloudFront (Origin Access Control, DRA-54). Va una política por bucket, escrita completa, para
+# que la revisión estática la reconozca (con for_each no la seguía).
+resource "aws_s3_bucket_policy" "artefactos" {
+  bucket = aws_s3_bucket.artefactos.id
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = concat(
-      [{
+    Statement = [{
+      Sid       = "SoloHttps"
+      Effect    = "Deny"
+      Principal = "*"
+      Action    = "s3:*"
+      Resource  = [aws_s3_bucket.artefactos.arn, "${aws_s3_bucket.artefactos.arn}/*"]
+      Condition = { Bool = { "aws:SecureTransport" = "false" } }
+    }]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.privado]
+}
+
+resource "aws_s3_bucket_policy" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
         Sid       = "SoloHttps"
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource  = ["arn:aws:s3:::${each.value}", "arn:aws:s3:::${each.value}/*"]
+        Resource  = [aws_s3_bucket.frontend.arn, "${aws_s3_bucket.frontend.arn}/*"]
         Condition = { Bool = { "aws:SecureTransport" = "false" } }
-      }],
-      contains(keys(local.sitio_del_bucket), each.key) ? [{
+      },
+      {
         Sid       = "LecturaDesdeCloudFront"
         Effect    = "Allow"
         Principal = { Service = "cloudfront.amazonaws.com" }
         Action    = "s3:GetObject"
-        Resource  = "arn:aws:s3:::${each.value}/*"
+        Resource  = "${aws_s3_bucket.frontend.arn}/*"
         Condition = {
-          StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.sitio[local.sitio_del_bucket[each.key]].arn }
+          StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.sitio["plataforma"].arn }
         }
-      }] : []
-    )
+      },
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.privado]
+}
+
+resource "aws_s3_bucket_policy" "portal" {
+  bucket = aws_s3_bucket.portal.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "SoloHttps"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource  = [aws_s3_bucket.portal.arn, "${aws_s3_bucket.portal.arn}/*"]
+        Condition = { Bool = { "aws:SecureTransport" = "false" } }
+      },
+      {
+        Sid       = "LecturaDesdeCloudFront"
+        Effect    = "Allow"
+        Principal = { Service = "cloudfront.amazonaws.com" }
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.portal.arn}/*"
+        Condition = {
+          StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.sitio["portal"].arn }
+        }
+      },
+    ]
   })
 
   depends_on = [aws_s3_bucket_public_access_block.privado]
@@ -86,10 +127,10 @@ resource "aws_s3_bucket_policy" "politica" {
 # actualiza en su lugar, sin borrarla y crearla de nuevo.
 moved {
   from = aws_s3_bucket_policy.solo_cloudfront["plataforma"]
-  to   = aws_s3_bucket_policy.politica["frontend"]
+  to   = aws_s3_bucket_policy.frontend
 }
 
 moved {
   from = aws_s3_bucket_policy.solo_cloudfront["portal"]
-  to   = aws_s3_bucket_policy.politica["portal"]
+  to   = aws_s3_bucket_policy.portal
 }

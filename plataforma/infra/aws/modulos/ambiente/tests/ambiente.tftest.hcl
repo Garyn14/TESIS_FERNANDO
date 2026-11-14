@@ -98,17 +98,17 @@ run "buckets_solo_https" {
   override_resource {
     override_during = plan
     target          = aws_s3_bucket.artefactos
-    values          = { id = "dra-satipo-qa-123456789012-artefactos" }
+    values          = { id = "dra-satipo-qa-123456789012-artefactos", arn = "arn:aws:s3:::dra-satipo-qa-123456789012-artefactos" }
   }
   override_resource {
     override_during = plan
     target          = aws_s3_bucket.frontend
-    values          = { id = "dra-satipo-qa-123456789012-frontend" }
+    values          = { id = "dra-satipo-qa-123456789012-frontend", arn = "arn:aws:s3:::dra-satipo-qa-123456789012-frontend" }
   }
   override_resource {
     override_during = plan
     target          = aws_s3_bucket.portal
-    values          = { id = "dra-satipo-qa-123456789012-portal" }
+    values          = { id = "dra-satipo-qa-123456789012-portal", arn = "arn:aws:s3:::dra-satipo-qa-123456789012-portal" }
   }
   override_resource {
     override_during = plan
@@ -117,12 +117,12 @@ run "buckets_solo_https" {
   }
 
   assert {
-    condition     = length(aws_s3_bucket_policy.politica) == 3
+    condition     = aws_s3_bucket_policy.artefactos.bucket != null && aws_s3_bucket_policy.frontend.bucket != null && aws_s3_bucket_policy.portal.bucket != null
     error_message = "Los tres buckets (artefactos, frontend y portal) deben tener su política."
   }
   assert {
     condition = alltrue([
-      for p in aws_s3_bucket_policy.politica : anytrue([
+      for p in [aws_s3_bucket_policy.artefactos, aws_s3_bucket_policy.frontend, aws_s3_bucket_policy.portal] : anytrue([
         for s in jsondecode(p.policy).Statement :
         s.Effect == "Deny" && s.Action == "s3:*" && s.Principal == "*" &&
         s.Condition.Bool["aws:SecureTransport"] == "false" &&
@@ -133,8 +133,8 @@ run "buckets_solo_https" {
   }
   assert {
     condition = alltrue([
-      for k in ["frontend", "portal"] : anytrue([
-        for s in jsondecode(aws_s3_bucket_policy.politica[k].policy).Statement :
+      for p in [aws_s3_bucket_policy.frontend, aws_s3_bucket_policy.portal] : anytrue([
+        for s in jsondecode(p.policy).Statement :
         s.Effect == "Allow" && s.Principal == { Service = "cloudfront.amazonaws.com" } && s.Action == "s3:GetObject"
       ])
     ])
@@ -142,7 +142,7 @@ run "buckets_solo_https" {
   }
   assert {
     condition = !anytrue([
-      for s in jsondecode(aws_s3_bucket_policy.politica["artefactos"].policy).Statement : s.Effect == "Allow"
+      for s in jsondecode(aws_s3_bucket_policy.artefactos.policy).Statement : s.Effect == "Allow"
     ])
     error_message = "El bucket de artefactos no permite nada por política: solo lo lee el servidor, con su rol."
   }
