@@ -84,13 +84,15 @@ El 13/11 se agregó **DRA-75, el manual general (versión 1)**: un solo manual q
 
 Revisión estática gratuita para repositorios públicos: **SonarQube Cloud** (calidad, seguridad y cobertura), **Slither** (contrato) y **gitleaks** (claves filtradas). Se evaluó ZeroPath y no entra en la épica. Para no frenar el avance, primero solo informa y luego bloquea únicamente lo grave del código nuevo.
 
-| Orden | Ticket | Qué | Puntos |
-|---|---|---|---|
-| 1 | DRA-78 | Revisión estática en la CI, en modo informativo, y medición inicial | 5 |
-| 2 | DRA-79 | Bloquear en la CI solo lo grave del código nuevo (*quality gate*) | 2 |
-| 3+ | — | Corrección de lo encontrado: se crean después de la medición inicial | — |
+| Orden | Ticket | Qué | Puntos | Estado (14/11/2026) |
+|---|---|---|---|---|
+| 1 | DRA-78 | Revisión estática en la CI, en modo informativo, y medición inicial | 5 | En revisión: 107 hallazgos en SonarQube, 5 en Slither y 3 en gitleaks, clasificados |
+| 2 | DRA-80 | Excluir los falsos positivos y aceptados, con su justificación (propuesta C) | 2 | En revisión: quedan los 12 reales |
+| 3 | DRA-81 | Ajustes del backend y de las pruebas (propuesta A) | 2 | En revisión: quedan 3 |
+| 4 | DRA-82 | Buckets de S3 solo con HTTPS (propuesta B) | 1 | En revisión: **0 hallazgos abiertos** |
+| 5 | DRA-79 | Bloquear en la CI solo lo grave del código nuevo, con fusión por pull request | 3 | Refinada; espera la validación de sus decisiones |
 
-Para DRA-78, el dueño del repositorio debe importar el proyecto en SonarQube Cloud y guardar su token como secreto `SONAR_TOKEN` en GitHub.
+El proyecto de SonarQube Cloud (plan gratuito) lo preparó el dueño del repositorio, con el token en el secreto `SONAR_TOKEN` de GitHub. El plan gratuito solo analiza `main` y los pull requests.
 
 ### Cierre del Sprint 8 (14/11/2026)
 
