@@ -1,5 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { normalizarCodigo, verificarCodigo, type Verificacion } from './api'
+import { RUTA_COMO_VERIFICAR } from './ruta'
 import TarjetaResultado from './TarjetaResultado'
 
 type Estado =
@@ -58,6 +59,14 @@ export default function Portada() {
             </li>
           ))}
         </ol>
+        <p className="mt-5">
+          <a href={RUTA_COMO_VERIFICAR} className="font-medium text-institutional underline">
+            ¿Cómo verificar un documento?
+          </a>{' '}
+          <span className="text-muted">
+            Dónde están el QR y el código, y qué significa cada resultado.
+          </span>
+        </p>
 
         <form noValidate onSubmit={verificar} className="mt-8 border-t border-line pt-6">
           <h2 className="text-lg font-semibold">¿No puede escanear el código QR?</h2>
