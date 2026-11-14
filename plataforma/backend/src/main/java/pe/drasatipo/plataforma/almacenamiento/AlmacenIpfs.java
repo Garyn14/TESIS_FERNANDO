@@ -11,6 +11,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import pe.drasatipo.plataforma.comun.Textos;
 
 /**
  * Cliente de la API HTTP de Kubo, el nodo IPFS privado (DRA-46). La API solo escucha en el
@@ -29,7 +30,7 @@ public class AlmacenIpfs implements AlmacenDeArchivos {
     fabrica.setReadTimeout(tiempoMaximo);
     this.cliente =
         RestClient.builder()
-            .baseUrl(url.replaceAll("/+$", "") + "/api/v0")
+            .baseUrl(Textos.sinFinal(url, '/') + "/api/v0")
             .requestFactory(fabrica)
             .build();
   }

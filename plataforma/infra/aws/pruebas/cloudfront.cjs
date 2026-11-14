@@ -79,4 +79,8 @@ async function paso(nombre, fn) {
   } finally {
     await navegador.close()
   }
-})()
+})().catch((error) => {
+  // DRA-81: un error fuera de un paso (por ejemplo, al abrir el navegador) también falla la prueba.
+  console.error(error)
+  process.exitCode = 1
+})

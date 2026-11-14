@@ -630,7 +630,7 @@ const paso = async (nombre, fn) => {
   // ------------------------------------------------------ HU26: aviso al Director
   const campanaDe = (p) => p.getByRole('banner').getByRole('button', { name: /^Avisos/ })
   const panelDe = (p) => p.getByRole('region', { name: 'Avisos' })
-  const sinLeerDe = async (p) => Number((await campanaDe(p).getAttribute('aria-label')).match(/(\d+) sin leer/)?.[1] ?? 0)
+  const sinLeerDe = async (p) => Number((await campanaDe(p).getAttribute('aria-label')).match(/(\d{1,4}) sin leer/)?.[1] ?? 0)
   await paso('HU26 · El Director tiene un aviso por cada documento y lote pendiente, con su cantidad sin leer', async () => {
     await reingresar(carlos, 'cmendoza')
     await campanaDe(carlos).waitFor()

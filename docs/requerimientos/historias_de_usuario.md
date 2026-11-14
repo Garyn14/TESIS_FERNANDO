@@ -2458,3 +2458,64 @@ La medición inicial (`docs/calidad/medicion-inicial.md`) clasificó a mano los 
 | Prioridad | Puntos |
 |---|---|
 | Media | 3 |
+
+---
+
+## DRA-81: Ajustes del backend y de las pruebas señalados por la revisión estática
+
+*Propuesta A de la medición inicial de la DRA-78.*
+
+**Como** equipo de desarrollo, **quiero** corregir los hallazgos reales de fiabilidad y mantenibilidad que encontró SonarQube, **para** quitar trampas que hoy no fallan pero podrían fallar con un cambio futuro.
+
+**Contexto**
+
+De los 12 hallazgos reales de la medición inicial, 9 son de esta propuesta (los otros 3 son de la DRA-82). Ninguno causa hoy un error visible.
+
+**Criterios de aceptación**
+
+- [ ] **`PdfFinal` y `VerificacionDeAutenticidad.Comprobacion`** (java:S6218, 2): sus `equals` y `hashCode` comparan el **contenido** del PDF y no la referencia del arreglo; su `toString` muestra el tamaño del PDF, no sus bytes.
+- [ ] **Quitar barras o guiones bajos de los extremos sin expresiones regulares** (java:S8786, 4, y java:S5850, 1): una ayuda común `Textos` con `sinFinal(texto, caracter)` y `sinExtremos(texto, caracter)`, usada en `GestionCatalogo` (código de un área), `AlmacenIpfs` y `GeneradorDePdf` (la dirección configurada, sin la barra final).
+- [ ] **`e2e/sprint6.cjs`** (javascript:S8786, 1): la expresión que lee la cantidad de avisos sin leer, con un límite de dígitos.
+- [ ] **`infra/aws/pruebas/cloudfront.cjs`** (javascript:S9383, 1): si la prueba falla fuera de un paso, termina con el error y un código de salida distinto de 0.
+- [ ] **Sin cambios de comportamiento:** las pruebas existentes pasan igual, y hay pruebas nuevas para `Textos` y para la igualdad de los dos *records*.
+- [ ] Tras el análisis de `main`, SonarQube muestra **3 hallazgos abiertos** (los de la DRA-82).
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Buckets solo con HTTPS | DRA-82 |
+
+| Prioridad | Puntos |
+|---|---|
+| Baja | 2 |
+
+---
+
+## DRA-82: Buckets de S3 solo con HTTPS
+
+*Propuesta B de la medición inicial de la DRA-78.*
+
+**Como** responsable de la infraestructura, **quiero** que los buckets de S3 rechacen cualquier acceso sin HTTPS, **para** que nada viaje sin cifrar aunque alguien se salte CloudFront.
+
+**Contexto**
+
+SonarQube marcó 3 buckets sin política de solo HTTPS (terraform:S6249): el de la plataforma, el del portal y el de los artefactos (el paquete que descarga el servidor). Hoy se entra por CloudFront con HTTPS, pero nada en el bucket lo exige.
+
+**Criterios de aceptación**
+
+- [ ] Cada bucket del módulo `ambiente` tiene una política que **niega toda acción si la conexión no es HTTPS** (`aws:SecureTransport = false`), junto con lo que ya permitía (el acceso de CloudFront a la plataforma y al portal).
+- [ ] Una prueba de Terraform (`terraform test`, sin cuenta de AWS) comprueba que cada bucket tiene esa negación.
+- [ ] `terraform validate` y las pruebas de la plantilla siguen en verde.
+- [ ] Tras el análisis de `main`, SonarQube muestra **0 hallazgos abiertos**.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Aplicar el cambio en el QA de AWS | Se aplica solo la próxima vez que se ejecute "QA – Encender" |
+| Registros de acceso de S3 y CloudFront | Aceptado por costo; se reconsidera en PROD (DRA-65) |
+
+| Prioridad | Puntos |
+|---|---|
+| Baja | 1 |

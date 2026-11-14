@@ -62,7 +62,26 @@ public class VerificacionDeAutenticidad {
    * El resultado de la comprobación y, si es Válido o Anulado, el PDF comprobado (lo muestra el
    * portal con el QR, HU19).
    */
-  public record Comprobacion(ResultadoVerificacion resultado, byte[] pdf) {}
+  public record Comprobacion(ResultadoVerificacion resultado, byte[] pdf) {
+
+    // DRA-81: compara el contenido del PDF, no la referencia del arreglo.
+    @Override
+    public boolean equals(Object otro) {
+      return otro instanceof Comprobacion c
+          && java.util.Objects.equals(resultado, c.resultado)
+          && java.util.Arrays.equals(pdf, c.pdf);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * java.util.Objects.hashCode(resultado) + java.util.Arrays.hashCode(pdf);
+    }
+
+    @Override
+    public String toString() {
+      return "Comprobacion[" + resultado + ", " + (pdf == null ? 0 : pdf.length) + " bytes]";
+    }
+  }
 
   /** El código impreso: DRA-AAAA-XXXXXX, sin caracteres que se confunden (RF16, RNF04). */
   private static final Pattern CODIGO =

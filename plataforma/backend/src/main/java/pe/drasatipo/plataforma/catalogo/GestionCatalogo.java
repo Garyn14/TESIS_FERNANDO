@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.drasatipo.plataforma.comun.ReglaDeNegocioException;
+import pe.drasatipo.plataforma.comun.Textos;
 import pe.drasatipo.plataforma.usuarios.Rol;
 
 /**
@@ -286,16 +287,17 @@ public class GestionCatalogo {
    */
   static String codigoDe(String nombre) {
     String codigo =
-        Normalizer.normalize(nombre, Normalizer.Form.NFD)
-            .replaceAll("\\p{M}", "")
-            .toUpperCase(java.util.Locale.ROOT)
-            .replaceAll("[^A-Z0-9]+", "_")
-            .replaceAll("^_+|_+$", "")
+        Textos.sinExtremos(
+                Normalizer.normalize(nombre, Normalizer.Form.NFD)
+                    .replaceAll("\\p{M}", "")
+                    .toUpperCase(java.util.Locale.ROOT)
+                    .replaceAll("[^A-Z0-9]+", "_"),
+                '_')
             .replaceFirst("^AREA_(DE_(LA_|LOS_|LAS_)?|DEL_)?", "");
     if (codigo.isEmpty()) {
       codigo = "AREA";
     }
-    return codigo.length() > 26 ? codigo.substring(0, 26).replaceAll("_+$", "") : codigo;
+    return codigo.length() > 26 ? Textos.sinFinal(codigo.substring(0, 26), '_') : codigo;
   }
 
   /** Si el código ya existe, le agrega _2, _3, … (máximo 30 caracteres). */

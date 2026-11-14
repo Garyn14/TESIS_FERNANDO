@@ -26,6 +26,7 @@ import java.time.LocalDate;
 import java.util.HexFormat;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import pe.drasatipo.plataforma.comun.Textos;
 
 /**
  * PDF final de un documento (HU16, RF30, RF36): la plantilla de la vista previa, sin la marca de
@@ -46,7 +47,7 @@ public class GeneradorDePdf {
   private final BaseFont negrita;
 
   public GeneradorDePdf(@Value("${plataforma.portal.url}") String portal) {
-    this.portal = portal.replaceAll("/+$", "");
+    this.portal = Textos.sinFinal(portal, '/');
     try (InputStream entrada = getClass().getResourceAsStream("/documentos/logo-dra.png")) {
       this.logo = entrada.readAllBytes();
       // Cp1252 cubre las tildes y la ñ del castellano con las fuentes estándar del PDF.
