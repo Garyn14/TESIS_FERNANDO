@@ -29,6 +29,7 @@ flowchart LR
     W --> RB[Job Red Besu]
     W --> IP[Job IPFS privado]
     W --> AW[Job Infraestructura AWS]
+    W --> CS[Job Revisión estática: contrato y secretos]
     B --> B1[Spotless: formato Java] --> B2[Compilación] --> B3[Pruebas con PostgreSQL 17 en Testcontainers] --> B4[Empaquetado JAR]
     F --> F1[npm ci] --> F2[oxlint] --> F3[Prettier] --> F4[Vitest] --> F5[Build de Vite]
     P --> P1[npm ci] --> P2[oxlint, Prettier, Vitest y build]
@@ -36,12 +37,17 @@ flowchart LR
     RB --> RB1[Generar claves y génesis] --> RB2[Levantar 4 validadores] --> RB3[Esperar bloques] --> RB4[Desplegar PruebaRed y leer evento]
     IP --> IP1[Generar clave de enjambre] --> IP2[Levantar nodo] --> IP3[Subir y recuperar por CID] --> IP4[Prueba de aislamiento]
     AW --> AW0[Plantilla de la cuenta: cfn-lint y pruebas] --> AW1[terraform fmt y validate] --> AW2[terraform test sin AWS] --> AW2b[Función de CloudFront] --> AW3[shellcheck] --> AW3b[Scripts de los disparadores y actionlint] --> AW4[Servidor de AWS en Docker]
+    CS --> CS1[Slither sobre el contrato] --> CS2[gitleaks sobre todo el historial] --> CS3[SARIF a la pestaña Security]
+    B4 & F5 & P2 --> SQ[Job Revisión estática: SonarQube Cloud, solo main y PR] --> SQ1[Análisis con las clases y la cobertura]
     B4 & F5 & P2 & C4 & RB4 & IP4 & AW4 --> R{¿Los siete en verde?}
+    CS3 & SQ1 -. informativos, no bloquean .-> R
     R -- Sí --> OK[Cambio integrable a main]
     R -- No --> KO[Se corrige en la misma rama]
 ```
 
 Los siete jobs corren **en paralelo** y son independientes: si falla uno, los otros terminan igual y se ve qué parte del proyecto tiene el problema.
+
+Desde la DRA-78 hay **dos jobs más de revisión estática** (nueve en total), por ahora **informativos**: muestran lo que encuentran, pero no ponen la CI en rojo (`continue-on-error`). El de SonarQube Cloud espera al backend, al frontend y al portal y usa sus artefactos; corre solo en `main` y en los pull requests, porque el plan gratuito no muestra otras ramas (en una rama `DRA-*` aparece omitido). Detalle en [`docs/calidad/README.md`](../calidad/README.md).
 
 ## 4. Qué valida cada job
 
@@ -95,6 +101,17 @@ Agregado en DRA-46.
 | Prueba de humo | `./ipfs/probar-ipfs.sh` | 0 nodos de arranque y 0 pares; un archivo subido con CIDv1 se recupera idéntico y queda fijado |
 | Aislamiento | `./ipfs/probar-aislamiento.sh` | Un nodo sin la clave es rechazado y uno con la misma clave se conecta (RNF03) |
 | Si falla | `docker compose logs` | Deja en el registro los últimos mensajes del nodo |
+
+### Revisión estática (DRA-78)
+
+| Job | Paso | Qué asegura |
+|---|---|---|
+| SonarQube Cloud | `SonarSource/sonarqube-scan-action` con `sonar-project.properties` | Errores, vulnerabilidades, puntos sensibles de seguridad, duplicación, mantenibilidad y cobertura del backend, la plataforma interna, el portal, la infraestructura y las pruebas de punta a punta. Usa las clases y el informe de JaCoCo del job Backend y el `lcov.info` de Vitest de los jobs Frontend y Portal |
+| Contrato y secretos | Slither 0.11.6 (solc 0.8.30) | Problemas conocidos de seguridad en el contrato |
+| Contrato y secretos | gitleaks 8.30.1 sobre todo el historial | Claves o contraseñas subidas al repositorio en cualquier commit |
+| Contrato y secretos | `github/codeql-action/upload-sarif` | Los hallazgos de Slither y gitleaks en la pestaña **Security** (solo en los push) |
+
+Además, los jobs Backend, Frontend y Portal miden la **cobertura**: JaCoCo dentro de `./mvnw verify` y `npm test -- --coverage` con `@vitest/coverage-v8`.
 
 ## 5. Cómo leer un resultado
 
