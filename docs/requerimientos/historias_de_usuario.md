@@ -2208,3 +2208,58 @@ Hoy no hay ningún manual. Los flujos están descritos para el negocio en `docs/
 | Prioridad | Puntos | Sprint |
 |---|---|---|
 | Media | 3 | 8 |
+
+---
+
+## DRA-74: Guía de operación del Administrador
+
+**Como** responsable de sistemas de la agencia (rol Administrador), **quiero** una guía de qué hacer y cuándo para mantener la plataforma funcionando, **para** operarla sin depender del equipo de desarrollo.
+
+**Contexto**
+
+La operación ya está documentada, pero para el equipo técnico y repartida en tres archivos del repositorio:
+- `despliegue-aws.md`: la cuenta, los disparadores y la clave de GitHub;
+- `respaldos.md` (DRA-66);
+- `monitoreo.md` (DRA-68).
+
+Al Administrador le falta una guía única, en lenguaje claro y dentro de la plataforma, que diga **qué tareas tiene, cada cuánto y qué hacer ante un problema**. Para el detalle técnico remite a esos documentos. Usa el mismo mecanismo que el manual de DRA-75.
+
+**Criterios de aceptación**
+
+- [ ] Una página "Guía de operación" en la plataforma, **solo para el Administrador**:
+  - es una opción de su menú;
+  - tiene un enlace en el recuadro "¿Necesita ayuda?" de su inicio.
+
+  Los demás roles no la ven en el menú, y si abren la dirección ven "No tiene permiso para ver esta sección".
+- [ ] Contenido, en este orden:
+  1. **Cómo está armada la plataforma**: la plataforma interna, el portal público, el servidor en AWS, la blockchain y los respaldos, en una página y sin términos técnicos innecesarios;
+  2. **Calendario de tareas**: qué revisar cada día, cada semana, cada mes y cada 90 días (alertas, cuentas bloqueadas, costos, copias, cambio de la clave de GitHub, actualizaciones de Dependabot);
+  3. **El personal**: altas, bajas, cuentas bloqueadas y **cambio de Director** (revocar y otorgar la billetera), con remisión al manual de DRA-75;
+  4. **Encender, apagar y actualizar** con los disparadores de GitHub;
+  5. **Respaldos**: respaldar antes de una operación delicada y restaurar, con lo que se pierde y el aviso al Director para MetaMask;
+  6. **Alertas**: qué hacer con cada correo del monitoreo;
+  7. **Seguridad**: dónde están los secretos, qué no compartir nunca, la billetera del administrador del contrato y qué hacer si se pierde una clave;
+  8. **Costos**: el presupuesto y sus avisos;
+  9. **Ante un incidente**: una lista de pasos (qué revisar primero, a quién avisar, cuándo restaurar);
+  10. **Documentos técnicos**: enlaces a `despliegue-aws.md`, `respaldos.md` y `monitoreo.md` en GitHub.
+- [ ] El contenido **no tiene ninguna clave, contraseña, correo ni dato personal**. La guía viaja en el código de la plataforma, que es público.
+- [ ] Los nombres de los disparadores son los de GitHub ("QA – Encender", "QA – Respaldar ahora"…). Una prueba los compara con `.github/workflows/`.
+- [ ] Un índice con un enlace por sección y el botón "Imprimir o guardar en PDF", como el manual.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Los disparadores y nombres de PROD | DRA-65: la guía usa los de QA y lo indica |
+| Contactos del equipo de soporte y de la DRA | Pregunta al PO |
+| Automatizar las tareas del calendario | Si el negocio lo pide |
+
+**Notas técnicas**
+
+- El texto está en Markdown, en `plataforma/frontend/src/ayuda/guia-de-operacion.md`, y se muestra con el mismo componente del manual (se generaliza `PaginaManual`).
+- Ruta `#/operacion`, con el permiso `USUARIOS_GESTIONAR`, que tiene solo el Administrador.
+- Pruebas con Vitest y en `e2e/sprint8.cjs`.
+
+| Prioridad | Puntos | Sprint |
+|---|---|---|
+| Media | 3 | 8 |
