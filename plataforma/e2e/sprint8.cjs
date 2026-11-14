@@ -290,9 +290,10 @@ const TITULOS = [
     const indice = admin.getByRole('navigation', { name: 'Contenido de la guía' })
     await indice.waitFor()
     assert.equal(await indice.getByRole('link').count(), 10)
-    await indice.getByRole('link', { name: 'Ante un incidente' }).click()
-    await admin.waitForURL(/#\/operacion\/ante-un-incidente$/)
-    const seccion = admin.getByRole('heading', { level: 2, name: 'Ante un incidente' })
+    // Una sección del medio: las últimas no pueden subir más allá del final de la página.
+    await indice.getByRole('link', { name: 'Respaldos' }).click()
+    await admin.waitForURL(/#\/operacion\/respaldos$/)
+    const seccion = admin.getByRole('heading', { level: 2, name: 'Respaldos' })
     const { y } = await seccion.boundingBox()
     assert.ok(y < 300, `la sección está a ${y} px del borde superior`)
     // Los documentos técnicos se abren en GitHub, en otra pestaña.
