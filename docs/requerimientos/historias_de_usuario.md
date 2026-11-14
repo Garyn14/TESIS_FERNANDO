@@ -2107,3 +2107,52 @@ Es la primera historia de la épica; DRA-71 (preguntas frecuentes) usará la mis
 | Prioridad | Puntos | Sprint |
 |---|---|---|
 | Media | 2 | 8 |
+
+---
+
+## DRA-71: Preguntas frecuentes del portal
+
+**Como** ciudadano o empleador, **quiero** respuestas cortas a las dudas comunes sobre la verificación, **para** resolverlas solo, sin acudir a la agencia.
+
+**Contexto**
+
+DRA-70 explica cómo verificar y qué significa cada resultado. Quedan dudas que no son un paso:
+- si cuesta;
+- si sirve una fotocopia;
+- qué datos se muestran y quién puede verlos;
+- qué hacer si se perdió el documento;
+- por qué "blockchain";
+- qué pasa si se verifica muchas veces seguidas.
+
+Las respuestas se basan en cómo funciona hoy el sistema (HU19–HU21, DRA-62). Las que dependen de un trámite de la agencia (pedir una copia, el costo, el plazo) se dejan generales y se listan como preguntas para el PO.
+
+**Criterios de aceptación**
+
+- [ ] Una página propia, `/preguntas-frecuentes`, con el título "Preguntas frecuentes", en el diseño del portal y adaptada al celular.
+- [ ] Se llega desde la portada, desde el pie de todas las páginas (junto a "¿Cómo verificar un documento?") y desde la guía de DRA-70.
+- [ ] Las preguntas van en tres grupos:
+  - **Sobre la verificación:** si tiene costo, si hay que registrarse o instalar algo, desde qué celular o computadora, hasta cuándo se puede verificar, qué es la blockchain y por qué da confianza, y qué pasa si se hacen muchas consultas seguidas (el límite de 10 por minuto, HU20);
+  - **Si usted es el titular del documento:** qué datos suyos se muestran (nunca el DNI), quién puede ver el documento completo (quien tenga el QR), qué hacer si lo perdió o se dañó el QR, por qué sale anulado, con una versión corregida o vencido;
+  - **Si usted recibe un documento (empleadores y entidades):** cómo saber si es auténtico, si sirve una fotocopia o una foto, qué hacer si el papel no coincide con el documento que muestra el portal, y si se pueden verificar varios documentos.
+- [ ] Cada pregunta se abre y se cierra (acordeón), con todas cerradas al inicio. Funcionan con el teclado y con lectores de pantalla.
+- [ ] Cada pregunta tiene su propio enlace (por ejemplo `/preguntas-frecuentes#perdi-mi-documento`). Al abrir ese enlace, la pregunta aparece abierta.
+- [ ] Las respuestas enlazan a la guía de DRA-70 cuando corresponde.
+- [ ] Lenguaje claro, sin términos técnicos, igual que DRA-70.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Buscador de preguntas | Son unas 15; si crecen, se agrega |
+| Preguntas de la plataforma interna | DRA-73, después de DRA-48 |
+| Datos de atención, costo y plazo de una copia nueva | Preguntas al PO; por ahora la respuesta remite a la Agencia Agraria Satipo |
+
+**Notas técnicas**
+
+- Las preguntas van en un archivo de datos (`portal/src/ayuda/preguntas.ts`): título, enlace, grupo y respuesta. DRA-73 usará el mismo formato en la plataforma.
+- Acordeón con `<details>` y `<summary>` del navegador: accesible y sin código extra.
+- Pruebas con Vitest y en `e2e/sprint8.cjs`.
+
+| Prioridad | Puntos | Sprint |
+|---|---|---|
+| Media | 3 | 8 |
