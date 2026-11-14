@@ -19,11 +19,11 @@ Las fechas de la Tabla 26 de la tesis ya habían pasado, así que el calendario 
 | 6 | 08/11 – 08/11 | Cerrado (19 de 19 puntos; validación del PO al final, en DRA-48) | Consulta interna, auditoría y notificaciones | HU22–HU28 | 19 |
 | | | | | **Total del backlog original** | **156** |
 | 7 | 11/11 – 11/11 | Cerrado (16 de 16 puntos; validación del PO al final, en DRA-48) | Ajustar roles y áreas a la organización y agregar la vigencia opcional de los documentos | DRA-59, DRA-60, DRA-61, DRA-58, DRA-62 | 16 |
-| 8 | 13/11 – 20/11 | En curso (0 de 21 puntos) | Preparar la operación de PROD y dar la primera ayuda a los usuarios | DRA-66, DRA-68, DRA-70, DRA-71, DRA-75, DRA-74 | 21 |
+| 8 | 13/11 – 14/11 | Cerrado (21 de 21 puntos; validación del PO al final, en DRA-48; Jira pendiente) | Preparar la operación de PROD y dar la primera ayuda a los usuarios | DRA-66, DRA-68, DRA-70, DRA-71, DRA-75, DRA-74 | 21 |
 
 **Avance:** 156 de 156 puntos cerrados (100 %): todas las historias del backlog. De ellos, 47 (Sprints 1 y 2) están aprobados por el PO; los 109 de los Sprints 3 a 6 esperan la validación final del PO (DRA-48). Velocidad: 24 puntos en el Sprint 1, 23 en el Sprint 2, 47 en el Sprint 3, 27 en el Sprint 4, 16 en el Sprint 5 y 19 en el Sprint 6.
 
-**Sprint 7 (fuera del backlog original):** 16 de 16 puntos cerrados el 11/11/2026, también a la espera de la validación del PO (DRA-48). En total, 172 puntos cerrados.
+**Sprints 7 y 8 (fuera del backlog original):** 16 puntos cerrados el 11/11/2026 y 21 el 14/11/2026, también a la espera de la validación del PO (DRA-48). En total, 193 puntos cerrados.
 
 > Pendiente: actualizar la Tabla 26 de la tesis con estas fechas.
 
@@ -74,6 +74,18 @@ El contenido se escribe en el repositorio y la plataforma y el portal lo muestra
 | 5 | DRA-74 | Guía de operación del Administrador (depende de DRA-66) | Inicio del Administrador |
 
 El 13/11 se agregó **DRA-75, el manual general (versión 1)**: un solo manual que explica los flujos, con pocas capturas, para no rehacerlo tras la validación del PO. **DRA-72** pasó a ser la **versión 2**, por rol y con capturas, después de DRA-48. DRA-73 también queda para después de DRA-48.
+
+### Cierre del Sprint 8 (14/11/2026)
+
+- **Las 6 historias se construyeron** del 13 al 14/11, con la CI en verde y la prueba de punta a punta del Sprint (17 pasos). Acta en [docs/scrum/sprint-8/revision.md](../scrum/sprint-8/revision.md).
+- **Se cerró sin la validación del PO**, como los Sprints 3 a 7: queda para DRA-48.
+- **Jira quedó pendiente:** el conector se desconectó el 13/11, después de pasar DRA-66 a En revisión. Las descripciones, los comentarios, las transiciones y el cierre del Sprint 8 (id 37) están en [docs/scrum/sprint-8/pendiente-jira.md](../scrum/sprint-8/pendiente-jira.md), para registrarlos en cuanto vuelva.
+- **Quedan en el backlog:**
+  - DRA-48 (validación del PO);
+  - DRA-63 (spike de la billetera);
+  - DRA-65 (PROD en AWS);
+  - DRA-67 (datos personales, bloqueado);
+  - DRA-72 y DRA-73 (después de DRA-48).
 
 ### Sprint 8 (desde el 13/11/2026)
 

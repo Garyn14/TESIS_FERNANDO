@@ -43,7 +43,7 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 - Si no corresponde a ninguna historia, va en un ticket independiente.
 - Un cambio menor (redacción, un ajuste de estilo, una dependencia) puede ir sin ticket, a criterio del equipo, citándolo en el commit.
 
-## Estado al 13/11/2026
+## Estado al 14/11/2026
 
 | Sprint | Estado |
 |---|---|
@@ -51,21 +51,26 @@ Commits con las líneas de coautoría que indique la sesión. Mantener el costo 
 | 3 (HU10–12, HU16–18), 4 (HU13–15, HU29–30) y 5 (HU19–21) | Cerrados **sin la validación del PO**, por decisión del equipo: el 3 y el 4 el 05/11 (74 puntos), el 5 el 07/11 (16 puntos) |
 | 6 (HU22–28) | Cerrado el 08/11 **sin la validación del PO** (19 puntos). Con él están cerradas las 30 historias del backlog: **156 de 156 puntos** |
 | 7 (DRA-58 a DRA-62, fuera del backlog original) | Cerrado el 11/11 **sin la validación del PO** (16 puntos): nombres de roles, áreas y tipos configurables, Mesa de Partes de área y vigencia opcional. Acta en `docs/scrum/sprint-7/revision.md` |
-| 8 (13/11 – 20/11) | **En curso**, 21 puntos: DRA-66 (respaldos), DRA-68 (monitoreo), DRA-70 y DRA-71 (ayuda del portal), DRA-75 (manual general, versión 1) y DRA-74 (guía de operación), en ese orden |
+| 8 (DRA-66, DRA-68, DRA-70, DRA-71, DRA-75 y DRA-74) | Cerrado el 14/11 **sin la validación del PO** (21 puntos; 193 en total): respaldos y monitoreo (apagados hasta PROD), la ayuda del portal, el manual general (versión 1) y la guía de operación. Acta en `docs/scrum/sprint-8/revision.md`. **Jira quedó pendiente** (el conector se desconectó): todo lo que falta registrar está en `docs/scrum/sprint-8/pendiente-jira.md` |
 
 **Lo siguiente:** no quedan historias del backlog original por construir. **QA en AWS (DRA-44) se cerró el 11/11/2026.** Quedan en Jira:
-- la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 7 (`docs/scrum/sprint-N/guion-de-pruebas.md`), que se hará en la reunión con el negocio (material en `docs/negocio/flujos-del-sistema.md` y `presentacion/video-presentacion.mp4`);
+- la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 8 (`docs/scrum/sprint-N/guion-de-pruebas.md`), que se hará en la reunión con el negocio (material en `docs/negocio/flujos-del-sistema.md` y `presentacion/video-presentacion.mp4`);
 - **DRA-63** (spike: seguridad de la billetera del Director), sin construir. Las propuestas DRA-58 a DRA-62 se construyeron en el Sprint 7;
 - **DRA-65 (PROD en AWS)**, a la espera del dominio y el alcance;
-- **requisitos antes de PROD** (12/11/2026, etiqueta `antes-de-prod`): DRA-66 (respaldos) y DRA-68 (monitoreo), que se definen en el módulo de Terraform detrás de un interruptor, se prueban en QA y se desactivan hasta PROD; DRA-67 (datos personales, **bloqueado** hasta el final); y la **épica E8 · Ayuda y documentación (DRA-69)**, con DRA-70 a DRA-74: "¿Cómo verificar?" y preguntas frecuentes en el portal, y manual por rol, preguntas frecuentes y guía de operación en la plataforma, con el contenido en el repositorio (no se usa Confluence). Distribuir los validadores de Besu en instituciones distintas queda como **trabajo futuro**, sin ticket: lo menciona la tesis.
+- **DRA-67** (datos personales, **bloqueado** hasta el final);
+- **DRA-72** (manual por rol, versión 2) y **DRA-73** (preguntas frecuentes de la plataforma), de la épica E8, **después de DRA-48**.
+
+Distribuir los validadores de Besu en instituciones distintas queda como **trabajo futuro**, sin ticket: lo menciona la tesis.
+
+**Respaldos y monitoreo (Sprint 8):** están en el módulo de Terraform detrás de `respaldos_activos` y `monitoreo_activo`, **apagados** hasta PROD; se encienden en QA con las opciones de "QA – Encender". Guías: `docs/arquitectura/respaldos.md` y `monitoreo.md`. **Falta que el dueño del correo de alertas confirme la suscripción** del tema `dra-satipo-alertas`. La ayuda vive en el repositorio: el portal en `portal/src/ayuda/`, y el manual y la guía de operación en `frontend/src/ayuda/*.md` (las capturas del manual se regeneran con `E2E_ACTUALIZAR_MANUAL=1 ./e2e/regresion.sh 8`).
 
 Cada observación del PO se registra como un ticket nuevo y se construye con el flujo de siempre. También falta actualizar la Tabla 26 de la tesis con el calendario de `jira.md`.
 
-**Validación del PO:** se hace **al final del proyecto** (DRA-48, en el backlog), con los guiones de los Sprints 3 a 7. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
+**Validación del PO:** se hace **al final del proyecto** (DRA-48, en el backlog), con los guiones de los Sprints 3 a 8. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
 
 **Pendientes conocidos:**
 - PROD en AWS (DRA-65): alcance y dominio por definir (saldrá de la misma plantilla de QA);
-- la clave temporal de AWS `claude-sesion` (permisos de administrador, usada para preparar QA) sigue activa: eliminarla cuando ya no se necesite. Sin ticket, por decisión del equipo;
+- la clave temporal de AWS `claude-sesion` (permisos de administrador, usada para preparar QA y actualizar la pila de la cuenta en el Sprint 8) sigue activa: eliminarla cuando ya no se necesite. Sin ticket, por decisión del equipo;
 - **Dependabot** (DRA-49) propone actualizaciones cada lunes: se revisan con la CI y, si tocan el PDF, el QR o el portal, con las pruebas de punta a punta. Su `package-lock.json` a veces viene desincronizado: se regenera con `npm install`. Pospuestas hasta después de la validación del PO (DRA-50): **OpenPDF 3** (cambia el nombre de los paquetes, `com.lowagie` → hay que migrar `GeneradorDePdf`), **Apache POI 6** y **TypeScript 7** en los contratos;
 - preguntas abiertas al PO, listadas en cada `revision.md`.
 
