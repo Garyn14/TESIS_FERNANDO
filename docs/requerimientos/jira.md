@@ -75,6 +75,23 @@ El contenido se escribe en el repositorio y la plataforma y el portal lo muestra
 
 El 13/11 se agregó **DRA-75, el manual general (versión 1)**: un solo manual que explica los flujos, con pocas capturas, para no rehacerlo tras la validación del PO. **DRA-72** pasó a ser la **versión 2**, por rol y con capturas, después de DRA-48. DRA-73 también queda para después de DRA-48.
 
+### Autoría del repositorio (DRA-76, 14/11/2026)
+
+- Por indicación del asesor de la tesis, el historial de git se reescribió con **Garyn Fernando Huarhuachi Ramos** como autor y committer, sin líneas de coautoría del asistente de IA. Su uso se declara en el documento de la tesis y en el README.
+- El contenido de los 306 commits no cambió. Se borraron del remoto las 70 ramas antiguas. Queda En revisión.
+
+### Épica E9 · Mejora y revisión estática del código (DRA-77, 14/11/2026)
+
+Revisión estática gratuita para repositorios públicos: **SonarQube Cloud** (calidad, seguridad y cobertura), **Slither** (contrato) y **gitleaks** (claves filtradas). Se evaluó ZeroPath y no entra en la épica. Para no frenar el avance, primero solo informa y luego bloquea únicamente lo grave del código nuevo.
+
+| Orden | Ticket | Qué | Puntos |
+|---|---|---|---|
+| 1 | DRA-78 | Revisión estática en la CI, en modo informativo, y medición inicial | 5 |
+| 2 | DRA-79 | Bloquear en la CI solo lo grave del código nuevo (*quality gate*) | 2 |
+| 3+ | — | Corrección de lo encontrado: se crean después de la medición inicial | — |
+
+Para DRA-78, el dueño del repositorio debe importar el proyecto en SonarQube Cloud y guardar su token como secreto `SONAR_TOKEN` en GitHub.
+
 ### Cierre del Sprint 8 (14/11/2026)
 
 - **Las 6 historias se construyeron** del 13 al 14/11, con la CI en verde y la prueba de punta a punta del Sprint (17 pasos). Acta en [docs/scrum/sprint-8/revision.md](../scrum/sprint-8/revision.md).
