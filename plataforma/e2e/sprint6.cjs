@@ -242,7 +242,7 @@ const paso = async (nombre, fn) => {
   const fila = (texto) => tabla().locator('tbody tr', { hasText: texto })
 
   await paso('HU22 · Mesa de Partes abre Buscar documentos y ve los más recientes de todas las áreas', async () => {
-    assert.deepEqual(await menu(luz), ['Inicio', 'Buscar documentos'])
+    assert.deepEqual(await menu(luz), ['Inicio', 'Buscar documentos', 'Manual de usuario'])
     await luz.getByRole('link', { name: 'Buscar documentos' }).click()
     assert.equal(await luz.getByText('Se habilita en el Sprint 6').count(), 0)
     // El lote es lo último que se envió; los certificados del lote van dentro de su fila.

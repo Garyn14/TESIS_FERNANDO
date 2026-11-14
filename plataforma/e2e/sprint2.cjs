@@ -140,7 +140,7 @@ const paso = async (nombre, fn) => {
   await paso('HU07 · Otro rol no ve la opción ni abre el formulario', async () => {
     const carlos = await nueva()
     await primerIngreso(carlos, 'cmendoza', TEMPORAL, PROPIA)
-    assert.deepEqual(await menu(carlos), ['Inicio', 'Por revisar', 'Documentos firmados'])
+    assert.deepEqual(await menu(carlos), ['Inicio', 'Por revisar', 'Documentos firmados', 'Manual de usuario'])
     await carlos.goto(URL + '#/nuevo-documento/CERTIFICADO_CAPACITACION')
     await carlos.getByText('No tiene permiso para ver esta sección.').waitFor()
     assert.equal(await api(carlos, '/api/tipos-documento'), 403)

@@ -133,7 +133,7 @@ const paso = async (nombre, fn) => {
   const emite = async (p, area) =>
     tarjetaDe(p, area).getByRole('list', { name: `Documentos que emite ${area}` }).getByRole('listitem').locator('span').allTextContents()
   await paso('DRA-60 · El Administrador tiene la pantalla "Áreas y documentos" con cada área, sus tipos y sus personas', async () => {
-    assert.deepEqual(await menu(admin), ['Inicio', 'Usuarios', 'Billetera del director', 'Áreas y documentos'])
+    assert.deepEqual(await menu(admin), ['Inicio', 'Usuarios', 'Billetera del director', 'Áreas y documentos', 'Manual de usuario'])
     await admin.getByRole('link', { name: 'Áreas y documentos' }).click()
     await tarjetaDe(admin, 'Área de Administración').getByText('2 personas del área').waitFor()
     await tarjetaDe(admin, 'Área de Capacitación').getByText('1 persona del área').waitFor()
@@ -402,7 +402,7 @@ const paso = async (nombre, fn) => {
   await paso('DRA-58 · Ana ve solo Inicio y Buscar documentos, con su rol y su área', async () => {
     await primerIngreso(ana, 'amontes', TEMPORAL, PROPIA)
     await ana.getByText('Mesa de Partes de área – Área de Administración').waitFor()
-    assert.deepEqual(await menu(ana), ['Inicio', 'Buscar documentos'])
+    assert.deepEqual(await menu(ana), ['Inicio', 'Buscar documentos', 'Manual de usuario'])
     await foto(ana, 'dra58_02_menu_de_ana')
   })
   await paso('DRA-58 · Buscar documentos muestra solo los documentos de su área', async () => {

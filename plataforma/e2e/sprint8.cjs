@@ -1,12 +1,25 @@
 // Prueba de punta a punta real del Sprint 8: navegador + portal + backend, sin simulaciones.
 // Recorre la ayuda del portal público (épica E8): DRA-70, "¿Cómo verificar un documento?", y
-// DRA-71, las preguntas frecuentes.
+// DRA-71, las preguntas frecuentes. Y el manual de usuario de la plataforma (DRA-75), con un
+// documento real: se registra, se firma con la billetera de prueba y se entrega. De ese recorrido
+// salen las capturas del manual; con E2E_ACTUALIZAR_MANUAL=1 se copian a frontend/src/ayuda/capturas.
 // DRA-66 y DRA-68 son de infraestructura: se prueban en el servidor de AWS en Docker y en QA.
 const { chromium, devices } = require('playwright')
 const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const path = require('node:path')
+const { getAddress } = require('ethers')
+const { instalarBilletera } = require('./billetera-de-prueba.cjs')
 
-const [out] = process.argv.slice(2)
+const [out, URL = 'http://localhost:5173/', ADMIN_TEMPORAL = 'Admin2026!'] = process.argv.slice(2)
 const PORTAL = process.env.E2E_PORTAL ?? 'http://localhost:5174'
+const BESU = process.env.BESU_RPC_URL ?? 'http://localhost:8545'
+const DESPLIEGUE = JSON.parse(fs.readFileSync(process.env.E2E_DESPLIEGUE ?? `${__dirname}/.despliegue.json`, 'utf8'))
+const B = DESPLIEGUE.billeteras
+const ADMIN_CLAVE = 'AdminPropia26'
+const TEMPORAL = 'Demo2026'
+const PROPIA = 'Propia2026'
+const CAPTURAS_DEL_MANUAL = path.join(__dirname, '..', 'frontend', 'src', 'ayuda', 'capturas')
 const resultados = []
 const paso = async (nombre, fn) => {
   await fn()
@@ -170,6 +183,147 @@ const TITULOS = [
     await p.getByRole('navigation', { name: 'Ayuda' }).getByRole('link', { name: 'Preguntas frecuentes' }).click()
     await faq(p).waitFor()
     await p.close()
+  })
+
+  // ------------------------------------------------ DRA-75: manual de usuario de la plataforma
+  const billeteras = new Map()
+  const nueva = async () => {
+    const c = await b.newContext({ viewport: { width: 1280, height: 800 } })
+    const p = await c.newPage()
+    billeteras.set(p, await instalarBilletera(c, BESU))
+    await p.goto(URL)
+    return p
+  }
+  const campo = (p, etiqueta) => p.getByLabel(etiqueta, { exact: true })
+  const ingresar = async (p, u, c) => {
+    await campo(p, 'Usuario').fill(u)
+    await campo(p, 'Contraseña').fill(c)
+    await p.getByRole('button', { name: 'Ingresar' }).click()
+  }
+  const primerIngreso = async (p, u, temporal, propia) => {
+    await ingresar(p, u, temporal)
+    await p.getByRole('heading', { name: 'Cambie su contraseña' }).waitFor()
+    await campo(p, 'Contraseña temporal').fill(temporal)
+    await campo(p, 'Contraseña nueva').fill(propia)
+    await campo(p, 'Repita la contraseña nueva').fill(propia)
+    await p.getByRole('button', { name: 'Cambiar contraseña' }).last().click()
+    await p.getByRole('navigation', { name: 'Menú principal' }).waitFor()
+  }
+  /** Captura del manual: en la carpeta de la prueba y, si se pide, en el frontend. */
+  const capturaDelManual = async (p, nombre) => {
+    fs.mkdirSync(`${out}/manual`, { recursive: true })
+    await p.screenshot({ path: `${out}/manual/${nombre}.png` })
+    if (process.env.E2E_ACTUALIZAR_MANUAL)
+      fs.copyFileSync(`${out}/manual/${nombre}.png`, path.join(CAPTURAS_DEL_MANUAL, `${nombre}.png`))
+  }
+
+  const admin = await nueva()
+  await paso('DRA-75 · Preparación: cuentas reales y la billetera del Director habilitada', async () => {
+    await primerIngreso(admin, 'admin', ADMIN_TEMPORAL, ADMIN_CLAVE)
+    await admin.getByRole('link', { name: 'Usuarios' }).click()
+    for (const [u, n, rol, area] of [
+      ['pmorales', 'Pedro Morales Ccanto', 'AREA_ENCARGADA', 'ADMINISTRACION'],
+      ['cmendoza', 'Ing. Carlos Mendoza Rivera', 'DIRECTOR', null],
+      ['ltorres', 'Luz Torres Rojas', 'CONSULTA_INTERNA', null],
+    ]) {
+      await admin.getByRole('button', { name: 'Nueva cuenta' }).click()
+      await campo(admin, 'Nombre de usuario').fill(u)
+      await campo(admin, 'Nombre completo').fill(n)
+      await campo(admin, 'Rol').selectOption(rol)
+      if (area) await campo(admin, 'Área').selectOption(area)
+      await campo(admin, 'Contraseña temporal').fill(TEMPORAL)
+      await admin.getByRole('button', { name: 'Crear cuenta' }).click()
+      await admin.getByRole('status').getByText(`Se creó la cuenta "${u}"`).waitFor()
+    }
+    await admin.getByRole('link', { name: 'Billetera del director' }).click()
+    await admin.getByRole('button', { name: 'Registrar la billetera de cmendoza' }).click()
+    const ventana = admin.getByRole('dialog', { name: 'Billetera del director' })
+    await campo(ventana, 'Dirección de la billetera').fill(B.director.direccion)
+    await ventana.getByRole('button', { name: 'Guardar billetera' }).click()
+    const fila = admin.locator('tr', { hasText: 'cmendoza' })
+    await fila.getByText(getAddress(B.director.direccion)).waitFor()
+    billeteras.get(admin).usar(B.administrador.clave)
+    await admin.getByRole('button', { name: 'Otorgar el rol de firmante a cmendoza' }).click()
+    const otorgar = admin.getByRole('dialog', { name: 'Otorgar rol de firmante' })
+    await otorgar.getByRole('button', { name: 'Conectar billetera y continuar' }).click()
+    await otorgar.getByRole('button', { name: 'Confirmar en la billetera' }).click()
+    await otorgar.getByText('Rol de firmante otorgado', { exact: false }).waitFor({ timeout: 60_000 })
+    await otorgar.getByRole('button', { name: 'Listo' }).click()
+    await fila.getByText('✓ Firmante activo').waitFor()
+  })
+
+  const pedro = await nueva()
+  await paso('DRA-75 · El inicio de cada rol lleva al manual, a la sección de su rol', async () => {
+    await primerIngreso(pedro, 'pmorales', TEMPORAL, PROPIA)
+    const ayuda = pedro.getByRole('complementary', { name: '¿Necesita ayuda?' })
+    await ayuda.waitFor()
+    await capturaDelManual(pedro, 'inicio')
+    await ayuda.getByRole('link', { name: 'Ver lo que hace el rol Emisor de área' }).click()
+    await pedro.waitForURL(/#\/manual\/para-el-emisor-de-area$/)
+    const seccion = pedro.getByRole('heading', { level: 2, name: 'Para el Emisor de área' })
+    await seccion.waitFor()
+    assert.ok(await seccion.isVisible())
+    // La sección queda arriba de la pantalla, no al final de la página.
+    const { y } = await seccion.boundingBox()
+    assert.ok(y < 300, `la sección está a ${y} px del borde superior`)
+    // El manual está en el menú de todos: también el del Administrador.
+    await admin.getByRole('navigation', { name: 'Menú principal' }).getByRole('link', { name: 'Manual de usuario' }).click()
+    await admin.getByRole('heading', { level: 1, name: 'Manual de usuario' }).waitFor()
+    await admin.screenshot({ path: `${out}/dra75_01_manual.png`, fullPage: true })
+  })
+
+  await paso('DRA-75 · Al imprimir sale solo el manual, sin el menú ni el encabezado', async () => {
+    await admin.emulateMedia({ media: 'print' })
+    assert.equal(await admin.getByRole('navigation', { name: 'Menú principal' }).isVisible(), false)
+    assert.equal(await admin.getByRole('banner').isVisible(), false)
+    assert.equal(await admin.getByRole('button', { name: 'Imprimir o guardar en PDF' }).isVisible(), false)
+    assert.ok(await admin.getByRole('heading', { level: 2, name: 'Para el Director' }).isVisible())
+    await admin.pdf({ path: `${out}/dra75_02_manual_impreso.pdf`, format: 'A4' })
+    await admin.emulateMedia({ media: 'screen' })
+  })
+
+  let codigo
+  await paso('DRA-75 · Capturas del manual: registrar un documento', async () => {
+    await pedro.getByRole('link', { name: 'Nuevo documento' }).click()
+    await pedro.getByRole('link', { name: /Certificado de Trabajo/ }).click()
+    await pedro.getByRole('heading', { name: 'Certificado de Trabajo' }).waitFor()
+    await pedro.getByLabel(/^N\.° de expediente/).fill('EXP-2026-008001')
+    await campo(pedro, 'DNI').fill('45829364')
+    await campo(pedro, 'Nombres').fill('Lucía')
+    await campo(pedro, 'Apellidos').fill('Paredes Quinto')
+    await pedro.getByLabel(/^Cargo/).fill('asistente administrativa')
+    await campo(pedro, 'Fecha de inicio').fill('02/01/2025')
+    await campo(pedro, 'Fecha de fin').fill('30/09/2026')
+    await pedro.getByRole('button', { name: 'Continuar a vista previa' }).click()
+    await pedro.getByRole('figure', { name: 'Vista previa: Certificado de Trabajo' }).waitFor()
+    await capturaDelManual(pedro, 'registrar')
+    await pedro.getByRole('button', { name: 'Enviar a revisión' }).click()
+    await pedro.getByRole('dialog', { name: '¿Enviar a revisión?' }).getByRole('button', { name: 'Enviar' }).click()
+    const aviso = pedro.getByRole('status')
+    await aviso.getByText('Documento enviado a revisión').waitFor()
+    codigo = await aviso.locator('strong').textContent()
+    assert.match(codigo, /^DRA-\d{4}-[A-Z0-9]{6}$/)
+  })
+
+  const carlos = await nueva()
+  await paso('DRA-75 · Capturas del manual: revisar y firmar', async () => {
+    await primerIngreso(carlos, 'cmendoza', TEMPORAL, PROPIA)
+    billeteras.get(carlos).usar(B.director.clave)
+    await carlos.goto(URL + '#/por-revisar/' + codigo)
+    await carlos.getByRole('heading', { name: 'Revisión – Certificado de Trabajo' }).waitFor()
+    await capturaDelManual(carlos, 'firmar')
+    await carlos.getByRole('button', { name: 'Firmar' }).click()
+    const dialogo = carlos.getByRole('dialog', { name: 'Firmar con su billetera' })
+    await dialogo.getByRole('button', { name: 'Confirmar' }).click()
+    await dialogo.getByText('Se firmó 1 documento.').waitFor({ timeout: 60_000 })
+  })
+
+  await paso('DRA-75 · Capturas del manual: buscar y entregar', async () => {
+    const luz = await nueva()
+    await primerIngreso(luz, 'ltorres', TEMPORAL, PROPIA)
+    await luz.goto(URL + '#/buscar/' + codigo)
+    await luz.getByRole('button', { name: 'Imprimir' }).waitFor({ timeout: 60_000 })
+    await capturaDelManual(luz, 'entregar')
   })
 
   await b.close()

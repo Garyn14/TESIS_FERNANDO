@@ -38,7 +38,7 @@ export default function Estructura({
   const [cambio, setCambio] = useState<null | 'formulario' | 'hecho'>(null)
   return (
     <div className="min-h-screen md:flex">
-      <aside className="bg-institutional text-white md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0">
+      <aside className="bg-institutional text-white print:hidden md:sticky md:top-0 md:h-screen md:w-64 md:shrink-0">
         <div className="flex items-center gap-3 px-5 py-4">
           <img src={logo} alt="" className="h-10 w-10 rounded-full bg-white p-0.5" />
           <span className="font-semibold">Agencia Agraria Satipo</span>
@@ -72,7 +72,7 @@ export default function Estructura({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-card px-6 py-3">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-card px-6 py-3 print:hidden">
           <h1 className="text-2xl font-semibold text-institutional">{titulo}</h1>
           <div className="flex items-center gap-3">
             {/* HU26–HU28: avisos dentro de la plataforma. */}

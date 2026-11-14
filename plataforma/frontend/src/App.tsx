@@ -1,3 +1,4 @@
+import { PaginaManual } from './ayuda/PaginaManual'
 import { useEffect, useRef, useState } from 'react'
 import { alTerminarSesion, ErrorApi } from './api/cliente'
 import Estructura from './estructura/Estructura'
@@ -125,6 +126,8 @@ export default function App() {
   else if (opcion.ruta === 'usuarios') contenido = <PaginaUsuarios />
   else if (opcion.ruta === 'billetera') contenido = <PaginaBilletera />
   else if (opcion.ruta === 'areas') contenido = <PaginaAreas />
+  // DRA-75: #/manual/<sección> abre el manual en esa sección.
+  else if (opcion.ruta === 'manual') contenido = <PaginaManual seccion={detalle} />
   // HU10: abrir un elemento registra la revisión; la bandeja se vuelve a cargar en cada visita.
   else if (opcion.ruta === 'por-revisar')
     contenido =

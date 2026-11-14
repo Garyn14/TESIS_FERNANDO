@@ -72,11 +72,11 @@ describe('App (HU03)', () => {
     [
       'Administrador',
       ADMIN,
-      ['Inicio', 'Usuarios', 'Billetera del director', 'Áreas y documentos'],
+      ['Inicio', 'Usuarios', 'Billetera del director', 'Áreas y documentos', 'Manual de usuario'],
     ],
-    ['Emisor de área', AREA, ['Inicio', 'Mis documentos', 'Nuevo documento']],
-    ['Director', DIRECTOR, ['Inicio', 'Por revisar', 'Documentos firmados']],
-    ['Mesa de Partes', CONSULTA, ['Inicio', 'Buscar documentos']],
+    ['Emisor de área', AREA, ['Inicio', 'Mis documentos', 'Nuevo documento', 'Manual de usuario']],
+    ['Director', DIRECTOR, ['Inicio', 'Por revisar', 'Documentos firmados', 'Manual de usuario']],
+    ['Mesa de Partes', CONSULTA, ['Inicio', 'Buscar documentos', 'Manual de usuario']],
   ])('el menú de %s muestra solo sus vistas', async (_rol, sesion, esperadas) => {
     backend(sesion)
     render(<App />)
@@ -223,6 +223,7 @@ describe('App (HU03)', () => {
       'Usuarios',
       'Billetera del director',
       'Áreas y documentos',
+      'Manual de usuario',
     ])
   })
 

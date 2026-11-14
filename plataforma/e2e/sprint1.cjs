@@ -91,7 +91,7 @@ const paso = async (nombre, fn) => {
   await paso('HU04+HU03 · Tras cambiarla, entra con el menú del Administrador', async () => {
     await cambiarContrasena(admin, ADMIN_TEMPORAL, ADMIN_CLAVE, 'Contraseña temporal')
     await admin.getByRole('navigation', { name: 'Menú principal' }).waitFor()
-    assert.deepEqual(await menu(admin), ['Inicio', 'Usuarios', 'Billetera del director', 'Áreas y documentos'])
+    assert.deepEqual(await menu(admin), ['Inicio', 'Usuarios', 'Billetera del director', 'Áreas y documentos', 'Manual de usuario'])
     await foto(admin, 'hu03_03_inicio_administrador')
   })
 
@@ -134,9 +134,9 @@ const paso = async (nombre, fn) => {
 
   // ---------------------------------------------------- HU03 + HU04: menú de cada rol
   for (const [u, esperado, archivo] of [
-    ['rquispe', ['Inicio', 'Mis documentos', 'Nuevo documento'], 'hu03_05_menu_area_encargada'],
-    ['cmendoza', ['Inicio', 'Por revisar', 'Documentos firmados'], 'hu03_06_menu_director'],
-    ['ltorres', ['Inicio', 'Buscar documentos'], 'hu03_07_menu_consulta_interna'],
+    ['rquispe', ['Inicio', 'Mis documentos', 'Nuevo documento', 'Manual de usuario'], 'hu03_05_menu_area_encargada'],
+    ['cmendoza', ['Inicio', 'Por revisar', 'Documentos firmados', 'Manual de usuario'], 'hu03_06_menu_director'],
+    ['ltorres', ['Inicio', 'Buscar documentos', 'Manual de usuario'], 'hu03_07_menu_consulta_interna'],
   ]) {
     await paso(`HU04+HU03 · ${u}: cambia la temporal y ve solo su menú`, async () => {
       const p = await nueva()
@@ -320,7 +320,7 @@ const paso = async (nombre, fn) => {
     await ingresar(p, 'cmendoza', PROPIA)
     await p.getByRole('alert').getByText('Usuario o contraseña incorrectos.').waitFor()
     await primerIngreso(p, 'cmendoza', temporalCarlos, PROPIA)
-    assert.deepEqual(await menu(p), ['Inicio', 'Por revisar', 'Documentos firmados'])
+    assert.deepEqual(await menu(p), ['Inicio', 'Por revisar', 'Documentos firmados', 'Manual de usuario'])
     await p.context().close()
   })
   await paso('HU04 · Restablecer cierra la sesión abierta de la persona', async () => {
@@ -407,7 +407,7 @@ const paso = async (nombre, fn) => {
 
     await rosa.getByRole('link', { name: 'Inicio' }).click()
     await rosa.getByRole('link', { name: 'Buscar documentos' }).waitFor()
-    assert.deepEqual(await menu(rosa), ['Inicio', 'Buscar documentos'])
+    assert.deepEqual(await menu(rosa), ['Inicio', 'Buscar documentos', 'Manual de usuario'])
     await rosa.context().close()
   })
   await paso('HU02 · El Administrador no puede desactivar su propia cuenta', async () => {

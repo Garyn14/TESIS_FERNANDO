@@ -826,7 +826,7 @@ const paso = async (nombre, fn) => {
     assert.equal((await enviar(pedro, '/api/firma/cancelacion', { codigos: [primero] })).estado, 403)
   })
   await paso('HU10 · Solo el Director ve la bandeja', async () => {
-    assert.deepEqual(await menu(pedro), ['Inicio', 'Mis documentos', 'Nuevo documento'])
+    assert.deepEqual(await menu(pedro), ['Inicio', 'Mis documentos', 'Nuevo documento', 'Manual de usuario'])
     await pedro.goto(URL + '#/por-revisar')
     await pedro.getByText('No tiene permiso para ver esta sección.').waitFor()
     assert.equal(await api(pedro, '/api/revision'), 403)

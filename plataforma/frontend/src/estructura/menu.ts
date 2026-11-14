@@ -48,6 +48,8 @@ export const MENU: OpcionMenu[] = [
     titulo: 'Buscar documentos',
     permiso: 'DOCUMENTO_BUSCAR',
   },
+  // DRA-75: el manual, para todos los roles (todos tienen CUENTA_PROPIA).
+  { ruta: 'manual', titulo: 'Manual de usuario', permiso: 'CUENTA_PROPIA' },
 ]
 
 export const opcionesPermitidas = (permisos: string[]) =>

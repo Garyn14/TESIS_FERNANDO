@@ -1,3 +1,4 @@
+import { SECCION_DEL_ROL } from '../ayuda/manual'
 import { useEffect, useState } from 'react'
 import { tiposPermitidos, type TipoDocumento } from '../documentos/api'
 import type { Sesion } from '../sesion/api'
@@ -15,6 +16,7 @@ export function PaginaInicio({ sesion }: { sesion: Sesion }) {
       </h2>
       <p className="mt-1 text-muted">Ingresó como {sesion.rolNombre}.</p>
       {sesion.permisos.includes('DOCUMENTO_REGISTRAR') && <TiposDeMiArea sesion={sesion} />}
+      <AyudaDelInicio sesion={sesion} />
     </section>
   )
 }
@@ -70,5 +72,31 @@ export function PaginaSinPermiso() {
         No tiene permiso para ver esta sección.
       </p>
     </section>
+  )
+}
+
+/** DRA-75: el manual de usuario, desde el inicio, con un enlace directo a la sección del rol. */
+function AyudaDelInicio({ sesion }: { sesion: Sesion }) {
+  const seccion = SECCION_DEL_ROL[sesion.rol]
+  return (
+    <aside
+      aria-label="¿Necesita ayuda?"
+      className="mt-6 rounded-xl border border-line bg-card p-5 shadow-sm"
+    >
+      <h3 className="font-semibold">¿Necesita ayuda?</h3>
+      <p className="mt-1 text-muted">
+        El manual de usuario explica paso a paso cómo usar la plataforma.
+      </p>
+      <p className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+        {seccion && (
+          <a href={`#/manual/${seccion}`} className="font-medium text-institutional underline">
+            Ver lo que hace el rol {sesion.rolNombre}
+          </a>
+        )}
+        <a href="#/manual" className="font-medium text-institutional underline">
+          Abrir el manual completo
+        </a>
+      </p>
+    </aside>
   )
 }
