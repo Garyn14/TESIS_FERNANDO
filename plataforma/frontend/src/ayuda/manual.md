@@ -8,13 +8,13 @@ Este manual explica cómo usar la plataforma interna. Lea primero _La plataforma
 
 La plataforma sirve para tres cosas: _emitir_ los certificados y constancias de la agencia, que el Director los _firme_ digitalmente y que cualquier persona pueda _verificar_ que son auténticos.
 
-| Rol                    | Qué hace                                                                                          | Opciones del menú                                                            |
-| ---------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Administrador          | Crea y mantiene las cuentas, las áreas y los tipos de documento, y habilita la firma del Director | **Inicio**, **Usuarios**, **Billetera del director**, **Áreas y documentos** |
-| Emisor de área         | Registra los documentos de su área, corrige los observados y reemite los que tienen errores       | **Inicio**, **Mis documentos**, **Nuevo documento**                          |
-| Director               | Revisa, observa, rechaza, firma y anula documentos                                                | **Inicio**, **Por revisar**, **Documentos firmados**                         |
-| Mesa de Partes         | Busca cualquier documento, informa su estado, ve su historial e imprime o descarga los firmados   | **Inicio**, **Buscar documentos**                                            |
-| Mesa de Partes de área | Lo mismo que Mesa de Partes, pero solo con los documentos de su área                              | **Inicio**, **Buscar documentos**                                            |
+| Rol                    | Qué hace                                                                                          | Opciones del menú                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Administrador          | Crea y mantiene las cuentas, las áreas y los tipos de documento, y habilita la firma del Director | **Inicio**, **Usuarios**, **Billetera del director**, **Áreas y documentos**, **Guía de operación** |
+| Emisor de área         | Registra los documentos de su área, corrige los observados y reemite los que tienen errores       | **Inicio**, **Mis documentos**, **Nuevo documento**                                                 |
+| Director               | Revisa, observa, rechaza, firma y anula documentos                                                | **Inicio**, **Por revisar**, **Documentos firmados**                                                |
+| Mesa de Partes         | Busca cualquier documento, informa su estado, ve su historial e imprime o descarga los firmados   | **Inicio**, **Buscar documentos**                                                                   |
+| Mesa de Partes de área | Lo mismo que Mesa de Partes, pero solo con los documentos de su área                              | **Inicio**, **Buscar documentos**                                                                   |
 
 Todos tienen además la opción **Manual de usuario**, la campana de avisos y **Cambiar contraseña**.
 
@@ -97,6 +97,10 @@ El Director firma con una _billetera digital_ (MetaMask). Para habilitarla:
 3. Cuando la fila del Director muestre "✓ Firmante activo", ya puede firmar.
 
 Si cambia el Director, revoque el permiso de la billetera anterior y otórguelo a la nueva. Los documentos firmados antes siguen siendo válidos.
+
+### La guía de operación
+
+La opción **Guía de operación** de su menú explica sus tareas como responsable de sistemas: qué revisar cada día, semana y mes, cómo encender, respaldar y restaurar la plataforma, qué hacer con cada alerta y ante un incidente.
 
 ## Para el Emisor de área
 

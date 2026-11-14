@@ -72,7 +72,14 @@ describe('App (HU03)', () => {
     [
       'Administrador',
       ADMIN,
-      ['Inicio', 'Usuarios', 'Billetera del director', 'Áreas y documentos', 'Manual de usuario'],
+      [
+        'Inicio',
+        'Usuarios',
+        'Billetera del director',
+        'Áreas y documentos',
+        'Guía de operación',
+        'Manual de usuario',
+      ],
     ],
     ['Emisor de área', AREA, ['Inicio', 'Mis documentos', 'Nuevo documento', 'Manual de usuario']],
     ['Director', DIRECTOR, ['Inicio', 'Por revisar', 'Documentos firmados', 'Manual de usuario']],
@@ -223,6 +230,7 @@ describe('App (HU03)', () => {
       'Usuarios',
       'Billetera del director',
       'Áreas y documentos',
+      'Guía de operación',
       'Manual de usuario',
     ])
   })

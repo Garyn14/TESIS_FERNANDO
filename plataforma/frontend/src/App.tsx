@@ -1,4 +1,4 @@
-import { PaginaManual } from './ayuda/PaginaManual'
+import { PaginaGuiaDeOperacion, PaginaManual } from './ayuda/PaginaManual'
 import { useEffect, useRef, useState } from 'react'
 import { alTerminarSesion, ErrorApi } from './api/cliente'
 import Estructura from './estructura/Estructura'
@@ -128,6 +128,8 @@ export default function App() {
   else if (opcion.ruta === 'areas') contenido = <PaginaAreas />
   // DRA-75: #/manual/<sección> abre el manual en esa sección.
   else if (opcion.ruta === 'manual') contenido = <PaginaManual seccion={detalle} />
+  // DRA-74: #/operacion/<sección>, solo con el permiso del Administrador.
+  else if (opcion.ruta === 'operacion') contenido = <PaginaGuiaDeOperacion seccion={detalle} />
   // HU10: abrir un elemento registra la revisión; la bandeja se vuelve a cargar en cada visita.
   else if (opcion.ruta === 'por-revisar')
     contenido =

@@ -48,6 +48,8 @@ export const MENU: OpcionMenu[] = [
     titulo: 'Buscar documentos',
     permiso: 'DOCUMENTO_BUSCAR',
   },
+  // DRA-74: la guía de operación, solo para el Administrador.
+  { ruta: 'operacion', titulo: 'Guía de operación', permiso: 'USUARIOS_GESTIONAR' },
   // DRA-75: el manual, para todos los roles (todos tienen CUENTA_PROPIA).
   { ruta: 'manual', titulo: 'Manual de usuario', permiso: 'CUENTA_PROPIA' },
 ]

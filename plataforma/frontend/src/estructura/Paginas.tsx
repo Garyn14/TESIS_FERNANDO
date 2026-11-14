@@ -96,6 +96,11 @@ function AyudaDelInicio({ sesion }: { sesion: Sesion }) {
         <a href="#/manual" className="font-medium text-institutional underline">
           Abrir el manual completo
         </a>
+        {sesion.permisos.includes('USUARIOS_GESTIONAR') && (
+          <a href="#/operacion" className="font-medium text-institutional underline">
+            Abrir la guía de operación
+          </a>
+        )}
       </p>
     </aside>
   )

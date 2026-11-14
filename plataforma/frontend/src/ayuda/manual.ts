@@ -9,11 +9,12 @@ export const seccionDe = (titulo: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 
-/** Las secciones del manual (sus títulos ##), en orden, para el índice. */
-export const SECCIONES = [...manual.matchAll(/^## (.+)$/gm)].map(([, titulo]) => ({
-  titulo,
-  id: seccionDe(titulo),
-}))
+/** Las secciones de un documento de ayuda (sus títulos ##), en orden, para el índice. */
+export const seccionesDe = (texto: string) =>
+  [...texto.matchAll(/^## (.+)$/gm)].map(([, titulo]) => ({ titulo, id: seccionDe(titulo) }))
+
+/** Las secciones del manual. */
+export const SECCIONES = seccionesDe(manual)
 
 /** La sección del manual de cada rol, para el enlace del inicio. */
 export const SECCION_DEL_ROL: Record<string, string> = {

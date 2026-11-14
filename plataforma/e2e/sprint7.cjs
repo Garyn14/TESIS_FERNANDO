@@ -133,7 +133,7 @@ const paso = async (nombre, fn) => {
   const emite = async (p, area) =>
     tarjetaDe(p, area).getByRole('list', { name: `Documentos que emite ${area}` }).getByRole('listitem').locator('span').allTextContents()
   await paso('DRA-60 · El Administrador tiene la pantalla "Áreas y documentos" con cada área, sus tipos y sus personas', async () => {
-    assert.deepEqual(await menu(admin), ['Inicio', 'Usuarios', 'Billetera del director', 'Áreas y documentos', 'Manual de usuario'])
+    assert.deepEqual(await menu(admin), ['Inicio', 'Usuarios', 'Billetera del director', 'Áreas y documentos', 'Guía de operación', 'Manual de usuario'])
     await admin.getByRole('link', { name: 'Áreas y documentos' }).click()
     await tarjetaDe(admin, 'Área de Administración').getByText('2 personas del área').waitFor()
     await tarjetaDe(admin, 'Área de Capacitación').getByText('1 persona del área').waitFor()

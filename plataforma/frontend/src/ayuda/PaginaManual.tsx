@@ -1,15 +1,38 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
 import Markdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import guia from './guia-de-operacion.md?raw'
 import manual from './manual.md?raw'
-import { CAPTURAS, SECCIONES, seccionDe } from './manual'
+import { CAPTURAS, seccionDe, seccionesDe } from './manual'
 
 /**
  * DRA-75: manual de usuario general (versión 1), el mismo para todos los roles. El texto vive en
  * manual.md, en Markdown, para leerlo y editarlo también en GitHub. Cada sección (##) tiene su
  * enlace, #/manual/<sección>; el inicio enlaza a la del rol de la persona.
  */
-export function PaginaManual({ seccion }: { seccion?: string }) {
+export const PaginaManual = ({ seccion }: { seccion?: string }) => (
+  <DocumentoDeAyuda texto={manual} ruta="manual" seccion={seccion} />
+)
+
+/** DRA-74: guía de operación, solo para el Administrador (#/operacion). */
+export const PaginaGuiaDeOperacion = ({ seccion }: { seccion?: string }) => (
+  <DocumentoDeAyuda texto={guia} ruta="operacion" seccion={seccion} />
+)
+
+/**
+ * Un documento de ayuda en Markdown, con su índice, un enlace por sección (#/<ruta>/<sección>) y
+ * el botón para imprimirlo. Al imprimir salen solo el documento y su título.
+ */
+function DocumentoDeAyuda({
+  texto: contenido,
+  ruta,
+  seccion,
+}: {
+  texto: string
+  ruta: string
+  seccion?: string
+}) {
+  const componentes = useMemo(() => componentesDe(contenido, ruta), [contenido, ruta])
   useEffect(() => {
     if (seccion) document.getElementById(seccion)?.scrollIntoView?.({ block: 'start' })
   }, [seccion])
@@ -26,8 +49,8 @@ export function PaginaManual({ seccion }: { seccion?: string }) {
         </button>
       </div>
       <article className="rounded-xl border border-line bg-card p-6 shadow-sm print:border-0 print:p-0 print:shadow-none">
-        <Markdown remarkPlugins={[remarkGfm]} components={COMPONENTES}>
-          {manual}
+        <Markdown remarkPlugins={[remarkGfm]} components={componentes}>
+          {contenido}
         </Markdown>
       </article>
     </section>
@@ -37,13 +60,13 @@ export function PaginaManual({ seccion }: { seccion?: string }) {
 const texto = (hijos: ReactNode): string =>
   Array.isArray(hijos) ? hijos.map(texto).join('') : typeof hijos === 'string' ? hijos : ''
 
-const COMPONENTES: Components = {
+const componentesDe = (contenido: string, ruta: string): Components => ({
   h1: ({ children }) => (
     <>
       {/* En pantalla el título ya está en el encabezado de la página; al imprimir, el encabezado
           se oculta y el título sale aquí. */}
       <h1 className="hidden text-2xl font-semibold text-institutional print:block">{children}</h1>
-      <Indice />
+      <Indice secciones={seccionesDe(contenido)} ruta={ruta} />
     </>
   ),
   h2: ({ children }) => (
@@ -81,22 +104,42 @@ const COMPONENTES: Components = {
       />
     ) : null
   },
-  a: ({ href, children }) => (
-    <a href={href} className="font-medium text-institutional underline">
-      {children}
-    </a>
-  ),
-}
+  // Los enlaces externos (los documentos técnicos en GitHub) se abren en otra pestaña.
+  a: ({ href, children }) =>
+    href?.startsWith('http') ? (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="font-medium text-institutional underline"
+      >
+        {children}
+      </a>
+    ) : (
+      <a href={href} className="font-medium text-institutional underline">
+        {children}
+      </a>
+    ),
+})
 
-/** Índice con un enlace a cada sección del manual. */
-function Indice() {
+/** Índice con un enlace a cada sección del documento. */
+function Indice({
+  secciones,
+  ruta,
+}: {
+  secciones: { titulo: string; id: string }[]
+  ruta: string
+}) {
   return (
-    <nav aria-label="Contenido del manual" className="mt-4 rounded-lg bg-cream p-4 print:hidden">
+    <nav
+      aria-label={ruta === 'manual' ? 'Contenido del manual' : 'Contenido de la guía'}
+      className="mt-4 rounded-lg bg-cream p-4 print:hidden"
+    >
       <p className="font-semibold">Contenido</p>
       <ol className="mt-2 list-decimal space-y-1 pl-6">
-        {SECCIONES.map((s) => (
+        {secciones.map((s) => (
           <li key={s.id}>
-            <a href={`#/manual/${s.id}`} className="text-institutional underline">
+            <a href={`#/${ruta}/${s.id}`} className="text-institutional underline">
               {s.titulo}
             </a>
           </li>

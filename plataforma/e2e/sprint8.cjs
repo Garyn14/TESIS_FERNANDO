@@ -3,6 +3,7 @@
 // DRA-71, las preguntas frecuentes. Y el manual de usuario de la plataforma (DRA-75), con un
 // documento real: se registra, se firma con la billetera de prueba y se entrega. De ese recorrido
 // salen las capturas del manual; con E2E_ACTUALIZAR_MANUAL=1 se copian a frontend/src/ayuda/capturas.
+// Por último, la guía de operación (DRA-74), solo para el Administrador.
 // DRA-66 y DRA-68 son de infraestructura: se prueban en el servidor de AWS en Docker y en QA.
 const { chromium, devices } = require('playwright')
 const assert = require('node:assert/strict')
@@ -281,6 +282,36 @@ const TITULOS = [
     assert.ok(await admin.getByRole('article').getByRole('heading', { level: 1, name: 'Manual de usuario' }).isVisible())
     await admin.pdf({ path: `${out}/dra75_02_manual_impreso.pdf`, format: 'A4' })
     await admin.emulateMedia({ media: 'screen' })
+  })
+
+  await paso('DRA-74 · El Administrador abre la guía de operación desde su inicio', async () => {
+    await admin.getByRole('navigation', { name: 'Menú principal' }).getByRole('link', { name: 'Inicio' }).click()
+    await admin.getByRole('complementary', { name: '¿Necesita ayuda?' }).getByRole('link', { name: 'Abrir la guía de operación' }).click()
+    const indice = admin.getByRole('navigation', { name: 'Contenido de la guía' })
+    await indice.waitFor()
+    assert.equal(await indice.getByRole('link').count(), 10)
+    await indice.getByRole('link', { name: 'Ante un incidente' }).click()
+    await admin.waitForURL(/#\/operacion\/ante-un-incidente$/)
+    const seccion = admin.getByRole('heading', { level: 2, name: 'Ante un incidente' })
+    const { y } = await seccion.boundingBox()
+    assert.ok(y < 300, `la sección está a ${y} px del borde superior`)
+    // Los documentos técnicos se abren en GitHub, en otra pestaña.
+    const github = admin.getByRole('link', { name: 'Respaldos y recuperación' })
+    assert.equal(await github.getAttribute('target'), '_blank')
+    assert.match(await github.getAttribute('href'), /^https:\/\/github\.com\/.+\/respaldos\.md$/)
+    await admin.goto(PLATAFORMA + '#/operacion')
+    await indice.waitFor()
+    await admin.screenshot({ path: `${out}/dra74_01_guia.png`, fullPage: true })
+  })
+
+  await paso('DRA-74 · Los demás roles no tienen la guía en su menú ni pueden abrirla', async () => {
+    const menu = await pedro.getByRole('navigation', { name: 'Menú principal' }).getByRole('link').allTextContents()
+    assert.ok(!menu.includes('Guía de operación'), menu.join(', '))
+    await pedro.goto(PLATAFORMA + '#/operacion')
+    await pedro.getByText('No tiene permiso para ver esta sección').waitFor()
+    assert.equal(await pedro.getByRole('navigation', { name: 'Contenido de la guía' }).count(), 0)
+    await pedro.screenshot({ path: `${out}/dra74_02_sin_permiso.png` })
+    await pedro.goto(PLATAFORMA + '#/inicio')
   })
 
   let codigo
