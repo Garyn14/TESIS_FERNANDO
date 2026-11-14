@@ -1,16 +1,6 @@
 import { fechaDeCalendario, fechaLarga, type Verificacion } from './api'
-
-const ENCABEZADOS = {
-  VALIDO: { titulo: 'Documento válido', icono: '✓', clase: 'border-institutional bg-green-pale' },
-  ANULADO: {
-    titulo: 'Documento anulado',
-    icono: '⊘',
-    clase: 'border-neutral-icon bg-neutral-pale',
-  },
-  // DRA-62: auténtico, pero su vigencia terminó.
-  VENCIDO: { titulo: 'Documento vencido', icono: '⌛', clase: 'border-orange bg-orange-pale' },
-  NO_VALIDO: { titulo: 'Documento no válido', icono: '✕', clase: 'border-red-700 bg-red-50' },
-}
+import { ENCABEZADOS } from './resultados'
+import { RUTA_COMO_VERIFICAR } from './ruta'
 
 const ESTADO = { VALIDO: 'Vigente', ANULADO: 'Anulado', VENCIDO: 'Vencido', NO_VALIDO: '' }
 
@@ -70,7 +60,10 @@ export default function TarjetaResultado({
       {v.resultado === 'NO_VALIDO' && (
         <p className="mt-4 text-sm">
           Compruebe que escaneó el código QR del documento original. Si cree que es un error,
-          comuníquese con la Agencia Agraria Satipo.
+          comuníquese con la Agencia Agraria Satipo.{' '}
+          <a href={RUTA_COMO_VERIFICAR} className="font-medium text-institutional underline">
+            Vea cómo verificar un documento
+          </a>
         </p>
       )}
     </section>

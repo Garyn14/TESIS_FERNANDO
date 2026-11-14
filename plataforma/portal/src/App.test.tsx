@@ -130,6 +130,10 @@ describe('Portal de verificación (HU19)', () => {
     expect(resultado).toHaveTextContent('No encontramos un documento válido con estos datos.')
     expect(resultado).not.toHaveTextContent('Titular')
     expect(screen.queryByRole('region', { name: 'Documento completo' })).not.toBeInTheDocument()
+    // DRA-70: lleva a la guía de cómo verificar.
+    expect(
+      within(resultado).getByRole('link', { name: 'Vea cómo verificar un documento' }),
+    ).toHaveAttribute('href', '/como-verificar')
   })
 
   it('si la verificación no está disponible, permite intentarlo nuevamente', async () => {

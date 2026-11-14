@@ -1,7 +1,8 @@
 import logo from './assets/logo-dra.png'
 import PaginaVerificacion from './PaginaVerificacion'
 import Portada from './Portada'
-import { tokenDeLaRuta } from './ruta'
+import ComoVerificar from './ayuda/ComoVerificar'
+import { esComoVerificar, RUTA_COMO_VERIFICAR, tokenDeLaRuta } from './ruta'
 
 /**
  * Portal público de verificación (HU19–HU21, RF37): sin registro ni inicio de sesión. Se abre al
@@ -21,13 +22,26 @@ export default function App({ ruta = window.location.pathname }: { ruta?: string
         </div>
       </header>
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
-        {token ? <PaginaVerificacion token={token} /> : <Portada />}
+        {token ? (
+          <PaginaVerificacion token={token} />
+        ) : esComoVerificar(ruta) ? (
+          <ComoVerificar />
+        ) : (
+          <Portada />
+        )}
       </main>
       <footer className="border-t border-line bg-card">
-        <p className="mx-auto max-w-4xl px-4 py-4 text-sm text-muted">
-          Portal público de la Agencia Agraria Satipo. La verificación no requiere registro: compara
-          el documento con su registro en la blockchain de la agencia.
-        </p>
+        <div className="mx-auto max-w-4xl space-y-2 px-4 py-4 text-sm text-muted">
+          <p>
+            Portal público de la Agencia Agraria Satipo. La verificación no requiere registro:
+            compara el documento con su registro en la blockchain de la agencia.
+          </p>
+          <nav aria-label="Ayuda">
+            <a href={RUTA_COMO_VERIFICAR} className="font-medium text-institutional underline">
+              ¿Cómo verificar un documento?
+            </a>
+          </nav>
+        </div>
       </footer>
     </div>
   )
