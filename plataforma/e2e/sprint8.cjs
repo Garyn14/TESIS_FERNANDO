@@ -11,7 +11,7 @@ const path = require('node:path')
 const { getAddress } = require('ethers')
 const { instalarBilletera } = require('./billetera-de-prueba.cjs')
 
-const [out, URL = 'http://localhost:5173/', ADMIN_TEMPORAL = 'Admin2026!'] = process.argv.slice(2)
+const [out, PLATAFORMA = 'http://localhost:5173/', ADMIN_TEMPORAL = 'Admin2026!'] = process.argv.slice(2)
 const PORTAL = process.env.E2E_PORTAL ?? 'http://localhost:5174'
 const BESU = process.env.BESU_RPC_URL ?? 'http://localhost:8545'
 const DESPLIEGUE = JSON.parse(fs.readFileSync(process.env.E2E_DESPLIEGUE ?? `${__dirname}/.despliegue.json`, 'utf8'))
@@ -191,7 +191,7 @@ const TITULOS = [
     const c = await b.newContext({ viewport: { width: 1280, height: 800 } })
     const p = await c.newPage()
     billeteras.set(p, await instalarBilletera(c, BESU))
-    await p.goto(URL)
+    await p.goto(PLATAFORMA)
     return p
   }
   const campo = (p, etiqueta) => p.getByLabel(etiqueta, { exact: true })
@@ -209,12 +209,10 @@ const TITULOS = [
     await p.getByRole('button', { name: 'Cambiar contraseña' }).last().click()
     await p.getByRole('navigation', { name: 'Menú principal' }).waitFor()
   }
-  /** Captura del manual: en la carpeta de la prueba y, si se pide, en el frontend. */
+  /** Captura del manual, en la carpeta de la prueba. Se copian al frontend al final (ver abajo). */
   const capturaDelManual = async (p, nombre) => {
     fs.mkdirSync(`${out}/manual`, { recursive: true })
     await p.screenshot({ path: `${out}/manual/${nombre}.png` })
-    if (process.env.E2E_ACTUALIZAR_MANUAL)
-      fs.copyFileSync(`${out}/manual/${nombre}.png`, path.join(CAPTURAS_DEL_MANUAL, `${nombre}.png`))
   }
 
   const admin = await nueva()
@@ -268,7 +266,9 @@ const TITULOS = [
     assert.ok(y < 300, `la sección está a ${y} px del borde superior`)
     // El manual está en el menú de todos: también el del Administrador.
     await admin.getByRole('navigation', { name: 'Menú principal' }).getByRole('link', { name: 'Manual de usuario' }).click()
-    await admin.getByRole('heading', { level: 1, name: 'Manual de usuario' }).waitFor()
+    await admin.getByRole('navigation', { name: 'Contenido del manual' }).waitFor()
+    // Un solo título en pantalla: el del encabezado de la página.
+    assert.equal(await admin.getByRole('heading', { level: 1, name: 'Manual de usuario' }).count(), 1)
     await admin.screenshot({ path: `${out}/dra75_01_manual.png`, fullPage: true })
   })
 
@@ -278,6 +278,7 @@ const TITULOS = [
     assert.equal(await admin.getByRole('banner').isVisible(), false)
     assert.equal(await admin.getByRole('button', { name: 'Imprimir o guardar en PDF' }).isVisible(), false)
     assert.ok(await admin.getByRole('heading', { level: 2, name: 'Para el Director' }).isVisible())
+    assert.ok(await admin.getByRole('article').getByRole('heading', { level: 1, name: 'Manual de usuario' }).isVisible())
     await admin.pdf({ path: `${out}/dra75_02_manual_impreso.pdf`, format: 'A4' })
     await admin.emulateMedia({ media: 'screen' })
   })
@@ -296,6 +297,8 @@ const TITULOS = [
     await campo(pedro, 'Fecha de fin').fill('30/09/2026')
     await pedro.getByRole('button', { name: 'Continuar a vista previa' }).click()
     await pedro.getByRole('figure', { name: 'Vista previa: Certificado de Trabajo' }).waitFor()
+    // La captura muestra el botón que se pulsa.
+    await pedro.getByRole('button', { name: 'Enviar a revisión' }).scrollIntoViewIfNeeded()
     await capturaDelManual(pedro, 'registrar')
     await pedro.getByRole('button', { name: 'Enviar a revisión' }).click()
     await pedro.getByRole('dialog', { name: '¿Enviar a revisión?' }).getByRole('button', { name: 'Enviar' }).click()
@@ -309,8 +312,9 @@ const TITULOS = [
   await paso('DRA-75 · Capturas del manual: revisar y firmar', async () => {
     await primerIngreso(carlos, 'cmendoza', TEMPORAL, PROPIA)
     billeteras.get(carlos).usar(B.director.clave)
-    await carlos.goto(URL + '#/por-revisar/' + codigo)
+    await carlos.goto(PLATAFORMA + '#/por-revisar/' + codigo)
     await carlos.getByRole('heading', { name: 'Revisión – Certificado de Trabajo' }).waitFor()
+    await carlos.getByRole('button', { name: 'Firmar' }).scrollIntoViewIfNeeded()
     await capturaDelManual(carlos, 'firmar')
     await carlos.getByRole('button', { name: 'Firmar' }).click()
     const dialogo = carlos.getByRole('dialog', { name: 'Firmar con su billetera' })
@@ -321,12 +325,17 @@ const TITULOS = [
   await paso('DRA-75 · Capturas del manual: buscar y entregar', async () => {
     const luz = await nueva()
     await primerIngreso(luz, 'ltorres', TEMPORAL, PROPIA)
-    await luz.goto(URL + '#/buscar/' + codigo)
+    await luz.goto(PLATAFORMA + '#/buscar/' + codigo)
     await luz.getByRole('button', { name: 'Imprimir' }).waitFor({ timeout: 60_000 })
     await capturaDelManual(luz, 'entregar')
   })
 
   await b.close()
+  // Se copian al terminar: si se copiaran durante la prueba, el servidor de Vite recargaría la
+  // plataforma en medio de un paso.
+  if (process.env.E2E_ACTUALIZAR_MANUAL)
+    for (const archivo of fs.readdirSync(`${out}/manual`))
+      fs.copyFileSync(`${out}/manual/${archivo}`, path.join(CAPTURAS_DEL_MANUAL, archivo))
   console.log(`\n${resultados.length} pasos correctos`)
 })().catch((e) => {
   console.error('✗ FALLÓ:', e.message || String(e))

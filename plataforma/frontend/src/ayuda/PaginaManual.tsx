@@ -40,7 +40,9 @@ const texto = (hijos: ReactNode): string =>
 const COMPONENTES: Components = {
   h1: ({ children }) => (
     <>
-      <h1 className="text-2xl font-semibold text-institutional">{children}</h1>
+      {/* En pantalla el título ya está en el encabezado de la página; al imprimir, el encabezado
+          se oculta y el título sale aquí. */}
+      <h1 className="hidden text-2xl font-semibold text-institutional print:block">{children}</h1>
       <Indice />
     </>
   ),
@@ -68,10 +70,14 @@ const COMPONENTES: Components = {
   img: ({ src, alt }) => {
     const archivo = CAPTURAS[String(src)]
     return archivo ? (
+      // Tamaño fijo (las capturas son de 1280 × 800): la página no se mueve al cargarlas, y el
+      // enlace a una sección la deja arriba de la pantalla.
       <img
         src={archivo}
         alt={alt ?? ''}
-        className="mt-4 w-full rounded-lg border border-line print:break-inside-avoid"
+        width={1280}
+        height={800}
+        className="mt-4 h-auto w-full rounded-lg border border-line print:break-inside-avoid"
       />
     ) : null
   },
