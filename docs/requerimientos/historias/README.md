@@ -14,3 +14,4 @@ Cada historia tiene sus criterios de aceptación como casillas (`- [ ]`). Se mar
 | E5 Consulta y trazabilidad interna | [E5_consulta_trazabilidad.md](E5_consulta_trazabilidad.md) | HU22–HU25 | 6 | 13 |
 | E6 Notificaciones | [E6_notificaciones.md](E6_notificaciones.md) | HU26–HU28 | 6 | 6 |
 | E7 Anulación y reemisión | [E7_anulacion_reemision.md](E7_anulacion_reemision.md) | HU29–HU30 | 4 | 16 |
+| E8 Ayuda y documentación (fuera del backlog original) | [E8_ayuda_documentacion.md](E8_ayuda_documentacion.md) | DRA-70–DRA-75 | 8 | — |
