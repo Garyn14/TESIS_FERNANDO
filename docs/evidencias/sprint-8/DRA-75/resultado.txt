@@ -1,0 +1,17 @@
+✓ DRA-70 · Desde la portada se llega a la guía "¿Cómo verificar un documento?"
+✓ DRA-70 · La guía explica el QR, el código, dónde están y los 6 resultados
+✓ DRA-70 · Un QR que no corresponde a ningún documento lleva a la guía
+✓ DRA-70 · El pie de cada página lleva a la guía, y la guía vuelve a verificar
+✓ DRA-70 · En el celular la guía se lee sin desplazarse de lado
+✓ DRA-71 · Desde la portada se llega a las preguntas frecuentes, en tres grupos y cerradas
+✓ DRA-71 · Una pregunta se abre y se cierra al pulsarla, también con el teclado
+✓ DRA-71 · El enlace de una pregunta la abre directamente, en el celular
+✓ DRA-71 · Se llega también desde el pie y desde la guía de cómo verificar
+✓ DRA-75 · Preparación: cuentas reales y la billetera del Director habilitada
+✓ DRA-75 · El inicio de cada rol lleva al manual, a la sección de su rol
+✓ DRA-75 · Al imprimir sale solo el manual, sin el menú ni el encabezado
+✓ DRA-75 · Capturas del manual: registrar un documento
+✓ DRA-75 · Capturas del manual: revisar y firmar
+✓ DRA-75 · Capturas del manual: buscar y entregar
+
+15 pasos correctos
