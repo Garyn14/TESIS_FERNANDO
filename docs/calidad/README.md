@@ -1,0 +1,46 @@
+# Revisión estática del código (épica E9)
+
+Parte del código se escribió con ayuda de un asistente de IA (lo declara la tesis). Para revisarlo con un criterio independiente, la CI analiza todo el repositorio con herramientas gratuitas en cada push a `main` o a una rama `DRA-*`, y en cada pull request.
+
+| Herramienta | Qué revisa | Dónde se ven los resultados |
+| --- | --- | --- |
+| **SonarQube Cloud** (plan gratuito) | Backend (Java), plataforma interna y portal (TypeScript), infraestructura (Terraform, Dockerfiles, scripts), pruebas de punta a punta: errores, vulnerabilidades, puntos sensibles de seguridad, código duplicado, mantenibilidad y cobertura de las pruebas | [sonarcloud.io, proyecto Garyn14_TESIS_FERNANDO](https://sonarcloud.io/project/overview?id=Garyn14_TESIS_FERNANDO) |
+| **Slither** 0.11.6 | El contrato `RegistroDocumentos.sol` (solc 0.8.30) | Resumen del job, artefacto `revision-estatica` y pestaña **Security** del repositorio |
+| **gitleaks** 8.30.1 | Claves y contraseñas en **todo el historial** de git | Resumen del job, artefacto `revision-estatica` y pestaña **Security** |
+
+## Cómo funciona en la CI
+
+- Dos jobs nuevos en `.github/workflows/ci.yml`:
+  - **Revisión estática (SonarQube Cloud):** espera al backend, al frontend y al portal, y usa lo que ellos dejan como artefactos (las clases compiladas, el informe de JaCoCo y el `lcov.info` de Vitest), sin volver a correr las pruebas.
+  - **Revisión estática (contrato y secretos):** Slither y gitleaks.
+- **Por ahora son informativos (DRA-78):** si encuentran algo, o si fallan, la CI sigue en verde (`continue-on-error`). Bloquear solo lo grave del código nuevo es la DRA-79.
+- **Código nuevo** = lo que cambia respecto de `main` (`sonar.newCode.referenceBranch=main` en `sonar-project.properties`).
+- **Cobertura:** el backend la mide con JaCoCo dentro de `./mvnw verify` (`target/site/jacoco/jacoco.xml`); el frontend y el portal con `npm test -- --coverage` (`coverage/lcov.info`).
+
+## Configuración (una sola vez, ya hecha)
+
+- En SonarQube Cloud: organización `garyn14` (plan Free), proyecto público `Garyn14_TESIS_FERNANDO`, con el **análisis automático desactivado** (lo hace la CI).
+- En GitHub: el secreto de repositorio `SONAR_TOKEN`. **El token nunca va en el repositorio ni en un mensaje.** Si se filtra, se revoca en SonarQube Cloud (My Account → Security) y se crea otro.
+- Los PR que vienen de otro repositorio (Dependabot, forks) no tienen acceso al secreto: en ellos el job de SonarQube no corre.
+
+## Correr las herramientas en local
+
+```bash
+# Slither (desde plataforma/contracts, con npm ci hecho)
+pip install slither-analyzer==0.11.6 solc-select==1.2.0 && solc-select install 0.8.30
+SOLC_VERSION=0.8.30 slither contracts/ --solc-remaps "@openzeppelin/=node_modules/@openzeppelin/" --filter-paths node_modules --exclude-dependencies
+```
+
+```bash
+# gitleaks (desde la raíz del repositorio)
+docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact
+```
+
+```bash
+# Cobertura del frontend o del portal
+npx vitest run --coverage
+```
+
+## Resultados
+
+- [Medición inicial (DRA-78)](medicion-inicial.md): lo que encontró cada herramienta la primera vez, clasificado, y los tickets de corrección propuestos.

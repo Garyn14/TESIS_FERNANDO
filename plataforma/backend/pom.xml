@@ -25,6 +25,7 @@
     <zxing.version>3.5.4</zxing.version>
     <bucket4j.version>8.22.0</bucket4j.version>
     <spotless.version>3.11.0</spotless.version>
+    <jacoco.version>0.8.16</jacoco.version>
   </properties>
 
   <dependencies>
@@ -144,6 +145,32 @@
               <goal>check</goal>
             </goals>
             <phase>verify</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <!-- DRA-78: cobertura de las pruebas para SonarQube Cloud (target/site/jacoco/jacoco.xml). -->
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <id>preparar</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>informe</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <formats>
+                <format>XML</format>
+              </formats>
+            </configuration>
           </execution>
         </executions>
       </plugin>

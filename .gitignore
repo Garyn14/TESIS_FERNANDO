@@ -33,3 +33,4 @@ plataforma/infra/aws/modulos/**/.terraform.lock.hcl
 
 # Python
 __pycache__/
+coverage/
