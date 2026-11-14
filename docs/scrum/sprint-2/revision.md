@@ -92,7 +92,7 @@ Las tomé al refinar cada historia. El sistema ya funciona así; si el PO pide c
 
 | Observación | Historia | Resolución |
 |---|---|---|
-| Las fechas se muestran en mes/día/año y deben ser día/mes/año | HU08, HU09 | **Corregida el 03/11/2026.** El selector del navegador tomaba el formato del idioma del sistema. Se reemplazó por un campo propio `dd/mm/aaaa`, que no depende del navegador y conserva el botón del calendario. Commit `aa6e3f2`, CI [41677224185](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41677224185). Evidencia en [observacion-fechas](../../evidencias/sprint-2/observacion-fechas/) |
+| Las fechas se muestran en mes/día/año y deben ser día/mes/año | HU08, HU09 | **Corregida el 03/11/2026.** El selector del navegador tomaba el formato del idioma del sistema. Se reemplazó por un campo propio `dd/mm/aaaa`, que no depende del navegador y conserva el botón del calendario. Commit `25842d1`, CI [41677224185](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/41677224185). Evidencia en [observacion-fechas](../../evidencias/sprint-2/observacion-fechas/) |
 | En la vista previa, la firma del Director aparece en blanco | HU08 | **Explicada, sin cambio.** Eran dos cosas:<ul><li>Bajo la línea salía "cmendoza" porque la cuenta se creó con ese nombre completo. El guion no indicaba qué nombre poner; ya lo indica.</li><li>El espacio sobre la línea está en blanco a propósito: no va una firma manuscrita, sino la firma digital con la billetera, que llega en el Sprint 3 (HU11, HU17).</li></ul>El PO acordó dejarlo así |
 
 ### Decisiones a validar

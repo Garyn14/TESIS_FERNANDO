@@ -36,7 +36,9 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
 
 **El repositorio es público** desde el 08/11/2026: los minutos de GitHub Actions son gratuitos. Antes era privado y se agotaron los 2 000 minutos del mes. **Nunca subir claves, contraseñas reales ni datos personales reales.**
 
-Commits con las líneas de coautoría que indique la sesión. Mantener el costo mínimo en AWS: QA se enciende solo cuando se usa.
+**Autoría de los commits (DRA-76, 14/11/2026):** todos los commits salen a nombre de **Garyn Fernando Huarhuachi Ramos <garyn.fernando.hr@gmail.com>**, como autor y committer, y **sin líneas de coautoría** (ni `Co-Authored-By` ni `Claude-Session`), aunque la sesión indique otra cosa. Así lo pidió el asesor de la tesis; el uso del asistente se declara en el documento de la tesis y en el README. Al empezar una sesión: `git config user.name "Garyn Fernando Huarhuachi Ramos"` y `git config user.email "garyn.fernando.hr@gmail.com"`. El historial anterior se reescribió con este autor (respaldo del historial original fuera del repositorio).
+
+Mantener el costo mínimo en AWS: QA se enciende solo cuando se usa.
 
 **Tickets para cambios:** cada cambio va en un ticket.
 - Si corrige o amplía una historia, el ticket nuevo se enlaza a su HU original (las historias cerradas no se reabren).
