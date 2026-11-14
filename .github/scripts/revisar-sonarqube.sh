@@ -18,7 +18,7 @@ ESPERA="${ESPERA_SEGUNDOS:-5}"
 valor() { grep "^$1=" "$INFORME" | cut -d= -f2-; }
 consultar() {
   if [[ -n "${SONAR_TOKEN:-}" ]]; then
-    curl -sSf -u "${SONAR_TOKEN}:" "$1"
+    curl -sSf -H "Authorization: Bearer ${SONAR_TOKEN}" "$1"
   else
     curl -sSf "$1"
   fi

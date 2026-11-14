@@ -8,3 +8,6 @@
 4397699bccf3582d7715513bdc6301eaa986ab52:plataforma/portal/src/App.test.tsx:generic-api-key:6
 # Token de verificación inventado para una prueba del PDF.
 28371a89dff31254b46ee0a749272eb3617d058f:plataforma/backend/src/test/java/pe/drasatipo/plataforma/documentos/GeneradorDePdfTest.java:generic-api-key:22
+# DRA-79: curl -u "${SONAR_TOKEN}:" en el script de SonarQube; es la variable del secreto de GitHub,
+# no una clave escrita. El script ya manda el token en un encabezado; esta huella es del commit anterior.
+cedb9426af1d37772fd18b1e695683a59a0a013d:.github/scripts/revisar-sonarqube.sh:curl-auth-user:21
