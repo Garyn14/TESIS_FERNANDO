@@ -108,3 +108,55 @@ Las respuestas se basan en cómo funciona hoy el sistema (HU19–HU21, DRA-62). 
 | Prioridad | Puntos | Sprint |
 |---|---|---|
 | Media | 3 | 8 |
+
+---
+
+## DRA-75: Manual de usuario general (versión 1)
+
+**Como** persona que usa la plataforma interna (cualquier rol), **quiero** un manual a la mano desde el inicio, **para** saber cómo hacer mi trabajo sin depender de que alguien me explique.
+
+**Contexto**
+
+Hoy no hay ningún manual. Los flujos están descritos para el negocio en `docs/negocio/flujos-del-sistema.md` (F1–F12), pero en lenguaje de reunión y fuera de la plataforma. Esta es la **versión 1**: un solo manual para todos, con pocas capturas, para no rehacerlo si la validación del PO (DRA-48) cambia pantallas. La **versión 2**, por rol y con capturas de cada paso, es DRA-72, después de DRA-48.
+
+**Criterios de aceptación**
+
+- [ ] Una página "Manual de usuario" dentro de la plataforma, en el mismo diseño, que pueden abrir **todos los roles** (también el Administrador).
+- [ ] Se llega desde:
+  - el menú, con la opción "Manual de usuario", al final y para todos;
+  - el inicio, con un recuadro "¿Necesita ayuda?" que lleva al manual y, directo, a la sección de su rol.
+- [ ] Contenido, en este orden:
+  1. **La plataforma en una página:** para qué sirve, quién hace qué y la vida de un documento (sus estados, con los mismos nombres y colores que en pantalla);
+  2. **Para todos:** ingresar, cambiar la contraseña, los avisos de la campana y qué hacer si la sesión se cierra;
+  3. **Una sección por rol**, con los pasos de cada tarea:
+     - Administrador: cuentas, áreas y tipos de documento, billetera del Director;
+     - Emisor de área: registrar un documento, emitir por lista, corregir un observado, reemitir;
+     - Director: revisar, observar, rechazar, firmar con la billetera y anular;
+     - Mesa de Partes y Mesa de Partes de área: buscar, ver el historial, imprimir y entregar;
+  4. **La verificación pública:** qué ve el ciudadano y el enlace a la guía del portal (DRA-70);
+  5. **Glosario.**
+- [ ] Un índice al inicio, con enlaces a cada sección. Cada sección tiene su propio enlace.
+- [ ] **4 capturas** de los momentos clave (registrar, revisar y firmar, buscar y entregar, el inicio). Son de la prueba de punta a punta, con datos ficticios, y se regeneran con ella.
+- [ ] Un botón **"Imprimir o guardar en PDF"**: al imprimir salen solo el manual, sin el menú ni la cabecera.
+- [ ] Los nombres de roles, opciones del menú, botones y estados son **exactamente** los de la pantalla. Una prueba lo comprueba contra el menú y los estados del código.
+- [ ] Lenguaje claro y en segunda persona ("pulse", "elija"), sin términos técnicos salvo los necesarios (billetera, blockchain), explicados en el glosario.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Un manual distinto para cada rol, con capturas de cada paso | DRA-72 (versión 2), después de DRA-48 |
+| Preguntas frecuentes de la plataforma | DRA-73, después de DRA-48 |
+| Guía de operación del servidor (respaldos, monitoreo) | DRA-74 |
+| Video tutorial | Si el negocio lo pide |
+
+**Notas técnicas**
+
+- El texto está en **Markdown**, en `plataforma/frontend/src/ayuda/manual.md`, para que se pueda leer y editar también en GitHub y adjuntar a la tesis. La plataforma lo muestra con `react-markdown` y `remark-gfm` (tablas), sin HTML incrustado.
+- Ruta `#/manual`, con el permiso `CUENTA_PROPIA`, que tienen todos los roles. Las secciones usan anclas `#/manual/<seccion>`.
+- Las capturas van en `frontend/src/ayuda/capturas/` y las genera `e2e/sprint8.cjs`.
+- Pruebas con Vitest y en `e2e/sprint8.cjs`.
+
+| Prioridad | Puntos | Sprint |
+|---|---|---|
+| Media | 3 | 8 |
