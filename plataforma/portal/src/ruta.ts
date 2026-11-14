@@ -10,3 +10,10 @@ export const RUTA_COMO_VERIFICAR = '/como-verificar'
 export function esComoVerificar(ruta: string): boolean {
   return /^\/como-verificar\/?$/.test(ruta)
 }
+
+/** DRA-71: las preguntas frecuentes. */
+export const RUTA_PREGUNTAS = '/preguntas-frecuentes'
+
+export function esPreguntasFrecuentes(ruta: string): boolean {
+  return /^\/preguntas-frecuentes\/?$/.test(ruta)
+}

@@ -1,6 +1,6 @@
 import { useId, useState, type FormEvent } from 'react'
 import { normalizarCodigo, verificarCodigo, type Verificacion } from './api'
-import { RUTA_COMO_VERIFICAR } from './ruta'
+import { RUTA_COMO_VERIFICAR, RUTA_PREGUNTAS } from './ruta'
 import TarjetaResultado from './TarjetaResultado'
 
 type Estado =
@@ -66,6 +66,12 @@ export default function Portada() {
           <span className="text-muted">
             Dónde están el QR y el código, y qué significa cada resultado.
           </span>
+        </p>
+        <p className="mt-2">
+          <a href={RUTA_PREGUNTAS} className="font-medium text-institutional underline">
+            Preguntas frecuentes
+          </a>{' '}
+          <span className="text-muted">Costo, datos que se muestran, copias y más.</span>
         </p>
 
         <form noValidate onSubmit={verificar} className="mt-8 border-t border-line pt-6">

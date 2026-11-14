@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { ENCABEZADOS } from '../resultados'
+import { RUTA_PREGUNTAS } from '../ruta'
 import DibujoDocumento from './DibujoDocumento'
 
 /**
@@ -94,6 +95,13 @@ export default function ComoVerificar() {
             Si aun así cree que es un error, comuníquese con la{' '}
             <strong>Agencia Agraria Satipo</strong> e indique el código de verificación del
             documento.
+          </li>
+          <li>
+            ¿Tiene otra duda? Revise las{' '}
+            <a href={RUTA_PREGUNTAS} className="font-medium text-institutional underline">
+              preguntas frecuentes
+            </a>
+            .
           </li>
         </ul>
       </Seccion>

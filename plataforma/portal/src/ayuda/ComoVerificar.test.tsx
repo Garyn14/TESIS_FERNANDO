@@ -78,7 +78,9 @@ describe('¿Cómo verificar un documento? (DRA-70)', () => {
     expect(enlaces).toHaveLength(2)
     for (const enlace of enlaces) expect(enlace).toHaveAttribute('href', '/como-verificar')
     expect(
-      within(screen.getByRole('navigation', { name: 'Ayuda' })).getByRole('link'),
+      within(screen.getByRole('navigation', { name: 'Ayuda' })).getByRole('link', {
+        name: '¿Cómo verificar un documento?',
+      }),
     ).toHaveAttribute('href', '/como-verificar')
   })
 })
