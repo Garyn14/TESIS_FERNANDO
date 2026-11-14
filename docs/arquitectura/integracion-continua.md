@@ -223,6 +223,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 14/11/2026 | [43652049553](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/43652049553) | `DRA-82-buckets-solo-https` | ✓ Ocho jobs en verde y SonarQube omitido en la rama (DRA-82): cada bucket niega todo acceso sin HTTPS. **Terraform 19** (nueva: `buckets_solo_https`); backend 277, frontend 212, portal 28 y contrato 28; cuenta 14, CloudFront 4, disparadores 46 y servidor 27. Duración: 3 min 45 s |
 | 14/11/2026 | [43652415219](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/43652415219) | `main` | ✓ Nueve jobs en verde tras fusionar la DRA-82, pero **SonarQube seguía marcando los 3 buckets**: la regla terraform:S6249 no sigue una política generada con `for_each` sobre un mapa |
 | 14/11/2026 | [43653054841](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/43653054841) | `DRA-82-buckets-solo-https` | ✓ Ocho jobs en verde y SonarQube omitido en la rama (DRA-82, ajuste): una política explícita por bucket, con el mismo contenido. Terraform 19, backend 277, frontend 212, portal 28 y contrato 28 |
+| 14/11/2026 | [43653460612](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/43653460612) | `main` | ✓ Nueve jobs en verde tras el ajuste de la DRA-82. **SonarQube: 0 hallazgos abiertos** (eran 107 en la medición inicial); Slither y gitleaks en 0. Backend 277 y Terraform 19 |
 
 ## 9. Pendientes
 
