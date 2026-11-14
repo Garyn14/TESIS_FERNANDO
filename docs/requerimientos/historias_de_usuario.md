@@ -14,7 +14,7 @@ Fuente: sección 3.2.3 de la tesis (Tablas 17 a 23), con los puntos y el sprint 
 | E7 Anulación y reemisión | HU29–HU30 | 4 | 16 |
 | Sprint 7: propuestas del equipo (fuera del backlog original) | DRA-58 a DRA-62 | 7 | 16 |
 | E8 Ayuda y documentación (fuera del backlog original) | DRA-70 a DRA-75 | 8 | 11 en el Sprint 8 |
-| E9 Mejora y revisión estática del código (fuera del backlog original) | DRA-78 a DRA-82 | — | 12 |
+| E9 Mejora y revisión estática del código (fuera del backlog original) | DRA-78 a DRA-82 | — | 13 |
 
 > **Nombres de los roles desde el Sprint 7 (DRA-59).** Las historias HU01–HU30 conservan los nombres de la tesis. En la plataforma, **"Área encargada"** se llama **"Emisor de área"** y **"Consulta interna"** se llama **"Mesa de Partes"**. Los códigos internos (`AREA_ENCARGADA`, `CONSULTA_INTERNA`) no cambian.
 
@@ -2388,3 +2388,73 @@ La medición inicial (`docs/calidad/medicion-inicial.md`) clasificó a mano los 
 | Prioridad | Puntos |
 |---|---|
 | Media | 2 |
+
+---
+
+## DRA-79: Bloquear en la CI solo lo grave del código nuevo
+
+*Refinada el 14/11/2026, con la medición inicial (DRA-78) y las exclusiones de la DRA-80.*
+
+**Como** equipo de desarrollo, **quiero** que la CI rechace un cambio solo cuando agrega un problema grave, **para** mantener la calidad sin frenar el avance con observaciones menores o del código que ya existía.
+
+**Contexto**
+
+- La DRA-78 dejó la revisión estática en modo informativo, y la DRA-80 excluyó los falsos positivos revisados: ahora cada herramienta muestra solo lo pendiente.
+- **Dos límites del plan gratuito de SonarQube Cloud**, comprobados al construir la DRA-78:
+  - **Solo analiza `main` y los pull requests**, no las ramas. Para revisar el código nuevo *antes* de que llegue a `main`, cada historia tiene que pasar por un pull request.
+  - **Solo tiene el umbral predefinido "Sonar way"**, que no se puede editar. Exige al código nuevo calificación A en seguridad, fiabilidad **y mantenibilidad**, **80 % de cobertura** y **3 % de duplicación como máximo**. Eso es más de lo acordado: bloquear solo lo grave.
+
+**Qué bloquea y qué no**
+
+| Bloquea (la CI falla) | No bloquea (queda como aviso) |
+|---|---|
+| Una clave o contraseña nueva en el historial (gitleaks) | Mantenibilidad, cobertura y duplicación del código nuevo |
+| Una vulnerabilidad o un error probable de gravedad **alta o bloqueante** que agrega el pull request (SonarQube) | Los hallazgos de gravedad media o baja |
+| Un aviso nuevo de gravedad media o alta en el contrato (Slither) | Lo que ya existía: va en sus propios tickets (DRA-81, DRA-82) |
+
+**Criterios de aceptación**
+
+**Flujo con pull request**
+- [ ] Cada historia, al terminar en su rama, abre un **pull request hacia `main`**. En el PR corren los 9 jobs, SonarQube incluido, y SonarQube comenta en el PR el resultado.
+- [ ] Se fusiona **solo con los 9 jobs en verde**, igual que hoy: con *fast-forward* desde la terminal (GitHub marca el PR como fusionado solo). El historial sigue lineal.
+- [ ] El flujo de `CLAUDE.md` y la guía de calidad describen el paso nuevo.
+
+**SonarQube**
+- [ ] Tras el análisis del PR, la CI **consulta a SonarQube los hallazgos nuevos del PR** y falla si hay alguno de seguridad o fiabilidad con gravedad alta o bloqueante. El mensaje dice cuál es y enlaza al detalle.
+- [ ] El umbral "Sonar way" se sigue mostrando en el PR como **aviso**, sin bloquear.
+- [ ] En `main` (después de fusionar) el job no bloquea: solo informa.
+
+**Contrato y secretos**
+- [ ] gitleaks falla la CI si encuentra algo fuera de `.gitleaksignore`.
+- [ ] Slither falla la CI con un aviso nuevo de gravedad media o alta (`--fail-medium`); los revisados están en `slither.db.json`.
+- [ ] Los jobs de revisión estática **dejan de ser informativos** (sin `continue-on-error`).
+
+**Prueba**
+- [ ] En un PR de ensayo, que se cierra sin fusionar:
+  - una clave falsa hace fallar gitleaks;
+  - una vulnerabilidad sembrada (por ejemplo, SQL armado con lo que escribe el usuario) hace fallar SonarQube;
+  - un cambio limpio deja todo en verde.
+
+**Fuera del alcance**
+
+| Tema | Dónde se resuelve |
+|---|---|
+| Corregir lo que ya existía | DRA-81 y DRA-82 |
+| Bloquear por mantenibilidad, cobertura o duplicación | A propósito: no se bloquea, para no frenar el avance |
+| Proteger la rama `main` en GitHub (*branch protection*) | Opcional; lo decide el dueño del repositorio (ver decisiones) |
+
+**Decisiones a validar**
+
+1. **Pasar a fusionar por pull request.** Es la única forma de revisar el código nuevo antes de `main` con el plan gratuito. Se mantiene el *fast-forward*, así que el historial no cambia de forma.
+2. **El bloqueo de SonarQube lo decide la CI, no el umbral "Sonar way".** El plan gratuito no deja editar el umbral, y "Sonar way" bloquearía también por mantenibilidad, cobertura y duplicación. El umbral queda visible como aviso.
+3. **Sin protección de rama por ahora.** Exigir los checks en GitHub impediría subir a `main` los commits de registro de la CI y los de documentación. El bloqueo se cumple por el flujo: no se fusiona un PR en rojo.
+
+**Notas técnicas**
+
+- Los hallazgos del PR: `api/issues/search?componentKeys=…&pullRequest=N&resolved=false&impactSoftwareQualities=SECURITY,RELIABILITY&impactSeverities=HIGH,BLOCKER` (el proyecto es público: no hace falta token para leer).
+- El análisis espera a que SonarQube procese el informe (`sonar.qualitygate.wait=true`, con un tiempo máximo), sin fallar por el umbral.
+- Los PR de Dependabot no tienen acceso al secreto: en ellos el job de SonarQube se omite, y gitleaks y Slither sí corren.
+
+| Prioridad | Puntos |
+|---|---|
+| Media | 3 |
