@@ -90,7 +90,7 @@ Revisión estática gratuita para repositorios públicos: **SonarQube Cloud** (c
 | 2 | DRA-80 | Excluir los falsos positivos y aceptados, con su justificación (propuesta C) | 2 | En revisión: quedan los 12 reales |
 | 3 | DRA-81 | Ajustes del backend y de las pruebas (propuesta A) | 2 | En revisión: quedan 3 |
 | 4 | DRA-82 | Buckets de S3 solo con HTTPS (propuesta B) | 1 | En revisión: **0 hallazgos abiertos** |
-| 5 | DRA-79 | Bloquear en la CI solo lo grave del código nuevo, con fusión por pull request | 3 | Refinada; espera la validación de sus decisiones |
+| 5 | DRA-79 | Bloquear en la CI solo lo grave del código nuevo, con fusión por pull request | 3 | En revisión: bloquea lo grave; ensayo en el PR #18 |
 
 El proyecto de SonarQube Cloud (plan gratuito) lo preparó el dueño del repositorio, con el token en el secreto `SONAR_TOKEN` de GitHub. El plan gratuito solo analiza `main` y los pull requests.
 
