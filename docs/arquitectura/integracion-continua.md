@@ -229,6 +229,7 @@ Un cambio no se integra a `main` mientras alguno de los jobs esté en rojo.
 | 14/11/2026 | [43655545568](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/43655545568) | PR #18 `DRA-79-ensayo-bloqueo` (ensayo) | ✗ Ensayo tras quitar lo sembrado: SonarQube en verde; gitleaks sigue en rojo porque la clave quedó en el historial de la rama (una clave subida a un repositorio público ya está expuesta). El PR se cerró sin fusionar |
 | 14/11/2026 | [43655513560](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/43655513560) | PR #17 `DRA-79-bloquear-lo-grave` | ✓ Nueve jobs en verde en el pull request (DRA-79): SonarQube "umbral OK, 0 hallazgos graves", gitleaks sin hallazgos, Slither en 0 y los 5 casos de `probar-revisar-sonarqube.sh`. Backend 277, frontend 212, portal 28 y contrato 28; Terraform 19, cuenta 14, CloudFront 4, disparadores 46 y servidor 27. Duración: 4 min 32 s |
 | 15/11/2026 | [43656001563](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/43656001563) | `main` | ✓ Nueve jobs en verde tras fusionar la DRA-79 con fast-forward (GitHub marcó el PR #17 como fusionado). SonarQube en `main`: "umbral OK, 0 hallazgos graves", sin bloquear |
+| 15/11/2026 | [43742622338](https://github.com/Garyn14/TESIS_FERNANDO/actions/runs/43742622338) | PR #19 `DRA-83-alertas-de-dependencias` | ✓ Nueve jobs en verde (DRA-83, solo documentación: las alertas de Dependabot clasificadas). SonarQube "umbral OK, 0 hallazgos graves" y gitleaks sin hallazgos. Pruebas sin cambios: backend 277, frontend 212, portal 28 y contrato 28 |
 
 ## 9. Pendientes
 
