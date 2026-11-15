@@ -28,7 +28,7 @@ Tesis: "Plataforma con Blockchain para la emisión y verificación de documentos
    - Frontend y portal: `npx prettier --write src`, `npm run lint`, `npx vitest run`, `npm run build`.
 4. **Prueba de punta a punta** del sprint en un entorno limpio (`plataforma/e2e/sprintN.cjs`, con `./e2e/regresion.sh N`), y regresión de los sprints anteriores.
 5. **Evidencia** en `docs/evidencias/sprint-N/HUxx/README.md`, con capturas, qué se comprueba, pruebas automáticas y ajustes encontrados.
-6. **Push** de la rama y **pull request hacia `main`** (`gh pr create`, en español, sin líneas de coautoría). Esperar la CI **del PR** con los **9 jobs** en verde (DRA-79). Dos son de revisión estática y bloquean solo lo grave: una clave nueva (gitleaks), un aviso nuevo medio o alto en el contrato (Slither) y un hallazgo nuevo de seguridad o fiabilidad alto o bloqueante (SonarQube, que solo corre en `main` y en los PR). Si algo grave aparece, se corrige o, si es un falso positivo revisado, se excluye con su justificación (`docs/calidad/README.md`). **Un PR en rojo no se fusiona.** **Las cantidades de pruebas se toman del registro de la CI** (`gh run view <id> --log`), nunca se calculan a mano: ya hubo que corregir cifras inventadas.
+6. **Push** de la rama y **pull request hacia `main`** (en español, sin líneas de coautoría; en la sesión en la nube `gh pr create` no funciona porque GraphQL está bloqueado: se usa `gh api repos/Garyn14/TESIS_FERNANDO/pulls -f base=main -f head=RAMA -f title=… -F body=@archivo`). Esperar la CI **del PR** con los **9 jobs** en verde (DRA-79). Dos son de revisión estática y bloquean solo lo grave: una clave nueva (gitleaks), un aviso nuevo medio o alto en el contrato (Slither) y un hallazgo nuevo de seguridad o fiabilidad alto o bloqueante (SonarQube, que solo corre en `main` y en los PR). Si algo grave aparece, se corrige o, si es un falso positivo revisado, se excluye con su justificación (`docs/calidad/README.md`). **Un PR en rojo no se fusiona.** **Las cantidades de pruebas se toman del registro de la CI** (`gh run view <id> --log`), nunca se calculan a mano: ya hubo que corregir cifras inventadas.
 7. **Registrar** la ejecución en `integracion-continua.md`, en un commit aparte (va también al PR).
 8. **Fusionar** a `main` con fast-forward desde la terminal y hacer push: GitHub marca el PR como fusionado solo y el historial sigue lineal.
 9. **Jira:** comentario detallado en primera persona (qué construí, cómo lo probé, decisiones a validar, lo que queda fuera, ajustes) y transición a **En revisión** (31).
@@ -45,7 +45,7 @@ Mantener el costo mínimo en AWS: QA se enciende solo cuando se usa.
 - Si no corresponde a ninguna historia, va en un ticket independiente.
 - Un cambio menor (redacción, un ajuste de estilo, una dependencia) puede ir sin ticket, a criterio del equipo, citándolo en el commit.
 
-## Estado al 14/11/2026
+## Estado al 15/11/2026
 
 | Sprint | Estado |
 |---|---|
@@ -54,6 +54,7 @@ Mantener el costo mínimo en AWS: QA se enciende solo cuando se usa.
 | 6 (HU22–28) | Cerrado el 08/11 **sin la validación del PO** (19 puntos). Con él están cerradas las 30 historias del backlog: **156 de 156 puntos** |
 | 7 (DRA-58 a DRA-62, fuera del backlog original) | Cerrado el 11/11 **sin la validación del PO** (16 puntos): nombres de roles, áreas y tipos configurables, Mesa de Partes de área y vigencia opcional. Acta en `docs/scrum/sprint-7/revision.md` |
 | 8 (DRA-66, DRA-68, DRA-70, DRA-71, DRA-75 y DRA-74) | Cerrado el 14/11 **sin la validación del PO** (21 puntos; 193 en total): respaldos y monitoreo (apagados hasta PROD), la ayuda del portal, el manual general (versión 1) y la guía de operación. Acta en `docs/scrum/sprint-8/revision.md`. En Jira, las 6 historias están en Listo y el Sprint 8 se cerró el 14/11 |
+| E9 · revisión estática (DRA-77: DRA-78 a DRA-82) | Cerrada el 15/11 (13 puntos), fuera de los sprints: SonarQube Cloud, Slither y gitleaks en la CI, de 115 hallazgos a 0, y bloqueo de lo grave en los PR (DRA-79). Medición y guía en `docs/calidad/`. **Desde aquí, cada historia llega a `main` por un pull request** |
 
 **Lo siguiente:** no quedan historias del backlog original por construir. **QA en AWS (DRA-44) se cerró el 11/11/2026.** Quedan en Jira:
 - la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 8 (`docs/scrum/sprint-N/guion-de-pruebas.md`), que se hará en la reunión con el negocio (material en `docs/negocio/flujos-del-sistema.md` y `presentacion/video-presentacion.mp4`);
