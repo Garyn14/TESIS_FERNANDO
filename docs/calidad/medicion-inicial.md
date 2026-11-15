@@ -98,5 +98,6 @@ Los propongo para que el equipo los valide; ninguno es urgente.
 | **DRA-80** | Exclusiones de los falsos positivos y aceptados: 20 reglas por archivo en `sonar-project.properties`, 5 avisos en `plataforma/contracts/slither.db.json` y 3 huellas en `.gitleaksignore` | SonarQube: 12 hallazgos abiertos (los reales); Slither y gitleaks: 0 |
 | **DRA-81** | `Textos` sin expresiones regulares (S8786, S5850), *records* que comparan el contenido del PDF (S6218), y ajustes en `e2e/sprint6.cjs` (S8786) y `cloudfront.cjs` (S9383) | SonarQube: 3 hallazgos abiertos (los de la DRA-82) |
 | **DRA-82** | Política de cada bucket con la negación de todo acceso sin HTTPS (S6249), probada con `terraform test`. Va una política explícita por bucket: escrita con `for_each`, la regla no la reconocía | SonarQube: 0 hallazgos abiertos (comprobado el 14/11/2026) |
+| **DRA-79** | La revisión estática bloquea solo lo grave; cada historia llega a `main` por un PR. Ensayo en el PR #18: una clave falsa y una inyección de SQL sembradas hicieron fallar la CI | Sin cambios en los hallazgos: sigue en 0 |
 
 **Resultado al 14/11/2026:** SonarQube, Slither y gitleaks en **0 hallazgos abiertos** sobre `main`. De 115 hallazgos, 12 eran reales y se corrigieron; los demás quedaron excluidos con su justificación.
