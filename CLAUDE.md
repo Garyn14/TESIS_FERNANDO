@@ -58,7 +58,7 @@ Mantener el costo mínimo en AWS: QA se enciende solo cuando se usa.
 
 **Lo siguiente:** no quedan historias del backlog original por construir. **QA en AWS (DRA-44) se cerró el 11/11/2026.** Quedan en Jira:
 - la **validación final del PO (DRA-48)**, con los guiones de los Sprints 3 a 8 (`docs/scrum/sprint-N/guion-de-pruebas.md`), que se hará en la reunión con el negocio (material en `docs/negocio/flujos-del-sistema.md` y `presentacion/video-presentacion.mp4`);
-- **DRA-63** (spike: seguridad de la billetera del Director), sin construir. Las propuestas DRA-58 a DRA-62 se construyeron en el Sprint 7;
+- **DRA-63** (spike: seguridad de la billetera del Director): **bloqueado** desde el 15/11/2026 por decisión del equipo, no se aborda; queda como riesgo conocido. Las propuestas DRA-58 a DRA-62 se construyeron en el Sprint 7;
 - **DRA-65 (PROD en AWS)**, a la espera del dominio y el alcance;
 - **DRA-67** (datos personales, **bloqueado** hasta el final);
 - **DRA-72** (manual por rol, versión 2) y **DRA-73** (preguntas frecuentes de la plataforma), de la épica E8, **después de DRA-48**.
