@@ -15,4 +15,4 @@ Cada historia tiene sus criterios de aceptación como casillas (`- [ ]`). Se mar
 | E6 Notificaciones | [E6_notificaciones.md](E6_notificaciones.md) | HU26–HU28 | 6 | 6 |
 | E7 Anulación y reemisión | [E7_anulacion_reemision.md](E7_anulacion_reemision.md) | HU29–HU30 | 4 | 16 |
 | E8 Ayuda y documentación (fuera del backlog original) | [E8_ayuda_documentacion.md](E8_ayuda_documentacion.md) | DRA-70–DRA-75 | 8 | — |
-| E9 Mejora y revisión estática del código (fuera del backlog original) | [E9_calidad_de_codigo.md](E9_calidad_de_codigo.md) | DRA-78–DRA-82 | — | 13 |
+| E9 Mejora y revisión estática del código (fuera del backlog original) | [E9_calidad_de_codigo.md](E9_calidad_de_codigo.md) | DRA-78–DRA-83 | — | 14 |

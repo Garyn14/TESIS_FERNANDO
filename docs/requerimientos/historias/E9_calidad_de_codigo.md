@@ -250,3 +250,23 @@ SonarQube marcó 3 buckets sin política de solo HTTPS (terraform:S6249): el de 
 | Prioridad | Puntos |
 |---|---|
 | Baja | 1 |
+
+---
+
+## DRA-83: Clasificar las alertas de Dependabot y documentar el estado de las dependencias
+
+*Complemento de la revisión estática: las bibliotecas de terceros. Creada el 15/11/2026.*
+
+**Como** equipo de desarrollo, **quiero** clasificar las alertas de dependencias vulnerables y dejar documentado su estado, **para** saber con evidencia si alguna afecta a la plataforma que se despliega.
+
+**Contexto:** GitHub muestra 9 alertas de Dependabot. 8 están en la copia del prototipo (`prototipo/`), que no se despliega ni se ejecuta, y 1 en las herramientas de Hardhat del contrato. Ninguna está en el backend, el frontend ni el portal.
+
+**Criterios de aceptación**
+- [ ] `docs/calidad/dependencias.md`: cada alerta con su clasificación y su justificación, y el resultado de `npm audit` por proyecto.
+- [ ] Las 8 alertas del prototipo se descartan en GitHub como "El código vulnerable no se usa" (opción A: la copia queda igual al original de Figma).
+- [ ] La alerta del contrato se descarta como "Riesgo tolerable", hasta que Hardhat actualice su dependencia.
+- [ ] La guía de calidad enlaza al documento nuevo.
+
+| Prioridad | Puntos |
+|---|---|
+| Baja | 1 |

@@ -14,7 +14,7 @@ Fuente: sección 3.2.3 de la tesis (Tablas 17 a 23), con los puntos y el sprint 
 | E7 Anulación y reemisión | HU29–HU30 | 4 | 16 |
 | Sprint 7: propuestas del equipo (fuera del backlog original) | DRA-58 a DRA-62 | 7 | 16 |
 | E8 Ayuda y documentación (fuera del backlog original) | DRA-70 a DRA-75 | 8 | 11 en el Sprint 8 |
-| E9 Mejora y revisión estática del código (fuera del backlog original) | DRA-78 a DRA-82 | — | 13 |
+| E9 Mejora y revisión estática del código (fuera del backlog original) | DRA-78 a DRA-83 | — | 14 |
 
 > **Nombres de los roles desde el Sprint 7 (DRA-59).** Las historias HU01–HU30 conservan los nombres de la tesis. En la plataforma, **"Área encargada"** se llama **"Emisor de área"** y **"Consulta interna"** se llama **"Mesa de Partes"**. Los códigos internos (`AREA_ENCARGADA`, `CONSULTA_INTERNA`) no cambian.
 
@@ -2515,6 +2515,26 @@ SonarQube marcó 3 buckets sin política de solo HTTPS (terraform:S6249): el de 
 |---|---|
 | Aplicar el cambio en el QA de AWS | Se aplica solo la próxima vez que se ejecute "QA – Encender" |
 | Registros de acceso de S3 y CloudFront | Aceptado por costo; se reconsidera en PROD (DRA-65) |
+
+| Prioridad | Puntos |
+|---|---|
+| Baja | 1 |
+
+---
+
+## DRA-83: Clasificar las alertas de Dependabot y documentar el estado de las dependencias
+
+*Complemento de la revisión estática: las bibliotecas de terceros. Creada el 15/11/2026.*
+
+**Como** equipo de desarrollo, **quiero** clasificar las alertas de dependencias vulnerables y dejar documentado su estado, **para** saber con evidencia si alguna afecta a la plataforma que se despliega.
+
+**Contexto:** GitHub muestra 9 alertas de Dependabot. 8 están en la copia del prototipo (`prototipo/`), que no se despliega ni se ejecuta, y 1 en las herramientas de Hardhat del contrato. Ninguna está en el backend, el frontend ni el portal.
+
+**Criterios de aceptación**
+- [ ] `docs/calidad/dependencias.md`: cada alerta con su clasificación y su justificación, y el resultado de `npm audit` por proyecto.
+- [ ] Las 8 alertas del prototipo se descartan en GitHub como "El código vulnerable no se usa" (opción A: la copia queda igual al original de Figma).
+- [ ] La alerta del contrato se descarta como "Riesgo tolerable", hasta que Hardhat actualice su dependencia.
+- [ ] La guía de calidad enlaza al documento nuevo.
 
 | Prioridad | Puntos |
 |---|---|

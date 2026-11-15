@@ -67,4 +67,5 @@ npx vitest run --coverage
 
 ## Resultados
 
+- [Dependencias con vulnerabilidades conocidas (DRA-83)](dependencias.md): las alertas de Dependabot y `npm audit`, clasificadas. Ninguna afecta a lo que se despliega.
 - [Medición inicial (DRA-78)](medicion-inicial.md): lo que encontró cada herramienta la primera vez, clasificado, y los tickets de corrección propuestos.
