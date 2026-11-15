@@ -91,8 +91,9 @@ Revisión estática gratuita para repositorios públicos: **SonarQube Cloud** (c
 | 3 | DRA-81 | Ajustes del backend y de las pruebas (propuesta A) | 2 | Listo: quedan 3 |
 | 4 | DRA-82 | Buckets de S3 solo con HTTPS (propuesta B) | 1 | Listo: **0 hallazgos abiertos** |
 | 5 | DRA-79 | Bloquear en la CI solo lo grave del código nuevo, con fusión por pull request | 3 | Listo: bloquea lo grave; ensayo en el PR #18 |
+| 6 | DRA-83 | Clasificar las alertas de Dependabot (las dependencias) | 1 | Listo: ninguna afecta a lo que se despliega; las 9 alertas, descartadas con su justificación |
 
-**Épica cerrada el 15/11/2026** (13 puntos), sin la validación del PO por ser una mejora técnica: los 115 hallazgos de la medición inicial quedaron en 0 (12 corregidos y el resto excluidos con su justificación), con calificación A en SonarQube. El proyecto de SonarQube Cloud (plan gratuito) lo preparó el dueño del repositorio, con el token en el secreto `SONAR_TOKEN` de GitHub. El plan gratuito solo analiza `main` y los pull requests.
+**Épica cerrada el 15/11/2026** (14 puntos, con la DRA-83), sin la validación del PO por ser una mejora técnica: los 115 hallazgos de la medición inicial quedaron en 0 (12 corregidos y el resto excluidos con su justificación), con calificación A en SonarQube. El proyecto de SonarQube Cloud (plan gratuito) lo preparó el dueño del repositorio, con el token en el secreto `SONAR_TOKEN` de GitHub. El plan gratuito solo analiza `main` y los pull requests.
 
 ### Cierre del Sprint 8 (14/11/2026)
 
