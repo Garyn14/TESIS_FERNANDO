@@ -67,7 +67,7 @@ Distribuir los validadores de Besu en instituciones distintas queda como **traba
 
 **Respaldos y monitoreo (Sprint 8):** están en el módulo de Terraform detrás de `respaldos_activos` y `monitoreo_activo`, **apagados** hasta PROD; se encienden en QA con las opciones de "QA – Encender". Guías: `docs/arquitectura/respaldos.md` y `monitoreo.md`. **Falta que el dueño del correo de alertas confirme la suscripción** del tema `dra-satipo-alertas`. La ayuda vive en el repositorio: el portal en `portal/src/ayuda/`, y el manual y la guía de operación en `frontend/src/ayuda/*.md` (las capturas del manual se regeneran con `E2E_ACTUALIZAR_MANUAL=1 ./e2e/regresion.sh 8`).
 
-Cada observación del PO se registra como un ticket nuevo y se construye con el flujo de siempre. También falta actualizar la Tabla 26 de la tesis con el calendario de `jira.md`.
+Cada observación del PO se registra como un ticket nuevo y se construye con el flujo de siempre. (Actualizar la Tabla 26 de la tesis desde aquí quedó descartado por el equipo el 15/11/2026.)
 
 **Validación del PO:** se hace **al final del proyecto** (DRA-48, en el backlog), con los guiones de los Sprints 3 a 8. Cada observación del PO se registra como un **ticket nuevo**; las historias cerradas no se reabren.
 
