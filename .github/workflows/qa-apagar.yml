@@ -56,7 +56,7 @@ jobs:
           else
             echo "configurada=si" >> "$GITHUB_OUTPUT"
           fi
-      - uses: aws-actions/configure-aws-credentials@v5
+      - uses: aws-actions/configure-aws-credentials@v6
         if: steps.cuenta.outputs.configurada == 'si'
         with:
           # DRA-56: la cuenta prohíbe el proveedor OIDC; la clave es un secreto del ambiente qa.
@@ -88,7 +88,7 @@ jobs:
       # Apagado, el servidor pierde su nombre DNS público y AWS puede dar su IP a otro cliente: el
       # origen de CloudFront pasa a servidor-apagado.invalid, para que el encabezado secreto no
       # viaje a un servidor ajeno (DRA-54). Solo se tocan las distribuciones.
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         if: steps.servidor.outputs.existe == 'si'
         with:
           terraform_version: 1.13.4
